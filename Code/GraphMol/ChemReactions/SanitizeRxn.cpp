@@ -296,7 +296,7 @@ void fixReactantTemplateAromaticity(ChemicalReaction &rxn) {
     if (rw) {
       sanitizeMol(*rw, ops, MolOps::SANITIZE_SETAROMATICITY);
     } else {
-      PRECONDITION(rw, "Oops, invaild pointer");
+      PRECONDITION(rw, "Oops, invalid pointer");
     }
   }
 }
