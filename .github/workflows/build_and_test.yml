@@ -12,15 +12,17 @@ permissions:
   contents: read
 
 # PR CI runs should be cancelled when new commits are pushed, while
-# for the master branch we want the CI to always run on each commit.
+# for the master, Releases and development branches we want the CI
+# to always run on each commit.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  # reusable workflows in subdirectories are not supported,
-  # so prefix jobs with "ci_job_". We use workflows, and not actions
-  # so that the individual steps are visible in the GH Actions section.
+  # reusable workflows in subdirectories are not supported, so prefix
+  # the reusable workflow files with "ci_job_". We use workflows, and
+  # not actions, so that the individual steps are visible in the GH
+  # Actions section.
   Ubuntu_x64_minimallib_build:
     uses: ./.github/workflows/ci_job_Ubuntu_x64_minimallib_build.yml
   Ubuntu_x64_base:
