@@ -13,6 +13,8 @@ jobs:
       - uses: actions/checkout@v7
       - name: Set up CI environment
         uses: ./.github/actions/ci-env
+      - name: Set up package management
+        uses: ./.github/actions/setup-package-management
       - name: Setup build environment
         run: |
           sudo apt-get update

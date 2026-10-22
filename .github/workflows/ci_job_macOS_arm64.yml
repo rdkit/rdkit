@@ -17,8 +17,8 @@ jobs:
       - uses: actions/checkout@v7
       - name: Set up CI environment
         uses: ./.github/actions/ci-env
-      - name: Set up macOS package management
-        uses: ./.github/actions/setup-macos-package-management
+      - name: Set up package management
+        uses: ./.github/actions/setup-package-management
       - name: Setup build environment
         run: |
           source ${CONDA}/etc/profile.d/conda.sh
