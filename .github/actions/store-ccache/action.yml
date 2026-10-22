@@ -1,16 +1,17 @@
 name: Trim and store ccache
-description: Trim and save the shared ccache cache for a CI job when no exact cache was restored.
+description: Trim and save the shared ccache cache for a CI job.
 runs:
   using: composite
   steps:
-    # in ci-env:  echo "JOB_START_TIMESTAMP=$(date +%s)"
-    - name: Trim ccache to this build's entries
+    # JOB_START_TIMESTAMP should be set at the start of the job,
+    # e.g. in ci-env:  echo "JOB_START_TIMESTAMP=$(date +%s)"
+    - name: Trim ccache cache to this build's touched entries
       shell: bash
       run: |
         source ${CONDA}/etc/profile.d/conda.sh
         conda activate rdkit_build
         ccache --evict-older-than "$(( $(date +%s) - JOB_START_TIMESTAMP ))s"
-    - name: Trim and store ccache
+    - name: Store ccache cache
       uses: actions/cache/save@v6
       with:
         path: ${{ env.CCACHE_DIR }}
