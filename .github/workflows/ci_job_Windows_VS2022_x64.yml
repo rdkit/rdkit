@@ -80,8 +80,6 @@ jobs:
       - name: Trim and store ccache
         uses: ./.github/actions/store-ccache
         if: ${{ success() && steps.cache-restore.outputs.cache-hit != 'true' }}
-        with:
-          cache-hit: ${{ steps.cache-restore.outputs.cache-hit }}
       - name: Show ccache stats
         run: |
           call activate rdkit_build
