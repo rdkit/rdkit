@@ -1472,6 +1472,8 @@ void findChiralSets(
     std::vector<std::shared_ptr<DistGeom::ChiralSet>> &chiralCenters,
     std::vector<std::shared_ptr<DistGeom::ChiralSet>> &tetrahedralCenters,
     const std::map<int, RDGeom::Point3D> *coordMap) {
+  const auto ringInfo = mol.getRingInfo();
+  const auto atomRings = ringInfo->atomRings();
   for (const auto &atom : mol.atoms()) {
     if (atom->getAtomicNum() != 1) {  // skip hydrogens
       Atom::ChiralType chiralType = atom->getChiralTag();
@@ -1508,7 +1510,8 @@ void findChiralSets(
         // set a flag for tetrahedral centers that are in multiple small rings
         auto numSmallRings = 0u;
         constexpr int smallRingSize = 5;
-        for (const auto sz : mol.getRingInfo()->atomRingSizes(atom->getIdx())) {
+        for (const auto ringIdx : ringInfo->atomMembers(atom->getIdx())) {
+          const auto sz = atomRings[ringIdx].size();
           if (sz < smallRingSize) {
             ++numSmallRings;
           }
