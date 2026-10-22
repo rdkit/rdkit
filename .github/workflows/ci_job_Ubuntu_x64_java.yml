@@ -5,7 +5,7 @@ on:
 
 jobs:
   Ubuntu_x64_java:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 90
     env:
       BOOST_VERSION: "1.92.0"
