@@ -17,7 +17,7 @@ jobs:
       - name: Set up CI environment
         uses: ./.github/actions/ci-env
       - name: Install .NET Core 8 SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 8.x
       - name: Setup build environment
