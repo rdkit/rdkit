@@ -35,7 +35,7 @@ jobs:
     uses: ./.github/workflows/ci_job_Ubuntu_x64_limitexternaldependencies.yml
   Ubuntu_x64_java:
     uses: ./.github/workflows/ci_job_Ubuntu_x64_java.yml
-  macOS_arn64:
+  macOS_arm64:
     uses: ./.github/workflows/ci_job_macOS_arm64.yml
   macOS_arm64_java:
     uses: ./.github/workflows/ci_job_macOS_arm64_java.yml
