@@ -6,7 +6,7 @@ runs:
     - name: Install conda
       shell: bash
       run: |
-        CONDA_INSTALLER_VERSION="26.5.3-0"
+        installer_version="26.5.3-0"
         case "$RUNNER_OS" in
           macOS)
             installer=Miniforge3-${installer_version}-MacOSX-arm64.sh
