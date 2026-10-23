@@ -30,7 +30,7 @@ jobs:
               libboost-python=${BOOST_VERSION} \
               libboost-devel=${BOOST_VERSION} \
               libboost=${BOOST_VERSION} \
-              numpy pillow eigen pandas matplotlib-base \
+              numpy pillow eigen pandas=3.0 matplotlib-base \
               cairo freetype \
               ccache
           conda activate rdkit_build

@@ -29,7 +29,7 @@ jobs:
               libboost=${BOOST_VERSION} \
               libboost-headers=${BOOST_VERSION} \
               nanobind=2 \
-              numpy pillow eigen pandas matplotlib-base \
+              numpy pillow eigen pandas=3.0 matplotlib-base \
               cairo \
               ccache
           conda activate rdkit_build

@@ -34,7 +34,7 @@ jobs:
               libboost=${BOOST_VERSION} libboost-devel=${BOOST_VERSION} \
               libboost-python=${BOOST_VERSION} libboost-python-devel=${BOOST_VERSION} \
               qt \
-              numpy matplotlib cairo pillow eigen pandas=3  \
+              numpy matplotlib cairo pillow eigen pandas=3.0  \
               jupyter=1.0 ipython=8.20 sphinx myst-parser pytest nbval make ccache
       - name: Restore ccache
         id: cache-restore

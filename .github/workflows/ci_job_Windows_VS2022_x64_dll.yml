@@ -32,7 +32,7 @@ jobs:
               libboost=%BOOST_VERSION% ^
               libboost-devel=%BOOST_VERSION% ^
               freetype cairo eigen ^
-              numpy matplotlib pillow pytest nbval pandas=3 expat ^
+              numpy matplotlib pillow pytest nbval pandas=3.0 expat ^
               ccache ninja
           call activate rdkit_build
           call conda config --env --add channels conda-forge
