@@ -68,5 +68,19 @@
         "MONOMER_TYPE": "Backbone",
         "AUTHOR": "RDKit",
         "PDBCODE": "PRP"
+    },
+    {
+        "SYMBOL": "EG",
+        "POLYMER_TYPE": "CHEM",
+        "NATURAL_ANALOG": "",
+        "CORE_SMILES": "*OCCO* |$_R1;;;;;_R2$|",
+        "RGROUPS": {
+            "R1": "*[H] |$_R1;$|",
+            "R2": "*[H] |$_R2;$|"
+        },
+        "NAME": "Ethylene glycol",
+        "MONOMER_TYPE": "Undefined",
+        "AUTHOR": "RDKit",
+        "PDBCODE": "EDO"
     }
 ]

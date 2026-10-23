@@ -78,13 +78,19 @@ TEST_CASE("RDKIT_MONOMER_LIBRARY replaces the built-in MacroMol templates") {
                        "MONOMER_TYPE": "Backbone", "PDBCODE": "XXX"}])",
                    "Missing or invalid 'SYMBOL'");
   }
+  // an unsupported polymer type
+  checkLoadError(R"([{"SYMBOL": "X", "POLYMER_TYPE": "BLOB",
+                     "CORE_SMILES": "*NCC(*)=O |$_R1;;;;_R2;$|",
+                     "RGROUPS": {"R1": "*[H] |$_R1;$|", "R2": "*O |$_R2;$|"},
+                     "MONOMER_TYPE": "Backbone", "PDBCODE": "XXX"}])",
+                 "Unsupported polymer type in monomer definition: BLOB");
   // duplicate monomers
   checkLoadError("[" + glycine + ", " + glycine + "]",
                  "already contains an entry");
 
   setenv("RDKIT_MONOMER_LIBRARY", customFile.string().c_str(), 1);
   const auto &library = getGlobalMacroMolTemplateLibrary();
-  CHECK(library.getTemplates().size() == 5);
+  CHECK(library.getTemplates().size() == 6);
   CHECK(library.getBySymbol(MonomerClass::AminoAcid, "Sar"));
   CHECK(!library.getBySymbol(MonomerClass::AminoAcid, "A"));
 
@@ -111,7 +117,16 @@ TEST_CASE("RDKIT_MONOMER_LIBRARY replaces the built-in MacroMol templates") {
   REQUIRE(propenyl);
   CHECK(MolToSmiles(propenyl->getMol()) == "[H]NCC(=O)/C=C/C");
 
+  // a CHEM monomer
+  const auto *glycol = library.getBySymbol(MonomerClass::Chemical, "EG");
+  REQUIRE(glycol);
+  CHECK(glycol->getMonomerClass() == MonomerClass::Chemical);
+  CHECK(glycol->getName() == "EDO");
+  CHECK(glycol->getMainSgroup().getProp<std::string>("CLASS") == "Chemical");
+  CHECK(glycol->getLeavingGroups().size() == 2);
+  CHECK(!library.getBySymbol(MonomerClass::AminoAcid, "EG"));
+
   MacroMolTemplateLibrary local;
   addBuiltinMacroMolTemplates(local);
-  CHECK(local.getTemplates().size() == 5);
+  CHECK(local.getTemplates().size() == 6);
 }

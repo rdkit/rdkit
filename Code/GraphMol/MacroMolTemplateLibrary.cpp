@@ -81,6 +81,9 @@ MonomerClass monomerClassFromPolymerType(const std::string &polymerType) {
   if (polymerType == "RNA") {
     return MonomerClass::NucleicAcid;
   }
+  if (polymerType == "CHEM") {
+    return MonomerClass::Chemical;
+  }
   throw std::runtime_error("Unsupported polymer type in monomer definition: " +
                            polymerType);
 }
