@@ -81,6 +81,14 @@ struct PyEmbedParameters : public RDKit::DGeomHelpers::EmbedParameters {
         new DistGeom::BoundsMatrix(nrows, sdata));
   }
 
+  void setChiralSets(const nb::list &chiralSets) {
+    additionalChiralSets.clear();
+    for (auto item : chiralSets) {
+      additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+          *nb::cast<DistGeom::ChiralSet *>(item)));
+    }
+  }
+
  private:
   std::unique_ptr<std::map<int, RDGeom::Point3D>> d_coordMap;
 };
@@ -548,6 +556,20 @@ RETURNS:
       .value("MMFF", RDKit::DGeomHelpers::EmbedFF::MMFF)
       .export_values();
 
+  nb::class_<DistGeom::ChiralSet>(
+      m, "ChiralSet",
+      "Captures a set of atoms defining a chiral volume in a molecule")
+      .def(nb::init<int, int, int, int, int, double, double>(), "idx0"_a,
+           "idx1"_a, "idx2"_a, "idx3"_a, "idx4"_a, "volLowerBound"_a,
+           "volUpperBound"_a, "Constructor for ChiralSet")
+      .def_rw("idx0", &DistGeom::ChiralSet::d_idx0)
+      .def_rw("idx1", &DistGeom::ChiralSet::d_idx1)
+      .def_rw("idx2", &DistGeom::ChiralSet::d_idx2)
+      .def_rw("idx3", &DistGeom::ChiralSet::d_idx3)
+      .def_rw("idx4", &DistGeom::ChiralSet::d_idx4)
+      .def_rw("volumeLowerBound", &DistGeom::ChiralSet::d_volumeLowerBound)
+      .def_rw("volumeUpperBound", &DistGeom::ChiralSet::d_volumeUpperBound);
+
   nb::class_<PyEmbedParameters>(m, "EmbedParameters",
                                 "Parameters controlling embedding")
       .def(nb::init<>())
@@ -656,6 +678,8 @@ used during structural minimisation stage)DOC")
           "If provided, the Conformer with this ID in the molecule (if present) is optimized with the ETKDG force field in place.")
       .def_rw("embedForceField", &PyEmbedParameters::embedForceField,
               "Force Field to use for ideal 1-2 and 1-3 distances.")
+      .def("SetChiralSets", &PyEmbedParameters::setChiralSets,
+           "Set additional chiral sets to be used for the embedding process.")
       .def("__setattr__", &safeSetattr);
 
   m.def("EmbedMultipleConfs", &RDKit::EmbedMultipleConfs2, "mol"_a,
