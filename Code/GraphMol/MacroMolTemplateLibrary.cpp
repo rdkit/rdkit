@@ -212,7 +212,8 @@ MacroMolLeavingGroup attachRGroup(RWMol &mol, unsigned int coreDummyIdx,
       leavingAtom->invertChirality();
     }
   }
-  return {std::move(atomIdxs), attachAtomIdx, coreDummyIdx, rGroupNumber};
+  return {std::move(atomIdxs), attachAtomIdx, static_cast<int>(coreDummyIdx),
+          rGroupNumber};
 }
 
 // Builds a template from CORE_SMILES, a CXSMILES in which the attachment points
