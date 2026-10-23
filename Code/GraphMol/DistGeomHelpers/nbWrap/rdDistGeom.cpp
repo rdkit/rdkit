@@ -81,7 +81,7 @@ struct PyEmbedParameters : public RDKit::DGeomHelpers::EmbedParameters {
         new DistGeom::BoundsMatrix(nrows, sdata));
   }
 
-  void setChiralSets(const nb::list &chiralSets) {
+  void setAdditionalChiralSets(const nb::list &chiralSets) {
     additionalChiralSets.clear();
     for (auto item : chiralSets) {
       additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
@@ -568,7 +568,8 @@ RETURNS:
       .def_rw("idx3", &DistGeom::ChiralSet::d_idx3)
       .def_rw("idx4", &DistGeom::ChiralSet::d_idx4)
       .def_rw("volumeLowerBound", &DistGeom::ChiralSet::d_volumeLowerBound)
-      .def_rw("volumeUpperBound", &DistGeom::ChiralSet::d_volumeUpperBound);
+      .def_rw("volumeUpperBound", &DistGeom::ChiralSet::d_volumeUpperBound)
+      .def_rw("structureFlags", &DistGeom::ChiralSet::d_structureFlags);
 
   nb::class_<PyEmbedParameters>(m, "EmbedParameters",
                                 "Parameters controlling embedding")
@@ -678,7 +679,8 @@ used during structural minimisation stage)DOC")
           "If provided, the Conformer with this ID in the molecule (if present) is optimized with the ETKDG force field in place.")
       .def_rw("embedForceField", &PyEmbedParameters::embedForceField,
               "Force Field to use for ideal 1-2 and 1-3 distances.")
-      .def("SetChiralSets", &PyEmbedParameters::setChiralSets,
+      .def("SetAdditionalChiralSets",
+           &PyEmbedParameters::setAdditionalChiralSets,
            "Set additional chiral sets to be used for the embedding process.")
       .def("__setattr__", &safeSetattr);
 
