@@ -1,0 +1,22 @@
+name: Set up CI environment
+description: Export the env variables used by later steps which are shared among jobs/platforms.
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        WORKSPACE: ${{ github.workspace }}
+        JOB: ${{ github.job }}
+        BRANCH: ${{ github.event_name == 'pull_request' && format('pr/{0}', github.event.pull_request.number) || github.ref_name }}
+      run: |
+        {
+          echo "CCACHE_DIR=${WORKSPACE}/.ccache"
+          echo "CCACHE_BASEDIR=${WORKSPACE}"
+          echo "CCACHE_STATSLOG=${WORKSPACE}/ccache_current_build_stats.log"
+          echo "CCACHE_NOHASHDIR=yes"
+          echo "CCACHE_NAMESPACE=${JOB}"
+          echo "CCACHE_MAXSIZE=500M"
+          echo "CCACHE_SLOPPINESS=time_macros"
+          echo "BUILD_BRANCH_NAME=${BRANCH}"
+          echo "JOB_START_TIMESTAMP=$(date +%s)"
+        } >> "$GITHUB_ENV"
