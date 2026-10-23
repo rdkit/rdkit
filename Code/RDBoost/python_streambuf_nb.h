@@ -504,6 +504,12 @@ class streambuf : public std::basic_streambuf<char> {
   class istream : public std::istream {
    public:
     istream(streambuf &buf) : std::istream(&buf) {
+      // Checked here rather than on the first read: some readers loop until
+      // end of file, which a stream that cannot read never reaches.
+      if (buf.py_read.is_none()) {
+        throw ValueErrorException(
+            "That Python file object has no 'read' attribute");
+      }
       exceptions(std::ios_base::badbit);
     }
 

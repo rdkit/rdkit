@@ -34,9 +34,11 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
+#include <nanobind/stl/variant.h>
 
 #include <GraphMol/GraphMol.h>
 #include <RDBoost/boost_shared_ptr.h>
+#include <RDBoost/Wrap_nb.h>
 #include "../inchi.h"
 
 namespace nb = nanobind;
@@ -45,16 +47,12 @@ using namespace nb::literals;
 NB_MODULE(rdinchi, m) {
   m.def(
       "InchiToMol",
-      [](const std::string &inchi, bool sanitize, bool removeHs) {
+      [](const StringOrBytes &inchi, bool sanitize, bool removeHs) {
         RDKit::ExtraInchiReturnValues rv;
-        RDKit::ROMol *mol = RDKit::InchiToMol(inchi, rv, sanitize, removeHs);
-        if (mol == nullptr) {
-          return std::make_tuple(RDKit::ROMOL_SPTR(), rv.returnCode,
-                                 rv.messagePtr, rv.logPtr);
-        } else {
-          return std::make_tuple(RDKit::ROMOL_SPTR(mol), rv.returnCode,
-                                 rv.messagePtr, rv.logPtr);
-        }
+        RDKit::ROMOL_SPTR mol(RDKit::InchiToMol(pyObjectToString(inchi), rv,
+                                                sanitize, removeHs));
+        return std::make_tuple(Nullable<RDKit::ROMOL_SPTR>(mol), rv.returnCode,
+                               rv.messagePtr, rv.logPtr);
       },
       "inchi"_a, "sanitize"_a = true, "removeHs"_a = true,
       R"DOC(return a ROMol for a InChI string
@@ -98,13 +96,14 @@ NB_MODULE(rdinchi, m) {
 
   m.def(
       "MolBlockToInchi",
-      [](const std::string &molblock, std::string options) {
+      [](const StringOrBytes &molblock, std::string options) {
         RDKit::ExtraInchiReturnValues rv;
         const char *_options = nullptr;
         if (options.size()) {
           _options = options.c_str();
         }
-        std::string inchi = RDKit::MolBlockToInchi(molblock, rv, _options);
+        std::string inchi =
+            RDKit::MolBlockToInchi(pyObjectToString(molblock), rv, _options);
         return std::make_tuple(inchi, rv.returnCode, rv.messagePtr, rv.logPtr,
                                rv.auxInfoPtr);
       },
@@ -127,8 +126,12 @@ NB_MODULE(rdinchi, m) {
       - a string with any log messages from the InChI conversion
       - a string with the InChI AuxInfo)DOC");
 
-  m.def("InchiToInchiKey", RDKit::InchiToInchiKey, "inchi"_a,
-        "return the InChI key for an InChI string");
+  m.def(
+      "InchiToInchiKey",
+      [](const StringOrBytes &inchi) {
+        return RDKit::InchiToInchiKey(pyObjectToString(inchi));
+      },
+      "inchi"_a, "return the InChI key for an InChI string");
 
   m.def(
       "MolToInchiKey", RDKit::MolToInchiKey, "mol"_a,

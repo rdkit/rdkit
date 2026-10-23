@@ -11,6 +11,7 @@
 #define NO_IMPORT_ARRAY
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/string.h>
 
 #include <fstream>
@@ -23,6 +24,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDBoost/python_streambuf_nb.h>
+#include <RDBoost/Wrap_nb.h>
 #include "ContextManagers.h"
 
 namespace nb = nanobind;
@@ -63,8 +65,9 @@ class LocalForwardSDMolSupplier : public RDKit::ForwardSDMolSupplier {
         new RDKit::v2::FileParsers::ForwardSDMolSupplier(sbis, owner, params));
     POSTCONDITION(sbis, "bad instream");
   }
-  LocalForwardSDMolSupplier(std::string filename, bool sanitize, bool removeHs,
-                            bool strictParsing) {
+  LocalForwardSDMolSupplier(const std::filesystem::path &filePath,
+                            bool sanitize, bool removeHs, bool strictParsing) {
+    const std::string filename = filePath.string();
     std::istream *tmpStream = nullptr;
     tmpStream = static_cast<std::istream *>(
         new std::ifstream(filename.c_str(), std::ios_base::binary));
@@ -90,7 +93,7 @@ LocalForwardSDMolSupplier *FwdMolSupplIter(LocalForwardSDMolSupplier *self) {
 }
 
 template <typename T>
-RDKit::ROMol *MolForwardSupplNext(T *suppl) {
+Nullable<RDKit::ROMol *> MolForwardSupplNext(T *suppl) {
   RDKit::ROMol *res = nullptr;
   if (!suppl->atEnd()) {
     try {
@@ -139,7 +142,7 @@ struct forwardsdmolsup_wrap {
   static void wrap(nb::module_ &m) {
     nb::class_<LocalForwardSDMolSupplier>(m, "ForwardSDMolSupplier",
                                           fsdMolSupplierClassDoc.c_str())
-        .def(nb::init<std::string, bool, bool, bool>(), "filename"_a,
+        .def(nb::init<std::filesystem::path, bool, bool, bool>(), "filename"_a,
              "sanitize"_a = true, "removeHs"_a = true, "strictParsing"_a = true)
         .def(nb::init<nb::object, bool, bool, bool>(), "fileobj"_a,
              "sanitize"_a = true, "removeHs"_a = true, "strictParsing"_a = true)
@@ -154,7 +157,8 @@ struct forwardsdmolsup_wrap {
              "traceback"_a = nb::none())
         .def(
             "__next__",
-            (ROMol * (*)(LocalForwardSDMolSupplier *)) & MolForwardSupplNext,
+            (Nullable<ROMol *>(*)(LocalForwardSDMolSupplier *)) &
+                MolForwardSupplNext,
             nb::rv_policy::take_ownership,
             R"DOC(Returns the next molecule in the file. Raises _StopIteration_ on EOF.
 )DOC")

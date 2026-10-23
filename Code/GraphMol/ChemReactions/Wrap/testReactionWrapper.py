@@ -1268,6 +1268,16 @@ class CXExtensionsTests(unittest.TestCase):
 
     self.assertEqual(cxsmiles_reaction_string, expected_cxsmiles_reaction_string)
 
+  def test_template_output_lists(self):
+    rxn = rdChemReactions.ReactionFromSmarts('[C:1]=O>[Pt]>[C:1]O')
+    removed = []
+    rxn.RemoveAgentTemplates(targetList=removed)
+    self.assertEqual(len(removed), 1)
+    rxn = rdChemReactions.ReactionFromSmarts('[C:1]=O.[N]>>[C:1]O')
+    with self.assertRaises(TypeError):
+      rxn.RemoveUnmappedReactantTemplates(targetList=())
+    with self.assertRaises(TypeError):
+      rdChemReactions.SanitizeRxn(rxn, params=5)
 
 if __name__ == '__main__':
   unittest.main(verbosity=2)

@@ -149,6 +149,9 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(shp.ShapeVolume, 259.144, places=3)
     self.assertEqual(shp.ColorVolume, 0.0)
 
+    opts.atomSubset = None
+    self.assertEqual(len(opts.atomSubset), 0)
+
   def test9_tversky(self):
     scores = rdGaussianShape.AlignMol(self.ref, self.probe)
     self.assertAlmostEqual(scores[0], 0.497, places=3)

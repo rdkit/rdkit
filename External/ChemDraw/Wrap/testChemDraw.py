@@ -274,6 +274,28 @@ class TestChemDraw(unittest.TestCase):
     self.assertEqual(len(mols), 1)
     self.assertEqual(Chem.MolToSmiles(mols[0]), "CC(C)(C)OC(=O)C1CCCCCC1")
 
+  def test_block_accepts_str_or_bytes(self):
+    path = os.path.join(RDConfig.RDBaseDir, "External", "ChemDraw", "test_data",
+                        "atom-to-fragment.cdxml")
+    with open(path) as inF:
+      block = inF.read()
+    fromStr = rdChemDraw.MolsFromChemDrawBlock(block)
+    fromBytes = rdChemDraw.MolsFromChemDrawBlock(block.encode())
+    self.assertEqual(len(fromStr), 1)
+    self.assertEqual([Chem.MolToSmiles(m) for m in fromBytes],
+                     [Chem.MolToSmiles(m) for m in fromStr])
+    with self.assertRaises(TypeError):
+      rdChemDraw.MolsFromChemDrawBlock(42)
+
+  def test_cdx_block_from_bytes(self):
+    path = os.path.join(RDConfig.RDBaseDir, "Code", "GraphMol", "test_data", "CDX",
+                        "structure_1.cdx")
+    with open(path, "rb") as inF:
+      block = inF.read()
+    for fmt in (rdChemDraw.CDXFormat.AUTO, rdChemDraw.CDXFormat.CDX):
+      mols = rdChemDraw.MolsFromChemDrawBlock(block, format=fmt)
+      self.assertEqual([Chem.MolToSmiles(m) for m in mols], ["C1CCOC1"])
+
   def test_reactions_without_explicit_import(self):
     # These return ChemicalReaction objects, which only rdChemReactions
     # registers. Nothing above imports it, so this is the state a caller is

@@ -1139,6 +1139,16 @@ $$$$
     # the same length, which is reasonable
     self.assertFalse(has_weird_bonds(mol))
 
+  def testGenerateDepictionMatching2DStructurePositionalArguments(self):
+    reference = Chem.MolFromSmiles('c1ccccc1')
+    rdDepictor.Compute2DCoords(reference)
+    mol = Chem.MolFromSmiles('c1ccccc1CCO')
+    # a bool in fifth position selects the overload taking acceptFailure
+    match = rdDepictor.GenerateDepictionMatching2DStructure(mol, reference, -1, None, True)
+    self.assertEqual(len(match), 6)
+    with self.assertRaises((TypeError, ValueError)):
+      rdDepictor.GenerateDepictionMatching2DStructure(mol, reference, -1, 5)
+
 
 if __name__ == '__main__':
   unittest.main()

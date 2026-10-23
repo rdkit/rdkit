@@ -11,7 +11,9 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
+#include <RDBoost/Wrap_nb.h>
 #include <GraphMol/Fingerprints/MHFP.h>
 #include <vector>
 
@@ -23,7 +25,7 @@ namespace RDKit {
 namespace MHFPWrapper {
 
 template <typename T>
-std::vector<T> ListToVector(nb::object obj) {
+std::vector<T> ListToVector(const PyIterableOf<T> &obj) {
   std::vector<T> result;
   for (auto item : obj) {
     result.push_back(nb::cast<T>(item));
@@ -37,25 +39,25 @@ NB_MODULE(rdMHFPFingerprint, m) {
            "seed"_a = 42)
       .def(
           "FromStringArray",
-          [](MHFPEncoder *enc, nb::object vec) {
+          [](MHFPEncoder *enc, const PyIterableOf<std::string> &vec) {
             auto v = ListToVector<std::string>(vec);
             return enc->FromStringArray(v);
           },
           "vec"_a, "Creates a MHFP vector from a list of arbitrary strings.")
       .def(
           "FromArray",
-          [](MHFPEncoder *enc, nb::object vec) {
+          [](MHFPEncoder *enc, const PyIterableOf<uint32_t> &vec) {
             auto v = ListToVector<uint32_t>(vec);
             return enc->FromArray(v);
           },
           "vec"_a, "Creates a MHFP vector from a list of unsigned integers.")
       .def(
           "CreateShinglingFromSmiles",
-          [](MHFPEncoder *enc, std::string smiles, unsigned char radius,
-             bool rings, bool isomeric, bool kekulize,
+          [](MHFPEncoder *enc, const StringOrBytes &smiles,
+             unsigned char radius, bool rings, bool isomeric, bool kekulize,
              unsigned char min_radius) {
-            return enc->CreateShingling(smiles, radius, rings, isomeric,
-                                        kekulize, min_radius);
+            return enc->CreateShingling(pyObjectToString(smiles), radius, rings,
+                                        isomeric, kekulize, min_radius);
           },
           "smiles"_a, "radius"_a = 3, "rings"_a = true, "isomeric"_a = false,
           "kekulize"_a = true, "min_radius"_a = 1,
@@ -74,10 +76,11 @@ NB_MODULE(rdMHFPFingerprint, m) {
           R"DOC(Creates a shingling (a list of circular n-grams / substructures) from a RDKit Mol instance.)DOC")
       .def(
           "EncodeSmiles",
-          [](MHFPEncoder *enc, std::string smiles, unsigned char radius,
-             bool rings, bool isomeric, bool kekulize,
+          [](MHFPEncoder *enc, const StringOrBytes &smiles,
+             unsigned char radius, bool rings, bool isomeric, bool kekulize,
              unsigned char min_radius) {
-            return enc->Encode(smiles, radius, rings, isomeric, kekulize,
+            auto text = pyObjectToString(smiles);
+            return enc->Encode(text, radius, rings, isomeric, kekulize,
                                min_radius);
           },
           "smiles"_a, "radius"_a = 3, "rings"_a = true, "isomeric"_a = false,
@@ -97,8 +100,8 @@ NB_MODULE(rdMHFPFingerprint, m) {
           "Creates a MHFP vector from an RDKit Mol instance.")
       .def(
           "EncodeSmilesBulk",
-          [](MHFPEncoder *enc, nb::object smiles, unsigned char radius,
-             bool rings, bool isomeric, bool kekulize,
+          [](MHFPEncoder *enc, const PyIterableOf<std::string> &smiles,
+             unsigned char radius, bool rings, bool isomeric, bool kekulize,
              unsigned char min_radius) -> nb::tuple {
             auto vec = ListToVector<std::string>(smiles);
             auto resVect =
@@ -114,8 +117,8 @@ NB_MODULE(rdMHFPFingerprint, m) {
           "Creates a MHFP vector from a list of SMILES strings.")
       .def(
           "EncodeMolsBulk",
-          [](MHFPEncoder *enc, nb::object mols, unsigned char radius,
-             bool rings, bool isomeric, bool kekulize,
+          [](MHFPEncoder *enc, const PyIterableOf<ROMol> &mols,
+             unsigned char radius, bool rings, bool isomeric, bool kekulize,
              unsigned char min_radius) -> nb::tuple {
             // There are access problems for vector and std::vector<ROMol>.
             // So let's fall back to an inefficient Python list.
@@ -136,10 +139,11 @@ NB_MODULE(rdMHFPFingerprint, m) {
           "Creates a MHFP vector from a list of RDKit Mol instances.")
       .def(
           "EncodeSECFPSmiles",
-          [](MHFPEncoder *enc, std::string smiles, unsigned char radius,
-             bool rings, bool isomeric, bool kekulize, unsigned char min_radius,
-             size_t length) {
-            return enc->EncodeSECFP(smiles, radius, rings, isomeric, kekulize,
+          [](MHFPEncoder *enc, const StringOrBytes &smiles,
+             unsigned char radius, bool rings, bool isomeric, bool kekulize,
+             unsigned char min_radius, size_t length) {
+            auto text = pyObjectToString(smiles);
+            return enc->EncodeSECFP(text, radius, rings, isomeric, kekulize,
                                     min_radius, length);
           },
           "smiles"_a, "radius"_a = 3, "rings"_a = true, "isomeric"_a = false,
@@ -159,9 +163,9 @@ NB_MODULE(rdMHFPFingerprint, m) {
           "Creates a SECFP binary vector from an RDKit Mol instance.")
       .def(
           "EncodeSECFPSmilesBulk",
-          [](MHFPEncoder *enc, nb::object smiles, unsigned char radius,
-             bool rings, bool isomeric, bool kekulize, unsigned char min_radius,
-             size_t length) -> nb::tuple {
+          [](MHFPEncoder *enc, const PyIterableOf<std::string> &smiles,
+             unsigned char radius, bool rings, bool isomeric, bool kekulize,
+             unsigned char min_radius, size_t length) -> nb::tuple {
             auto vec = ListToVector<std::string>(smiles);
             auto resVect = enc->EncodeSECFP(vec, radius, rings, isomeric,
                                             kekulize, min_radius, length);
@@ -176,9 +180,9 @@ NB_MODULE(rdMHFPFingerprint, m) {
           "Creates a SECFP binary vector from a list of SMILES strings.")
       .def(
           "EncodeSECFPMolsBulk",
-          [](MHFPEncoder *enc, nb::object mols, unsigned char radius,
-             bool rings, bool isomeric, bool kekulize, unsigned char min_radius,
-             size_t length) -> nb::tuple {
+          [](MHFPEncoder *enc, const PyIterableOf<ROMol> &mols,
+             unsigned char radius, bool rings, bool isomeric, bool kekulize,
+             unsigned char min_radius, size_t length) -> nb::tuple {
             std::vector<ROMol> vec;
             for (auto item : mols) {
               vec.push_back(*nb::cast<const ROMol *>(item));

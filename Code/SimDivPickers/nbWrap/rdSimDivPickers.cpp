@@ -16,6 +16,8 @@ void wrap_leaderpick(nb::module_ &m);
 void wrap_HierarchCP(nb::module_ &m);
 
 NB_MODULE(rdSimDivPickers, m) {
+  nb::module_::import_("rdkit.DataStructs.cDataStructs");
+
   m.doc() = "Module containing the diversity and similarity pickers";
 
   wrap_maxminpick(m);

@@ -10,6 +10,7 @@
 
 #define NO_IMPORT_ARRAY
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 #include <string>
@@ -32,7 +33,8 @@ class LocalTDTWriter : public TDTWriter {
   LocalTDTWriter(nb::object fileObj)
       : TDTWriter(new streambuf::ostream(new streambuf(fileObj, 't')), true) {}
 
-  LocalTDTWriter(std::string fileName) : TDTWriter(fileName) {}
+  LocalTDTWriter(const std::filesystem::path &fileName)
+      : TDTWriter(fileName.string()) {}
 };
 }  // namespace
 
@@ -40,7 +42,7 @@ struct tdtwriter_wrap {
   static void wrap(nb::module_ &m) {
     nb::class_<LocalTDTWriter>(
         m, "TDTWriter", R"DOC(A class for writing molecules to TDT files.)DOC")
-        .def(nb::init<std::string>(), "fileName"_a,
+        .def(nb::init<std::filesystem::path>(), "fileName"_a,
              R"DOC(Constructor.
 
    If a string argument is provided, it will be treated as the name of the

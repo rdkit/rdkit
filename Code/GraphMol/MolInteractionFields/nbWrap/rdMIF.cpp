@@ -11,6 +11,7 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
 
@@ -58,10 +59,10 @@ extractChargesAndPositions(const nb::object &charges,
 }
 
 std::tuple<RDGeom::UniformRealValueGrid3D *, RDKit::ROMol *> readCubeFileHelper(
-    const std::string &filename) {
+    const std::filesystem::path &filename) {
   std::unique_ptr<RDGeom::UniformRealValueGrid3D> grd(
       new RDGeom::UniformRealValueGrid3D());
-  auto res = readFromCubeFile(*grd, filename);
+  auto res = readFromCubeFile(*grd, filename.string());
   return std::make_tuple(grd.release(),
                          static_cast<RDKit::ROMol *>(res.release()));
 }
@@ -72,9 +73,6 @@ NB_MODULE(rdMIF, m) {
   m.doc() =
       R"DOC(Module containing functions for calculating molecular interaction fields (MIFs)
 NOTE: This functionality is experimental and the API and/or results may change in future releases.)DOC";
-
-  nb::exception<ValueErrorException>(m, "MIFValueError", PyExc_ValueError);
-  nb::exception<IndexErrorException>(m, "MIFIndexError", PyExc_IndexError);
 
   nb::class_<Coulomb>(m, "Coulomb",
                       R"DOC(Class for calculation of electrostatic interaction (Coulomb energy) between probe and molecule in
@@ -388,13 +386,10 @@ NOTE: This functionality is experimental and the API and/or results may change i
 
   m.def(
       "WriteToCubeFile",
-      [](const RDGeom::UniformRealValueGrid3D &grid, const std::string &filename,
-         const nb::object &mol, int confId) {
-        const RDKit::ROMol *molPtr = nullptr;
-        if (!mol.is_none()) {
-          molPtr = nb::cast<const RDKit::ROMol *>(mol);
-        }
-        writeToCubeFile(grid, filename, molPtr, confId);
+      [](const RDGeom::UniformRealValueGrid3D &grid,
+         const std::filesystem::path &filename, const RDKit::ROMol *mol,
+         int confId) {
+        writeToCubeFile(grid, filename.string(), mol, confId);
       },
       "grid"_a, "filename"_a, "mol"_a = nb::none(), "confId"_a = -1,
       R"DOC(Writes Grid to a file in Gaussian CUBE format.

@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/ndarray.h>
 #include <GraphMol/ROMol.h>
@@ -15,21 +16,23 @@
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <Geometry/Transform3D.h>
 #include <Geometry/point.h>
+#include <RDBoost/Wrap_nb.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
 using namespace RDKit;
 namespace {
 
-RDGeom::Point3D computeCentroidHelper(const Conformer &conf, bool ignoreHs,
-                                      nb::object weights) {
+RDGeom::Point3D computeCentroidHelper(
+    const Conformer &conf, bool ignoreHs,
+    const std::optional<PySequenceOf<double>> &weights) {
   std::vector<double> *weightsVecPtr = nullptr;
   std::vector<double> weightsVec;
-  if (!weights.is_none()) {
-    size_t numElements = nb::len(weights);
+  if (weights) {
+    size_t numElements = nb::len(*weights);
     weightsVec.resize(numElements);
     size_t i = 0;
-    for (nb::handle h : weights) {
+    for (nb::handle h : *weights) {
       weightsVec[i++] = nb::cast<double>(h);
     }
     weightsVecPtr = &weightsVec;
@@ -60,20 +63,21 @@ auto computeCanonTrans(const Conformer &conf,
 nb::object computePrincAxesMomentsHelper(
     bool func(const Conformer &, Eigen::Matrix3d &, Eigen::Vector3d &, bool,
               bool, const std::vector<double> *),
-    const Conformer &conf, bool ignoreHs, nb::object weights) {
+    const Conformer &conf, bool ignoreHs,
+    const std::optional<PySequenceOf<double>> &weights) {
   Eigen::Matrix3d axes;
   Eigen::Vector3d moments;
   std::vector<double> *weightsVecPtr = nullptr;
   std::vector<double> weightsVec;
-  if (!weights.is_none()) {
-    size_t numElements = nb::len(weights);
+  if (weights) {
+    size_t numElements = nb::len(*weights);
     if (numElements != conf.getNumAtoms()) {
       throw ValueErrorException(
           "The Python container must have length equal to conf.GetNumAtoms()");
     }
     weightsVec.resize(numElements);
     size_t i = 0;
-    for (nb::handle h : weights) {
+    for (nb::handle h : *weights) {
       weightsVec[i++] = nb::cast<double>(h);
     }
     weightsVecPtr = &weightsVec;
@@ -111,15 +115,16 @@ nb::object computePrincAxesMomentsHelper(
   }
 }
 
-nb::object computePrincAxesMoments(const Conformer &conf, bool ignoreHs,
-                                   nb::object weights) {
+nb::object computePrincAxesMoments(
+    const Conformer &conf, bool ignoreHs,
+    const std::optional<PySequenceOf<double>> &weights) {
   return computePrincAxesMomentsHelper(
       MolTransforms::computePrincipalAxesAndMoments, conf, ignoreHs, weights);
 }
 
-nb::object computePrincAxesMomentsFromGyrationMatrix(const Conformer &conf,
-                                                     bool ignoreHs,
-                                                     nb::object weights) {
+nb::object computePrincAxesMomentsFromGyrationMatrix(
+    const Conformer &conf, bool ignoreHs,
+    const std::optional<PySequenceOf<double>> &weights) {
   return computePrincAxesMomentsHelper(
       MolTransforms::computePrincipalAxesAndMomentsFromGyrationMatrix, conf,
       ignoreHs, weights);

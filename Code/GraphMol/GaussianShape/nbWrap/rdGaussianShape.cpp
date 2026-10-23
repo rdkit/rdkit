@@ -31,6 +31,17 @@ namespace RDKit {
 
 namespace helpers {
 
+using CustomFeatureTuple = nb::typed<nb::tuple, int, RDGeom::Point3D, double,
+                                     std::vector<unsigned int>>;
+using ConformerFeatureSequence = PyTupleOf<CustomFeatureTuple>;
+using CustomFeatureSequence = PyTupleOf<ConformerFeatureSequence>;
+using BestSimilarityResult =
+    nb::typed<nb::tuple, nb::typed<nb::tuple, double, double, double>,
+              unsigned int, unsigned int, nb::typed<nb::list, double>>;
+using ScoreAllConformersResult =
+    nb::typed<nb::tuple, nb::typed<nb::list, nb::typed<nb::list, double>>, int,
+              int, nb::typed<nb::list, double>>;
+
 void set_customFeatures(GaussianShape::ShapeInputOptions &shp, nb::object s) {
   shp.customFeatures.clear();
   auto numVecs = nb::len(s);
@@ -59,7 +70,8 @@ void set_customFeatures(GaussianShape::ShapeInputOptions &shp, nb::object s) {
   }
 }
 
-nb::tuple get_customFeatures(const GaussianShape::ShapeInputOptions &shp) {
+CustomFeatureSequence get_customFeatures(
+    const GaussianShape::ShapeInputOptions &shp) {
   nb::list allFeatLists;
   for (const auto &feats : shp.customFeatures) {
     nb::list featList;
@@ -73,7 +85,7 @@ nb::tuple get_customFeatures(const GaussianShape::ShapeInputOptions &shp) {
     }
     allFeatLists.append(nb::tuple(featList));
   }
-  return nb::tuple(allFeatLists);
+  return CustomFeatureSequence(nb::tuple(allFeatLists));
 }
 
 double getShapeVolumeHelper(const GaussianShape::ShapeInput &shape) {
@@ -84,7 +96,7 @@ double getColorVolumeHelper(const GaussianShape::ShapeInput &shape) {
   return shape.getColorVolume();
 }
 
-nb::tuple bestSimilarity_helper(
+BestSimilarityResult bestSimilarity_helper(
     GaussianShape::ShapeInput &refShape,
     const GaussianShape::ShapeInput &fitShape, double threshold,
     std::optional<GaussianShape::ShapeOverlayOptions> py_overlayOpts) {
@@ -104,7 +116,7 @@ nb::tuple bestSimilarity_helper(
     }
   }
   results.append(pyMatrix);
-  return nb::tuple(results);
+  return BestSimilarityResult(nb::tuple(results));
 }
 
 double maxPossibleSimilarity_helper(
@@ -120,7 +132,7 @@ ROMol *shapeToMol_helper(GaussianShape::ShapeInput &shape, bool includeColors,
   return static_cast<ROMol *>(mol.release());
 }
 
-nb::tuple scoreMolAllConfs_helper(
+ScoreAllConformersResult scoreMolAllConfs_helper(
     const ROMol &ref, const ROMol &fit,
     std::optional<GaussianShape::ShapeInputOptions> py_refOpts,
     std::optional<GaussianShape::ShapeInputOptions> py_fitOpts,
@@ -153,7 +165,7 @@ nb::tuple scoreMolAllConfs_helper(
     }
   }
   results.append(pyMatrix);
-  return nb::tuple(results);
+  return ScoreAllConformersResult(nb::tuple(results));
 }
 
 }  // namespace helpers
@@ -205,7 +217,8 @@ slight accuracy penalty but significant speed gain if used.  Default=True.)DOC")
             }
             return nb::tuple(py_list);
           },
-          [](GaussianShape::ShapeInputOptions &opts, nb::object as) {
+          [](GaussianShape::ShapeInputOptions &opts,
+             const std::optional<PyIterableOf<unsigned int>> &as) {
             pythonObjectToVect<unsigned int>(as, opts.atomSubset);
           },
           "If not empty, use just these atoms in the molecule to form the ShapeInput object.")
@@ -225,7 +238,9 @@ and optionally a list of indices of the atoms that the feature was derived from.
             }
             return nb::tuple(py_list);
           },
-          [](GaussianShape::ShapeInputOptions &opts, nb::object ar) {
+          [](GaussianShape::ShapeInputOptions &opts,
+             const PySequenceOf<nb::typed<nb::tuple, unsigned int, double>>
+                 &ar) {
             int len = nb::len(ar);
             opts.atomRadii.resize(len);
             for (int i = 0; i < len; i++) {
@@ -250,7 +265,8 @@ A list of tuples of [int, float].)DOC")
       .def_rw(
           "includeDummies", &GaussianShape::ShapeInputOptions::includeDummies,
           "Whether to include dummy atoms in the shape or not.  Default=True.")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   nb::class_<GaussianShape::ShapeOverlayOptions>(
       m, "ShapeOverlayOptions",
@@ -317,7 +333,8 @@ units the coordinates are in.)DOC")
           R"DOC(Optimisation stops when the shape Tversky score changes by less
 than this amount after an optimisation step.  A larger number is
 faster but gives less precise overlays.  Default=0.001.)DOC")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   nb::class_<GaussianShape::ShapeInput>(m, "ShapeInput", "ShapeInput object")
       .def(
@@ -382,7 +399,8 @@ faster but gives less precise overlays.  Default=0.001.)DOC")
            " is when one shape is entirely inside the other.  This returns"
            " the similarity in that case, which is the upper bound on what"
            " is achievable between these 2 shapes.")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   m.def(
       "AlignMol",
@@ -492,7 +510,6 @@ fitShape : ShapeInput
     fit shape
 overlayOpts: ShapeOverlayOptions, optional
     Options for controlling the overlay
-
 
 Returns
 -------

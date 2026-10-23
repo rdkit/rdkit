@@ -10,6 +10,7 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/tuple.h>
@@ -120,7 +121,8 @@ std::vector<FilterMatch> FilterCatalogEntryGetMatches(FilterCatalogEntry &fm,
   return std::vector<FilterMatch>();
 }
 
-void SetOffPatterns(ExclusionList &fc, nb::object list) {
+void SetOffPatterns(ExclusionList &fc,
+                    const PyIterableOf<FilterMatcherBase> &list) {
   std::vector<boost::shared_ptr<FilterMatcherBase>> temp;
   for (auto item : list) {
     FilterMatcherBase *matcher = nb::cast<FilterMatcherBase *>(item);
@@ -142,10 +144,12 @@ bool FilterCatalogRemoveEntry(FilterCatalog &fc, nb::object obj) {
   return fc.removeEntry(idx);
 }
 
-nb::dict GetFlattenedFunctionalGroupHierarchyHelper(bool normalize) {
+using DictOfMols = PyDictOf<std::string, ROMol *>;
+
+DictOfMols GetFlattenedFunctionalGroupHierarchyHelper(bool normalize) {
   const std::map<std::string, ROMOL_SPTR> &flattened =
       GetFlattenedFunctionalGroupHierarchy(normalize);
-  nb::dict dict;
+  DictOfMols dict;
   for (const auto &it : flattened) {
     dict[it.first.c_str()] = it.second;
   }
@@ -250,21 +254,33 @@ True
                     unsigned int>(),
            "name"_a, "mol"_a, "minCount"_a = 1, "maxCount"_a = UINT_MAX,
            "Construct from a name, molecule, minimum and maximum count")
-      .def(nb::init<const std::string &, const std::string &, unsigned int,
-                    unsigned int>(),
-           "name"_a, "smarts"_a, "minCount"_a = 1, "maxCount"_a = UINT_MAX,
-           "Construct from a name, smarts pattern, minimum and maximum count")
+      .def(
+          "__init__",
+          [](SmartsMatcher *self, const std::string &name,
+             const StringOrBytes &smarts, unsigned int minCount,
+             unsigned int maxCount) {
+            new (self) SmartsMatcher(name, pyObjectToString(smarts), minCount,
+                                     maxCount);
+          },
+          "name"_a, "smarts"_a, "minCount"_a = 1, "maxCount"_a = UINT_MAX,
+          "Construct from a name, smarts pattern, minimum and maximum count")
       .def("IsValid", &SmartsMatcher::isValid,
            "Returns True if the SmartsMatcher is valid")
       .def("SetPattern",
            nb::overload_cast<const ROMol &>(&SmartsMatcher::setPattern),
            "pat"_a, "Set the pattern molecule for the SmartsMatcher")
-      .def("SetPattern",
-           nb::overload_cast<const std::string &>(&SmartsMatcher::setPattern),
-           "pat"_a,
+      .def(
+          "SetPattern",
+          [](SmartsMatcher &self, const StringOrBytes &pat) {
+            self.setPattern(pyObjectToString(pat));
+          },
+          "pat"_a,
            "Set the smarts pattern for the Smarts Matcher (warning: "
            "MinimumCount is not reset)")
-      .def("GetPattern", &SmartsMatcher::getPattern)
+      .def("GetPattern",
+           [](const SmartsMatcher &self) -> Nullable<ROMOL_SPTR> {
+             return self.getPattern();
+           })
       .def("GetMinCount", &SmartsMatcher::getMinCount,
            "Get the minimum times pattern must appear for the filter to match")
       .def("SetMinCount", &SmartsMatcher::setMinCount, "count"_a,
