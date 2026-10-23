@@ -23,6 +23,10 @@ class TestCase(unittest.TestCase):
   def setUp(self):
     pass
 
+  def testSignaturesDoNotNameAtomPairsParameters(self):
+    # fromAtoms, ignoreAtoms, and atomInvariants are untyped object arguments
+    self.assertNotIn('AtomPairsParameters', rdMD.GetAtomPairFingerprint.__doc__)
+
   def testAtomPairTypes(self):
     params = rdMD.AtomPairsParameters
     mol = Chem.MolFromSmiles("C=C")

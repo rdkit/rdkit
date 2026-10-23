@@ -212,11 +212,8 @@ void Atom::initFromOther(const Atom &other) {
   d_hybrid = other.d_hybrid;
   d_implicitValence = other.d_implicitValence;
   d_explicitValence = other.d_explicitValence;
-  if (other.dp_monomerInfo) {
-    dp_monomerInfo = other.dp_monomerInfo->copy();
-  } else {
-    dp_monomerInfo = nullptr;
-  }
+  dp_monomerInfo.reset(other.dp_monomerInfo ? other.dp_monomerInfo->copy()
+                                            : nullptr);
   dp_macroAtomInfo =
       other.dp_macroAtomInfo ? other.dp_macroAtomInfo->copy() : nullptr;
   d_flags = other.d_flags;
@@ -231,6 +228,10 @@ Atom &Atom::operator=(const Atom &other) {
   initFromOther(other);
   return *this;
 }
+
+// Defined out of line because AtomMonomerInfo is incomplete in Atom.h.
+Atom::Atom(Atom &&other) noexcept = default;
+Atom &Atom::operator=(Atom &&other) noexcept = default;
 
 void Atom::initAtom() {
   df_isAromatic = false;
@@ -249,7 +250,7 @@ void Atom::initAtom() {
   d_explicitValence = -1;
 }
 
-Atom::~Atom() { delete dp_monomerInfo; }
+Atom::~Atom() = default;
 
 Atom *Atom::copy() const {
   auto *res = new Atom(*this);
@@ -631,8 +632,7 @@ int Atom::calcImplicitValence(bool strict) {
 }
 
 void Atom::setMonomerInfo(AtomMonomerInfo *info) {
-  delete dp_monomerInfo;
-  dp_monomerInfo = info;
+  dp_monomerInfo.reset(info);
 }
 
 void Atom::setMacroAtomInfo(MacroAtomInfo *info) {

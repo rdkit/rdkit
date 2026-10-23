@@ -38,13 +38,10 @@ void expandQuery(QueryAtom *self, const QueryAtom *other,
   if (!other) {
     throw ValueErrorException("other Atom is null");
   }
-  std::cerr << "\n**** expandQuery **** " << other->hasQuery() << std::endl;
   if (other->hasQuery()) {
     const QueryAtom::QUERYATOM_QUERY *qry = other->getQuery();
     self->expandQuery(qry->copy(), how, maintainOrder);
   }
-  std::cerr << "\n**** expandQuery done **** "
-            << self->getQuery()->getDescription() << std::endl;
 }
 
 void setQuery(QueryAtom *self, const QueryAtom *other) {
@@ -234,7 +231,7 @@ struct atom_wrapper {
         .def("SetFormalCharge", &Atom::setFormalCharge, "what"_a)
 
         .def("SetNoImplicit", &Atom::setNoImplicit,
-             "what"_a
+             "what"_a,
              "Sets a marker on the atom that *disallows* implicit Hs.\n"
              "  This holds even if the atom would otherwise have implicit Hs "
              "added.\n")
