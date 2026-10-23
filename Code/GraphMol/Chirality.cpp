@@ -15,6 +15,7 @@
 #include <RDGeneral/Ranking.h>
 #include <GraphMol/new_canon.h>
 #include <GraphMol/Atropisomers.h>
+#include <RDGeneral/Exceptions.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/types.h>
@@ -2899,6 +2900,37 @@ void addStereoAnnotations(ROMol &mol, std::string absLabel, std::string orLabel,
         bond->setProp(common_properties::bondNote, lab);
       }
     }
+  }
+}
+
+void restoreTetrahedralParity(
+    const Atom &srcAtom, Atom &newAtom,
+    const std::function<unsigned int(unsigned int)> &mapIdx) {
+  const auto chiralTag = newAtom.getChiralTag();
+  if (chiralTag != Atom::CHI_TETRAHEDRAL_CW &&
+      chiralTag != Atom::CHI_TETRAHEDRAL_CCW) {
+    return;
+  }
+  const auto &srcMol = srcAtom.getOwningMol();
+  const auto &newMol = newAtom.getOwningMol();
+  if (srcAtom.getDegree() != newAtom.getDegree()) {
+    throw ValueErrorException(
+        "restoreTetrahedralParity: atoms have different degrees");
+  }
+  INT_LIST bondOrder;
+  for (const auto bond : srcMol.atomBonds(&srcAtom)) {
+    const auto newNbrIdx = mapIdx(bond->getOtherAtomIdx(srcAtom.getIdx()));
+    const auto newBond =
+        newMol.getBondBetweenAtoms(newAtom.getIdx(), newNbrIdx);
+    if (!newBond) {
+      throw ValueErrorException(
+          "restoreTetrahedralParity: mapped neighbor is not bonded to the "
+          "new atom");
+    }
+    bondOrder.push_back(newBond->getIdx());
+  }
+  if (newAtom.getPerturbationOrder(bondOrder) % 2) {
+    newAtom.invertChirality();
   }
 }
 

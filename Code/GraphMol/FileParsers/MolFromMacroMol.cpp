@@ -12,10 +12,14 @@
 
 #include <GraphMol/Atom.h>
 #include <GraphMol/Bond.h>
+#include <GraphMol/Chirality.h>
+#include <GraphMol/MolOps.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SubstanceGroup.h>
 #include <RDGeneral/FileParseException.h>
 
+#include <algorithm>
+#include <functional>
 #include <map>
 #include <memory>
 #include <set>
@@ -30,8 +34,12 @@ struct MacroAtomDetails {
 };
 
 struct ExpandedMacroAtom {
+  const MacroMolTemplate *templ = nullptr;
   std::map<unsigned int, unsigned int> templateToResultAtom;
   std::map<int, unsigned int> attachPointToTemplateAtom;
+  std::map<int, int> attachPointToLeavingAtom;
+  // result atom that took the place of each removed template leaving atom
+  std::map<unsigned int, unsigned int> leavingAtomReplacements;
   std::set<int> usedAttachPoints;
 };
 
@@ -67,6 +75,7 @@ void addBondCopy(RWMol &result, const Bond &oldBond,
   newBond->setBeginAtomIdx(beginAtomIdx);
   newBond->setEndAtomIdx(endAtomIdx);
   newBond->setBondDir(oldBond.getBondDir());
+  newBond->setIsAromatic(oldBond.getIsAromatic());
   newBond->updateProps(oldBond, false);
   result.addBond(newBond, true);
 }
@@ -125,6 +134,8 @@ void rememberTemplateAttachPoints(ExpandedMacroAtom &expanded,
   for (const auto &leavingGroup : templ.getLeavingGroups()) {
     expanded.attachPointToTemplateAtom[leavingGroup.attachPoint] =
         leavingGroup.attachAtomIdx;
+    expanded.attachPointToLeavingAtom[leavingGroup.attachPoint] =
+        leavingGroup.leavingAtomIdx;
   }
 }
 
@@ -197,6 +208,7 @@ void copyMacroAtom(BuildState &state, const MacroMol &macroMol,
   }
 
   ExpandedMacroAtom expanded;
+  expanded.templ = templ;
   expanded.usedAttachPoints = findUsedAttachPoints(macroMol, atom);
   const auto atomsToSkip =
       findLeavingAtomsToSkip(*templ, expanded.usedAttachPoints);
@@ -238,6 +250,23 @@ unsigned int getResultAtomForBond(const BuildState &state, const Atom &atom,
   return expanded.templateToResultAtom.at(attachPoint->second);
 }
 
+void recordLeavingAtomReplacement(BuildState &state, const Atom &atom,
+                                  int attachPointId,
+                                  unsigned int replacementAtomIdx) {
+  const auto expanded = state.macroAtoms.find(atom.getIdx());
+  if (expanded == state.macroAtoms.end()) {
+    return;
+  }
+  const auto leavingAtom =
+      expanded->second.attachPointToLeavingAtom.find(attachPointId);
+  if (leavingAtom == expanded->second.attachPointToLeavingAtom.end() ||
+      leavingAtom->second < 0) {
+    return;
+  }
+  expanded->second.leavingAtomReplacements[leavingAtom->second] =
+      replacementAtomIdx;
+}
+
 void copyMacroMolBonds(BuildState &state, const MacroMol &macroMol) {
   for (const auto *oldBond : macroMol.bonds()) {
     const auto *macroBondInfo = oldBond->getMacroBondInfo();
@@ -257,8 +286,112 @@ void copyMacroMolBonds(BuildState &state, const MacroMol &macroMol) {
           state, *oldBond->getEndAtom(), bondInfo.endAttachPt);
       addBondCopy(state.result, *oldBond, beginAtomIdx, endAtomIdx,
                   static_cast<Bond::BondType>(bondInfo.bondType));
+      recordLeavingAtomReplacement(state, *oldBond->getBeginAtom(),
+                                   bondInfo.beginAttachPt, endAtomIdx);
+      recordLeavingAtomReplacement(state, *oldBond->getEndAtom(),
+                                   bondInfo.endAttachPt, beginAtomIdx);
     }
   }
+}
+
+// Copies oldBond's double bond stereo to resultBond, mapping its stereo atoms
+// with mapIdx. E/Z labels are converted to CIS/TRANS, which refer to the
+// stereo atoms and so stay valid when a neighbor is replaced by an atom with a
+// different CIP rank.
+void copyBondStereo(const Bond &oldBond, Bond &resultBond,
+                    const std::function<unsigned int(unsigned int)> &mapIdx) {
+  auto stereo = oldBond.getStereo();
+  if (stereo == Bond::STEREONONE) {
+    return;
+  }
+  const auto &stereoAtoms = oldBond.getStereoAtoms();
+  if (stereoAtoms.size() == 2) {
+    resultBond.setStereoAtoms(mapIdx(stereoAtoms[0]), mapIdx(stereoAtoms[1]));
+    stereo = Chirality::translateEZLabelToCisTrans(stereo);
+  }
+  resultBond.setStereo(stereo);
+}
+
+// Restores the stereo of template atoms and bonds. This must be done after all
+// bonds have been added, since a removed leaving atom is replaced by the atom
+// it is bonded to through an inter-monomer bond.
+void fixTemplateStereo(BuildState &state) {
+  for (const auto &[macroAtomIdx, expanded] : state.macroAtoms) {
+    const auto mapIdx = [&expanded](unsigned int templAtomIdx) {
+      const auto resultAtom = expanded.templateToResultAtom.find(templAtomIdx);
+      if (resultAtom != expanded.templateToResultAtom.end()) {
+        return resultAtom->second;
+      }
+      return expanded.leavingAtomReplacements.at(templAtomIdx);
+    };
+    const auto &templMol = expanded.templ->getMol();
+
+    // Chiral tags are relative to the order of an atom's bonds. Replacing a
+    // leaving atom's bond with an inter-monomer bond, which is added last,
+    // can change that order, so restore the template's parity where needed.
+    for (const auto *templAtom : templMol.atoms()) {
+      const auto resultAtomIdx =
+          expanded.templateToResultAtom.find(templAtom->getIdx());
+      if (resultAtomIdx == expanded.templateToResultAtom.end()) {
+        continue;  // a removed leaving atom
+      }
+      auto *resultAtom = state.result.getAtomWithIdx(resultAtomIdx->second);
+      Chirality::restoreTetrahedralParity(*templAtom, *resultAtom, mapIdx);
+    }
+
+    for (const auto *templBond : templMol.bonds()) {
+      const auto beginAtom =
+          expanded.templateToResultAtom.find(templBond->getBeginAtomIdx());
+      const auto endAtom =
+          expanded.templateToResultAtom.find(templBond->getEndAtomIdx());
+      if (beginAtom == expanded.templateToResultAtom.end() ||
+          endAtom == expanded.templateToResultAtom.end()) {
+        continue;  // a removed leaving group bond
+      }
+      auto *resultBond =
+          state.result.getBondBetweenAtoms(beginAtom->second, endAtom->second);
+      copyBondStereo(*templBond, *resultBond, mapIdx);
+    }
+  }
+}
+
+// Copies the double bond stereo of bonds between ordinary atoms. Stereo whose
+// stereo atoms include a macro atom is not copied.
+void fixMacroMolBondStereo(BuildState &state, const MacroMol &macroMol) {
+  const auto isMapped = [&state](int atomIdx) {
+    return state.atomToResultAtom.find(atomIdx) !=
+           state.atomToResultAtom.end();
+  };
+  const auto mapIdx = [&state](unsigned int atomIdx) {
+    return state.atomToResultAtom.at(atomIdx);
+  };
+  for (const auto *oldBond : macroMol.bonds()) {
+    if (oldBond->getMacroBondInfo() ||
+        oldBond->getStereo() == Bond::STEREONONE) {
+      continue;
+    }
+    const auto &stereoAtoms = oldBond->getStereoAtoms();
+    if (!std::all_of(stereoAtoms.begin(), stereoAtoms.end(), isMapped)) {
+      continue;
+    }
+    auto *resultBond = state.result.getBondBetweenAtoms(
+        mapIdx(oldBond->getBeginAtomIdx()), mapIdx(oldBond->getEndAtomIdx()));
+    copyBondStereo(*oldBond, *resultBond, mapIdx);
+  }
+}
+
+// Double bond stereo is fully described by the bond stereo and stereo atoms.
+// The copied bond directions are incomplete where leaving atoms were replaced,
+// and the legacy stereo perception would use them to override the stereo, so
+// regenerate them.
+void regenerateDoubleBondNeighborDirections(RWMol &mol) {
+  for (auto *bond : mol.bonds()) {
+    if (bond->getBondDir() == Bond::ENDUPRIGHT ||
+        bond->getBondDir() == Bond::ENDDOWNRIGHT) {
+      bond->setBondDir(Bond::NONE);
+    }
+  }
+  MolOps::setDoubleBondNeighborDirections(mol);
 }
 
 }  // namespace
@@ -270,8 +403,11 @@ std::unique_ptr<RWMol> MolFromMacroMol(
 
   copyAtoms(state, macroMol, templates);
   copyMacroMolBonds(state, macroMol);
+  fixTemplateStereo(state);
+  fixMacroMolBondStereo(state, macroMol);
 
   result->updatePropertyCache(false);
+  regenerateDoubleBondNeighborDirections(*result);
   return result;
 }
 

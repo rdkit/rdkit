@@ -12,6 +12,7 @@
 #include <GraphMol/FileParsers/MolFromMacroMol.h>
 #include <GraphMol/MacroMol.h>
 #include <GraphMol/MacroMolTemplate.h>
+#include <GraphMol/MolOps.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -31,10 +32,10 @@ constexpr int rootedAtAtom = 0;
 constexpr bool canonical = false;
 
 std::unique_ptr<MacroMolTemplate> makeAlanineTemplate() {
-  SmilesParserParams params;
+  v2::SmilesParse::SmilesParserParams params;
   params.removeHs = false;
-  const std::string smiles = "C[C@H](N[H:1])C(=O)[OH:2]";
-  auto alanine = std::unique_ptr<RWMol>(SmilesToMol(smiles, params));
+  const std::string smiles = "C[C@H](N[H])C(=O)O";
+  auto alanine = v2::SmilesParse::MolFromSmiles(smiles, params);
   MacroMolTemplateBuilder builder(*alanine, MonomerClass::AminoAcid, "ALA",
                                   "A", smiles);
   builder.setMainGroup({0, 1, 2, 4, 5})
@@ -44,10 +45,10 @@ std::unique_ptr<MacroMolTemplate> makeAlanineTemplate() {
 }
 
 std::unique_ptr<MacroMolTemplate> makeGlycineTemplate() {
-  SmilesParserParams params;
+  v2::SmilesParse::SmilesParserParams params;
   params.removeHs = false;
-  const std::string smiles = "O=C(CN[H:1])[OH:2]";
-  auto glycine = std::unique_ptr<RWMol>(SmilesToMol(smiles, params));
+  const std::string smiles = "O=C(CN[H])O";
+  auto glycine = v2::SmilesParse::MolFromSmiles(smiles, params);
   MacroMolTemplateBuilder builder(*glycine, MonomerClass::AminoAcid, "GLY",
                                   "G", smiles);
   builder.setMainGroup({0, 1, 2, 3})
@@ -79,7 +80,7 @@ TEST_CASE("MolFromMacroMol converts a single amino acid macro atom",
   CHECK(mol->getNumBonds() == 6);
   CHECK(MolToSmiles(*mol, doIsomericSmiles, doKekule, rootedAtAtom,
                     canonical) ==
-        "C[C@H](N[H:1])C(=O)[OH:2]");
+        "C[C@H](N[H])C(=O)O");
   const auto &mainSgroup = getOnlyMainSgroup(*mol);
   CHECK(mainSgroup.getProp<std::string>("CLASS") == "AminoAcid");
   CHECK(mainSgroup.getProp<std::string>("LABEL") == "ALA");
@@ -108,7 +109,7 @@ TEST_CASE("MolFromMacroMol converts connected amino acid macro atoms",
   CHECK(mol->getNumBonds() == 10);
   CHECK(MolToSmiles(*mol, doIsomericSmiles, doKekule, rootedAtAtom,
                     canonical) ==
-        "C[C@H](N[H:1])C(=O)NCC(=O)[OH:2]");
+        "C[C@H](N[H])C(=O)NCC(=O)O");
   const auto &sgroups = getSubstanceGroups(*mol);
   REQUIRE(sgroups.size() == 2);
   CHECK(sgroups[0].getProp<std::string>("LABEL") == "ALA");
@@ -138,7 +139,7 @@ TEST_CASE("MolFromMacroMol converts mixed macro and atomistic atoms",
   CHECK(mol->getNumBonds() == 6);
   CHECK(MolToSmiles(*mol, doIsomericSmiles, doKekule, rootedAtAtom,
                     canonical) ==
-        "C[C@H](NC)C(=O)[OH:2]");
+        "C[C@H](NC)C(=O)O");
   const auto &mainSgroup = getOnlyMainSgroup(*mol);
   CHECK(mainSgroup.getProp<std::string>("LABEL") == "ALA");
   CHECK(mainSgroup.getAttachPoints()[0].lvIdx == -1);
@@ -148,7 +149,7 @@ TEST_CASE("MolFromMacroMol converts mixed macro and atomistic atoms",
 TEST_CASE("MolFromMacroMol removes complete multi-atom leaving groups",
           "[MolFromMacroMol]") {
   const std::string smiles = "COC";
-  auto parsed = std::unique_ptr<RWMol>(SmilesToMol(smiles));
+  auto parsed = v2::SmilesParse::MolFromSmiles(smiles);
   MacroMolTemplateBuilder builder(*parsed, MonomerClass::Chemical, "METHYL",
                                   "Me", smiles);
   builder.setMainGroup({0}).addLeavingGroup({{1, 2}, 0, 1, 1});
@@ -182,5 +183,166 @@ TEST_CASE("MolFromMacroMol removes complete multi-atom leaving groups",
     CHECK(mainSgroup.getProp<std::string>("CLASS") == "Chemical");
     CHECK(mainSgroup.getProp<std::string>("LABEL") == "METHYL");
     CHECK(mainSgroup.getAttachPoints()[0].lvIdx == -1);
+  }
+}
+
+TEST_CASE("MolFromMacroMol preserves chirality at an attachment atom",
+          "[MolFromMacroMol]") {
+  // The leaving atom (Cl) is bonded directly to the stereocenter, so the
+  // stereocenter's bond to it is replaced by the inter-monomer bond.
+  const std::string smiles = "[Cl][C@](F)(Br)I";
+  auto parsed = v2::SmilesParse::MolFromSmiles(smiles);
+  MacroMolTemplateBuilder builder(*parsed, MonomerClass::Chemical, "CFBRI",
+                                  "X", smiles);
+  builder.setMainGroup({1, 2, 3, 4}).addLeavingGroup({{0}, 1, 0, 1});
+
+  MacroMolTemplateLibrary templates;
+  templates.addTemplate(builder.build());
+
+  MacroMol macroMol;
+  const auto macroAtom = macroMol.addMacroAtom("X", MonomerClass::Chemical);
+  const auto regularAtom = macroMol.addAtom(new Atom(6), false, true);
+  macroMol.addMacroAtomToAtomBond(macroAtom, regularAtom, 1);
+
+  auto mol = MolFromMacroMol(macroMol, templates);
+  REQUIRE(mol);
+  MolOps::sanitizeMol(*mol);
+
+  // The new carbon takes the place of the Cl, so the configuration should
+  // match the template with Cl replaced by C.
+  auto expected = v2::SmilesParse::MolFromSmiles("C[C@](F)(Br)I");
+  CHECK(MolToSmiles(*mol) == MolToSmiles(*expected));
+}
+
+TEST_CASE("MolFromMacroMol preserves aromaticity of template bonds",
+          "[MolFromMacroMol]") {
+  const std::string smiles = "c1ccc(cc1)O";
+  auto parsed = v2::SmilesParse::MolFromSmiles(smiles);
+  MacroMolTemplateBuilder builder(*parsed, MonomerClass::Chemical, "PHENYL",
+                                  "Ph", smiles);
+  builder.setMainGroup({0, 1, 2, 3, 4, 5}).addLeavingGroup({{6}, 3, 6, 1});
+
+  MacroMolTemplateLibrary templates;
+  templates.addTemplate(builder.build());
+
+  MacroMol macroMol;
+  const auto macroAtom = macroMol.addMacroAtom("Ph", MonomerClass::Chemical);
+  const auto regularAtom = macroMol.addAtom(new Atom(6), false, true);
+  macroMol.addMacroAtomToAtomBond(macroAtom, regularAtom, 1);
+
+  auto mol = MolFromMacroMol(macroMol, templates);
+  REQUIRE(mol);
+  for (const auto *bond : mol->bonds()) {
+    if (bond->getBondType() == Bond::AROMATIC) {
+      CHECK(bond->getIsAromatic());
+    }
+  }
+  REQUIRE_NOTHROW(MolOps::sanitizeMol(*mol));
+  CHECK(MolToSmiles(*mol) == "Cc1ccccc1");
+}
+
+TEST_CASE("MolFromMacroMol handles a stereocenter in a leaving group",
+          "[MolFromMacroMol]") {
+  // The leaving group {1, 2, 3} contains the stereocenter at atom 1.
+  const std::string smiles = "C[C@H](F)Cl";
+  auto parsed = v2::SmilesParse::MolFromSmiles(smiles);
+  MacroMolTemplateBuilder builder(*parsed, MonomerClass::Chemical, "CHFCL",
+                                  "Y", smiles);
+  builder.setMainGroup({0}).addLeavingGroup({{1, 2, 3}, 0, 1, 1});
+
+  MacroMolTemplateLibrary templates;
+  templates.addTemplate(builder.build());
+
+  SECTION("unused group keeps its configuration") {
+    MacroMol macroMol;
+    macroMol.addMacroAtom("Y", MonomerClass::Chemical);
+    auto mol = MolFromMacroMol(macroMol, templates);
+    REQUIRE(mol);
+    MolOps::sanitizeMol(*mol);
+    CHECK(MolToSmiles(*mol) == MolToSmiles(*parsed));
+  }
+
+  SECTION("used group is removed with its stereocenter") {
+    MacroMol macroMol;
+    const auto macroAtom = macroMol.addMacroAtom("Y", MonomerClass::Chemical);
+    const auto regularAtom = macroMol.addAtom(new Atom(8), false, true);
+    macroMol.addMacroAtomToAtomBond(macroAtom, regularAtom, 1);
+
+    auto mol = MolFromMacroMol(macroMol, templates);
+    REQUIRE(mol);
+    MolOps::sanitizeMol(*mol);
+    CHECK(MolToSmiles(*mol) == "CO");
+  }
+}
+
+TEST_CASE("MolFromMacroMol preserves double bond stereo",
+          "[MolFromMacroMol]") {
+  const auto convert = [](const std::string &smiles,
+                          std::vector<unsigned int> &&mainAtoms,
+                          MacroMolLeavingGroup &&leavingGroup, bool bond) {
+    auto parsed = v2::SmilesParse::MolFromSmiles(smiles);
+    MacroMolTemplateBuilder builder(*parsed, MonomerClass::Chemical, "DB",
+                                    "Z", smiles);
+    builder.setMainGroup(std::move(mainAtoms))
+        .addLeavingGroup(std::move(leavingGroup));
+    MacroMolTemplateLibrary templates;
+    templates.addTemplate(builder.build());
+
+    MacroMol macroMol;
+    const auto macroAtom = macroMol.addMacroAtom("Z", MonomerClass::Chemical);
+    if (bond) {
+      const auto regularAtom = macroMol.addAtom(new Atom(7), false, true);
+      macroMol.addMacroAtomToAtomBond(macroAtom, regularAtom, 1);
+    }
+    auto mol = MolFromMacroMol(macroMol, templates);
+    REQUIRE(mol);
+    // the stereo must be stored on the bond, not just implied by bond
+    // directions
+    for (const auto *bond : mol->bonds()) {
+      if (bond->getBondType() == Bond::DOUBLE &&
+          bond->getBeginAtom()->getAtomicNum() == 6 &&
+          bond->getEndAtom()->getAtomicNum() == 6) {
+        CHECK(bond->getStereo() > Bond::STEREOANY);
+        CHECK(bond->getStereoAtoms().size() == 2);
+      }
+    }
+    MolOps::sanitizeMol(*mol);
+    return MolToSmiles(*mol);
+  };
+
+  SECTION("double bond away from the leaving group, unused") {
+    CHECK(convert("C/C=C/C(=O)O", {0, 1, 2, 3, 4}, {{5}, 3, 5, 1}, false) ==
+          "C/C=C/C(=O)O");
+  }
+  SECTION("double bond away from the leaving group, used") {
+    CHECK(convert("C/C=C/C(=O)O", {0, 1, 2, 3, 4}, {{5}, 3, 5, 1}, true) ==
+          "C/C=C/C(N)=O");
+  }
+  SECTION("leaving atom is a stereo atom, unused") {
+    CHECK(convert("O/C=C/C", {1, 2, 3}, {{0}, 1, 0, 1}, false) == "C/C=C/O");
+  }
+  SECTION("leaving atom is a stereo atom, used") {
+    CHECK(convert("O/C=C/C", {1, 2, 3}, {{0}, 1, 0, 1}, true) == "C/C=C/N");
+  }
+  SECTION("double bond between ordinary atoms") {
+    MacroMol macroMol;
+    for (unsigned int i = 0; i < 4; ++i) {
+      macroMol.addAtom(new Atom(6), false, true);
+    }
+    macroMol.addBond(0u, 1u, Bond::SINGLE);
+    macroMol.addBond(1u, 2u, Bond::DOUBLE);
+    macroMol.addBond(2u, 3u, Bond::SINGLE);
+    auto *doubleBond = macroMol.getBondWithIdx(1);
+    doubleBond->setStereoAtoms(0, 3);
+    doubleBond->setStereo(Bond::STEREOCIS);
+
+    auto mol = MolFromMacroMol(macroMol, MacroMolTemplateLibrary());
+    REQUIRE(mol);
+    const auto *resultBond = mol->getBondBetweenAtoms(1, 2);
+    REQUIRE(resultBond);
+    CHECK(resultBond->getStereo() == Bond::STEREOCIS);
+    CHECK(resultBond->getStereoAtoms() == std::vector<int>({0, 3}));
+    MolOps::sanitizeMol(*mol);
+    CHECK(MolToSmiles(*mol) == "C/C=C\\C");
   }
 }

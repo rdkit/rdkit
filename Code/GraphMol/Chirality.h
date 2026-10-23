@@ -17,6 +17,7 @@
 #include <GraphMol/Atom.h> /* for Atom:ChiralType enum */
 #include <GraphMol/Bond.h> /* for Bond::BondDir enum */
 #include <boost/dynamic_bitset.hpp>
+#include <functional>
 #include <limits>
 
 namespace RDKit {
@@ -86,6 +87,27 @@ RDKIT_GRAPHMOL_EXPORT const Bond *getNeighboringDirectedBond(const ROMol &mol,
 RDKIT_GRAPHMOL_EXPORT Bond::BondStereo translateEZLabelToCisTrans(
     Bond::BondStereo label);
 /// @endcond
+
+//! Restores tetrahedral parity after an atom's bonds were rebuilt
+/*!
+  Use this after copying \c srcAtom into another molecule as \c newAtom when
+  its bonds were added in a different order (for example, because a neighbor
+  was replaced by a different atom). \c newAtom's chiral tag is inverted if
+  needed so that it describes the same configuration as \c srcAtom's.
+
+  \param srcAtom the original atom; must have an owning molecule
+  \param newAtom the copy, with \c srcAtom's chiral tag; must have an owning
+                 molecule
+  \param mapIdx  maps the index of each of \c srcAtom's neighbors to the index
+                 of the corresponding neighbor of \c newAtom
+
+  Atoms without tetrahedral (CW/CCW) chirality are left unchanged.
+  \throws ValueErrorException if the mapped neighbors are not exactly
+          \c newAtom's neighbors
+*/
+RDKIT_GRAPHMOL_EXPORT void restoreTetrahedralParity(
+    const Atom &srcAtom, Atom &newAtom,
+    const std::function<unsigned int(unsigned int)> &mapIdx);
 
 enum class StereoType {
   Unspecified,
