@@ -43,7 +43,7 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles('CC(F)=CC(Cl)C')
     smiles = set()
     opts = rdEnumerateStereoisomers.StereoEnumerationOptions()
-    enum = rdEnumerateStereoisomers.StereoisomerEnumerator(mol)
+    enum = rdEnumerateStereoisomers.StereoisomerEnumerator(mol, opts)
     while True:
         iso = enum.next()
         if iso is None:
@@ -76,10 +76,46 @@ class TestCase(unittest.TestCase):
     while True:
       iso = enum.next()
       if iso is None:
-          break;
+          break
       self.assertEqual(iso.GetProp('_MolFileChiralFlag'), '1')
       smiles.add(Chem.MolToSmiles(iso, isomericSmiles=True))
     self.assertEqual(len(smiles), 13)
+
+  def testEnumerateStereoisomersWithRingPatterns(self):
+
+    def _getIsomers(mol, opts):
+      smiles = list()
+      enum = rdEnumerateStereoisomers.StereoisomerEnumerator(mol, opts)
+
+      # This is the maximum number of stereoisomers the mol can be enumerated
+      # into. Depending on the options we use, some of these might get discarded
+      # because they are impossible in 3D space, but this number should
+      # always be the same, independently of the options, since it only
+      # depends on the number of stereo features on the molecule.
+      self.assertEqual(enum.GetStereoisomerCount(), 16)
+
+      while True:
+        iso = enum.next()
+        if iso is None:
+            break
+        smiles.append(iso)
+      return smiles
+
+    mol = Chem.MolFromSmiles("BrC=CC1OC(C2)(F)C2(Cl)C1")
+
+    opts = rdEnumerateStereoisomers.StereoEnumerationOptions()
+
+    # Check the "old" behavior first
+    opts.useRingSystemFilter = False  # the default is to use them
+    allIsomers = _getIsomers(mol, opts)
+
+    self.assertEqual(len(allIsomers), 16)
+
+    # Now check the behavior when patterns are enabled
+    opts.useRingSystemFilter = True  # restore the default value
+    validIsomers = _getIsomers(mol, opts)
+
+    self.assertEqual(len(validIsomers), 8)
 
 
 if __name__ == '__main__':
