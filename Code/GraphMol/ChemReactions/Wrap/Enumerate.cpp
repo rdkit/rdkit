@@ -53,6 +53,9 @@ std::vector<RDKit::MOL_SPTR_VECT> ConvertToVect(T bbs) {
     for (unsigned int j = 0; j < len1; ++j) {
       auto mol = python::extract<RDKit::ROMOL_SPTR>(bbs[i][j]);
       if (mol.check()) {
+        if (!mol()) {
+          throw_value_error("reaction called with None reactants");
+        }
         reacts.push_back(mol);
       } else {
         throw_value_error("reaction called with non molecule reactant");

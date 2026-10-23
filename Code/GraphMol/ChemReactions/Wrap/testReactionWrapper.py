@@ -790,6 +790,16 @@ M  END
       self.assertEqual(nrxn.GetNumReactantTemplates(), 2)
       self.assertEqual(nrxn.GetNumProductTemplates(), 1)
 
+  def testRunReactantsFromSupplier(self):
+    rxn = rdChemReactions.ReactionFromSmarts('[C:1](=[O:2])O.[N:3]>>[C:1](=[O:2])[N:3]')
+    smiles = 'CC(=O)O\nNC\n'
+    expected = rxn.RunReactants([Chem.MolFromSmiles(smi) for smi in smiles.split()])
+    # The supplier builds a new molecule each time it is indexed.
+    suppl = Chem.SmilesMolSupplierFromText(smiles, nameColumn=-1, titleLine=False)
+    products = rxn.RunReactants(suppl)
+    self.assertEqual([Chem.MolToSmiles(mol) for mol in products[0]],
+                     [Chem.MolToSmiles(mol) for mol in expected[0]])
+
 
 def _getProductCXSMILES(product):
   """

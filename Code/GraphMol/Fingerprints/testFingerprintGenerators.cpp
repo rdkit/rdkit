@@ -2412,6 +2412,26 @@ void testBulkFP() {
     }
 
     delete results;
+
+    const ROMol &mol = *molVect[0];
+    std::unique_ptr<SparseIntVect<std::uint64_t>> sparseCount(
+        getSparseCountFP(mol, it.second));
+    std::unique_ptr<SparseIntVect<std::uint64_t>> expectedSparseCount(
+        it.first->getSparseCountFingerprint(mol));
+    TEST_ASSERT(*sparseCount == *expectedSparseCount);
+    std::unique_ptr<SparseBitVect> sparse(getSparseFP(mol, it.second));
+    std::unique_ptr<SparseBitVect> expectedSparse(
+        it.first->getSparseFingerprint(mol));
+    TEST_ASSERT(*sparse == *expectedSparse);
+    std::unique_ptr<SparseIntVect<std::uint32_t>> count(
+        getCountFP(mol, it.second));
+    std::unique_ptr<SparseIntVect<std::uint32_t>> expectedCount(
+        it.first->getCountFingerprint(mol));
+    TEST_ASSERT(*count == *expectedCount);
+    std::unique_ptr<ExplicitBitVect> bits(getFP(mol, it.second));
+    std::unique_ptr<ExplicitBitVect> expectedBits(
+        it.first->getFingerprint(mol));
+    TEST_ASSERT(*bits == *expectedBits);
   }
 
   for (auto &&m : molVect) {
