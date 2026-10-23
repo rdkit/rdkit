@@ -3298,13 +3298,15 @@ M  END)CTAB"_ctab;
 }
 
 TEST_CASE("providing additional chiral sets while embedding") {
+  // values used in the code:
+  constexpr double chiralVolumeMin = 5.0;
+  constexpr double chiralVolumeMax = 100.0;
   SECTION("basics") {
     auto m1 = "I[C@](Cl)(Br)F"_smiles;
     REQUIRE(m1);
     auto m2 = "I[C](Cl)(Br)F"_smiles;
     REQUIRE(m2);
-    auto m3 = "I[C](Cl)(Br)F"_smiles;
-    REQUIRE(m3);
+    RWMol m3(*m2);
 
     auto params = DGeomHelpers::ETKDGv4;
     params.randomSeed = 0xf00d;
@@ -3313,9 +3315,6 @@ TEST_CASE("providing additional chiral sets while embedding") {
     DGeomHelpers::EmbedMolecule(*m1, params);
     MolOps::assignStereochemistryFrom3D(*m1);
 
-    // values used in the code:
-    double chiralVolumeMin = 5.0;
-    double chiralVolumeMax = 100.0;
     params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
         1, 0, 2, 3, 4, chiralVolumeMin, chiralVolumeMax));
     DGeomHelpers::EmbedMolecule(*m2, params);
@@ -3325,11 +3324,53 @@ TEST_CASE("providing additional chiral sets while embedding") {
     params.additionalChiralSets.clear();
     params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
         1, 0, 2, 3, 4, -chiralVolumeMax, -chiralVolumeMin));
-    DGeomHelpers::EmbedMolecule(*m3, params);
-    MolOps::assignStereochemistryFrom3D(*m3);
+    DGeomHelpers::EmbedMolecule(m3, params);
+    MolOps::assignStereochemistryFrom3D(m3);
 
     CHECK(m1->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
     CHECK(m2->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
-    CHECK(m3->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
+    CHECK(m3.getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
+  }
+
+  SECTION("bad input handling") {
+    auto m1 = "I[C](Cl)(Br)F"_smiles;
+    REQUIRE(m1);
+    auto params = DGeomHelpers::ETKDGv4;
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 2, 3, 8, chiralVolumeMin, chiralVolumeMax));
+    CHECK_THROWS_AS(DGeomHelpers::EmbedMolecule(*m1, params),
+                    ValueErrorException);
+  }
+
+  SECTION("duplicate handling") {
+    auto m1 = "I[C@](Cl)(Br)F"_smiles;
+    REQUIRE(m1);
+    auto params = DGeomHelpers::ETKDGv4;
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 2, 3, 4, chiralVolumeMin, chiralVolumeMax));
+    CHECK_THROWS_AS(DGeomHelpers::EmbedMolecule(*m1, params),
+                    ValueErrorException);
+    // the check is order independent
+    params.additionalChiralSets.clear();
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 3, 2, 4, chiralVolumeMin, chiralVolumeMax));
+    CHECK_THROWS_AS(DGeomHelpers::EmbedMolecule(*m1, params),
+                    ValueErrorException);
+  }
+  SECTION("two chiral sets") {
+    auto m1 = "I[C](Cl)(Br)O[C](F)(Cl)Br"_smiles;
+    REQUIRE(m1);
+
+    auto params = DGeomHelpers::ETKDGv4;
+    params.randomSeed = 0xf00d;
+    params.enforceChirality = true;
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 2, 3, 4, chiralVolumeMin, chiralVolumeMax));
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        5, 4, 6, 7, 8, chiralVolumeMin, chiralVolumeMax));
+    CHECK(DGeomHelpers::EmbedMolecule(*m1, params) == 0);
+    MolOps::assignStereochemistryFrom3D(*m1);
+    CHECK(m1->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+    CHECK(m1->getAtomWithIdx(5)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
   }
 }

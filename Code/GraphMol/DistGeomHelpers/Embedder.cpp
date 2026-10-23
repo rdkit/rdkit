@@ -39,6 +39,7 @@
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/RDThreads.h>
+#include <boost/dynamic_bitset/dynamic_bitset.hpp>
 #include <cmath>
 #include <cstddef>
 #include <memory>
@@ -1943,6 +1944,13 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     coordMap = nullptr;  // FIXME not directly related to ETKDG, but here I
                          // think it should be params.boundsMat = nullptr
   }
+  if (molFrags.size() > 1 && !params.additionalChiralSets.empty()) {
+    BOOST_LOG(rdWarningLog)
+        << "Conformer generation using a user-provided chiral sets "
+           "does not work with molecules that have multiple fragments. The "
+           "chiral sets will be ignored."
+        << std::endl;
+  }
 
   // we will generate conformations for each fragment in the molecule
   // separately, so loop over them:
@@ -2009,7 +2017,34 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     std::vector<std::shared_ptr<DistGeom::ChiralSet>> tetrahedralCarbons;
     EmbeddingOps::findChiralSets(*piece, chiralCenters, tetrahedralCarbons,
                                  coordMap);
-    if (!params.additionalChiralSets.empty()) {
+    if (molFrags.size() == 1 && !params.additionalChiralSets.empty()) {
+      const unsigned int nAtoms = piece->getNumAtoms();
+      std::vector<std::set<unsigned int>> volumesThere;
+      std::for_each(
+          chiralCenters.begin(), chiralCenters.end(),
+          [&volumesThere](const std::shared_ptr<DistGeom::ChiralSet> &cs) {
+            volumesThere.push_back(
+                {cs->d_idx0, cs->d_idx1, cs->d_idx2, cs->d_idx3, cs->d_idx4});
+          });
+      std::for_each(
+          params.additionalChiralSets.begin(),
+          params.additionalChiralSets.end(),
+          [nAtoms,
+           &volumesThere](const std::shared_ptr<DistGeom::ChiralSet> &cs) {
+            if (cs->d_idx0 >= nAtoms || cs->d_idx1 >= nAtoms ||
+                cs->d_idx2 >= nAtoms || cs->d_idx3 >= nAtoms ||
+                cs->d_idx4 >= nAtoms) {
+              throw ValueErrorException(
+                  "additionalChiralSets contains indices that are out of bounds for the molecule.");
+            }
+            if (std::find(volumesThere.begin(), volumesThere.end(),
+                          std::set<unsigned int>{
+                              cs->d_idx0, cs->d_idx1, cs->d_idx2, cs->d_idx3,
+                              cs->d_idx4}) != volumesThere.end()) {
+              throw ValueErrorException(
+                  "additionalChiralSets contains a duplicate of an existing chiral set.");
+            }
+          });
       chiralCenters.insert(chiralCenters.end(),
                            params.additionalChiralSets.begin(),
                            params.additionalChiralSets.end());
