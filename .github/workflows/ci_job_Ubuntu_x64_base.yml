@@ -1,0 +1,148 @@
+name: Ubuntu_x64_base
+
+on:
+  workflow_call:
+
+jobs:
+  # more or less the oldest version of what we support
+  Ubuntu_x64_base:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
+    env:
+      PYTHON: python=3.10
+      BOOST_VERSION: "1.82.0"
+      CC: gcc-11
+      CXX: g++-11
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up CI environment
+        uses: ./.github/actions/ci-env
+      - name: Setup build environment
+        run: |
+          sudo apt-get install g++ wget make libgl1-mesa-dev mesa-common-dev
+          source ${CONDA}/etc/profile.d/conda.sh
+          sudo chown -R ${USER} ${CONDA}
+          conda config --set always_yes yes --set changeps1 no
+          conda update -q conda
+          conda config --set channel_priority strict
+          conda config --add channels conda-forge
+          conda config --set solver libmamba
+          conda info -a
+          conda create --name rdkit_build -c conda-forge --override-channels ${PYTHON} cmake \
+              boost-cpp=${BOOST_VERSION} \
+              boost=${BOOST_VERSION} \
+              numpy pillow eigen=3 pandas=2.0 matplotlib-base=3.8 \
+              qt=5 cairo ccache
+          conda activate rdkit_build
+          conda config --env --add channels conda-forge
+          conda config --env --set channel_priority strict
+          conda install -c conda-forge --override-channels pytest nbval "ipykernel>=6.0"
+      - name: Restore ccache
+        id: cache-restore
+        uses: ./.github/actions/restore-ccache
+      - name: Configure build (Run CMake)
+        run: |
+          source ${CONDA}/etc/profile.d/conda.sh
+          conda activate rdkit_build
+          export CXXFLAGS="${CXXFLAGS} -Wall -Werror"
+          mkdir build && cd build && \
+          cmake .. \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+          -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+          -DRDK_INSTALL_INTREE=ON \
+          -DRDK_INSTALL_STATIC_LIBS=OFF \
+          -DRDK_BUILD_CPP_TESTS=ON \
+          -DRDK_BUILD_BOOST_PYTHON_WRAPPERS=ON \
+          -DRDK_BUILD_NANOBIND_WRAPPERS=OFF \
+          -DRDK_BUILD_COORDGEN_SUPPORT=ON \
+          -DRDK_BUILD_MAEPARSER_SUPPORT=ON \
+          -DRDK_OPTIMIZE_POPCNT=ON \
+          -DRDK_BUILD_TEST_GZIP=ON \
+          -DRDK_BUILD_FREESASA_SUPPORT=ON \
+          -DRDK_BUILD_AVALON_SUPPORT=ON \
+          -DRDK_BUILD_INCHI_SUPPORT=ON \
+          -DRDK_BUILD_YAEHMOP_SUPPORT=ON \
+          -DRDK_BUILD_XYZ2MOL_SUPPORT=ON \
+          -DRDK_BUILD_CAIRO_SUPPORT=ON \
+          -DRDK_BUILD_QT_SUPPORT=ON \
+          -DQt5_DIR=/usr/lib/x86_64-linux-gnu/cmake/Qt5 \
+          -DRDK_BUILD_SWIG_WRAPPERS=OFF \
+          -DRDK_SWIG_STATIC=OFF \
+          -DRDK_BUILD_THREADSAFE_SSS=ON \
+          -DRDK_TEST_MULTITHREADED=ON \
+          -DRDK_BUILD_CFFI_LIB=ON \
+          -DRDK_USE_UNITY_BUILDS=ON \
+          -DBoost_NO_SYSTEM_PATHS=ON \
+          -DPYTHON_EXECUTABLE=${CONDA_PREFIX}/bin/python3 \
+          -DCMAKE_INCLUDE_PATH="${CONDA_PREFIX}/include" \
+          -DCMAKE_LIBRARY_PATH="${CONDA_PREFIX}/lib"
+      - name: Check Eigen support
+        run: |
+          cd build
+          if ! grep -Fq "RDK_BUILD_DESCRIPTORS3D:BOOL=ON" CMakeCache.txt; then
+            echo "ERROR: Eigen support was not enabled in CMakeCache.txt"
+            exit 1
+          fi
+      - name: Build
+        run: |
+          source ${CONDA}/etc/profile.d/conda.sh
+          conda activate rdkit_build
+          cd build
+          make -j $(nproc) install
+      - name: Trim and store ccache
+        uses: ./.github/actions/store-ccache
+        if: ${{ success() && steps.cache-restore.outputs.cache-hit != 'true' }}
+      - name: Show ccache stats
+        run: |
+          source ${CONDA}/etc/profile.d/conda.sh
+          conda activate rdkit_build
+          echo -e "Current build stats:"
+          ccache --show-log-stats
+          echo -e "Global stats:"
+          ccache -s
+      - name: Run tests
+        run: |
+          source ${CONDA}/etc/profile.d/conda.sh
+          conda activate rdkit_build
+          export RDBASE=`pwd`
+          export PYTHONPATH=${RDBASE}:${PYTHONPATH}
+          export LD_LIBRARY_PATH=${RDBASE}/lib:${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH}
+          echo "LD_LIBRARY_PATH: " $LD_LIBRARY_PATH
+          export QT_QPA_PLATFORM='offscreen'
+          cd build
+          ctest -j $(nproc) --output-on-failure -E shard -T Test
+      - name: Run sharded tests
+        run: |
+          source ${CONDA}/etc/profile.d/conda.sh
+          conda activate rdkit_build
+          export RDBASE=`pwd`
+          export PYTHONPATH=${RDBASE}:${PYTHONPATH}
+          export LD_LIBRARY_PATH=${RDBASE}/lib:${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH}
+          echo "LD_LIBRARY_PATH: " $LD_LIBRARY_PATH
+          export QT_QPA_PLATFORM='offscreen'
+          cd build
+          ctest -j $(nproc) --output-on-failure -R shard -T Test
+      - name: Run tests with older numpy and pandas
+        run: |
+          source ${CONDA}/etc/profile.d/conda.sh
+          conda activate rdkit_build
+          conda install -c conda-forge --override-channels numpy=1.24 pandas=2.2
+          export RDBASE=`pwd`
+          export PYTHONPATH=${RDBASE}:${PYTHONPATH}
+          export LD_LIBRARY_PATH=${RDBASE}/lib:${CONDA_PREFIX}/lib:${LD_LIBRARY_PATH}
+          echo "LD_LIBRARY_PATH: " $LD_LIBRARY_PATH
+          export QT_QPA_PLATFORM='offscreen'
+          cd build
+          ctest -j $(nproc) --output-on-failure -E shard -T Test
+      - name: Run documentation tests
+        run: |
+          source ${CONDA}/etc/profile.d/conda.sh
+          conda activate rdkit_build
+          conda install -c conda-forge --override-channels ipython=8.12 sphinx myst-parser
+          export RDBASE=`pwd`
+          export PYTHONPATH=${RDBASE}:${PYTHONPATH}
+          export LD_LIBRARY_PATH=${RDBASE}/lib:${LD_LIBRARY_PATH}
+          export QT_QPA_PLATFORM='offscreen'
+          cd Docs/Book
+          make doctest
