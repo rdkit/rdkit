@@ -1367,6 +1367,18 @@ TEST_CASE("CXSMILES for reactions", "[cxsmiles]") {
         "[#6]-[#6](-[#8])(-[#9])-[#17]>>[#6]-[#6](-[#7])(-[#9])-[#17] |w:1.0,6.5|";
     CHECK(output_cxsmarts == expected_cxsmarts);
   }
+
+  SECTION("canonical reactant reordering and enhanced stereo") {
+    auto rxn = v2::ReactionParser::ReactionFromSmiles(
+        "O.C[C@H](O)CC>>CCC(C)=O |&1:2|");
+    REQUIRE(rxn);
+    SmilesWriteParams params;
+    CHECK(ChemicalReactionToCXRxnSmiles(*rxn, params) ==
+          "CC[C@H](C)O.O>>CCC(C)=O |&1:2|");
+    params.canonical = false;
+    CHECK(ChemicalReactionToCXRxnSmiles(*rxn, params) ==
+          "O.C[C@H](O)CC>>CCC(C)=O |&1:2|");
+  }
 }
 
 TEST_CASE("V3K rxn blocks") {
