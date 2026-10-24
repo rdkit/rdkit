@@ -47,8 +47,8 @@ constexpr double FAILED12 = -1.0;
 namespace RDKit {
 namespace DGeomHelpers {
 // forward declarations:
-typedef boost::shared_ptr<RDNumeric::IntSymmMatrix> SymmIntMatPtr;
-typedef boost::shared_ptr<RDNumeric::DoubleSymmMatrix> SymmDoubleMatPtr;
+typedef std::shared_ptr<RDNumeric::IntSymmMatrix> SymmIntMatPtr;
+typedef std::shared_ptr<RDNumeric::DoubleSymmMatrix> SymmDoubleMatPtr;
 
 typedef boost::dynamic_bitset<> BIT_SET;
 

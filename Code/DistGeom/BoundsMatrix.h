@@ -103,7 +103,7 @@ class RDKIT_DISTGEOMETRY_EXPORT BoundsMatrix
   }
 };
 
-using BoundsMatPtr = boost::shared_ptr<BoundsMatrix>;
+using BoundsMatPtr = std::shared_ptr<BoundsMatrix>;
 }  // namespace DistGeom
 
 #endif

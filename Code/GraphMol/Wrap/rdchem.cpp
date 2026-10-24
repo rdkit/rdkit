@@ -137,7 +137,7 @@ BOOST_PYTHON_MODULE(rdchem) {
                                        python::no_init)
       .def("Message", &MolSanitizeException::what, python::args("self"))
       .def("GetType", &MolSanitizeException::getType, python::args("self"));
-  python::register_ptr_to_python<boost::shared_ptr<MolSanitizeException>>();
+  python::register_ptr_to_python<std::shared_ptr<MolSanitizeException>>();
   molSanitizeExceptionType = createExceptionClass("MolSanitizeException");
   python::register_exception_translator<RDKit::MolSanitizeException>(
       [&](const MolSanitizeException &exc) {
@@ -149,7 +149,7 @@ BOOST_PYTHON_MODULE(rdchem) {
       python::no_init)
       .def("GetAtomIdx", &AtomSanitizeException::getAtomIdx,
            python::args("self"));
-  python::register_ptr_to_python<boost::shared_ptr<AtomSanitizeException>>();
+  python::register_ptr_to_python<std::shared_ptr<AtomSanitizeException>>();
   atomSanitizeExceptionType =
       createExceptionClass("AtomSanitizeException", molSanitizeExceptionType);
   python::register_exception_translator<RDKit::AtomSanitizeException>(
@@ -160,7 +160,7 @@ BOOST_PYTHON_MODULE(rdchem) {
   python::class_<AtomValenceException, python::bases<AtomSanitizeException>>(
       "_cppAtomValenceException", "exception arising from sanitization",
       python::no_init);
-  python::register_ptr_to_python<boost::shared_ptr<AtomValenceException>>();
+  python::register_ptr_to_python<std::shared_ptr<AtomValenceException>>();
   atomValenceExceptionType =
       createExceptionClass("AtomValenceException", atomSanitizeExceptionType);
   python::register_exception_translator<RDKit::AtomValenceException>(
@@ -171,7 +171,7 @@ BOOST_PYTHON_MODULE(rdchem) {
   python::class_<AtomKekulizeException, python::bases<AtomSanitizeException>>(
       "_cppAtomKekulizeException", "exception arising from sanitization",
       python::no_init);
-  python::register_ptr_to_python<boost::shared_ptr<AtomKekulizeException>>();
+  python::register_ptr_to_python<std::shared_ptr<AtomKekulizeException>>();
   atomKekulizeExceptionType =
       createExceptionClass("AtomKekulizeException", atomSanitizeExceptionType);
   python::register_exception_translator<RDKit::AtomKekulizeException>(
@@ -183,7 +183,7 @@ BOOST_PYTHON_MODULE(rdchem) {
       "_cppAtomKekulizeException", "exception arising from sanitization",
       python::no_init)
       .def("GetAtomIndices", &getAtomIndicesHelper);
-  python::register_ptr_to_python<boost::shared_ptr<KekulizeException>>();
+  python::register_ptr_to_python<std::shared_ptr<KekulizeException>>();
   kekulizeExceptionType =
       createExceptionClass("KekulizeException", molSanitizeExceptionType);
   python::register_exception_translator<RDKit::KekulizeException>(

@@ -61,7 +61,7 @@ using namespace RDKit;
 // for each starting point check to see that the archive
 //  starts at the same point
 void pickleTest(EnumerationStrategyBase &en, size_t len) {
-  boost::shared_ptr<EnumerationStrategyBase> base(en.copy());
+  std::shared_ptr<EnumerationStrategyBase> base(en.copy());
   TEST_ASSERT(std::string(base->type()) == std::string(en.type()));
 
   for (size_t i = 0; i < len; ++i) {
@@ -70,7 +70,7 @@ void pickleTest(EnumerationStrategyBase &en, size_t len) {
       boost::archive::text_oarchive ar(ss);
       ar & base;
     }
-    boost::shared_ptr<EnumerationStrategyBase> copy;
+    std::shared_ptr<EnumerationStrategyBase> copy;
     {
       boost::archive::text_iarchive ar(ss);
       ar & copy;
@@ -86,16 +86,15 @@ void testSamplers() {
   EnumerationTypes::BBS bbs;
   bbs.resize(3);
   for (int i = 0; i < 10; ++i) {
-    bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("C=CCN=C=S")));
+    bbs[0].push_back(std::shared_ptr<ROMol>(SmilesToMol("C=CCN=C=S")));
   }
 
   for (int i = 0; i < 5; ++i) {
-    bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCc1ncc(Cl)cc1Br")));
+    bbs[1].push_back(std::shared_ptr<ROMol>(SmilesToMol("NCc1ncc(Cl)cc1Br")));
   }
 
   for (int i = 0; i < 6; ++i) {
-    bbs[2].push_back(
-        boost::shared_ptr<ROMol>(SmilesToMol("NCCCc1ncc(Cl)cc1Br")));
+    bbs[2].push_back(std::shared_ptr<ROMol>(SmilesToMol("NCCCc1ncc(Cl)cc1Br")));
   }
 
   ChemicalReaction rxn;
@@ -107,7 +106,7 @@ void testSamplers() {
   randBBs.initialize(rxn, bbs);
   EvenSamplePairsStrategy even;
   even.initialize(rxn, bbs);
-  std::vector<boost::shared_ptr<EnumerationStrategyBase>> enumerators;
+  std::vector<std::shared_ptr<EnumerationStrategyBase>> enumerators;
   enumerators.emplace_back(cart.copy());
   enumerators.emplace_back(rand.copy());
   enumerators.emplace_back(randBBs.copy());
@@ -130,9 +129,9 @@ void testEvenSamplers() {
   boost::uint64_t R2 = 50;
   boost::uint64_t R3 = 1000;
 
-  boost::shared_ptr<ROMol> m(SmilesToMol("C=CCN=C=S"));
-  boost::shared_ptr<ROMol> m2(SmilesToMol("NCc1ncc(Cl)cc1Br"));
-  boost::shared_ptr<ROMol> m3(SmilesToMol("NCCCc1ncc(Cl)cc1Br"));
+  std::shared_ptr<ROMol> m(SmilesToMol("C=CCN=C=S"));
+  std::shared_ptr<ROMol> m2(SmilesToMol("NCc1ncc(Cl)cc1Br"));
+  std::shared_ptr<ROMol> m3(SmilesToMol("NCCCc1ncc(Cl)cc1Br"));
 
   for (unsigned long i = 0; i < R1; ++i) {
     bbs[0].push_back(m);
@@ -167,12 +166,12 @@ void testEnumerations() {
   EnumerationTypes::BBS bbs;
   bbs.resize(2);
 
-  bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("C=CCN=C=S")));
-  bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("CC=CCN=C=S")));
+  bbs[0].push_back(std::shared_ptr<ROMol>(SmilesToMol("C=CCN=C=S")));
+  bbs[0].push_back(std::shared_ptr<ROMol>(SmilesToMol("CC=CCN=C=S")));
 
-  bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCc1ncc(Cl)cc1Br")));
-  bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCCc1ncc(Cl)cc1Br")));
-  bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCCCc1ncc(Cl)cc1Br")));
+  bbs[1].push_back(std::shared_ptr<ROMol>(SmilesToMol("NCc1ncc(Cl)cc1Br")));
+  bbs[1].push_back(std::shared_ptr<ROMol>(SmilesToMol("NCCc1ncc(Cl)cc1Br")));
+  bbs[1].push_back(std::shared_ptr<ROMol>(SmilesToMol("NCCCc1ncc(Cl)cc1Br")));
 
   ChemicalReaction *rxn = RxnSmartsToChemicalReaction(
       "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);"
@@ -205,7 +204,7 @@ void testEnumerations() {
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
   {
-    boost::shared_ptr<EnumerateLibrary> en(
+    std::shared_ptr<EnumerateLibrary> en(
         new EnumerateLibrary(*rxn, bbs, RandomSampleStrategy()));
 
     std::vector<std::vector<std::vector<std::string>>> smir;
@@ -223,7 +222,7 @@ void testEnumerations() {
         boost::archive::text_oarchive ar(ss);
         ar & en;
       }
-      boost::shared_ptr<EnumerateLibrary> copy;
+      std::shared_ptr<EnumerateLibrary> copy;
       {
         boost::archive::text_iarchive ar(ss);
         ar & copy;
@@ -283,8 +282,8 @@ void testInsaneEnumerations() {
   // RxnOps::sanitizeRxn(*rxn2, MolOps::AdjustQueryParameters());
   MatchVectType tvect;
 
-  bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("CCNCC")));
-  bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCC")));
+  bbs[0].push_back(std::shared_ptr<ROMol>(SmilesToMol("CCNCC")));
+  bbs[0].push_back(std::shared_ptr<ROMol>(SmilesToMol("NCC")));
   std::cerr << "0,0 "
             << (int)SubstructMatch(*bbs[0][0].get(),
                                    *rxn2->getReactants()[0].get(), tvect)
@@ -294,8 +293,8 @@ void testInsaneEnumerations() {
                                    *rxn2->getReactants()[0].get(), tvect)
             << std::endl;
 
-  bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("ClC1CCC1")));
-  bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("ClC1CCC1Cl")));
+  bbs[1].push_back(std::shared_ptr<ROMol>(SmilesToMol("ClC1CCC1")));
+  bbs[1].push_back(std::shared_ptr<ROMol>(SmilesToMol("ClC1CCC1Cl")));
   std::cerr << "1,0 "
             << (int)SubstructMatch(*bbs[1][0].get(),
                                    *rxn2->getReactants()[1].get(), tvect)
@@ -305,8 +304,8 @@ void testInsaneEnumerations() {
                                    *rxn2->getReactants()[1].get(), tvect)
             << std::endl;
 
-  bbs[2].push_back(boost::shared_ptr<ROMol>(SmilesToMol("CCNCC")));
-  bbs[2].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCC")));
+  bbs[2].push_back(std::shared_ptr<ROMol>(SmilesToMol("CCNCC")));
+  bbs[2].push_back(std::shared_ptr<ROMol>(SmilesToMol("NCC")));
   std::cerr << "2,0 "
             << (int)SubstructMatch(*bbs[2][0].get(),
                                    *rxn2->getReactants()[2].get(), tvect)
@@ -342,12 +341,12 @@ void testGithub1657() {
   EnumerationTypes::BBS bbs;
   bbs.resize(2);
 
-  bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("C=CCN=C=S")));
-  bbs[0].push_back(boost::shared_ptr<ROMol>(SmilesToMol("CC=CCN=C=S")));
+  bbs[0].push_back(std::shared_ptr<ROMol>(SmilesToMol("C=CCN=C=S")));
+  bbs[0].push_back(std::shared_ptr<ROMol>(SmilesToMol("CC=CCN=C=S")));
 
-  bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCc1ncc(Cl)cc1Br")));
-  bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCCc1ncc(Cl)cc1Br")));
-  bbs[1].push_back(boost::shared_ptr<ROMol>(SmilesToMol("NCCCc1ncc(Cl)cc1Br")));
+  bbs[1].push_back(std::shared_ptr<ROMol>(SmilesToMol("NCc1ncc(Cl)cc1Br")));
+  bbs[1].push_back(std::shared_ptr<ROMol>(SmilesToMol("NCCc1ncc(Cl)cc1Br")));
+  bbs[1].push_back(std::shared_ptr<ROMol>(SmilesToMol("NCCCc1ncc(Cl)cc1Br")));
 
   ChemicalReaction *rxn = RxnSmartsToChemicalReaction(
       "[N;$(N-[#6]):3]=[C;$(C=S):1].[N;$(N[#6]);!$(N=*);!$([N-]);!$(N#*);"

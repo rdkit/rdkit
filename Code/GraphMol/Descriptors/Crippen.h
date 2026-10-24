@@ -77,7 +77,7 @@ RDKIT_DESCRIPTORS_EXPORT void calcCrippenDescriptors(const ROMol &mol,
 //! a class used to store Crippen parameters
 class RDKIT_DESCRIPTORS_EXPORT CrippenParams {
  public:
-  boost::shared_ptr<const ROMol> dp_pattern;
+  std::shared_ptr<const ROMol> dp_pattern;
   unsigned int idx;
   std::string label;
   std::string smarts;

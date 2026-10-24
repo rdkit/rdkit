@@ -48,7 +48,7 @@
 namespace RDKit {
 
 namespace {
-std::string getArgName(const boost::shared_ptr<FilterMatcherBase> &arg) {
+std::string getArgName(const std::shared_ptr<FilterMatcherBase> &arg) {
   if (arg.get()) {
     return arg->getName();
   }
@@ -58,8 +58,8 @@ std::string getArgName(const boost::shared_ptr<FilterMatcherBase> &arg) {
 
 namespace FilterMatchOps {
 class RDKIT_FILTERCATALOG_EXPORT And : public FilterMatcherBase {
-  boost::shared_ptr<FilterMatcherBase> arg1;
-  boost::shared_ptr<FilterMatcherBase> arg2;
+  std::shared_ptr<FilterMatcherBase> arg1;
+  std::shared_ptr<FilterMatcherBase> arg2;
 
  public:
   // !Default Constructor for serialization
@@ -71,8 +71,8 @@ class RDKIT_FILTERCATALOG_EXPORT And : public FilterMatcherBase {
   And(const FilterMatcherBase &arg1, const FilterMatcherBase &arg2)
       : FilterMatcherBase("And"), arg1(arg1.copy()), arg2(arg2.copy()) {}
 
-  And(boost::shared_ptr<FilterMatcherBase> arg1,
-      boost::shared_ptr<FilterMatcherBase> arg2)
+  And(std::shared_ptr<FilterMatcherBase> arg1,
+      std::shared_ptr<FilterMatcherBase> arg2)
       : FilterMatcherBase("And"),
         arg1(std::move(arg1)),
         arg2(std::move(arg2)) {}
@@ -107,8 +107,8 @@ class RDKIT_FILTERCATALOG_EXPORT And : public FilterMatcherBase {
     return false;
   }
 
-  boost::shared_ptr<FilterMatcherBase> copy() const override {
-    return boost::shared_ptr<FilterMatcherBase>(new And(*this));
+  std::shared_ptr<FilterMatcherBase> copy() const override {
+    return std::shared_ptr<FilterMatcherBase>(new And(*this));
   }
 
  private:
@@ -126,8 +126,8 @@ class RDKIT_FILTERCATALOG_EXPORT And : public FilterMatcherBase {
 };
 
 class RDKIT_FILTERCATALOG_EXPORT Or : public FilterMatcherBase {
-  boost::shared_ptr<FilterMatcherBase> arg1;
-  boost::shared_ptr<FilterMatcherBase> arg2;
+  std::shared_ptr<FilterMatcherBase> arg1;
+  std::shared_ptr<FilterMatcherBase> arg2;
 
  public:
   // !Default Constructor for serialization
@@ -138,8 +138,8 @@ class RDKIT_FILTERCATALOG_EXPORT Or : public FilterMatcherBase {
   Or(const FilterMatcherBase &arg1, const FilterMatcherBase &arg2)
       : FilterMatcherBase("Or"), arg1(arg1.copy()), arg2(arg2.copy()) {}
 
-  Or(boost::shared_ptr<FilterMatcherBase> arg1,
-     boost::shared_ptr<FilterMatcherBase> arg2)
+  Or(std::shared_ptr<FilterMatcherBase> arg1,
+     std::shared_ptr<FilterMatcherBase> arg2)
       : FilterMatcherBase("Or"), arg1(std::move(arg1)), arg2(std::move(arg2)) {}
 
   Or(const Or &rhs) : FilterMatcherBase(rhs), arg1(rhs.arg1), arg2(rhs.arg2) {}
@@ -169,8 +169,8 @@ class RDKIT_FILTERCATALOG_EXPORT Or : public FilterMatcherBase {
     return res1 || res2;
   }
 
-  boost::shared_ptr<FilterMatcherBase> copy() const override {
-    return boost::shared_ptr<FilterMatcherBase>(new Or(*this));
+  std::shared_ptr<FilterMatcherBase> copy() const override {
+    return std::shared_ptr<FilterMatcherBase>(new Or(*this));
   }
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
@@ -186,7 +186,7 @@ class RDKIT_FILTERCATALOG_EXPORT Or : public FilterMatcherBase {
 };
 
 class RDKIT_FILTERCATALOG_EXPORT Not : public FilterMatcherBase {
-  boost::shared_ptr<FilterMatcherBase> arg1;
+  std::shared_ptr<FilterMatcherBase> arg1;
 
  public:
   // !Default Constructor for serialization
@@ -199,7 +199,7 @@ class RDKIT_FILTERCATALOG_EXPORT Not : public FilterMatcherBase {
   Not(const FilterMatcherBase &arg1)
       : FilterMatcherBase("Not"), arg1(arg1.copy()) {}
 
-  Not(boost::shared_ptr<FilterMatcherBase> arg1)
+  Not(std::shared_ptr<FilterMatcherBase> arg1)
       : FilterMatcherBase("Not"), arg1(std::move(arg1)) {}
 
   Not(const Not &rhs) : FilterMatcherBase(rhs), arg1(rhs.arg1) {}
@@ -223,8 +223,8 @@ class RDKIT_FILTERCATALOG_EXPORT Not : public FilterMatcherBase {
     return !arg1->getMatches(mol, matchVect);
   }
 
-  boost::shared_ptr<FilterMatcherBase> copy() const override {
-    return boost::shared_ptr<FilterMatcherBase>(new Not(*this));
+  std::shared_ptr<FilterMatcherBase> copy() const override {
+    return std::shared_ptr<FilterMatcherBase>(new Not(*this));
   }
 
  private:
@@ -336,8 +336,8 @@ class RDKIT_FILTERCATALOG_EXPORT SmartsMatcher : public FilterMatcherBase {
   bool getMatches(const ROMol &mol,
                   std::vector<FilterMatch> &matchVect) const override;
   bool hasMatch(const ROMol &mol) const override;
-  boost::shared_ptr<FilterMatcherBase> copy() const override {
-    return boost::shared_ptr<FilterMatcherBase>(new SmartsMatcher(*this));
+  std::shared_ptr<FilterMatcherBase> copy() const override {
+    return std::shared_ptr<FilterMatcherBase>(new SmartsMatcher(*this));
   }
 
  private:
@@ -359,7 +359,7 @@ class RDKIT_FILTERCATALOG_EXPORT SmartsMatcher : public FilterMatcherBase {
     RDUNUSED_PARAM(version);
     std::string res;
     ar & res;
-    d_pattern = boost::shared_ptr<ROMol>(new ROMol(res));
+    d_pattern = std::shared_ptr<ROMol>(new ROMol(res));
     ar & d_min_count;
     ar & d_max_count;
   }
@@ -381,7 +381,7 @@ class RDKIT_FILTERCATALOG_EXPORT SmartsMatcher : public FilterMatcherBase {
 //  which will return the SmartsMatcher FilterMatch only if no patterns
 //    in the exclusion list are found.
 class RDKIT_FILTERCATALOG_EXPORT ExclusionList : public FilterMatcherBase {
-  std::vector<boost::shared_ptr<FilterMatcherBase>> d_offPatterns;
+  std::vector<std::shared_ptr<FilterMatcherBase>> d_offPatterns;
 
  public:
   ExclusionList() : FilterMatcherBase("Not any of"), d_offPatterns() {}
@@ -394,7 +394,7 @@ class RDKIT_FILTERCATALOG_EXPORT ExclusionList : public FilterMatcherBase {
   //!                 And(Not(SmartsMatcher(pat2)),
   //!                                And(Not(Single...
 
-  ExclusionList(std::vector<boost::shared_ptr<FilterMatcherBase>> offPatterns)
+  ExclusionList(std::vector<std::shared_ptr<FilterMatcherBase>> offPatterns)
       : FilterMatcherBase("Not any of"),
         d_offPatterns(std::move(offPatterns)) {}
 
@@ -423,7 +423,7 @@ class RDKIT_FILTERCATALOG_EXPORT ExclusionList : public FilterMatcherBase {
   }
 
   void setExclusionPatterns(
-      const std::vector<boost::shared_ptr<FilterMatcherBase>> &offPatterns) {
+      const std::vector<std::shared_ptr<FilterMatcherBase>> &offPatterns) {
     d_offPatterns = offPatterns;
   }
 
@@ -449,8 +449,8 @@ class RDKIT_FILTERCATALOG_EXPORT ExclusionList : public FilterMatcherBase {
     return result;
   }
 
-  boost::shared_ptr<FilterMatcherBase> copy() const override {
-    return boost::shared_ptr<FilterMatcherBase>(new ExclusionList(*this));
+  std::shared_ptr<FilterMatcherBase> copy() const override {
+    return std::shared_ptr<FilterMatcherBase>(new ExclusionList(*this));
   }
 
  private:
@@ -467,8 +467,8 @@ class RDKIT_FILTERCATALOG_EXPORT ExclusionList : public FilterMatcherBase {
 
 class RDKIT_FILTERCATALOG_EXPORT FilterHierarchyMatcher
     : public FilterMatcherBase {
-  std::vector<boost::shared_ptr<FilterHierarchyMatcher>> d_children;
-  boost::shared_ptr<FilterMatcherBase> d_matcher;
+  std::vector<std::shared_ptr<FilterHierarchyMatcher>> d_children;
+  std::shared_ptr<FilterMatcherBase> d_matcher;
 
  public:
   // !Default Constructor for serialization
@@ -511,12 +511,12 @@ class RDKIT_FILTERCATALOG_EXPORT FilterHierarchyMatcher
   /*
     \param hierarchy The new FilterHierarchyMatcher child for this node
   */
-  boost::shared_ptr<FilterHierarchyMatcher> addChild(
+  std::shared_ptr<FilterHierarchyMatcher> addChild(
       const FilterHierarchyMatcher &hierarchy) {
     PRECONDITION(hierarchy.d_matcher.get() && hierarchy.d_matcher->isValid(),
                  "Only one root node is allowed in a FilterHierarchyMatcher");
 
-    d_children.push_back(boost::shared_ptr<FilterHierarchyMatcher>(
+    d_children.push_back(std::shared_ptr<FilterHierarchyMatcher>(
         new FilterHierarchyMatcher(hierarchy)));
     return d_children.back();
   }
@@ -539,8 +539,8 @@ class RDKIT_FILTERCATALOG_EXPORT FilterHierarchyMatcher
   }
 
   //! copys the FilterHierarchyMatcher into a FilterMatcherBase
-  boost::shared_ptr<FilterMatcherBase> copy() const override {
-    return boost::shared_ptr<FilterMatcherBase>(
+  std::shared_ptr<FilterMatcherBase> copy() const override {
+    return std::shared_ptr<FilterMatcherBase>(
         new FilterHierarchyMatcher(*this));
   }
 
