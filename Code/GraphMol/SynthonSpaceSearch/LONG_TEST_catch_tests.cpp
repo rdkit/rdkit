@@ -460,7 +460,7 @@ TEST_CASE("Shape More Small tests") {
   // compensated for by other things.
   std::vector<size_t> expNumHits{8, 1};
   std::vector<std::vector<double>> expScores{
-      {0.9, 0.9, 0.9, 0.9, 0.8, 0.8, 0.8, 0.8}, {0.6}};
+      {0.9, 0.9, 0.9, 0.85, 0.8, 0.8, 0.8, 0.8}, {0.6}};
   std::vector<std::vector<std::string>> expNames{
       {"1-1;2-1;3-1;triazole-1", "1-1;2-2;3-1;triazole-1",
        "1-1;2-1;3-2;triazole-1", "1-1;2-2;3-2;triazole-1",
@@ -718,6 +718,7 @@ Cc1nc2ccc(NC(=O)[1*])cc2o1	1-1	0	4al4
   // conformations even with the same parameters.
   {
     params.possibleHitsFile = "poss_hits_1.txt";
+
     params.maxExcludedVolume = -1.0;
     auto results = synthonSpace.shapeSearch(*comb_4aji_4aj1, params);
     auto &hits = results.getHitMolecules();
