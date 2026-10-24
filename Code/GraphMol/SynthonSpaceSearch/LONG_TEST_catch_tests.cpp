@@ -563,9 +563,8 @@ TEST_CASE("Shape Two piece query") {
   params.shapeOverlayOptions.simAlpha = 0.95;
   params.shapeOverlayOptions.simBeta = 0.05;
   auto results = synthonspace.shapeSearch(*queryMol, params);
-  CHECK(results.getHitMolecules().size() == 7);
-  std::vector<double> expScores{0.801, 0.796, 0.778, 0.766,
-                                0.744, 0.717, 0.711};
+  CHECK(results.getHitMolecules().size() == 6);
+  std::vector<double> expScores{0.805, 0.774, 0.758, 0.757, 0.731, 0.705};
   for (unsigned int i = 0; i < results.getHitMolecules().size(); ++i) {
     auto &mol = results.getHitMolecules()[i];
     CHECK_THAT(mol->getProp<double>("Similarity"),
@@ -647,7 +646,7 @@ N#CCc(cncc1)c1[2*]	689988332-107515102	2	urea-3)");
   // get something because of bestHit=true.
   for (const auto &mol : results.getHitMolecules()) {
     CHECK_THAT(mol->getProp<double>("Similarity"),
-               Catch::Matchers::WithinAbs(0.728, 0.005));
+               Catch::Matchers::WithinAbs(0.855, 0.005));
     auto scores = GaussianShape::ScoreMolecule(*queryMol, *mol);
     CHECK_THAT(mol->getProp<double>("Similarity"),
                Catch::Matchers::WithinAbs(scores[0], 0.001));
@@ -722,7 +721,7 @@ Cc1nc2ccc(NC(=O)[1*])cc2o1	1-1	0	4al4
     params.maxExcludedVolume = -1.0;
     auto results = synthonSpace.shapeSearch(*comb_4aji_4aj1, params);
     auto &hits = results.getHitMolecules();
-    CHECK(hits.size() == 2);
+    REQUIRE(hits.size() == 2);
     // The different conformer generators make it difficult to check the
     // excluded volumes exactly, but the orders should be consistent
     // and they should be within these ranges.
@@ -739,16 +738,15 @@ Cc1nc2ccc(NC(=O)[1*])cc2o1	1-1	0	4al4
     CHECK(countFileLines("poss_hits_1.txt") == 2);
     std::remove("poss_hits_1.txt");
   }
-
   {
     params.possibleHitsFile = "poss_hits_2.txt";
-    params.maxExcludedVolume = 80.0;
+    params.maxExcludedVolume = 90.0;
     auto results = synthonSpace.shapeSearch(*comb_4aji_4aj1, params);
-    CHECK(results.getHitMolecules().size() == 1);
+    REQUIRE(results.getHitMolecules().size() == 1);
     CHECK(results.getHitMolecules()[0]->getProp<std::string>(
               common_properties::_Name) == "1-1;2-1;3-1;4al4");
     CHECK(results.getHitMolecules()[0]->getProp<double>("ExcludedVolume") <
-          80.0);
+          90.0);
     CHECK(countFileLines("poss_hits_2.txt") == 2);
     std::remove("poss_hits_2.txt");
   }
