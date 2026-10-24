@@ -444,9 +444,7 @@ void testGithub9634(std::string rdbase) {
 // FIX still missing chirality by 3D structure
 //  still missing input std::string
 
-int main(int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
+int main() {
   RDLog::InitLogs();
 
   std::string rdbase = getenv("RDBASE");
