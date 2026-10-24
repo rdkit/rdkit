@@ -914,7 +914,7 @@ std::unique_ptr<ROMol> buildProduct(
   std::unique_ptr<ROMol> zipProdMol;
   try {
     zipProdMol = molzip(*prodMol, mzparams);
-    MolOps::sanitizeMol(*dynamic_cast<RWMol *>(zipProdMol.get()));
+    MolOps::sanitizeMol(*static_cast<RWMol *>(zipProdMol.get()));
   } catch (std::exception &e) {
     std::cout << "AWOOGA :: Failed to zip " << MolToSmiles(*prodMol)
               << " because " << std::endl

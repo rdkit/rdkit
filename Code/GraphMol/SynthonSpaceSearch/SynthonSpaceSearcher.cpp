@@ -218,7 +218,7 @@ void checkPossibleHitsPart(
     std::unique_ptr<ROMol> prod;
     try {
       prod = molzip(*mol, mzparams);
-      MolOps::sanitizeMol(*dynamic_cast<RWMol *>(prod.get()));
+      MolOps::sanitizeMol(*static_cast<RWMol *>(prod.get()));
     } catch (std::exception &e) {
       std::cout << "Failed to zip " << MolToSmiles(*mol) << " for " << name
                 << " because " << std::endl

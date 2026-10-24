@@ -1296,7 +1296,7 @@ TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
       auto mol = "N/C=C/C"_smiles;
       CHECK(mol->getBondWithIdx(1)->getStereo() ==
             Bond::BondStereo::STEREOTRANS);
-      auto rwmol = dynamic_cast<RWMol *>(mol.get());
+      auto rwmol = static_cast<RWMol *>(mol.get());
       rwmol->removeBond(0, 1);
       CHECK(mol->getBondWithIdx(0)->getStereo() ==
             Bond::BondStereo::STEREONONE);
@@ -1305,7 +1305,7 @@ TEST_CASE("ring stereo finding is overly aggressive", "[chirality][bug]") {
       auto mol = "N/C=C/C"_smiles;
       CHECK(mol->getBondWithIdx(1)->getStereo() ==
             Bond::BondStereo::STEREOTRANS);
-      auto rwmol = dynamic_cast<RWMol *>(mol.get());
+      auto rwmol = static_cast<RWMol *>(mol.get());
       rwmol->removeBond(2, 3);
       CHECK(mol->getBondWithIdx(1)->getStereo() ==
             Bond::BondStereo::STEREONONE);

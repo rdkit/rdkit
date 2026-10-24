@@ -46,7 +46,7 @@ struct RGroupDecompData {
   std::map<int, int> finalRlabelMapping;
   mutable RGroupScorer rGroupScorer;
 
-  RGroupDecompData(const RWMol &inputCore,
+  RGroupDecompData(const ROMol &inputCore,
                    RGroupDecompositionParameters inputParams);
 
   RGroupDecompData(const std::vector<ROMOL_SPTR> &inputCores,
