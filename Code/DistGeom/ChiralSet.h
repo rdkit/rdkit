@@ -23,21 +23,26 @@ enum class ChiralSetStructureFlags : std::uint64_t {
 };
 
 /*! \brief Class used to store a quartet of points and chiral volume bounds on
- *them
+ * them
+ *
+ * The chiral volume is calculated using points 1-4.
+ * Point 0 is considered to be the centroid; if the chiral set does not have a
+ *   centroid, set it to the same value as \c d_idx4
  *
  */
 class RDKIT_DISTGEOMETRY_EXPORT ChiralSet {
  public:
-  unsigned int d_idx0;  // the centroid
-  unsigned int d_idx1;
-  unsigned int d_idx2;
-  unsigned int d_idx3;
-  unsigned int d_idx4;
-  double d_volumeLowerBound;
-  double d_volumeUpperBound;
+  unsigned int d_idx0 = 0;  // the centroid
+  unsigned int d_idx1 = 0;
+  unsigned int d_idx2 = 0;
+  unsigned int d_idx3 = 0;
+  unsigned int d_idx4 = 0;
+  double d_volumeLowerBound = 0.0;
+  double d_volumeUpperBound = 0.0;
   std::uint64_t d_structureFlags =
       0;  // used to track special cases that may make embedding more difficult
 
+  ChiralSet() = default;
   ChiralSet(unsigned int pid0, unsigned int pid1, unsigned int pid2,
             unsigned int pid3, unsigned int pid4, double lowerVolBound,
             double upperVolBound, std::uint64_t structureFlags = 0)

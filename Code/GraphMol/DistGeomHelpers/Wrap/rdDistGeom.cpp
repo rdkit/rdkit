@@ -639,7 +639,10 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       .export_values();
 
   python::class_<DistGeom::ChiralSet>(
-      "ChiralSet", "Class representing a chiral set",
+      "ChiralSet",
+      R"DOC(Captures a set of atoms defining a chiral volume in a molecule. 
+  The chiral volume is calculated using points 1-4. 
+  Point 0 is considered to be the centroid; if the chiral set does not have a centroid, set it to the same value as d_idx4.)DOC",
       python::init<int, int, int, int, int, double, double>())
       .def_readwrite("idx0", &DistGeom::ChiralSet::d_idx0)
       .def_readwrite("idx1", &DistGeom::ChiralSet::d_idx1)

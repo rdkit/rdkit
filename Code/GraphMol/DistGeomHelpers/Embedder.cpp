@@ -2044,6 +2044,10 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
               throw ValueErrorException(
                   "additionalChiralSets contains a duplicate of an existing chiral set.");
             }
+            // make sure we don't have duplicates in the additional chiral sets
+            // themselves
+            volumesThere.push_back(
+                {cs->d_idx0, cs->d_idx1, cs->d_idx2, cs->d_idx3, cs->d_idx4});
           });
       chiralCenters.insert(chiralCenters.end(),
                            params.additionalChiralSets.begin(),

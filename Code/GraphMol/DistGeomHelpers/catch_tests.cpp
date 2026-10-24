@@ -3357,6 +3357,20 @@ TEST_CASE("providing additional chiral sets while embedding") {
     CHECK_THROWS_AS(DGeomHelpers::EmbedMolecule(*m1, params),
                     ValueErrorException);
   }
+
+  SECTION("duplicate handling on input") {
+    auto m1 = "I[C](Cl)(Br)F"_smiles;
+    REQUIRE(m1);
+    auto params = DGeomHelpers::ETKDGv4;
+    params.additionalChiralSets.clear();
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 3, 2, 4, chiralVolumeMin, chiralVolumeMax));
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 3, 2, 4, chiralVolumeMin, chiralVolumeMax));
+    CHECK_THROWS_AS(DGeomHelpers::EmbedMolecule(*m1, params),
+                    ValueErrorException);
+  }
+
   SECTION("two chiral sets") {
     auto m1 = "I[C](Cl)(Br)O[C](F)(Cl)Br"_smiles;
     REQUIRE(m1);
@@ -3372,5 +3386,37 @@ TEST_CASE("providing additional chiral sets while embedding") {
     MolOps::assignStereochemistryFrom3D(*m1);
     CHECK(m1->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
     CHECK(m1->getAtomWithIdx(5)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+  }
+
+  SECTION("JSON handling") {
+    auto params = DGeomHelpers::ETKDGv4;
+    params.randomSeed = 0xf00d;
+    params.enforceChirality = true;
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 2, 3, 4, chiralVolumeMin, chiralVolumeMax));
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        5, 4, 6, 7, 8, chiralVolumeMin, chiralVolumeMax));
+    auto json = DGeomHelpers::embedParametersToJSON(params);
+    CHECK(json.find("additionalChiralSets") != std::string::npos);
+
+    DGeomHelpers::EmbedParameters newParams;
+    DGeomHelpers::updateEmbedParametersFromJSON(newParams, json);
+    CHECK(newParams.additionalChiralSets.size() == 2);
+    CHECK(newParams.additionalChiralSets[0]->d_idx0 == 1);
+    CHECK(newParams.additionalChiralSets[0]->d_idx1 == 0);
+    CHECK(newParams.additionalChiralSets[0]->d_idx2 == 2);
+    CHECK(newParams.additionalChiralSets[0]->d_idx3 == 3);
+    CHECK(newParams.additionalChiralSets[0]->d_idx4 == 4);
+    CHECK(newParams.additionalChiralSets[0]->d_volumeLowerBound == chiralVolumeMin);
+    CHECK(newParams.additionalChiralSets[0]->d_volumeUpperBound == chiralVolumeMax);
+    CHECK(newParams.additionalChiralSets[0]->d_structureFlags == 0);
+    CHECK(newParams.additionalChiralSets[1]->d_idx0 == 5);
+    CHECK(newParams.additionalChiralSets[1]->d_idx1 == 4);
+    CHECK(newParams.additionalChiralSets[1]->d_idx2 == 6);
+    CHECK(newParams.additionalChiralSets[1]->d_idx3 == 7);
+    CHECK(newParams.additionalChiralSets[1]->d_idx4 == 8);
+    CHECK(newParams.additionalChiralSets[1]->d_volumeLowerBound == chiralVolumeMin);
+    CHECK(newParams.additionalChiralSets[1]->d_volumeUpperBound == chiralVolumeMax);
+    CHECK(newParams.additionalChiralSets[1]->d_structureFlags == 0);
   }
 }

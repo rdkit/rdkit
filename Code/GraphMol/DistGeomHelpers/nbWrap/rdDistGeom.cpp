@@ -558,7 +558,9 @@ RETURNS:
 
   nb::class_<DistGeom::ChiralSet>(
       m, "ChiralSet",
-      "Captures a set of atoms defining a chiral volume in a molecule")
+      R"DOC(Captures a set of atoms defining a chiral volume in a molecule. 
+  The chiral volume is calculated using points 1-4. 
+  Point 0 is considered to be the centroid; if the chiral set does not have a centroid, set it to the same value as d_idx4.)DOC")
       .def(nb::init<int, int, int, int, int, double, double>(), "idx0"_a,
            "idx1"_a, "idx2"_a, "idx3"_a, "idx4"_a, "volLowerBound"_a,
            "volUpperBound"_a, "Constructor for ChiralSet")
