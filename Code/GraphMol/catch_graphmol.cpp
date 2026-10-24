@@ -2577,7 +2577,7 @@ void check_dest(RWMol *m1, const ROMol &m2) {
   CHECK(m1->getRingInfo() == nullptr);
 
   // make sure we can still do something with m1:
-  *m1 = m2;
+  *m1 = RWMol(m2);
   CHECK(!m1->getDict().empty());
   CHECK(m1->getNumAtoms() == 8);
   CHECK(m1->getNumBonds() == 7);
