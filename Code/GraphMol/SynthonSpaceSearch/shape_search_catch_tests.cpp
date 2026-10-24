@@ -548,3 +548,47 @@ TEST_CASE("Shape Write possible hits") {
   CHECK(countFileLines("amide_space_shapes_poss_hits.txt") == 3);
   std::remove(params.possibleHitsFile.c_str());
 }
+
+TEST_CASE("Github 9744 - possible hits not in descending order of similarity") {
+  auto queryMol =
+      "C1CCCC1.C[C@H]1CCNC1 |(-1.11549,-0.643316,-1.37025;-2.26431,-1.65079,-1.54776;-2.58926,-1.96617,-0.0975393;-2.00229,-0.836476,0.740437;-1.71735,0.224133,-0.333621;3.88187,-1.9608,1.02401;3.40947,-0.556473,0.685633;3.49763,-0.278493,-0.787477;2.18424,0.313597,-1.21035;1.39217,0.480256,0.0110759;1.90383,-0.551243,0.906815),wD:6.5|"_smiles;
+  REQUIRE(queryMol);
+  std::string fName(rdbase);
+  std::string fullRoot(fName + "/Code/GraphMol/SynthonSpaceSearch/data/");
+  std::string dbName = fullRoot + "triazole_space_shapes.spc";
+  SynthonSpace synthonspace;
+  synthonspace.readDBFile(dbName);
+  SynthonSpaceSearchParams params;
+  params.similarityCutoff = 0.7;
+  params.fragSimilarityAdjuster = 0.2;
+  params.numThreads = 1;
+  params.confRMSThreshold = 0.5;
+  params.timeOut = 0;
+  params.randomSeed = 1;
+  params.bestHit = true;
+  params.shapeOverlayOptions.simAlpha = 0.95;
+  params.shapeOverlayOptions.simBeta = 0.05;
+  params.possibleHitsFile = "two_shapes_poss_hits.txt";
+  params.writePossibleHitsAndStop = true;
+
+  auto results = synthonspace.shapeSearch(*queryMol, params);
+  CHECK(results.getHitMolecules().size() == 0);
+
+  // Previously, these same possible hits appeared in a different order.
+  std::vector<std::string> expHits = {
+      "OCC([1*])=NN=[2*].c1ccccc1N([3*])[1*].CC1CCN(C1)C(=[2*])[3*] 1-1;2-2;3-1;triazole-1",
+      "CC(C)OCC([1*])=NN=[2*].c1ccccc1N([3*])[1*].CC1CCN(C1)C(=[2*])[3*] 1-2;2-2;3-1;triazole-1",
+      "OCC([1*])=NN=[2*].C1CCCC1N([3*])[1*].CC1CCN(C1)C(=[2*])[3*] 1-1;2-1;3-1;triazole-1",
+      "CC(C)OCC([1*])=NN=[2*].C1CCCC1N([3*])[1*].CC1CCN(C1)C(=[2*])[3*] 1-2;2-1;3-1;triazole-1",
+      "OCC([1*])=NN=[2*].c1ccccc1N([3*])[1*].C(F)(F)(F)C1CCN(C1)C(=[2*])[3*] 1-1;2-2;3-2;triazole-1",
+      "OCC([1*])=NN=[2*].C1CCCC1N([3*])[1*].C(F)(F)(F)C1CCN(C1)C(=[2*])[3*] 1-1;2-1;3-2;triazole-1",
+      "CC(C)OCC([1*])=NN=[2*].c1ccccc1N([3*])[1*].C(F)(F)(F)C1CCN(C1)C(=[2*])[3*] 1-2;2-2;3-2;triazole-1"};
+  CHECK(countFileLines(params.possibleHitsFile) == 7);
+  std::ifstream ifs(params.possibleHitsFile);
+  std::string line;
+  int lineNum = 0;
+  while (std::getline(ifs, line)) {
+    CHECK(line == expHits[lineNum]);
+    lineNum++;
+  }
+}

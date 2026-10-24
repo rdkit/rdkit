@@ -18,6 +18,7 @@
 #include <regex>
 #include <sstream>
 #include <thread>
+#include <unordered_set>
 #include <vector>
 
 #include <boost/dynamic_bitset.hpp>
@@ -1513,4 +1514,19 @@ void sortAndUniquifyToTry(
   toTry = std::move(newToTry);
 }
 
+void uniquifyToTry(std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
+        &toTry) {
+  std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
+      newToTry;
+  newToTry.reserve(toTry.size());
+  std::unordered_set<std::string> prodNames;
+  for (auto &tt: toTry) {
+    auto prodName = buildProductName(tt.first, tt.second);
+    auto res = prodNames.insert(prodName);
+    if (res.second) {
+      newToTry.emplace_back(std::move(tt));
+    }
+  }
+  toTry = std::move(newToTry);
+}
 }  // namespace RDKit::SynthonSpaceSearch::details

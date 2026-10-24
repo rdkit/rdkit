@@ -221,6 +221,12 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT void sortAndUniquifyToTry(
     std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
         &toTry);
 
+// Uniquify the possible hits in toTry based on product name, keeping the
+// first product of that name and discarding any duplicates.
+RDKIT_SYNTHONSPACESEARCH_EXPORT void uniquifyToTry(
+    std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
+        &toTry);
+
 }  // namespace details
 }  // namespace SynthonSpaceSearch
 }  // namespace RDKit
