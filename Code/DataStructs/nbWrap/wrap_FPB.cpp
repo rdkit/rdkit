@@ -23,20 +23,17 @@ const std::uint8_t *bytesToFP(const nb::bytes &bytes) {
   return reinterpret_cast<const std::uint8_t *>(bytes.data());
 }
 
-nb::tuple toTuple(const nb::list &l) {
-  return nb::steal<nb::tuple>(PySequence_Tuple(l.ptr()));
-}
 
 nb::tuple taniNbrHelper(const FPBReader *self, const nb::bytes &bytes,
                         double threshold) {
   const auto *bv = bytesToFP(bytes);
   std::vector<std::pair<double, unsigned int>> nbrs =
       self->getTanimotoNeighbors(bv, threshold);
-  nb::list result;
-  for (auto &nbr : nbrs) {
-    result.append(nb::make_tuple(nbr.first, nbr.second));
+  nb::tuple_builder result(nbrs.size());
+  for (const auto &nbr : nbrs) {
+    result.put(nb::make_tuple(nbr.first, nbr.second));
   }
-  return toTuple(result);
+  return result.commit();
 }
 
 nb::tuple tverskyNbrHelper(const FPBReader *self, const nb::bytes &bytes,
@@ -44,21 +41,21 @@ nb::tuple tverskyNbrHelper(const FPBReader *self, const nb::bytes &bytes,
   const auto *bv = bytesToFP(bytes);
   std::vector<std::pair<double, unsigned int>> nbrs =
       self->getTverskyNeighbors(bv, ca, cb, threshold);
-  nb::list result;
-  for (auto &nbr : nbrs) {
-    result.append(nb::make_tuple(nbr.first, nbr.second));
+  nb::tuple_builder result(nbrs.size());
+  for (const auto &nbr : nbrs) {
+    result.put(nb::make_tuple(nbr.first, nbr.second));
   }
-  return toTuple(result);
+  return result.commit();
 }
 
 nb::tuple containingNbrHelper(const FPBReader *self, const nb::bytes &bytes) {
   const auto *bv = bytesToFP(bytes);
   std::vector<unsigned int> nbrs = self->getContainingNeighbors(bv);
-  nb::list result;
-  for (auto &nbr : nbrs) {
-    result.append(nbr);
+  nb::tuple_builder result(nbrs.size());
+  for (const auto &nbr : nbrs) {
+    result.put(nbr);
   }
-  return toTuple(result);
+  return result.commit();
 }
 
 nb::tuple multiTaniNbrHelper(const MultiFPBReader *self, const nb::bytes &bytes,
@@ -66,12 +63,12 @@ nb::tuple multiTaniNbrHelper(const MultiFPBReader *self, const nb::bytes &bytes,
   const auto *bv = bytesToFP(bytes);
   std::vector<MultiFPBReader::ResultTuple> nbrs =
       self->getTanimotoNeighbors(bv, threshold, numThreads);
-  nb::list result;
-  for (auto &nbr : nbrs) {
-    result.append(
+  nb::tuple_builder result(nbrs.size());
+  for (const auto &nbr : nbrs) {
+    result.put(
         nb::make_tuple(std::get<0>(nbr), std::get<1>(nbr), std::get<2>(nbr)));
   }
-  return toTuple(result);
+  return result.commit();
 }
 
 nb::tuple multiTverskyNbrHelper(const MultiFPBReader *self,
@@ -80,12 +77,12 @@ nb::tuple multiTverskyNbrHelper(const MultiFPBReader *self,
   const auto *bv = bytesToFP(bytes);
   std::vector<MultiFPBReader::ResultTuple> nbrs =
       self->getTverskyNeighbors(bv, ca, cb, threshold, numThreads);
-  nb::list result;
-  for (auto &nbr : nbrs) {
-    result.append(
+  nb::tuple_builder result(nbrs.size());
+  for (const auto &nbr : nbrs) {
+    result.put(
         nb::make_tuple(std::get<0>(nbr), std::get<1>(nbr), std::get<2>(nbr)));
   }
-  return toTuple(result);
+  return result.commit();
 }
 
 nb::tuple multiContainingNbrHelper(const MultiFPBReader *self,
@@ -94,11 +91,11 @@ nb::tuple multiContainingNbrHelper(const MultiFPBReader *self,
   const auto *bv = bytesToFP(bytes);
   std::vector<std::pair<unsigned int, unsigned int>> nbrs =
       self->getContainingNeighbors(bv, numThreads);
-  nb::list result;
-  for (auto &nbr : nbrs) {
-    result.append(nb::make_tuple(nbr.first, nbr.second));
+  nb::tuple_builder result(nbrs.size());
+  for (const auto &nbr : nbrs) {
+    result.put(nb::make_tuple(nbr.first, nbr.second));
   }
-  return toTuple(result);
+  return result.commit();
 }
 
 nb::bytes getBytesHelper(const FPBReader *self, unsigned int which) {
