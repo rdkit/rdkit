@@ -2911,6 +2911,8 @@ TEST_CASE("Github #5849: aromatic tag allows bad valences to pass") {
   SECTION("edge cases atoms") {
     std::vector<std::string> smis = {
         "c1c(ccc2NC(CN=c(c21)=C)=O)O",     // exocyclic double bond
+        "Cc1(C)=NCCCc1",                   // a hexavalent C atom
+        "Cc1(C)nCCCC=1",                   // a hexavalent C atom
         "c1c(ccc2NC(Cn=c(c21)(C)C)=O)O",   // even more bogus aromatic atoms
         "c1c(ccc2NC(CN=c(c21)(:c)C)=O)O",  // even more bogus aromatic atoms
     };
@@ -2922,8 +2924,6 @@ TEST_CASE("Github #5849: aromatic tag allows bad valences to pass") {
   SECTION("edge cases kekulization") {
     std::vector<std::string> smis = {
         "c12ccccc1=NCCC2",  // adjacent to an actual aromatic ring
-        "Cc1(C)=NCCCc1",    // two bogus aromatic atoms
-        "Cc1(C)nCCCC=1",    // two bogus aromatic atoms
         "Cc1(C)nCCCc1",     // three bogus aromatic atoms
         "Cc:1(C):nCCCc:1",  // three bogus aromatic atoms
     };
@@ -5166,5 +5166,56 @@ TEST_CASE("duplicate atoms/bonds in StereoGroups") {
             StereoGroupType::STEREO_ABSOLUTE, std::vector<Atom *>{},
             std::vector<Bond *>{m->getBondWithIdx(1), m->getBondWithIdx(1)}),
         ValueErrorException);
+  }
+}
+
+TEST_CASE(
+    "GitHub #9735: Valence checks for aromatic atoms allows them to be hypervalent") {
+  auto runCheck = [](const char *smiles, bool expectKekulizeError = false) {
+    const v2::SmilesParse::SmilesParserParams p{.sanitize = false,
+                                                .replacements = {}};
+
+    auto mol = v2::SmilesParse::MolFromSmiles(smiles, p);
+    REQUIRE(mol);
+
+    auto failures = MolOps::detectChemistryProblems(*mol);
+
+    REQUIRE(failures.size() == (expectKekulizeError ? 2 : 1));
+
+    REQUIRE(failures[0]->getType() == "AtomValenceException");
+    auto valenceFailure =
+        dynamic_cast<AtomValenceException *>(failures[0].get());
+    REQUIRE(valenceFailure);
+
+    REQUIRE(valenceFailure->getAtomIdx() == 4);
+
+    if (expectKekulizeError) {
+      REQUIRE(failures[1]->getType() == "KekulizeException");
+    }
+  };
+
+  SECTION("aliphatic pentavalent carbon") {
+    // the [C] atom is pentavalent, and parsing the SMILES fails
+    // sanitization at the valence checks in SANITIZE_PROPERTIES
+    runCheck("Oc1cc2=[C](=O)c(cccn2)n1");
+  }
+
+  SECTION("aromatic pentavalent carbon") {
+    // ... but when the atom is aromatic, the valence check doesn't
+    // catch the pentavalent carbon (this is the reported issue)
+    runCheck("Oc1cc2=[c](=O)c(cccn2)n1");
+  }
+
+  SECTION("hypervalent aromatic with explicit Hs") {
+    // using [cH2] would not trigger the valence error,
+    // since the valence check would consider the case where both
+    // ring bonds are kekulized to single bonds, but kekulization
+    // will fail (the ring can't be aromatic if these bonds are both
+    // single).
+    // With [cH3], both the valence and the kekulization checks
+    // will fail.
+
+    bool expectKekulizeError = true;
+    runCheck("c1ccc[cH3]c1", expectKekulizeError);
   }
 }
