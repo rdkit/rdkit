@@ -583,7 +583,7 @@ TEST_CASE("Github 9744 - possible hits not in descending order of similarity") {
       "OCC([1*])=NN=[2*].c1ccccc1N([3*])[1*].C(F)(F)(F)C1CCN(C1)C(=[2*])[3*] 1-1;2-2;3-2;triazole-1",
       "OCC([1*])=NN=[2*].C1CCCC1N([3*])[1*].C(F)(F)(F)C1CCN(C1)C(=[2*])[3*] 1-1;2-1;3-2;triazole-1",
       "CC(C)OCC([1*])=NN=[2*].c1ccccc1N([3*])[1*].C(F)(F)(F)C1CCN(C1)C(=[2*])[3*] 1-2;2-2;3-2;triazole-1"};
-  CHECK(countFileLines(params.possibleHitsFile) == 7);
+  REQUIRE(countFileLines(params.possibleHitsFile) == 7);
   std::ifstream ifs(params.possibleHitsFile);
   std::string line;
   int lineNum = 0;
