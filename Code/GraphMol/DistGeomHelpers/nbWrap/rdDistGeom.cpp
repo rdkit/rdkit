@@ -81,6 +81,14 @@ struct PyEmbedParameters : public RDKit::DGeomHelpers::EmbedParameters {
         new DistGeom::BoundsMatrix(nrows, sdata));
   }
 
+  void setAdditionalChiralSets(const nb::list &chiralSets) {
+    additionalChiralSets.clear();
+    for (auto item : chiralSets) {
+      additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+          *nb::cast<DistGeom::ChiralSet *>(item)));
+    }
+  }
+
  private:
   std::unique_ptr<std::map<int, RDGeom::Point3D>> d_coordMap;
 };
@@ -548,6 +556,23 @@ RETURNS:
       .value("MMFF", RDKit::DGeomHelpers::EmbedFF::MMFF)
       .export_values();
 
+  nb::class_<DistGeom::ChiralSet>(
+      m, "ChiralSet",
+      R"DOC(Captures a set of atoms defining a chiral volume in a molecule. 
+  The chiral volume is calculated using points 1-4. 
+  Point 0 is considered to be the centroid; if the chiral set does not have a centroid, set it to the same value as d_idx4.)DOC")
+      .def(nb::init<int, int, int, int, int, double, double>(), "idx0"_a,
+           "idx1"_a, "idx2"_a, "idx3"_a, "idx4"_a, "volLowerBound"_a,
+           "volUpperBound"_a, "Constructor for ChiralSet")
+      .def_rw("idx0", &DistGeom::ChiralSet::d_idx0)
+      .def_rw("idx1", &DistGeom::ChiralSet::d_idx1)
+      .def_rw("idx2", &DistGeom::ChiralSet::d_idx2)
+      .def_rw("idx3", &DistGeom::ChiralSet::d_idx3)
+      .def_rw("idx4", &DistGeom::ChiralSet::d_idx4)
+      .def_rw("volumeLowerBound", &DistGeom::ChiralSet::d_volumeLowerBound)
+      .def_rw("volumeUpperBound", &DistGeom::ChiralSet::d_volumeUpperBound)
+      .def_rw("structureFlags", &DistGeom::ChiralSet::d_structureFlags);
+
   nb::class_<PyEmbedParameters>(m, "EmbedParameters",
                                 "Parameters controlling embedding")
       .def(nb::init<>())
@@ -656,6 +681,9 @@ used during structural minimisation stage)DOC")
           "If provided, the Conformer with this ID in the molecule (if present) is optimized with the ETKDG force field in place.")
       .def_rw("embedForceField", &PyEmbedParameters::embedForceField,
               "Force Field to use for ideal 1-2 and 1-3 distances.")
+      .def("SetAdditionalChiralSets",
+           &PyEmbedParameters::setAdditionalChiralSets,
+           "Set additional chiral sets to be used for the embedding process.")
       .def("__setattr__", &safeSetattr);
 
   m.def("EmbedMultipleConfs", &RDKit::EmbedMultipleConfs2, "mol"_a,

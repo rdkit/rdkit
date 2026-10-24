@@ -17,6 +17,7 @@
 #include <RDGeneral/BoostEndInclude.h>
 
 #include <DistGeom/BoundsMatrix.h>
+#include <DistGeom/ChiralSet.h>
 #include <Geometry/point.h>
 #include <string>
 
@@ -93,6 +94,41 @@ void updateEmbedParametersFromJSON(EmbedParameters &params,
     params.coordMap = cmap;
   }
 
+  if (auto opt = pt.get_child_optional("additionalChiralSets")) {
+    for (const auto &entry : *opt) {
+      auto chiralSet = std::make_shared<DistGeom::ChiralSet>();
+      if (const auto val = entry.second.get_optional<unsigned int>("d_idx0")) {
+        chiralSet->d_idx0 = *val;
+      }
+      if (const auto val = entry.second.get_optional<unsigned int>("d_idx1")) {
+        chiralSet->d_idx1 = *val;
+      }
+      if (const auto val = entry.second.get_optional<unsigned int>("d_idx2")) {
+        chiralSet->d_idx2 = *val;
+      }
+      if (const auto val = entry.second.get_optional<unsigned int>("d_idx3")) {
+        chiralSet->d_idx3 = *val;
+      }
+      if (const auto val = entry.second.get_optional<unsigned int>("d_idx4")) {
+        chiralSet->d_idx4 = *val;
+      }
+      if (const auto val =
+              entry.second.get_optional<float>("d_volumeLowerBound")) {
+        chiralSet->d_volumeLowerBound = *val;
+      }
+      if (const auto val =
+              entry.second.get_optional<float>("d_volumeUpperBound")) {
+        chiralSet->d_volumeUpperBound = *val;
+      }
+      if (const auto val =
+              entry.second.get_optional<std::uint64_t>("d_structureFlags")) {
+        chiralSet->d_structureFlags = *val;
+      }
+      // Here you would parse the entry to populate chiralSet
+      // This is a placeholder for the actual parsing logic
+      params.additionalChiralSets.push_back(chiralSet);
+    }
+  }
   if (auto opt = pt.get_optional<std::string>("initialEmbeddingMode")) {
     std::stringstream valS{*opt};
     if (!(valS >> params.initialEmbeddingMode)) {
@@ -151,6 +187,26 @@ std::string embedParametersToJSON(const EmbedParameters &params) {
     }
 
     pt.add_child("boundsMatrix", matrixPT);
+  }
+
+  if (!params.additionalChiralSets.empty()) {
+    boost::property_tree::ptree chiralSetsPT;
+
+    for (const auto &chiralSet : params.additionalChiralSets) {
+      boost::property_tree::ptree chiralSetPT;
+      chiralSetPT.put("d_idx0", chiralSet->d_idx0);
+      chiralSetPT.put("d_idx1", chiralSet->d_idx1);
+      chiralSetPT.put("d_idx2", chiralSet->d_idx2);
+      chiralSetPT.put("d_idx3", chiralSet->d_idx3);
+      chiralSetPT.put("d_idx4", chiralSet->d_idx4);
+      chiralSetPT.put("d_volumeLowerBound", chiralSet->d_volumeLowerBound);
+      chiralSetPT.put("d_volumeUpperBound", chiralSet->d_volumeUpperBound);
+      chiralSetPT.put("d_structureFlags", chiralSet->d_structureFlags);
+
+      chiralSetsPT.push_back({"", chiralSetPT});
+    }
+
+    pt.add_child("additionalChiralSets", chiralSetsPT);
   }
 
   std::ostringstream ss;

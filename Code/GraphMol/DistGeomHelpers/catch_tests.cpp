@@ -28,6 +28,7 @@
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <Geometry/Utils.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
+#include <DistGeom/ChiralSet.h>
 #include "Embedder.h"
 #include "BoundsMatrixBuilder.h"
 #include "BoundsMatrixBuilderDetails.h"
@@ -3294,4 +3295,128 @@ M  END)CTAB"_ctab;
              Catch::Matchers::WithinAbs(mmat->getLowerBound(22, 36), 5.e-1));
   CHECK_THAT(mmat->getLowerBound(22, 8),
              Catch::Matchers::WithinAbs(mmat->getLowerBound(21, 36), 5.e-1));
+}
+
+TEST_CASE("providing additional chiral sets while embedding") {
+  // values used in the code:
+  constexpr double chiralVolumeMin = 5.0;
+  constexpr double chiralVolumeMax = 100.0;
+  SECTION("basics") {
+    auto m1 = "I[C@](Cl)(Br)F"_smiles;
+    REQUIRE(m1);
+    auto m2 = "I[C](Cl)(Br)F"_smiles;
+    REQUIRE(m2);
+    RWMol m3(*m2);
+
+    auto params = DGeomHelpers::ETKDGv4;
+    params.randomSeed = 0xf00d;
+    params.enforceChirality = true;
+
+    DGeomHelpers::EmbedMolecule(*m1, params);
+    MolOps::assignStereochemistryFrom3D(*m1);
+
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 2, 3, 4, chiralVolumeMin, chiralVolumeMax));
+    DGeomHelpers::EmbedMolecule(*m2, params);
+    MolOps::assignStereochemistryFrom3D(*m2);
+
+    // Swap to a negative chiral volume:
+    params.additionalChiralSets.clear();
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 2, 3, 4, -chiralVolumeMax, -chiralVolumeMin));
+    DGeomHelpers::EmbedMolecule(m3, params);
+    MolOps::assignStereochemistryFrom3D(m3);
+
+    CHECK(m1->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+    CHECK(m2->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+    CHECK(m3.getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
+  }
+
+  SECTION("bad input handling") {
+    auto m1 = "I[C](Cl)(Br)F"_smiles;
+    REQUIRE(m1);
+    auto params = DGeomHelpers::ETKDGv4;
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 2, 3, 8, chiralVolumeMin, chiralVolumeMax));
+    CHECK_THROWS_AS(DGeomHelpers::EmbedMolecule(*m1, params),
+                    ValueErrorException);
+  }
+
+  SECTION("duplicate handling") {
+    auto m1 = "I[C@](Cl)(Br)F"_smiles;
+    REQUIRE(m1);
+    auto params = DGeomHelpers::ETKDGv4;
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 2, 3, 4, chiralVolumeMin, chiralVolumeMax));
+    CHECK_THROWS_AS(DGeomHelpers::EmbedMolecule(*m1, params),
+                    ValueErrorException);
+    // the check is order independent
+    params.additionalChiralSets.clear();
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 3, 2, 4, chiralVolumeMin, chiralVolumeMax));
+    CHECK_THROWS_AS(DGeomHelpers::EmbedMolecule(*m1, params),
+                    ValueErrorException);
+  }
+
+  SECTION("duplicate handling on input") {
+    auto m1 = "I[C](Cl)(Br)F"_smiles;
+    REQUIRE(m1);
+    auto params = DGeomHelpers::ETKDGv4;
+    params.additionalChiralSets.clear();
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 3, 2, 4, chiralVolumeMin, chiralVolumeMax));
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 3, 2, 4, chiralVolumeMin, chiralVolumeMax));
+    CHECK_THROWS_AS(DGeomHelpers::EmbedMolecule(*m1, params),
+                    ValueErrorException);
+  }
+
+  SECTION("two chiral sets") {
+    auto m1 = "I[C](Cl)(Br)O[C](F)(Cl)Br"_smiles;
+    REQUIRE(m1);
+
+    auto params = DGeomHelpers::ETKDGv4;
+    params.randomSeed = 0xf00d;
+    params.enforceChirality = true;
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 2, 3, 4, chiralVolumeMin, chiralVolumeMax));
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        5, 4, 6, 7, 8, chiralVolumeMin, chiralVolumeMax));
+    CHECK(DGeomHelpers::EmbedMolecule(*m1, params) == 0);
+    MolOps::assignStereochemistryFrom3D(*m1);
+    CHECK(m1->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+    CHECK(m1->getAtomWithIdx(5)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+  }
+
+  SECTION("JSON handling") {
+    auto params = DGeomHelpers::ETKDGv4;
+    params.randomSeed = 0xf00d;
+    params.enforceChirality = true;
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 2, 3, 4, chiralVolumeMin, chiralVolumeMax));
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        5, 4, 6, 7, 8, chiralVolumeMin, chiralVolumeMax));
+    auto json = DGeomHelpers::embedParametersToJSON(params);
+    CHECK(json.find("additionalChiralSets") != std::string::npos);
+
+    DGeomHelpers::EmbedParameters newParams;
+    DGeomHelpers::updateEmbedParametersFromJSON(newParams, json);
+    CHECK(newParams.additionalChiralSets.size() == 2);
+    CHECK(newParams.additionalChiralSets[0]->d_idx0 == 1);
+    CHECK(newParams.additionalChiralSets[0]->d_idx1 == 0);
+    CHECK(newParams.additionalChiralSets[0]->d_idx2 == 2);
+    CHECK(newParams.additionalChiralSets[0]->d_idx3 == 3);
+    CHECK(newParams.additionalChiralSets[0]->d_idx4 == 4);
+    CHECK(newParams.additionalChiralSets[0]->d_volumeLowerBound == chiralVolumeMin);
+    CHECK(newParams.additionalChiralSets[0]->d_volumeUpperBound == chiralVolumeMax);
+    CHECK(newParams.additionalChiralSets[0]->d_structureFlags == 0);
+    CHECK(newParams.additionalChiralSets[1]->d_idx0 == 5);
+    CHECK(newParams.additionalChiralSets[1]->d_idx1 == 4);
+    CHECK(newParams.additionalChiralSets[1]->d_idx2 == 6);
+    CHECK(newParams.additionalChiralSets[1]->d_idx3 == 7);
+    CHECK(newParams.additionalChiralSets[1]->d_idx4 == 8);
+    CHECK(newParams.additionalChiralSets[1]->d_volumeLowerBound == chiralVolumeMin);
+    CHECK(newParams.additionalChiralSets[1]->d_volumeUpperBound == chiralVolumeMax);
+    CHECK(newParams.additionalChiralSets[1]->d_structureFlags == 0);
+  }
 }
