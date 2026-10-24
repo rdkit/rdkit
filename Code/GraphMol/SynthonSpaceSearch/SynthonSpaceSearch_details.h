@@ -217,12 +217,9 @@ RDKIT_SYNTHONSPACESEARCH_EXPORT void makeShapesFromMols(
     DGeomHelpers::EmbedParameters &dgParams, ShapeBuildParams &shapeBuildParams,
     std::unique_ptr<ProgressBar> &pbar);
 
-RDKIT_SYNTHONSPACESEARCH_EXPORT void sortAndUniquifyToTry(
-    std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
-        &toTry);
-
 // Uniquify the possible hits in toTry based on product name, keeping the
-// first product of that name and discarding any duplicates.
+// first product of that name and discarding any duplicates.  Input order
+// is preserved.
 RDKIT_SYNTHONSPACESEARCH_EXPORT void uniquifyToTry(
     std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
         &toTry);

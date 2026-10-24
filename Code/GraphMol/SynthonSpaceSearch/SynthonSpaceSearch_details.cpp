@@ -1485,42 +1485,14 @@ void makeShapesFromMols(std::vector<std::unique_ptr<SampleMolRec>> &sampleMols,
   }
 }
 
-void sortAndUniquifyToTry(
+void uniquifyToTry(
     std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
-        &toTry) {
-  // Uniquify on hit name, maintaining the order of the same name from
-  // different hitsets.  This is particularly important for shape searching
-  // where they should be in order of descending approx similarity.
-  std::vector<std::pair<size_t, std::string>> tmp;
-  tmp.reserve(toTry.size());
-  for (size_t i = 0; i < toTry.size(); i++) {
-    tmp.emplace_back(
-        i, details::buildProductName(toTry[i].first, toTry[i].second));
-  }
-  std::stable_sort(tmp.begin(), tmp.end(),
-                   [](const auto &lhs, const auto &rhs) -> bool {
-                     return lhs.second < rhs.second;
-                   });
-  tmp.erase(std::unique(tmp.begin(), tmp.end(),
-                        [](const auto &lhs, const auto &rhs) -> bool {
-                          return lhs.second == rhs.second;
-                        }),
-            tmp.end());
-  std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
-      newToTry;
-  newToTry.reserve(tmp.size());
-  std::transform(tmp.begin(), tmp.end(), back_inserter(newToTry),
-                 [&](const auto &p) -> auto { return toTry[p.first]; });
-  toTry = std::move(newToTry);
-}
-
-void uniquifyToTry(std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
         &toTry) {
   std::vector<std::pair<const SynthonSpaceHitSet *, std::vector<size_t>>>
       newToTry;
   newToTry.reserve(toTry.size());
   std::unordered_set<std::string> prodNames;
-  for (auto &tt: toTry) {
+  for (auto &tt : toTry) {
     auto prodName = buildProductName(tt.first, tt.second);
     auto res = prodNames.insert(prodName);
     if (res.second) {
