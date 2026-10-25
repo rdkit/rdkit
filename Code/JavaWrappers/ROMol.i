@@ -74,8 +74,8 @@
 #include <sstream>
 %}
 
-%template(ROMol_Vect) std::vector< boost::shared_ptr<RDKit::ROMol> >;
-%template(ROMol_Vect_Vect) std::vector< std::vector< boost::shared_ptr<RDKit::ROMol> > >;
+%template(ROMol_Vect) std::vector< std::shared_ptr<RDKit::ROMol> >;
+%template(ROMol_Vect_Vect) std::vector< std::vector< std::shared_ptr<RDKit::ROMol> > >;
 %template(Atom_Vect) std::vector<RDKit::Atom*>;
 %template(Const_Bond_Vect) std::vector<const RDKit::Bond*>;
 %template(StereoGroup_Vect) std::vector<RDKit::StereoGroup>;

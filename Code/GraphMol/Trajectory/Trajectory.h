@@ -86,7 +86,7 @@ class RDKIT_TRAJECTORY_EXPORT Trajectory {
   // number of coordinate tuples associated to each Snapshot
   const unsigned int d_numPoints;
   // smart_ptr to vector holding the Snapshots for this Trajectory
-  boost::shared_ptr<SnapshotVect> d_snapshotVect;
+  std::shared_ptr<SnapshotVect> d_snapshotVect;
 };
 /*! \brief Reads coordinates from an AMBER trajectory file
            into the traj Trajectory object

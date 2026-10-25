@@ -18,7 +18,7 @@
 
 #include <string>
 #include <utility>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 namespace RDKit {
 
