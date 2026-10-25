@@ -48,9 +48,9 @@ unsigned int getEffectiveAtomicNum(const Atom &atom, bool checkValue) {
     throw AtomValenceException("Effective atomic number out of range",
                                atom.getIdx());
   }
-  effectiveAtomicNum = std::clamp(
-      effectiveAtomicNum, 0,
-      static_cast<int>(periodicTable->getMaxAtomicNumber()));
+  effectiveAtomicNum =
+      std::clamp(effectiveAtomicNum, 0,
+                 static_cast<int>(periodicTable->getMaxAtomicNumber()));
   return static_cast<unsigned int>(effectiveAtomicNum);
 }
 
@@ -351,11 +351,18 @@ int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
   const auto *periodicTable = PeriodicTable::getTable();
   // FIX: contributions of bonds to valence are being done at best
   // approximately
-  double accum = 0;
+  double accum = atom.getNumExplicitHs();
+
+  // this only makes sense for aromatic atoms: we use it to calculate
+  // the minimum possible bond order for the atom, which is met when
+  // all incoming aromatic bonds are considered to have a bond order
+  // of 1.0 (i.e. when the mol is kekulized, they are kekulized to single bonds)
+  double minAccum = atom.getNumExplicitHs();
   for (const auto bnd : atom.getOwningMol().atomBonds(&atom)) {
-    accum += bnd->getValenceContrib(&atom);
+    auto contrib = bnd->getValenceContrib(&atom);
+    accum += contrib;
+    minAccum += (bnd->getIsAromatic() ? 1.0 : contrib);
   }
-  accum += atom.getNumExplicitHs();
 
   const auto &ovalens = periodicTable->getValenceList(atom.getAtomicNum());
   // if we start with an atom that doesn't have specified valences, we stick
@@ -388,13 +395,16 @@ int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
         pval = val;
       }
     }
+
+    // first, check that the minimum possible valence for the aromatic
+    // atom does not exceed the allowed valence for the element. Then,
     // if we're within 1.5 of the allowed valence, go ahead and take it.
     // this reflects things like the N in c1cccn1C, which starts with
     // accum of 4, but which can be kekulized to C1=CC=CN1C, where
     // the valence is 3 or the bridging N in c1ccn2cncc2c1, which starts
     // with a valence of 4.5, but can be happily kekulized down to a valence
     // of 3
-    if (accum - pval <= 1.5) {
+    if (minAccum - pval <= 0.1 && accum - pval <= 1.5) {
       accum = pval;
     }
   }
@@ -439,8 +449,8 @@ int calculateExplicitValence(const Atom &atom, bool strict, bool checkIt) {
         // raise an error
         std::ostringstream errout;
         errout << "Explicit valence for atom # " << atom.getIdx() << " "
-               << periodicTable->getElementSymbol(atom.getAtomicNum())
-               << ", " << res << ", is greater than permitted";
+               << periodicTable->getElementSymbol(atom.getAtomicNum()) << ", "
+               << res << ", is greater than permitted";
         std::string msg = errout.str();
         BOOST_LOG(rdErrorLog) << msg << std::endl;
         throw AtomValenceException(msg, atom.getIdx());
