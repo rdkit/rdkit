@@ -78,13 +78,13 @@ SubstructTerm::SubstructTerm(std::string aname, std::string asmarts, int ascore,
       score(ascore),
       requiredElements(std::move(reqElements)),
       connectivitySmarts(std::move(connSmarts)) {
-  std::unique_ptr<ROMol> pattern(SmartsToMol(smarts));
+  std::unique_ptr<RWMol> pattern(SmartsToMol(smarts));
   if (pattern) {
     matcher = std::move(*pattern);
   }
   // Initialize connectivity matcher if provided
   if (!connectivitySmarts.empty()) {
-    std::unique_ptr<ROMol> connPattern(SmartsToMol(connectivitySmarts));
+    std::unique_ptr<RWMol> connPattern(SmartsToMol(connectivitySmarts));
     if (connPattern) {
       connectivityMatcher = std::move(*connPattern);
     }

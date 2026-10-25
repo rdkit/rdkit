@@ -2427,24 +2427,45 @@ TEST_CASE("Github #9461") {
              Catch::Matchers::WithinAbs(0.02, 1e-4));
 }
 
+namespace {
+auto allTrans = [](RWMol &mol, DGeomHelpers::EmbedParameters &ps,
+                   const std::size_t i, const std::size_t j,
+                   const std::size_t k, const std::size_t l) {
+  auto cids = DGeomHelpers::EmbedMultipleConfs(mol, 10, ps);
+
+  REQUIRE(cids.size() > 0);
+
+  for (const auto cid : cids) {
+    auto conf = mol.getConformer(cid);
+    auto tors = MolTransforms::getDihedralDeg(conf, i, j, k, l);
+    if (std::fabs(tors) < 90.0) {
+      return false;
+    }
+  }
+  return true;
+};
+auto allCis = [](RWMol &mol, DGeomHelpers::EmbedParameters &ps,
+                 const std::size_t i, const std::size_t j, const std::size_t k,
+                 const std::size_t l) {
+  auto cids = DGeomHelpers::EmbedMultipleConfs(mol, 10, ps);
+
+  REQUIRE(cids.size() > 0);
+
+  for (const auto cid : cids) {
+    auto conf = mol.getConformer(cid);
+    auto tors = MolTransforms::getDihedralDeg(conf, i, j, k, l);
+    if (std::fabs(tors) > 90.0) {
+      return false;
+    }
+  }
+  return true;
+};
+}  // namespace
+
 TEST_CASE("TransAmideKTerm") {
   /* Embed 10 confs of a molecule using the provided parameters and returns
   true if all torsions around i,j,k,l are closer to +/-180 than to 0
   */
-  auto allTrans = [](RWMol &mol, DGeomHelpers::EmbedParameters &ps,
-                     const std::size_t i, const std::size_t j,
-                     const std::size_t k, const std::size_t l) {
-    auto cids = DGeomHelpers::EmbedMultipleConfs(mol, 10, ps);
-
-    for (const auto cid : cids) {
-      auto conf = mol.getConformer(cid);
-      auto tors = MolTransforms::getDihedralDeg(conf, i, j, k, l);
-      if (std::fabs(tors) < 90.0) {
-        return false;
-      }
-    }
-    return true;
-  };
   SECTION("Chain Case") {
     auto mol = "CNC(=O)C"_smiles;
     MolOps::addHs(*mol);
@@ -2981,6 +3002,41 @@ TEST_CASE("Constraint torsions (initial embedding (IC))") {
                                                (i + 3) % numRingAtoms),
                  Catch::Matchers::WithinAbs(0.0, 1.e-4));
     }
+  }
+}
+
+TEST_CASE("PR #9730") {
+  SECTION("carbamide") {
+    auto mol = "NC(=O)NC"_smiles;
+    MolOps::addHs(*mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) > 0.2);
+    auto ps = DGeomHelpers::ETKDGv4;
+    ps.randomSeed = 0xC0FFEE;
+    ps.useLegacyImplementation = GENERATE(true, false);
+
+    CHECK(!allTrans(*mol, ps, 0, 1, 3, 4));
+    CHECK(!allCis(*mol, ps, 0, 1, 3, 4));
+  }
+
+  SECTION("Esters") {
+    // esters should be still forced to be trans
+    auto mol = "NC(=O)OC"_smiles;
+    MolOps::addHs(*mol);
+    DistGeom::BoundsMatPtr bm{new DistGeom::BoundsMatrix(mol->getNumAtoms())};
+    DGeomHelpers::initBoundsMat(bm, 0.0, 1000.0);
+    DGeomHelpers::setTopolBounds(*mol, bm);
+
+    CHECK(bm->getUpperBound(0, 4) - bm->getLowerBound(0, 4) <= 0.2);
+
+    auto ps = DGeomHelpers::ETKDGv4;
+    ps.randomSeed = 0xC0FFEE;
+    ps.useLegacyImplementation = GENERATE(true, false);
+
+    CHECK(allTrans(*mol, ps, 0, 1, 3, 4));
   }
 }
 
