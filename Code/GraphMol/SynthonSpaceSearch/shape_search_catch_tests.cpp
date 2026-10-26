@@ -591,10 +591,6 @@ TEST_CASE("Best hits false") {
                                  0.863, 0.856, 0.822, 0.820};
   int i = 0;
   for (const auto &mol : results.getHitMolecules()) {
-    // Different machine/compiler combinations give slightly different results
-    // for these tests which seems to be due to the conformer generator.
-    // With bestHits = true, some of the hits come back as > 0.9.  This checks
-    // that we're not getting those.
     CHECK((mol->getProp<double>("Similarity") <= fullScores[i++]));
     CHECK(std::ranges::find(
               expNames, mol->getProp<std::string>(common_properties::_Name)) !=
