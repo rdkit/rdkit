@@ -64,7 +64,7 @@ PGXS       := $(shell $(PG_CONFIG) --pgxs)
 
 all: $(EXTENSION)--$(EXTVERSION).sql
 
-REGRESS    = rdkit-91 props btree molgist bfpgist-91 bfpgin sfpgist slfpgist fps reaction ${INCHIREGRESS} ${AVALONREGRESS}
+REGRESS    = rdkit-91 props btree molgist bfpgist-91 bfpknn bfpgin sfpgist slfpgist fps reaction ${INCHIREGRESS} ${AVALONREGRESS}
 DATA = $(EXTENSION)--$(EXTVERSION).sql
 EXTRA_CLEAN = $(EXTENSION)--$(EXTVERSION).sql
 include $(PGXS)
