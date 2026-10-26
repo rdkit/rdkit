@@ -56,7 +56,11 @@ bool getMacroAtomDetails(const Atom &atom, MacroAtomDetails &info) {
   }
   info.monomerClass = macroInfo->getMonomerClass();
   info.label = macroInfo->getSymbol();
-  return !info.label.empty();
+  if (info.label.empty()) {
+    throw ValueErrorException("Macro atom " + std::to_string(atom.getIdx()) +
+                              " has an empty symbol");
+  }
+  return true;
 }
 
 const MacroMolTemplate *findTemplate(
@@ -95,21 +99,26 @@ void copyRegularAtom(BuildState &state, const Atom &atom) {
 std::set<int> findUsedAttachPoints(const MacroMol &macroMol,
                                    const Atom &macroAtom) {
   std::set<int> usedAttachPoints;
-  for (const auto *macroBond : macroMol.bonds()) {
+  for (const auto *macroBond : macroMol.atomBonds(&macroAtom)) {
     const auto *macroBondInfo = macroBond->getMacroBondInfo();
     if (!macroBondInfo) {
       continue;
     }
 
+    const bool isBegin = macroBond->getBeginAtomIdx() == macroAtom.getIdx();
     for (const auto &bondInfo : macroBondInfo->getBonds()) {
-      int attachPoint = -1;
-      if (macroBond->getBeginAtomIdx() == macroAtom.getIdx()) {
-        attachPoint = bondInfo.beginAttachPt;
-      } else if (macroBond->getEndAtomIdx() == macroAtom.getIdx()) {
-        attachPoint = bondInfo.endAttachPt;
+      const auto attachPoint =
+          isBegin ? bondInfo.beginAttachPt : bondInfo.endAttachPt;
+      if (attachPoint < 0) {
+        continue;
       }
-      if (attachPoint >= 0) {
-        usedAttachPoints.insert(attachPoint);
+      // Each attachment point has a single leaving group, which can only be
+      // replaced by one bond
+      if (!usedAttachPoints.insert(attachPoint).second) {
+        throw ValueErrorException(
+            "Attachment point " + std::to_string(attachPoint) +
+            " of macro atom " + std::to_string(macroAtom.getIdx()) +
+            " is used by more than one macro bond");
       }
     }
   }

@@ -441,3 +441,43 @@ TEST_CASE("MolFromMacroMol checks macro bond types", "[MolFromMacroMol]") {
         ContainsSubstring("must be a hydrogen or zero-order bond"));
   }
 }
+
+TEST_CASE("MolFromMacroMol rejects invalid macro atoms and bonds",
+          "[MolFromMacroMol]") {
+  using Catch::Matchers::ContainsSubstring;
+  MacroMolTemplateLibrary templates;
+  templates.addTemplate(makeAlanineTemplate());
+  templates.addTemplate(makeGlycineTemplate());
+
+  SECTION("macro atom with an empty symbol") {
+    MacroMol macroMol;
+    macroMol.addMacroAtom("", MonomerClass::AminoAcid);
+    CHECK_THROWS_WITH(MolFromMacroMol(macroMol, templates),
+                      ContainsSubstring("Macro atom 0 has an empty symbol"));
+  }
+
+  SECTION("attachment point used by bonds to two ordinary atoms") {
+    MacroMol macroMol;
+    const auto macroAtom = macroMol.addMacroAtom("A", MonomerClass::AminoAcid);
+    const auto atom1 = macroMol.addAtom(new Atom(6), false, true);
+    const auto atom2 = macroMol.addAtom(new Atom(6), false, true);
+    macroMol.addMacroAtomToAtomBond(macroAtom, atom1, 1);
+    macroMol.addMacroAtomToAtomBond(macroAtom, atom2, 1);
+    CHECK_THROWS_WITH(
+        MolFromMacroMol(macroMol, templates),
+        ContainsSubstring("Attachment point 1 of macro atom 0 is used by more "
+                          "than one macro bond"));
+  }
+
+  SECTION("attachment point used twice between the same macro atoms") {
+    MacroMol macroMol;
+    const auto ala = macroMol.addMacroAtom("A", MonomerClass::AminoAcid);
+    const auto gly = macroMol.addMacroAtom("G", MonomerClass::AminoAcid);
+    macroMol.addMacroBond(ala, gly, 2, 1);
+    macroMol.addMacroBond(ala, gly, 2, 2);
+    CHECK_THROWS_WITH(
+        MolFromMacroMol(macroMol, templates),
+        ContainsSubstring("Attachment point 2 of macro atom 0 is used by more "
+                          "than one macro bond"));
+  }
+}

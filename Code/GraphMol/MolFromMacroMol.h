@@ -30,11 +30,13 @@ namespace RDKit {
   \param macroMol  the molecule to expand
   \param templates the library used to look up the macro atoms' templates
 
-  \throws ValueErrorException if a macro atom has no template, or a macro
-          bond uses an attachment point its template does not have, or a macro
-          bond would change the valence of an attachment atom: its bond type
-          must match that of the bond to the leaving atom it replaces or, if
-          the attachment point has no leaving atom, be HYDROGEN or ZERO
+  \throws ValueErrorException if
+    - a macro atom has an empty symbol or no template,
+    - an attachment point is used by more than one macro bond,
+    - a macro bond uses an attachment point its template does not have, or
+    - a macro bond would change the valence of an attachment atom: its bond
+      type must match that of the bond to the leaving atom it replaces or, if
+      the attachment point has no leaving atom, be HYDROGEN or ZERO
 */
 RDKIT_GRAPHMOL_EXPORT std::unique_ptr<RWMol> MolFromMacroMol(
     const MacroMol &macroMol, const MacroMolTemplateLibrary &templates);
