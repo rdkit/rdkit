@@ -63,14 +63,12 @@ TEST_CASE("Shape Small test") {
 #if 1
   // The source files for the shape database.  Useful to keep
   // around in case the database ever needs updating.
-  std::string libNames = fullRoot + "amide_space.txt";
+  std::string libName = fullRoot + "amide_space.txt";
 #endif
   std::string dbName = fullRoot + "amide_space_shapes.spc";
   std::string querySmi =
       "O=C(c1ccccc1)N1CCCC1 |(0.0443291,-1.81486,-1.76886;0.0506321,-0.858174,-0.921491;1.37975,-0.430412,-0.483603;2.18964,-1.35506,0.144714;3.47088,-1.00454,0.585539;3.93803,0.297573,0.388032;3.1267,1.22739,-0.242406;1.85597,0.849751,-0.670531;-1.14837,-0.261434,-0.446583;-1.26073,0.836916,0.520219;-2.73583,1.04666,0.696614;-3.34033,-0.283345,0.290893;-2.46516,-0.679843,-0.874401)|";
   std::vector<size_t> expNumHits{3, 8, 1};
-  std::vector<std::vector<double>> expScores{
-      {0.9, 0.9, 0.9}, {0.9, 0.9, 0.9, 0.9, 0.8, 0.8, 0.8, 0.8}, {0.6}};
   std::vector<std::string> expNames{"1-1;2-1;amide-1", "1-2;2-1;amide-1",
                                     "1-3;2-1;amide-1"};
   ShapeBuildParams shapeBuildOptions;
@@ -82,11 +80,11 @@ TEST_CASE("Shape Small test") {
 
   SynthonSpace synthonspace;
 #if 0
-    // In case the databases ever need updating.
-    bool cancelled = false;
-    synthonspace.readTextFile(libName, cancelled);
-    synthonspace.buildSynthonShapes(cancelled, shapeBuildOptions);
-    synthonspace.writeDBFile(dbName);
+  // In case the databases ever need updating.
+  bool cancelled = false;
+  synthonspace.readTextFile(libName, cancelled);
+  synthonspace.buildSynthonShapes(cancelled, shapeBuildOptions);
+  synthonspace.writeDBFile(dbName);
 #endif
   synthonspace.readDBFile(dbName);
   SynthonSpaceSearchParams params;
@@ -547,4 +545,63 @@ TEST_CASE("Shape Write possible hits") {
   auto newResults = synthonspace.shapeSearch(*queryMol, params);
   CHECK(countFileLines("amide_space_shapes_poss_hits.txt") == 3);
   std::remove(params.possibleHitsFile.c_str());
+}
+
+TEST_CASE("Best hits false") {
+  // Show that best hits false also works, but gives not better results
+  // than when it's true.
+  REQUIRE(rdbase);
+  std::string fName(rdbase);
+  std::string fullRoot(fName + "/Code/GraphMol/SynthonSpaceSearch/data/");
+  std::string dbName = fullRoot + "triazole_space_shapes.spc";
+
+  std::string querySmi =
+      "C[C@H]1CCN(c2nnc(CO)n2C2CCCC2)C1 |(3.88187,-1.9608,1.02401;3.40947,-0.556473,0.685633;3.49763,-0.278493,-0.787477;2.18424,0.313597,-1.21035;1.39217,0.480256,0.0110759;0.36454,1.42337,0.278193;0.656593,2.66561,0.766052;-0.477075,3.33073,0.923413;-1.48168,2.52297,0.540741;-2.93641,2.8664,0.551747;-3.33354,3.43671,-0.657732;-0.965924,1.32594,0.134935;-1.71735,0.224133,-0.333621;-1.11549,-0.643316,-1.37025;-2.26431,-1.65079,-1.54776;-2.58926,-1.96617,-0.0975393;-2.00229,-0.836476,0.740437;1.90383,-0.551243,0.906815),wD:1.0|";
+  size_t expNumHits{8};
+  std::vector<std::string> expNames{
+      {"1-1;2-1;3-1;triazole-1", "1-1;2-2;3-1;triazole-1",
+       "1-1;2-1;3-2;triazole-1", "1-1;2-2;3-2;triazole-1",
+       "1-2;2-1;3-1;triazole-1", "1-2;2-1;3-2;triazole-1",
+       "1-2;2-2;3-1;triazole-1", "1-2;2-2;3-2;triazole-1"}};
+  ShapeBuildParams shapeBuildOptions;
+  shapeBuildOptions.numConfs = 100;
+  shapeBuildOptions.rmsThreshold = 0.5;
+  shapeBuildOptions.numThreads = 1;
+  shapeBuildOptions.shapeSimThreshold = 0.95;
+  shapeBuildOptions.randomSeed = 0xdac;
+
+  SynthonSpace synthonspace;
+  synthonspace.readDBFile(dbName);
+  SynthonSpaceSearchParams params;
+  params.similarityCutoff = 0.8;
+  params.fragSimilarityAdjuster = 0.2;
+  params.approxSimilarityAdjuster = 0.2;
+  params.numConformers = 100;
+  params.numThreads = shapeBuildOptions.numThreads;
+  params.confRMSThreshold = shapeBuildOptions.rmsThreshold;
+  params.timeOut = 0;
+  params.randomSeed = shapeBuildOptions.randomSeed;
+  params.bestHit = false;
+  auto queryMol = v2::SmilesParse::MolFromSmiles(querySmi);
+  auto results = synthonspace.shapeSearch(*queryMol, params);
+  unsigned int j = 0;
+  CHECK(expNumHits == results.getHitMolecules().size());
+  // These are the results I got for bestHit = true.
+  std::vector<double> fullScores{0.944, 0.925, 0.916, 0.893,
+                                 0.863, 0.856, 0.822, 0.820};
+  int i = 0;
+  for (const auto &mol : results.getHitMolecules()) {
+    // Different machine/compiler combinations give slightly different results
+    // for these tests which seems to be due to the conformer generator.
+    // With bestHits = true, some of the hits come back as > 0.9.  This checks
+    // that we're not getting those.
+    CHECK((mol->getProp<double>("Similarity") <= fullScores[i++]));
+    CHECK(std::ranges::find(
+              expNames, mol->getProp<std::string>(common_properties::_Name)) !=
+          expNames.end());
+    auto scores = GaussianShape::ScoreMolecule(*queryMol, *mol);
+    CHECK_THAT(mol->getProp<double>("Similarity"),
+               Catch::Matchers::WithinAbs(scores[0], 0.001));
+    ++j;
+  }
 }

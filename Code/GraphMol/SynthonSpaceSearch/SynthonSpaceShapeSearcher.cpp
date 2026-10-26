@@ -1100,6 +1100,29 @@ std::unique_ptr<ROMol> SynthonSpaceShapeSearcher::buildHit(
       std::cout << " for reaction " << hs->d_reaction->getId() << std::endl;
     }
   }
+
+  // Optimise the torsions in the zipped molecule in case they have ended
+  // up somewhere that isn't sensible.
+  auto dgParams = DGeomHelpers::ETKDGv3;
+  dgParams.optimizeConfWithId = prod->getConformer().getId();
+  // Add coords for the Hs or this can fail with v3.
+  prod.reset(MolOps::addHs(*prod, false, true));
+  auto res = DGeomHelpers::EmbedMolecule(*prod, dgParams);
+  if (res == -1) {
+    // It's a duff conformation, probably because the zip got confused.
+    // This happens in the triazole test, for example, where the connection
+    // points in some cases aren't well aligned due to one of the synthons
+    // flipping wrt where it ought to be.
+    // Build a single decent conformation to be getting on with.
+    dgParams.optimizeConfWithId = std::nullopt;
+    auto res = DGeomHelpers::EmbedMolecule(*prod, dgParams);
+    if (res == -1) {
+      // It's beyond hope, it seems.
+      prod.reset();
+      return prod;
+    }
+  }
+  prod.reset(MolOps::removeHs(*prod));
   return prod;
 }
 
