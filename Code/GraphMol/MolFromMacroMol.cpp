@@ -8,7 +8,7 @@
 //  of the RDKit source tree.
 //
 
-#include <GraphMol/FileParsers/MolFromMacroMol.h>
+#include <GraphMol/MolFromMacroMol.h>
 
 #include <GraphMol/Atom.h>
 #include <GraphMol/Bond.h>
@@ -16,7 +16,7 @@
 #include <GraphMol/MolOps.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SubstanceGroup.h>
-#include <RDGeneral/FileParseException.h>
+#include <RDGeneral/Exceptions.h>
 
 #include <algorithm>
 #include <functional>
@@ -203,7 +203,7 @@ void copyMacroAtom(BuildState &state, const MacroMol &macroMol,
                    const MacroAtomDetails &info) {
   const auto *templ = findTemplate(templates, info);
   if (!templ) {
-    throw FileParseException("No template found for macro atom " +
+    throw ValueErrorException("No template found for macro atom " +
                              std::to_string(atom.getIdx()));
   }
 
@@ -244,7 +244,7 @@ unsigned int getResultAtomForBond(const BuildState &state, const Atom &atom,
   const auto attachPoint =
       expanded.attachPointToTemplateAtom.find(attachPointId);
   if (attachPoint == expanded.attachPointToTemplateAtom.end()) {
-    throw FileParseException("Macro atom bond is missing an attachment point");
+    throw ValueErrorException("Macro atom bond is missing an attachment point");
   }
 
   return expanded.templateToResultAtom.at(attachPoint->second);

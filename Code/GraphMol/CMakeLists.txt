@@ -4,6 +4,7 @@ rdkit_library(GraphMol
         MacroAtomInfo.cpp
         MacroMol.cpp
         MacroMolTemplate.cpp
+        MolFromMacroMol.cpp
         PeriodicTable.cpp
         atomic_data.cpp QueryOps.cpp MolPickler.cpp Canon.cpp
         AtomIterators.cpp BondIterators.cpp Aromaticity.cpp Kekulize.cpp
@@ -51,6 +52,7 @@ rdkit_headers(Atom.h
         MacroMol.h
         MacroMolTemplate.h
         MacroMolTemplateLibrary.h
+        MolFromMacroMol.h
         SanitException.h
         SubstanceGroup.h
         StereoGroup.h
@@ -245,6 +247,9 @@ rdkit_catch_test(testMacroMolTemplate testMacroMolTemplate.cpp
         LINK_LIBRARIES SmilesParse GraphMol)
 
 rdkit_catch_test(testMacroMolTemplateLibrary testMacroMolTemplateLibrary.cpp
+        LINK_LIBRARIES MacroMolTemplateLibrary SmilesParse GraphMol)
+
+rdkit_catch_test(testMolFromMacroMol testMolFromMacroMol.cpp
         LINK_LIBRARIES MacroMolTemplateLibrary SmilesParse GraphMol)
 
 rdkit_catch_test(testMacroMolTemplateLibraryEnv testMacroMolTemplateLibraryEnv.cpp

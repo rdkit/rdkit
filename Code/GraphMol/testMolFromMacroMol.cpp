@@ -9,9 +9,10 @@
 //
 
 #include <GraphMol/Atom.h>
-#include <GraphMol/FileParsers/MolFromMacroMol.h>
 #include <GraphMol/MacroMol.h>
 #include <GraphMol/MacroMolTemplate.h>
+#include <GraphMol/MacroMolTemplateLibrary.h>
+#include <GraphMol/MolFromMacroMol.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -344,5 +345,42 @@ TEST_CASE("MolFromMacroMol preserves double bond stereo",
     CHECK(resultBond->getStereoAtoms() == std::vector<int>({0, 3}));
     MolOps::sanitizeMol(*mol);
     CHECK(MolToSmiles(*mol) == "C/C=C\\C");
+  }
+}
+
+TEST_CASE("MolFromMacroMol works with the built-in templates",
+          "[MolFromMacroMol]") {
+  const auto &templates = getGlobalMacroMolTemplateLibrary();
+  v2::SmilesParse::SmilesParserParams params;
+  params.removeHs = false;
+
+  MacroMol macroMol;
+  const auto ala = macroMol.addMacroAtom("A", MonomerClass::AminoAcid);
+  const auto gly = macroMol.addMacroAtom("G", MonomerClass::AminoAcid);
+  macroMol.addMacroBond(ala, gly, 2, 1);
+
+  SECTION("linear dipeptide") {
+    auto mol = MolFromMacroMol(macroMol, templates);
+    REQUIRE(mol);
+    MolOps::sanitizeMol(*mol);
+    // L-Ala-Gly; the unused leaving groups (N-terminal H and C-terminal OH)
+    // remain
+    auto expected = v2::SmilesParse::MolFromSmiles(
+        "[H]N[C@@H](C)C(=O)NCC(=O)O", params);
+    CHECK(MolToSmiles(*mol) == MolToSmiles(*expected));
+    const auto &sgroups = getSubstanceGroups(*mol);
+    REQUIRE(sgroups.size() == 2);
+    CHECK(sgroups[0].getProp<std::string>("LABEL") == "ALA");
+    CHECK(sgroups[1].getProp<std::string>("LABEL") == "GLY");
+  }
+
+  SECTION("cyclic dipeptide") {
+    // a second macro bond between the same macro atoms
+    macroMol.addMacroBond(gly, ala, 2, 1);
+    auto mol = MolFromMacroMol(macroMol, templates);
+    REQUIRE(mol);
+    MolOps::sanitizeMol(*mol);
+    auto expected = v2::SmilesParse::MolFromSmiles("N1[C@@H](C)C(=O)NCC1=O");
+    CHECK(MolToSmiles(*mol) == MolToSmiles(*expected));
   }
 }
