@@ -24,6 +24,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <utility>
 
 namespace RDKit {
 namespace {
@@ -40,7 +41,6 @@ struct ExpandedMacroAtom {
   std::map<int, int> attachPointToLeavingAtom;
   // result atom that took the place of each removed template leaving atom
   std::map<unsigned int, unsigned int> leavingAtomReplacements;
-  std::set<int> usedAttachPoints;
 };
 
 struct BuildState {
@@ -218,16 +218,15 @@ void copyMacroAtom(BuildState &state, const MacroMol &macroMol,
 
   ExpandedMacroAtom expanded;
   expanded.templ = templ;
-  expanded.usedAttachPoints = findUsedAttachPoints(macroMol, atom);
   const auto atomsToSkip =
-      findLeavingAtomsToSkip(*templ, expanded.usedAttachPoints);
+      findLeavingAtomsToSkip(*templ, findUsedAttachPoints(macroMol, atom));
 
   rememberTemplateAttachPoints(expanded, *templ);
   copyTemplateAtoms(state, expanded, *templ, atomsToSkip);
   copyTemplateBonds(state, expanded, *templ);
   copyMainSgroup(state, expanded, *templ);
 
-  state.macroAtoms[atom.getIdx()] = expanded;
+  state.macroAtoms[atom.getIdx()] = std::move(expanded);
 }
 
 void copyAtoms(BuildState &state, const MacroMol &macroMol,
