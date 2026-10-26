@@ -384,3 +384,60 @@ TEST_CASE("MolFromMacroMol works with the built-in templates",
     CHECK(MolToSmiles(*mol) == MolToSmiles(*expected));
   }
 }
+
+TEST_CASE("MolFromMacroMol checks macro bond types", "[MolFromMacroMol]") {
+  // Converts a template bonded at attachment point 1 to an ordinary carbon
+  const auto convert = [](const std::string &smiles,
+                          std::vector<unsigned int> &&mainAtoms,
+                          MacroMolLeavingGroup &&leavingGroup,
+                          Bond::BondType bondType) {
+    auto parsed = v2::SmilesParse::MolFromSmiles(smiles);
+    MacroMolTemplateBuilder builder(*parsed, MonomerClass::Chemical, "BT",
+                                    "B", smiles);
+    builder.setMainGroup(std::move(mainAtoms))
+        .addLeavingGroup(std::move(leavingGroup));
+    MacroMolTemplateLibrary templates;
+    templates.addTemplate(builder.build());
+
+    MacroMol macroMol;
+    const auto macroAtom = macroMol.addMacroAtom("B", MonomerClass::Chemical);
+    const auto regularAtom = macroMol.addAtom(new Atom(6), false, true);
+    macroMol.addMacroAtomToAtomBond(macroAtom, regularAtom, 1, bondType);
+    return MolFromMacroMol(macroMol, templates);
+  };
+  using Catch::Matchers::ContainsSubstring;
+
+  SECTION("double-bonded leaving atom") {
+    auto mol = convert("CC=O", {0, 1}, {{2}, 1, 2, 1}, Bond::DOUBLE);
+    REQUIRE(mol);
+    MolOps::sanitizeMol(*mol);
+    CHECK(MolToSmiles(*mol) == "C=CC");
+
+    CHECK_THROWS_WITH(
+        convert("CC=O", {0, 1}, {{2}, 1, 2, 1}, Bond::SINGLE),
+        ContainsSubstring("must have the same bond type as the bond to the "
+                          "leaving atom"));
+  }
+
+  SECTION("single-bonded leaving atom") {
+    CHECK_THROWS_WITH(
+        convert("CCO", {0, 1}, {{2}, 1, 2, 1}, Bond::DOUBLE),
+        ContainsSubstring("must have the same bond type as the bond to the "
+                          "leaving atom"));
+  }
+
+  SECTION("attachment point without a leaving atom") {
+    for (const auto bondType : {Bond::HYDROGEN, Bond::ZERO}) {
+      auto mol = convert("CO", {0, 1}, {{}, 1, -1, 1}, bondType);
+      REQUIRE(mol);
+      CHECK(mol->getNumAtoms() == 3);
+      CHECK(mol->getBondBetweenAtoms(1, 2)->getBondType() == bondType);
+      // the hydrogen on the oxygen is not displaced
+      CHECK(mol->getAtomWithIdx(1)->getTotalNumHs() == 1);
+    }
+
+    CHECK_THROWS_WITH(
+        convert("CO", {0, 1}, {{}, 1, -1, 1}, Bond::SINGLE),
+        ContainsSubstring("must be a hydrogen or zero-order bond"));
+  }
+}

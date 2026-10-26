@@ -267,6 +267,47 @@ void recordLeavingAtomReplacement(BuildState &state, const Atom &atom,
       replacementAtomIdx;
 }
 
+// Checks that a macro bond at an attachment point leaves the valence of the
+// attachment atom unchanged: the bond type must match that of the bond to the
+// leaving atom it replaces or, if the attachment point has no leaving atom
+// (as for hydrogen bonds), the bond must not contribute to the valence.
+void checkMacroBondType(const BuildState &state, const Atom &atom,
+                        int attachPointId, Bond::BondType bondType) {
+  const auto expanded = state.macroAtoms.find(atom.getIdx());
+  if (expanded == state.macroAtoms.end()) {
+    return;  // an ordinary atom
+  }
+  const auto leavingAtom =
+      expanded->second.attachPointToLeavingAtom.find(attachPointId);
+  if (leavingAtom == expanded->second.attachPointToLeavingAtom.end()) {
+    return;  // a missing attachment point is reported elsewhere
+  }
+
+  const auto bondDescription =
+      "Macro bond at attachment point " + std::to_string(attachPointId) +
+      " of macro atom " + std::to_string(atom.getIdx());
+  if (leavingAtom->second < 0) {
+    if (bondType != Bond::HYDROGEN && bondType != Bond::ZERO) {
+      throw ValueErrorException(
+          bondDescription +
+          " must be a hydrogen or zero-order bond, since the attachment point "
+          "has no leaving atom");
+    }
+    return;
+  }
+  const auto attachAtomIdx =
+      expanded->second.attachPointToTemplateAtom.at(attachPointId);
+  const auto *leavingBond =
+      expanded->second.templ->getMol().getBondBetweenAtoms(
+          attachAtomIdx, leavingAtom->second);
+  if (leavingBond->getBondType() != bondType) {
+    throw ValueErrorException(
+        bondDescription +
+        " must have the same bond type as the bond to the leaving atom it "
+        "replaces");
+  }
+}
+
 void copyMacroMolBonds(BuildState &state, const MacroMol &macroMol) {
   for (const auto *oldBond : macroMol.bonds()) {
     const auto *macroBondInfo = oldBond->getMacroBondInfo();
@@ -284,8 +325,12 @@ void copyMacroMolBonds(BuildState &state, const MacroMol &macroMol) {
           state, *oldBond->getBeginAtom(), bondInfo.beginAttachPt);
       const auto endAtomIdx = getResultAtomForBond(
           state, *oldBond->getEndAtom(), bondInfo.endAttachPt);
-      addBondCopy(state.result, *oldBond, beginAtomIdx, endAtomIdx,
-                  static_cast<Bond::BondType>(bondInfo.bondType));
+      const auto bondType = static_cast<Bond::BondType>(bondInfo.bondType);
+      checkMacroBondType(state, *oldBond->getBeginAtom(),
+                         bondInfo.beginAttachPt, bondType);
+      checkMacroBondType(state, *oldBond->getEndAtom(), bondInfo.endAttachPt,
+                         bondType);
+      addBondCopy(state.result, *oldBond, beginAtomIdx, endAtomIdx, bondType);
       recordLeavingAtomReplacement(state, *oldBond->getBeginAtom(),
                                    bondInfo.beginAttachPt, endAtomIdx);
       recordLeavingAtomReplacement(state, *oldBond->getEndAtom(),
