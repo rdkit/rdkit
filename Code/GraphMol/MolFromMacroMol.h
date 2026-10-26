@@ -24,8 +24,16 @@ namespace RDKit {
   Each macro atom is replaced by a copy of its template, looked up in
   \c templates by monomer class and symbol, then by monomer class and name.
   The leaving groups of the attachment points used by macro bonds are removed,
-  and each macro atom's main group is recorded as a SUP SGroup. Ordinary atoms
-  and bonds are copied unchanged. The result is not sanitized.
+  and each macro atom's main group is recorded as a SUP SGroup. The leaving
+  groups of unused attachment points remain, including any explicit hydrogen
+  atoms. Ordinary atoms and bonds are copied unchanged. The result is not
+  sanitized.
+
+  Only atoms, bonds, and their stereochemistry and properties are carried
+  over. In particular, the result has no conformers (generate coordinates
+  afterwards if needed), and the templates' leaving group SGroups, and the
+  SGroups, stereo groups and molecule properties of \c macroMol, are not
+  copied.
 
   \param macroMol  the molecule to expand
   \param templates the library used to look up the macro atoms' templates
