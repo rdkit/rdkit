@@ -1088,6 +1088,9 @@ std::unique_ptr<ROMol> SynthonSpaceShapeSearcher::buildHit(
     }
   }
   auto prod = details::buildProduct(shapeSynths);
+  auto dgParams = DGeomHelpers::ETKDGv3;
+  dgParams.randomSeed = getParams().randomSeed;
+  dgParams.timeout = getParams().timeOut;
   if (!prod) {
     // Try it with the plain synthons, which will obviously need coordinates
     // creating later on.
@@ -1098,12 +1101,13 @@ std::unique_ptr<ROMol> SynthonSpaceShapeSearcher::buildHit(
         std::cout << *s << " ";
       }
       std::cout << " for reaction " << hs->d_reaction->getId() << std::endl;
+      return prod;
     }
+    DGeomHelpers::EmbedMolecule(*prod, dgParams);
   }
 
   // Optimise the torsions in the zipped molecule in case they have ended
   // up somewhere that isn't sensible.
-  auto dgParams = DGeomHelpers::ETKDGv3;
   dgParams.optimizeConfWithId = prod->getConformer().getId();
   // Add coords for the Hs or this can fail with v3.
   prod.reset(MolOps::addHs(*prod, false, true));
