@@ -8,17 +8,17 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #include <memory>
 #include <optional>
 #ifndef RD_EMBEDDER_H_GUARD
 #define RD_EMBEDDER_H_GUARD
 
-#include <RDGeneral/RDLog.h>
+#include "RDGeneral/RDLog.h"
 #include <map>
 #include <utility>
 #include <vector>
-#include <GraphMol/ROMol.h>
+#include "GraphMol/ROMol.h"
 #include <boost/shared_ptr.hpp>
 #include "ZMatrixBuilder.h"
 
