@@ -39,6 +39,8 @@ namespace RDKit {
   \param templates the library used to look up the macro atoms' templates
 
   \throws ValueErrorException if
+    - \c macroMol contains query atoms or bonds (templates cannot contain
+      them either),
     - a macro atom has an empty symbol or no template,
     - an attachment point is used by more than one macro bond,
     - a macro bond uses an attachment point its template does not have, or

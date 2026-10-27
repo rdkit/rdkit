@@ -89,6 +89,11 @@ void addBondCopy(RWMol &result, const Bond &oldBond, unsigned int beginAtomIdx,
 }
 
 void copyRegularAtom(BuildState &state, const Atom &atom) {
+  // Queries are not supported (yet); copying would lose them.
+  if (atom.hasQuery()) {
+    throw ValueErrorException("Atom " + std::to_string(atom.getIdx()) +
+                              " is a query atom, which is not supported");
+  }
   auto *newAtom = new Atom(atom);
   state.atomToResultAtom[atom.getIdx()] =
       state.result.addAtom(newAtom, true, true);
@@ -318,6 +323,10 @@ void copyMacroMolBonds(BuildState &state, const MacroMol &macroMol) {
   for (const auto *oldBond : macroMol.bonds()) {
     const auto *macroBondInfo = oldBond->getMacroBondInfo();
     if (!macroBondInfo) {
+      if (oldBond->hasQuery()) {
+        throw ValueErrorException("Bond " + std::to_string(oldBond->getIdx()) +
+                                  " is a query bond, which is not supported");
+      }
       const auto beginAtomIdx =
           getResultAtomForBond(state, *oldBond->getBeginAtom(), -1);
       const auto endAtomIdx =
