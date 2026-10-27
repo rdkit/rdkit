@@ -460,10 +460,15 @@ void regenerateDoubleBondNeighborDirections(RWMol &mol) {
 
 std::unique_ptr<RWMol> MolFromMacroMol(
     const MacroMol &macroMol, const MacroMolTemplateLibrary &templates) {
+  // Use either the local library or the given one, never a mix of both
+  const auto &localTemplates = macroMol.getLocalTemplateLibrary();
+  const auto &templatesToUse =
+      localTemplates.getTemplates().empty() ? templates : localTemplates;
+
   auto result = std::make_unique<RWMol>();
   BuildState state{*result, {}, {}};
 
-  copyAtoms(state, macroMol, templates);
+  copyAtoms(state, macroMol, templatesToUse);
   copyMacroMolBonds(state, macroMol);
   fixTemplateStereo(state);
   fixMacroMolBondStereo(state, macroMol);

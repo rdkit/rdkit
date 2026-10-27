@@ -505,3 +505,38 @@ TEST_CASE("MolFromMacroMol rejects invalid macro atoms and bonds",
         ContainsSubstring("Bond 0 is a query bond, which is not supported"));
   }
 }
+
+TEST_CASE("MolFromMacroMol prefers the local template library",
+          "[MolFromMacroMol]") {
+  using Catch::Matchers::ContainsSubstring;
+  MacroMolTemplateLibrary templates;
+  templates.addTemplate(makeAlanineTemplate());
+  templates.addTemplate(makeGlycineTemplate());
+
+  // A local template with alanine's symbol but a different name
+  v2::SmilesParse::SmilesParserParams params;
+  params.removeHs = false;
+  const std::string smiles = "CC[H]";
+  auto parsed = v2::SmilesParse::MolFromSmiles(smiles, params);
+  MacroMolTemplateBuilder builder(*parsed, MonomerClass::AminoAcid, "LOCALA",
+                                  "A", smiles);
+  builder.setMainGroup({0, 1}).addLeavingGroup({{2}, 1, 2, 1});
+
+  MacroMol macroMol;
+  macroMol.getLocalTemplateLibrary().addTemplate(builder.build());
+  macroMol.addMacroAtom("A", MonomerClass::AminoAcid);
+
+  SECTION("a non-empty local library is used instead of the given one") {
+    auto mol = MolFromMacroMol(macroMol, templates);
+    REQUIRE(mol);
+    CHECK(mol->getNumAtoms() == 3);
+    CHECK(getOnlyMainSgroup(*mol).getProp<std::string>("LABEL") == "LOCALA");
+  }
+
+  SECTION("templates missing from the local library are not looked up in "
+          "the given one") {
+    macroMol.addMacroAtom("G", MonomerClass::AminoAcid);
+    CHECK_THROWS_WITH(MolFromMacroMol(macroMol, templates),
+                      ContainsSubstring("No template found for macro atom 1"));
+  }
+}
