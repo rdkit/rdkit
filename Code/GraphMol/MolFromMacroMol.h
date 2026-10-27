@@ -21,8 +21,13 @@ namespace RDKit {
 
 //! Expands a MacroMol into an ordinary molecule.
 /*!
-  Each macro atom is replaced by a copy of its template, looked up in
-  \c templates by monomer class and symbol, then by monomer class and name.
+  Each macro atom is replaced by a copy of its template, looked up by monomer
+  class and symbol, then by monomer class and name. If \c macroMol's local
+  template library is not empty, all templates are looked up there;
+  otherwise, they are all looked up in \c templates. The two libraries are
+  never combined: a macro atom missing from a non-empty local library is an
+  error, even if \c templates has it.
+
   The leaving groups of the attachment points used by macro bonds are removed,
   and each macro atom's main group is recorded as a SUP SGroup. The leaving
   groups of unused attachment points remain, including any explicit hydrogen
@@ -36,7 +41,8 @@ namespace RDKit {
   copied.
 
   \param macroMol  the molecule to expand
-  \param templates the library used to look up the macro atoms' templates
+  \param templates the library used if \c macroMol's local template library
+                   is empty
 
   \throws ValueErrorException if
     - \c macroMol contains query atoms or bonds (templates cannot contain
