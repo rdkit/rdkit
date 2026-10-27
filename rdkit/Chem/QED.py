@@ -162,26 +162,14 @@ def properties(mol):
   """
   if mol is None:
     raise ValueError('You need to provide a mol argument.')
-  mol = Chem.RemoveHs(mol)
-  qedProperties = QEDproperties(
-    MW=rdmd._CalcMolWt(mol),
-    ALOGP=Crippen.MolLogP(mol),
-    HBA=sum(
-      len(mol.GetSubstructMatches(pattern)) for pattern in Acceptors
-      if mol.HasSubstructMatch(pattern)),
-    HBD=rdmd.CalcNumHBD(mol),
-    PSA=MolSurf.TPSA(mol),
-    ROTB=rdmd.CalcNumRotatableBonds(mol, rdmd.NumRotatableBondsOptions.Strict),
-    AROM=len(Chem.GetSSSR(Chem.DeleteSubstructs(Chem.Mol(mol), AliphaticRings))),
-    ALERTS=sum(1 for alert in StructuralAlerts if mol.HasSubstructMatch(alert)),
-  )
-  # The replacement
+  # AROM counts the SSSR rings left after deleting the AliphaticRings
+  # pattern. The replacement
   # AROM=Lipinski.NumAromaticRings(mol),
   # is not identical. The expression above tends to count more rings
   # N1C2=CC=CC=C2SC3=C1C=CC4=C3C=CC=C4
   # OC1=C(O)C=C2C(=C1)OC3=CC(=O)C(=CC3=C2C4=CC=CC=C4)O
   # CC(C)C1=CC2=C(C)C=CC2=C(C)C=C1  uses 2, should be 0 ?
-  return qedProperties
+  return QEDproperties(*rdmd.CalcQEDProperties(mol))
 
 
 @setDescriptorVersion(version='1.1.0')
@@ -200,10 +188,11 @@ def qed(mol, w=WEIGHT_MEAN, qedProperties=None):
   0.234...
   """
   if qedProperties is None:
-    qedProperties = properties(mol)
-  d = [ads(pi, adsParameters[name]) for name, pi in qedProperties._asdict().items()]
-  t = sum(wi * math.log(di) for wi, di in zip(w, d))
-  return math.exp(t / sum(w))
+    if mol is None:
+      raise ValueError('You need to provide a mol argument.')
+    return rdmd.CalcQED(mol, w)
+  # mol is not used when the properties are provided
+  return rdmd.CalcQED(mol if mol is not None else Chem.Mol(), w, tuple(qedProperties))
 
 
 def weights_max(mol):

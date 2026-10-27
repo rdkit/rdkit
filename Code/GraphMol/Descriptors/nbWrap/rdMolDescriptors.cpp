@@ -15,6 +15,7 @@
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/map.h>
 #include <nanobind/stl/tuple.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/trampoline.h>
 #include <nanobind/ndarray.h>
 
@@ -1030,6 +1031,68 @@ nb::dict getSurfacePointsHelper(
   return surfacePoints;
 }
 
+// wrappers for the descriptors ported from python
+std::vector<double> CalcEState_VSAHelper(
+    const RDKit::ROMol &mol, std::optional<std::vector<double>> bins) {
+  return RDKit::Descriptors::calcEState_VSA(mol, bins ? &*bins : nullptr);
+}
+
+std::vector<double> CalcVSA_EStateHelper(
+    const RDKit::ROMol &mol, std::optional<std::vector<double>> bins) {
+  return RDKit::Descriptors::calcVSA_EState(mol, bins ? &*bins : nullptr);
+}
+
+nb::tuple QEDPropertiesToTuple(const RDKit::Descriptors::QEDProperties &p) {
+  return nb::make_tuple(p.MW, p.ALOGP, p.HBA, p.HBD, p.PSA, p.ROTB, p.AROM,
+                        p.ALERTS);
+}
+
+RDKit::Descriptors::QEDProperties vectToQEDProperties(
+    const std::vector<double> &v) {
+  if (v.size() != 8) {
+    throw ValueErrorException("QED properties and weights have 8 values");
+  }
+  RDKit::Descriptors::QEDProperties res;
+  res.MW = v[0];
+  res.ALOGP = v[1];
+  res.HBA = v[2];
+  res.HBD = v[3];
+  res.PSA = v[4];
+  res.ROTB = v[5];
+  res.AROM = v[6];
+  res.ALERTS = v[7];
+  return res;
+}
+
+double CalcQEDHelper(const RDKit::ROMol &mol,
+                     std::optional<std::vector<double>> weights,
+                     std::optional<std::vector<double>> qedProperties) {
+  auto w = weights ? vectToQEDProperties(*weights)
+                   : RDKit::Descriptors::QEDWeightsMean;
+  if (!qedProperties) {
+    return RDKit::Descriptors::calcQED(mol, w);
+  }
+  return RDKit::Descriptors::calcQED(vectToQEDProperties(*qedProperties), w);
+}
+
+using DistMatArray =
+    nb::ndarray<const double, nb::ndim<2>, nb::c_contig, nb::device::cpu>;
+
+// returns the data of an optional (nAtoms, nAtoms) distance matrix, or
+// nullptr when none was given
+const double *distMatData(const RDKit::ROMol &mol,
+                          const std::optional<DistMatArray> &dMat) {
+  if (!dMat) {
+    return nullptr;
+  }
+  if (dMat->shape(0) != mol.getNumAtoms() ||
+      dMat->shape(1) != mol.getNumAtoms()) {
+    throw ValueErrorException(
+        "the distance matrix must have shape (nAtoms, nAtoms)");
+  }
+  return dMat->data();
+}
+
 }  // namespace
 
 NB_MODULE(rdMolDescriptors, m) {
@@ -1799,6 +1862,189 @@ query.Match( mol ))DOC",
   m.def("CalcAUTOCORR2D", calcAUTOCORR2Ds, "mol"_a, "CustomAtomProperty"_a = "",
         "Returns 2D Autocorrelation descriptors vector");
 #endif
+
+  // descriptors ported from python
+  m.def("CalcEStateIndices", RDKit::Descriptors::calcEStateIndices, "mol"_a,
+        "Returns the EState indices of the atoms (Hall, Mohney and Kier, "
+        "JCICS 31, 76-81 (1991))");
+  m.attr("_CalcEStateIndices_version") =
+      RDKit::Descriptors::EStateIndicesVersion;
+  m.def("CalcMaxEStateIndex", RDKit::Descriptors::calcMaxEStateIndex, "mol"_a,
+        "Returns the largest EState index");
+  m.attr("_CalcMaxEStateIndex_version") =
+      RDKit::Descriptors::MaxEStateIndexVersion;
+  m.def("CalcMinEStateIndex", RDKit::Descriptors::calcMinEStateIndex, "mol"_a,
+        "Returns the smallest EState index");
+  m.attr("_CalcMinEStateIndex_version") =
+      RDKit::Descriptors::MinEStateIndexVersion;
+  m.def("CalcMaxAbsEStateIndex", RDKit::Descriptors::calcMaxAbsEStateIndex,
+        "mol"_a, "Returns the largest absolute EState index");
+  m.attr("_CalcMaxAbsEStateIndex_version") =
+      RDKit::Descriptors::MaxAbsEStateIndexVersion;
+  m.def("CalcMinAbsEStateIndex", RDKit::Descriptors::calcMinAbsEStateIndex,
+        "mol"_a, "Returns the smallest absolute EState index");
+  m.attr("_CalcMinAbsEStateIndex_version") =
+      RDKit::Descriptors::MinAbsEStateIndexVersion;
+  m.def("CalcEState_VSA", CalcEState_VSAHelper, "mol"_a, "bins"_a = nb::none(),
+        "Returns the EState_VSA descriptors: the VSA contributions of the "
+        "atoms binned by EState index (bins defaults to the EState_VSA bins)");
+  m.attr("_CalcEState_VSA_version") = RDKit::Descriptors::EState_VSAVersion;
+  m.def("CalcVSA_EState", CalcVSA_EStateHelper, "mol"_a, "bins"_a = nb::none(),
+        "Returns the VSA_EState descriptors: the EState indices of the atoms "
+        "binned by VSA contribution (bins defaults to the VSA_EState bins)");
+  m.attr("_CalcVSA_EState_version") = RDKit::Descriptors::VSA_EStateVersion;
+
+  m.def("CalcChi0", RDKit::Descriptors::calcChi0, "mol"_a,
+        "From equations (1),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, "
+        "(1991)");
+  m.attr("_CalcChi0_version") = RDKit::Descriptors::chi0Version;
+  m.def("CalcChi1", RDKit::Descriptors::calcChi1, "mol"_a,
+        "From equations (1),(11) and (12) of Rev. Comp. Chem. vol 2, "
+        "367-422, (1991)");
+  m.attr("_CalcChi1_version") = RDKit::Descriptors::chi1Version;
+  m.def(
+      "CalcBalabanJ",
+      [](const RDKit::ROMol &mol, const std::optional<DistMatArray> &dMat) {
+        return RDKit::Descriptors::calcBalabanJ(mol, distMatData(mol, dMat));
+      },
+      "mol"_a, "dMat"_a = nb::none(),
+      "Returns Balaban's J value (Chem. Phys. Lett. vol 89, 399-404, "
+      "(1982)). dMat is an optional (nAtoms, nAtoms) distance matrix to use "
+      "instead of the bond-order weighted one");
+  m.attr("_CalcBalabanJ_version") = RDKit::Descriptors::balabanJVersion;
+  m.def(
+      "CalcBertzCT",
+      [](const RDKit::ROMol &mol, unsigned int cutoff,
+         const std::optional<DistMatArray> &dMat) {
+        return RDKit::Descriptors::calcBertzCT(mol, cutoff,
+                                               distMatData(mol, dMat));
+      },
+      "mol"_a, "cutoff"_a = 100, "dMat"_a = nb::none(),
+      "Returns Bertz's complexity index (J. Am. Chem. Soc., vol 103, "
+      "3599-3601 (1981)). dMat is an optional (nAtoms, nAtoms) distance "
+      "matrix used to assign the symmetry classes instead of the bond-order "
+      "weighted one");
+  m.attr("_CalcBertzCT_version") = RDKit::Descriptors::bertzCTVersion;
+  m.def(
+      "CalcIpc",
+      [](const RDKit::ROMol &mol, bool avg,
+         const std::optional<DistMatArray> &dMat) {
+        return RDKit::Descriptors::calcIpc(mol, avg, distMatData(mol, dMat));
+      },
+      "mol"_a, "avg"_a = false, "dMat"_a = nb::none(),
+      "Returns the information content of the coefficients of the "
+      "characteristic polynomial of the adjacency matrix (Eq 6 of Bonchev "
+      "& Trinajstic, J. Chem. Phys. vol 67, 4517-4533 (1977)); with avg, "
+      "divided by the total population. dMat is an optional (nAtoms, "
+      "nAtoms) distance matrix; the adjacency matrix is taken from its "
+      "entries equal to 1");
+  m.attr("_CalcIpc_version") = RDKit::Descriptors::ipcVersion;
+  m.def(
+      "CalcAvgIpc",
+      [](const RDKit::ROMol &mol, const std::optional<DistMatArray> &dMat) {
+        return RDKit::Descriptors::calcAvgIpc(mol, distMatData(mol, dMat));
+      },
+      "mol"_a, "dMat"_a = nb::none(),
+      "Returns the average information content (Eq 7 of Bonchev & "
+      "Trinajstic). dMat is as for CalcIpc");
+  m.attr("_CalcAvgIpc_version") = RDKit::Descriptors::avgIpcVersion;
+
+  m.def("CalcHeavyAtomMolWt", RDKit::Descriptors::calcHeavyAtomMolWt, "mol"_a,
+        "Returns the average molecular weight ignoring hydrogens");
+  m.attr("_CalcHeavyAtomMolWt_version") =
+      RDKit::Descriptors::HeavyAtomMolWtVersion;
+  m.def("CalcNumValenceElectrons", RDKit::Descriptors::calcNumValenceElectrons,
+        "mol"_a, "Returns the number of valence electrons");
+  m.attr("_CalcNumValenceElectrons_version") =
+      RDKit::Descriptors::NumValenceElectronsVersion;
+  m.def("CalcNumRadicalElectrons", RDKit::Descriptors::calcNumRadicalElectrons,
+        "mol"_a, "Returns the number of radical electrons");
+  m.attr("_CalcNumRadicalElectrons_version") =
+      RDKit::Descriptors::NumRadicalElectronsVersion;
+  m.def("CalcMaxPartialCharge", RDKit::Descriptors::calcMaxPartialCharge,
+        "mol"_a,
+        "Returns the largest Gasteiger partial charge (-500 for a molecule "
+        "with no atoms)");
+  m.attr("_CalcMaxPartialCharge_version") =
+      RDKit::Descriptors::MaxPartialChargeVersion;
+  m.def("CalcMinPartialCharge", RDKit::Descriptors::calcMinPartialCharge,
+        "mol"_a,
+        "Returns the smallest Gasteiger partial charge (500 for a molecule "
+        "with no atoms)");
+  m.attr("_CalcMinPartialCharge_version") =
+      RDKit::Descriptors::MinPartialChargeVersion;
+  m.def("CalcMaxAbsPartialCharge", RDKit::Descriptors::calcMaxAbsPartialCharge,
+        "mol"_a, "Returns the largest absolute Gasteiger partial charge");
+  m.attr("_CalcMaxAbsPartialCharge_version") =
+      RDKit::Descriptors::MaxAbsPartialChargeVersion;
+  m.def("CalcMinAbsPartialCharge", RDKit::Descriptors::calcMinAbsPartialCharge,
+        "mol"_a, "Returns the smallest absolute Gasteiger partial charge");
+  m.attr("_CalcMinAbsPartialCharge_version") =
+      RDKit::Descriptors::MinAbsPartialChargeVersion;
+  m.def("CalcFpDensityMorgan", RDKit::Descriptors::calcFpDensityMorgan, "mol"_a,
+        "radius"_a,
+        "Returns the number of distinct Morgan count fingerprint elements of "
+        "the given radius per heavy atom");
+  m.attr("_CalcFpDensityMorgan_version") =
+      RDKit::Descriptors::FpDensityMorganVersion;
+
+  m.def(
+      "GetFragmentDescriptorNames",
+      []() {
+        return nb::tuple(
+            nb::cast(RDKit::Descriptors::getFragmentDescriptorNames()));
+      },
+      "Returns the names of the fragment descriptors (fr_*), in the order "
+      "used by CalcFragmentDescriptors");
+  m.def(
+      "GetFragmentDescriptorSmarts",
+      []() {
+        return nb::tuple(
+            nb::cast(RDKit::Descriptors::getFragmentDescriptorSmarts()));
+      },
+      "Returns the SMARTS of the fragment descriptors, in the order of "
+      "GetFragmentDescriptorNames");
+  m.def(
+      "GetFragmentDescriptorDescriptions",
+      []() {
+        return nb::tuple(
+            nb::cast(RDKit::Descriptors::getFragmentDescriptorDescriptions()));
+      },
+      "Returns the descriptions of the fragment descriptors, in the order of "
+      "GetFragmentDescriptorNames");
+  m.def("CalcFragmentDescriptors", RDKit::Descriptors::calcFragmentDescriptors,
+        "mol"_a, "countUnique"_a = true,
+        "Returns the number of matches of each fragment pattern, in the "
+        "order of GetFragmentDescriptorNames. Only unique matches are "
+        "counted unless countUnique is false");
+  m.def("CalcFragmentDescriptor", RDKit::Descriptors::calcFragmentDescriptor,
+        "mol"_a, "name"_a, "countUnique"_a = true,
+        "Returns the number of matches of one fragment pattern, e.g. "
+        "'fr_benzene'. Only unique matches are counted unless countUnique "
+        "is false");
+  m.attr("_CalcFragmentDescriptors_version") =
+      RDKit::Descriptors::FragmentDescriptorsVersion;
+
+  m.def(
+      "CalcQEDProperties",
+      [](const RDKit::ROMol &mol) {
+        return QEDPropertiesToTuple(RDKit::Descriptors::calcQEDProperties(mol));
+      },
+      "mol"_a,
+      "Returns the properties used by QED: (MW, ALOGP, HBA, HBD, PSA, ROTB, "
+      "AROM, ALERTS)");
+  m.def("CalcQED", CalcQEDHelper, "mol"_a, "weights"_a = nb::none(),
+        "qedProperties"_a = nb::none(),
+        "Returns the QED (quantitative estimate of drug-likeness) of a "
+        "molecule. weights (8 values, in the order of CalcQEDProperties) "
+        "defaults to the mean weights; if qedProperties is given it is used "
+        "instead of calculating the properties of mol");
+  m.attr("_CalcQED_version") = RDKit::Descriptors::QEDVersion;
+
+  m.def("CalcSPS", RDKit::Descriptors::calcSPS, "mol"_a, "normalize"_a = true,
+        "Returns the spacial score (SPS) of a molecule, normalized by the "
+        "number of heavy atoms unless normalize is false");
+  m.attr("_CalcSPS_version") = RDKit::Descriptors::SPSVersion;
 
 #ifdef RDK_HAS_EIGEN3
   m.attr("_BCUT2D_version") = RDKit::Descriptors::BCUT2DVersion;

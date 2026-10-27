@@ -15,8 +15,6 @@ from rdkit import Chem
 from rdkit import rdBase
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
-from rdkit.Chem import rdPartialCharges
-from rdkit.Chem import rdFingerprintGenerator
 from rdkit.Chem.EState.EState import (MaxAbsEStateIndex, MaxEStateIndex, MinAbsEStateIndex,
                                       MinEStateIndex)
 from rdkit.Chem.QED import qed
@@ -124,10 +122,7 @@ def NumValenceElectrons(mol):
     12
 
     """
-  tbl = Chem.GetPeriodicTable()
-  return sum(
-    tbl.GetNOuterElecs(atom.GetAtomicNum()) - atom.GetFormalCharge() + atom.GetTotalNumHs()
-    for atom in mol.GetAtoms())
+  return _rdMolDescriptors.CalcNumValenceElectrons(mol)
 
 
 NumValenceElectrons.version = "1.1.0"
@@ -149,7 +144,7 @@ def NumRadicalElectrons(mol):
     3
 
     """
-  return sum(atom.GetNumRadicalElectrons() for atom in mol.GetAtoms())
+  return _rdMolDescriptors.CalcNumRadicalElectrons(mol)
 
 
 NumRadicalElectrons.version = "1.1.0"
@@ -158,14 +153,7 @@ NumRadicalElectrons.version = "1.1.0"
 def _ChargeDescriptors(mol, force=False):
   if not force and hasattr(mol, '_chargeDescriptors'):
     return mol._chargeDescriptors
-  chgs = rdPartialCharges.ComputeGasteigerCharges(mol)
-  minChg = 500.
-  maxChg = -500.
-  for at in mol.GetAtoms():
-    chg = float(at.GetProp('_GasteigerCharge'))
-    minChg = min(chg, minChg)
-    maxChg = max(chg, maxChg)
-  res = (minChg, maxChg)
+  res = (_rdMolDescriptors.CalcMinPartialCharge(mol), _rdMolDescriptors.CalcMaxPartialCharge(mol))
   mol._chargeDescriptors = res
   return res
 
@@ -202,40 +190,16 @@ def MinAbsPartialCharge(mol, force=False):
 MinAbsPartialCharge.version = "1.0.0"
 
 
-def _FingerprintDensity(mol, func, *args, **kwargs):
-  aname = f'_{func.__name__}_{args}'
-  if hasattr(mol, aname):
-    fp = getattr(mol, aname)
-  else:
-    fp = func(*((mol, ) + args), **kwargs)
-    setattr(mol, aname, fp)
-  if hasattr(fp, 'GetNumOnBits'):
-    val = fp.GetNumOnBits()
-  else:
-    val = len(fp.GetNonzeroElements())
-  num_heavy_atoms = mol.GetNumHeavyAtoms()
-  if num_heavy_atoms == 0:
-    res = 0.0
-  else:
-    res = float(val) / num_heavy_atoms
-  return res
-
-
-def _getMorganCountFingerprint(mol, radius):
-  fpg = rdFingerprintGenerator.GetMorganGenerator(radius)
-  return fpg.GetSparseCountFingerprint(mol)
-
-
 def FpDensityMorgan1(x):
-  return _FingerprintDensity(x, _getMorganCountFingerprint, 1)
+  return _rdMolDescriptors.CalcFpDensityMorgan(x, 1)
 
 
 def FpDensityMorgan2(x):
-  return _FingerprintDensity(x, _getMorganCountFingerprint, 2)
+  return _rdMolDescriptors.CalcFpDensityMorgan(x, 2)
 
 
 def FpDensityMorgan3(x):
-  return _FingerprintDensity(x, _getMorganCountFingerprint, 3)
+  return _rdMolDescriptors.CalcFpDensityMorgan(x, 3)
 
 
 _du.setDescriptorVersion('1.0.0')(FpDensityMorgan1)

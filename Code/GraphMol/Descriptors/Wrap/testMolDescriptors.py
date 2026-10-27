@@ -967,5 +967,57 @@ class TestCase(unittest.TestCase):
         
 
 
+  def testPortedDescriptors(self):
+    m = Chem.MolFromSmiles('c1ccccc1C(=O)NCC[NH3+]')
+    estate = rdMD.CalcEStateIndices(m)
+    self.assertEqual(len(estate), m.GetNumAtoms())
+    self.assertAlmostEqual(rdMD.CalcMaxEStateIndex(m), max(estate))
+    self.assertAlmostEqual(rdMD.CalcMinEStateIndex(m), min(estate))
+    self.assertAlmostEqual(rdMD.CalcMaxAbsEStateIndex(m), max(abs(x) for x in estate))
+    self.assertAlmostEqual(rdMD.CalcMinAbsEStateIndex(m), min(abs(x) for x in estate))
+    self.assertEqual(len(rdMD.CalcEState_VSA(m)), 11)
+    self.assertEqual(len(rdMD.CalcVSA_EState(m)), 10)
+    self.assertEqual(len(rdMD.CalcEState_VSA(m, bins=[0.0, 1.0])), 3)
+    self.assertAlmostEqual(sum(rdMD.CalcVSA_EState(m, bins=[5.0])), sum(estate))
+
+    self.assertAlmostEqual(rdMD.CalcChi0(Chem.MolFromSmiles('CC')), 2.0)
+    self.assertAlmostEqual(rdMD.CalcChi1(Chem.MolFromSmiles('CC')), 1.0)
+    self.assertGreater(rdMD.CalcBalabanJ(m), 0)
+    self.assertGreater(rdMD.CalcBertzCT(m), rdMD.CalcBertzCT(m, cutoff=1) - 1e-8)
+    self.assertAlmostEqual(rdMD.CalcIpc(m, avg=True), rdMD.CalcAvgIpc(m))
+
+    self.assertAlmostEqual(rdMD.CalcHeavyAtomMolWt(Chem.MolFromSmiles('CC')), 24.022, places=3)
+    self.assertEqual(rdMD.CalcNumValenceElectrons(Chem.MolFromSmiles('CC')), 14)
+    self.assertEqual(rdMD.CalcNumRadicalElectrons(Chem.MolFromSmiles('C[CH]')), 2)
+    self.assertGreater(rdMD.CalcMaxPartialCharge(m), rdMD.CalcMinPartialCharge(m))
+    self.assertEqual(rdMD.CalcMaxPartialCharge(Chem.Mol()), -500)
+    self.assertGreaterEqual(rdMD.CalcMaxAbsPartialCharge(m), rdMD.CalcMinAbsPartialCharge(m))
+    self.assertGreater(rdMD.CalcFpDensityMorgan(m, 2), rdMD.CalcFpDensityMorgan(m, 1))
+
+    names = rdMD.GetFragmentDescriptorNames()
+    self.assertEqual(len(names), 85)
+    self.assertEqual(len(rdMD.GetFragmentDescriptorSmarts()), 85)
+    counts = rdMD.CalcFragmentDescriptors(m)
+    self.assertEqual(counts[names.index('fr_amide')], 1)
+    self.assertEqual(rdMD.CalcFragmentDescriptor(m, 'fr_benzene'), 1)
+    with self.assertRaises(KeyError):
+      rdMD.CalcFragmentDescriptor(m, 'fr_nonsense')
+
+    props = rdMD.CalcQEDProperties(m)
+    self.assertEqual(len(props), 8)
+    self.assertAlmostEqual(rdMD.CalcQED(m), rdMD.CalcQED(m, qedProperties=props))
+    self.assertNotAlmostEqual(rdMD.CalcQED(m), rdMD.CalcQED(m, weights=[1.0] * 8))
+    with self.assertRaises(ValueError):
+      rdMD.CalcQED(m, weights=[1.0])
+    self.assertAlmostEqual(
+      rdMD.CalcQED(Chem.MolFromSmiles('N=C(CCSCc1csc(N=C(N)N)n1)NS(N)(=O)=O')), 0.253, places=3)
+
+    self.assertAlmostEqual(rdMD.CalcSPS(m) * m.GetNumHeavyAtoms(), rdMD.CalcSPS(m, normalize=False))
+    for nm in ('EStateIndices', 'MaxEStateIndex', 'EState_VSA', 'VSA_EState', 'Chi0', 'Chi1',
+               'BalabanJ', 'BertzCT', 'Ipc', 'AvgIpc', 'HeavyAtomMolWt', 'NumValenceElectrons',
+               'NumRadicalElectrons', 'MaxPartialCharge', 'FpDensityMorgan',
+               'FragmentDescriptors', 'QED', 'SPS'):
+      self.assertTrue(getattr(rdMD, f'_Calc{nm}_version'))
+
 if __name__ == '__main__':
   unittest.main()
