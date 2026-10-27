@@ -5222,7 +5222,7 @@ TEST_CASE(
 
 TEST_CASE("getTotalNumHs() and query atoms") {
   SECTION("basics") {
-    auto m = "C[CH][CH]"_smarts;
+    auto m = "C[CH][CH][CH,NH2]"_smarts;
     REQUIRE(m);
     m->getAtomWithIdx(2)->setNoImplicit(false);
     CHECK(m->getAtomWithIdx(0)->getTotalNumHs(false) == 0);
@@ -5231,5 +5231,6 @@ TEST_CASE("getTotalNumHs() and query atoms") {
         m->getAtomWithIdx(2)->getValence(Atom::ValenceType::IMPLICIT),
         std::runtime_error);
     CHECK(m->getAtomWithIdx(2)->getTotalNumHs(false) == 1);
+    CHECK(m->getAtomWithIdx(3)->getTotalNumHs(false) == 0);
   }
 }
