@@ -1,8 +1,9 @@
 <!--
 Thanks for contributing a pull request! 
 
-Please review the contributing guide before submitting:
+Please review the contributing guide and contributor conventions before submitting:
 https://github.com/rdkit/rdkit/blob/master/Docs/Book/GettingStartedWithContributing.md
+https://github.com/rdkit/rdkit/blob/master/Docs/Book/ContributorConventions.md
 -->
 #### Reference Issue
 <!-- Example: Fixes #1234 -->
@@ -13,11 +14,6 @@ https://github.com/rdkit/rdkit/blob/master/Docs/Book/GettingStartedWithContribut
 
 #### Any other comments?
 
-
-Before contributing, please read:
-
-- [Getting started with contributing](../Docs/Book/GettingStartedWithContributing.md)
-- [RDKit contributor conventions](../Docs/Book/ContributorConventions.md)
 
 Changes should almost always include tests that exercise them. Bug fixes should
 include at least a specific regression test for the bug.
