@@ -39,8 +39,7 @@ The [RDKit blog](https://greglandrum.github.io/rdkit-blog/) often has useful tip
 
 ## Contributing
 
-Before changing code, read the [contribution guide](Docs/Book/GettingStartedWithContributing.md)
-and [contributor conventions](Docs/Book/ContributorConventions.md).
+Before changing code, please read the [contribution guide](Docs/Book/GettingStartedWithContributing.md)
 
 ## Support and Community
 

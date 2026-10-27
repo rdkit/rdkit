@@ -13,3 +13,12 @@ https://github.com/rdkit/rdkit/blob/master/Docs/Book/GettingStartedWithContribut
 
 #### Any other comments?
 
+
+Before contributing, please read:
+
+- [Getting started with contributing](../Docs/Book/GettingStartedWithContributing.md)
+- [RDKit contributor conventions](../Docs/Book/ContributorConventions.md)
+
+Changes should almost always include tests that exercise them. Bug fixes should
+include at least a specific regression test for the bug.
+
