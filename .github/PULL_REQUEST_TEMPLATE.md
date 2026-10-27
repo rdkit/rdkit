@@ -14,7 +14,3 @@ https://github.com/rdkit/rdkit/blob/master/Docs/Book/ContributorConventions.md
 
 #### Any other comments?
 
-
-Changes should almost always include tests that exercise them. Bug fixes should
-include at least a specific regression test for the bug.
-
