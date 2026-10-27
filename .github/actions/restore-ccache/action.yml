@@ -1,0 +1,18 @@
+name: Restore ccache
+description: Restore the shared ccache cache for a CI job.
+outputs:
+  cache-hit:
+    description: Whether the exact ccache cache was found.
+    value: ${{ steps.restore.outputs.cache-hit }}
+runs:
+  using: composite
+  steps:
+    - name: Restore ccache
+      id: restore
+      uses: actions/cache/restore@v6
+      with:
+        path: ${{ env.CCACHE_DIR }}
+        key: ccache-${{ runner.os }}-${{ github.job }}-${{ env.BUILD_BRANCH_NAME }}-${{ github.sha }}
+        restore-keys: |
+          ccache-${{ runner.os }}-${{ github.job }}-${{ env.BUILD_BRANCH_NAME }}
+          ccache-${{ runner.os }}-${{ github.job }}-master
