@@ -66,6 +66,12 @@ void QueryAtom::expandQuery(QUERYATOM_QUERY *what,
 
 namespace {
 bool localMatch(ATOM_EQUALS_QUERY const *q1, ATOM_EQUALS_QUERY const *q2) {
+  std::cerr << "local match: " << q1->getDescription() << " vs "
+            << q2->getDescription() << std::endl;
+  std::cerr << "   q1 negation: " << q1->getNegation()
+            << ", q2 negation: " << q2->getNegation() << std::endl;
+  std::cerr << "   q1 value: " << q1->getVal() << ", q2 value: " << q2->getVal()
+            << std::endl;
   if (q1->getNegation() == q2->getNegation()) {
     return q1->getVal() == q2->getVal();
   } else {
@@ -166,11 +172,14 @@ bool queriesMatch(QueryAtom::QUERYATOM_QUERY const *q1,
       }
     }
   } else if (d1 == d2) {
+    std::cerr << "equality query match: " << d1 << " vs " << d2 << std::endl;
     if (std::find(&equalityQueries[0], &equalityQueries[nQueries], d1) !=
         &equalityQueries[nQueries]) {
+      std::cerr << "   engage local match" << std::endl;
       res = localMatch(static_cast<ATOM_EQUALS_QUERY const *>(q1),
                        static_cast<ATOM_EQUALS_QUERY const *>(q2));
     }
+    std::cerr << "equality query match result: " << res << std::endl;
   } else {
   }
   return res;
@@ -180,6 +189,8 @@ bool queriesMatch(QueryAtom::QUERYATOM_QUERY const *q1,
 bool QueryAtom::Match(Atom const *what) const {
   PRECONDITION(what, "bad query atom");
   PRECONDITION(dp_query, "no query set");
+  std::cerr << "match: " << dp_query->getDescription() << " vs "
+            << what->hasQuery() << std::endl;
   return dp_query->Match(what);
 }
 bool QueryAtom::QueryMatch(QueryAtom const *what) const {
@@ -188,6 +199,8 @@ bool QueryAtom::QueryMatch(QueryAtom const *what) const {
   if (!what->hasQuery()) {
     return dp_query->Match(what);
   } else {
+    std::cerr << "query match: " << dp_query->getDescription() << " vs "
+              << what->getQuery()->getDescription() << std::endl;
     return queriesMatch(dp_query, what->getQuery());
   }
 }

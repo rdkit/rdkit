@@ -77,7 +77,6 @@ TEST_CASE("query atom and bond matching") {
   CHECK(qM.getBondWithIdx(0)->Match(m.getBondWithIdx(1)));
   CHECK(!qM.getBondWithIdx(1)->Match(m.getBondWithIdx(0)));
   CHECK(qM.getBondWithIdx(1)->Match(m.getBondWithIdx(1)));
-
 }
 
 TEST_CASE("query bond order matching") {
@@ -107,7 +106,6 @@ TEST_CASE("query bond order matching") {
   CHECK(!qB->Match(m.getBondWithIdx(0)));
   CHECK(qB->Match(m.getBondWithIdx(1)));
   CHECK(qB->Match(m.getBondWithIdx(2)));
-
 }
 
 TEST_CASE("atom and bond query operations") {
@@ -211,7 +209,6 @@ TEST_CASE("atom and bond query operations") {
   CHECK(beq->Match(m.getBondBetweenAtoms(1, 0)));
   CHECK(!beq->Match(m.getBondBetweenAtoms(5, 6)));
   CHECK(!beq->Match(m.getBondBetweenAtoms(6, 5)));
-
 }
 
 TEST_CASE("null atom queries") {
@@ -275,11 +272,9 @@ TEST_CASE("query atom bond products") {
 
   valenceProd = queryAtomAllBondProduct(m.getAtomWithIdx(6));
   CHECK(valenceProd == 81);
-
 }
 
 TEST_CASE("query-query matching") {
-
   // =====================================
   // ATOMS
   // =====================================
@@ -467,7 +462,6 @@ TEST_CASE("query-query matching") {
     CHECK(a1.QueryMatch(&a2));
     CHECK(a2.QueryMatch(&a1));
   }
-
 }
 
 TEST_CASE("query atom mass") {
@@ -477,14 +471,13 @@ TEST_CASE("query atom mass") {
 
   int massVal;
   massVal = queryAtomMass(&a);
-  CHECK(massVal == static_cast<int>(
-                             std::round(12.011 * massIntegerConversionFactor)));
+  CHECK(massVal ==
+        static_cast<int>(std::round(12.011 * massIntegerConversionFactor)));
 
   a.setIsotope(13);
   massVal = queryAtomMass(&a);
-  CHECK(massVal == static_cast<int>(
-                             std::round(13.003 * massIntegerConversionFactor)));
-
+  CHECK(massVal ==
+        static_cast<int>(std::round(13.003 * massIntegerConversionFactor)));
 }
 
 TEST_CASE("ring query matches") {
@@ -499,7 +492,6 @@ TEST_CASE("ring query matches") {
   CHECK(SubstructMatch(*m, *q, mvv));
   CHECK(mvv.size() == 3);
   CHECK(mvv[0].size() == 1);
-
 }
 
 TEST_CASE("qualified atom queries") {
@@ -534,11 +526,9 @@ TEST_CASE("qualified atom queries") {
     CHECK(qA.Match(m->getAtomWithIdx(1)));
     CHECK(qA.Match(m->getAtomWithIdx(2)));
   }
-
 }
 
 TEST_CASE("radicals in atom matching") {
-
   Atom a1(6);
   Atom a2(6);
 
@@ -553,7 +543,6 @@ TEST_CASE("radicals in atom matching") {
   a2.setNumRadicalElectrons(3);
   CHECK(!a1.Match(&a2));
   CHECK(!a2.Match(&a1));
-
 }
 
 TEST_CASE("atom has-property queries") {
@@ -639,7 +628,6 @@ TEST_CASE("double property-value queries") {
 }
 
 TEST_CASE("additional atom queries") {
-
   {  // radicals
     QueryAtom qA;
     qA.setQuery(makeAtomNumRadicalElectronsQuery(1));
@@ -715,10 +703,8 @@ TEST_CASE("additional atom queries") {
     a1.setProp(common_properties::_ChiralityPossible, 1);
     CHECK(!qA.Match(&a1));
   }
-
 }
 TEST_CASE("additional bond queries") {
-
   {  // stereo
     QueryBond qB;
     qB.setQuery(makeBondHasStereoQuery());
@@ -738,7 +724,6 @@ TEST_CASE("additional bond queries") {
   }
 }
 TEST_CASE("heteroatom neighbor queries") {
-
   std::unique_ptr<RWMol> m(SmilesToMol("CCNCOO"));
   REQUIRE(m);
   {
@@ -783,7 +768,6 @@ TEST_CASE("heteroatom neighbor queries") {
 }
 
 TEST_CASE("atom type queries") {
-
   std::unique_ptr<RWMol> m(SmilesToMol("CCc1ccccc1"));
   REQUIRE(m);
   {
@@ -800,22 +784,18 @@ TEST_CASE("atom type queries") {
     CHECK(!qA2.Match(m->getAtomWithIdx(2)));
     CHECK(!qA3.Match(m->getAtomWithIdx(2)));
   }
-
 }
 
 TEST_CASE("dummy atoms in recursive queries") {
-
   auto m = "[*;$(CC)][*]"_smarts;
   REQUIRE(m);
   CHECK(m->getAtomWithIdx(0)->hasQuery());
   CHECK(m->getAtomWithIdx(1)->hasQuery());
   CHECK(isComplexQuery(m->getAtomWithIdx(0)));
   CHECK(!isComplexQuery(m->getAtomWithIdx(1)));
-
 }
 
 TEST_CASE("bond type queries") {
-
   {
     auto m = "C-C-@C@-C@CC-,=C!-C"_smarts;
     REQUIRE(m);
@@ -843,4 +823,53 @@ TEST_CASE("bond type queries") {
       CHECK(!QueryOps::hasBondTypeQuery(*bond));
     }
   }
+}
+
+TEST_CASE("query-query matches with ring queries") {
+  // SECTION("atom basics") {
+  //   auto a1 = v2::SmilesParse::AtomFromSmarts("[R]");
+  //   REQUIRE(a1);
+  //   auto a2 = v2::SmilesParse::AtomFromSmarts("[R]");
+  //   REQUIRE(a2);
+  //   CHECK(a1->hasQuery());
+  //   CHECK(a2->hasQuery());
+  //   CHECK(dynamic_cast<QueryAtom *>(a1.get())->QueryMatch(
+  //       dynamic_cast<QueryAtom *>(a2.get())));
+  // }
+  SECTION("atoms in molecules basics") {
+    auto m1 = "[R][R]"_smarts;
+    REQUIRE(m1);
+    std::vector<std::pair<std::string, size_t>> checks = {
+        {"[R][R]", 1},
+        // {"[R][!R]", 0},
+        // {"[!R][!R]", 1},
+    };
+    for (const auto &[smarts, expected_size] : checks) {
+      INFO(smarts);
+      auto m2 = v2::SmilesParse::MolFromSmarts(smarts);
+      REQUIRE(m2);
+      SubstructMatchParameters params;
+      params.useQueryQueryMatches = true;
+      CHECK(SubstructMatch(*m1, *m2, params).size() == expected_size);
+    }
+  }
+  // SECTION("bond basics") {
+  //   auto b1 = v2::SmilesParse::BondFromSmarts("@");
+  //   REQUIRE(b1);
+  //   auto b2 = v2::SmilesParse::BondFromSmarts("@");
+  //   REQUIRE(b2);
+  //   CHECK(b1->hasQuery());
+  //   CHECK(b2->hasQuery());
+  //   CHECK(dynamic_cast<QueryBond *>(b1.get())->QueryMatch(
+  //       dynamic_cast<QueryBond *>(b2.get())));
+  // }
+  // SECTION("bonds in molecules basics") {
+  //   auto m1 = "[R]@[R]"_smarts;
+  //   REQUIRE(m1);
+  //   auto m2 = "[R]@[R]"_smarts;
+  //   REQUIRE(m2);
+  //   std::vector<MatchVectType> mvv;
+  //   CHECK(SubstructMatch(*m1, *m2, mvv));
+  //   CHECK(mvv.size() == 1);
+  // }
 }
