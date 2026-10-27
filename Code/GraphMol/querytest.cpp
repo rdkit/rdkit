@@ -9,6 +9,8 @@
 //
 #include <catch2/catch_all.hpp>
 
+#include <memory>
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -22,49 +24,44 @@ TEST_CASE("query atom and bond matching") {
   Mol qM;
   Mol m;
 
-  auto *a = new Atom(6);
-  // we copy in addAtom, so this is safe
-  m.addAtom(a);
-  m.addAtom(a);
-  delete a;
+  Atom a(6);
+  m.addAtom(&a);
+  m.addAtom(&a);
   m.addBond(0, 1, Bond::SINGLE);
-  a = new Atom(8);
-  m.addAtom(a);
-  delete a;
+  a.setAtomicNum(8);
+  m.addAtom(&a);
   m.addBond(1, 2, Bond::DOUBLE);
   MolOps::sanitizeMol(m);
 
-  auto *qA = new QueryAtom(6);
-  CHECK(qA->Match(m.getAtomWithIdx(0)));
-  CHECK(qA->Match(m.getAtomWithIdx(1)));
-  CHECK(!qA->Match(m.getAtomWithIdx(2)));
-  qA->expandQuery(makeAtomImplicitValenceQuery(3));
-  CHECK(qA->Match(m.getAtomWithIdx(0)));
-  CHECK(!qA->Match(m.getAtomWithIdx(1)));
-  CHECK(!qA->Match(m.getAtomWithIdx(2)));
+  QueryAtom qA(6);
+  CHECK(qA.Match(m.getAtomWithIdx(0)));
+  CHECK(qA.Match(m.getAtomWithIdx(1)));
+  CHECK(!qA.Match(m.getAtomWithIdx(2)));
+  qA.expandQuery(makeAtomImplicitValenceQuery(3));
+  CHECK(qA.Match(m.getAtomWithIdx(0)));
+  CHECK(!qA.Match(m.getAtomWithIdx(1)));
+  CHECK(!qA.Match(m.getAtomWithIdx(2)));
 
-  qM.addAtom(qA);
-  delete qA;
-  qA = new QueryAtom(6);
-  qA->expandQuery(makeAtomNumQuery(8), Queries::COMPOSITE_OR);
-  qM.addAtom(qA);
-  delete qA;
-  qM.addAtom(new QueryAtom(8), true, true);
+  qM.addAtom(&qA);
+  QueryAtom qA2(6);
+  qA2.expandQuery(makeAtomNumQuery(8), Queries::COMPOSITE_OR);
+  qM.addAtom(&qA2);
+  QueryAtom qA3(8);
+  qM.addAtom(&qA3);
 
-  QueryBond *qB;
-  qB = new QueryBond(Bond::UNSPECIFIED);
-  qB->setOwningMol(qM);
-  qB->setBeginAtomIdx(0);
-  qB->setEndAtomIdx(1);
+  QueryBond qB(Bond::UNSPECIFIED);
+  qB.setOwningMol(qM);
+  qB.setBeginAtomIdx(0);
+  qB.setEndAtomIdx(1);
 
-  CHECK(qB->Match(m.getBondWithIdx(0)));
-  CHECK(qB->Match(m.getBondWithIdx(1)));
-  qM.addBond(qB, true);
-  qB = new QueryBond(Bond::DOUBLE);
-  qB->setOwningMol(qM);
-  qB->setBeginAtomIdx(1);
-  qB->setEndAtomIdx(2);
-  qM.addBond(qB, true);
+  CHECK(qB.Match(m.getBondWithIdx(0)));
+  CHECK(qB.Match(m.getBondWithIdx(1)));
+  qM.addBond(&qB);
+  QueryBond qB2(Bond::DOUBLE);
+  qB2.setOwningMol(qM);
+  qB2.setBeginAtomIdx(1);
+  qB2.setEndAtomIdx(2);
+  qM.addBond(&qB2);
 
   CHECK(qM.getAtomWithIdx(0)->Match(m.getAtomWithIdx(0)));
   CHECK(!qM.getAtomWithIdx(0)->Match(m.getAtomWithIdx(1)));
@@ -87,49 +84,43 @@ TEST_CASE("query bond order matching") {
   Mol qM;
   Mol m;
 
-  auto *a = new Atom(6);
-  // we copy in addAtom, so this is safe
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  delete a;
+  Atom a(6);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
   m.addBond(0, 1, Bond::TRIPLE);
   m.addBond(1, 2, Bond::SINGLE);
-  a = new Atom(8);
-  m.addAtom(a);
-  delete a;
+  a.setAtomicNum(8);
+  m.addAtom(&a);
   m.addBond(2, 3, Bond::DOUBLE);
   MolOps::sanitizeMol(m);
 
-  QueryBond *qB;
-  qB = new QueryBond(Bond::SINGLE);
+  auto qB = std::make_unique<QueryBond>(Bond::SINGLE);
 
   CHECK(!qB->Match(m.getBondWithIdx(0)));
   CHECK(qB->Match(m.getBondWithIdx(1)));
   CHECK(!qB->Match(m.getBondWithIdx(2)));
 
-  BOND_EQUALS_QUERY *newQ = makeBondOrderEqualsQuery(Bond::DOUBLE);
-  qB->expandQuery(newQ, Queries::COMPOSITE_OR);
+  auto newQ = std::unique_ptr<BOND_EQUALS_QUERY>(
+      makeBondOrderEqualsQuery(Bond::DOUBLE));
+  qB->expandQuery(newQ.release(), Queries::COMPOSITE_OR);
   CHECK(!qB->Match(m.getBondWithIdx(0)));
   CHECK(qB->Match(m.getBondWithIdx(1)));
   CHECK(qB->Match(m.getBondWithIdx(2)));
 
-  delete qB;
 }
 
 TEST_CASE("atom and bond query operations") {
   Mol m;
 
-  auto *a = new Atom(6);
-  // we copy in addAtom, so this is safe
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  delete a;
+  Atom a(6);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
   m.addBond(0, 1, Bond::SINGLE);
   m.addBond(1, 2, Bond::DOUBLE);
   m.addBond(2, 3, Bond::SINGLE);
@@ -139,55 +130,48 @@ TEST_CASE("atom and bond query operations") {
   m.addBond(5, 6, Bond::SINGLE);
   MolOps::sanitizeMol(m);
 
-  ATOM_EQUALS_QUERY *aeq = makeAtomExplicitDegreeQuery(3);
+  std::unique_ptr<ATOM_EQUALS_QUERY> aeq(makeAtomExplicitDegreeQuery(3));
   CHECK(!aeq->Match(m.getAtomWithIdx(0)));
   CHECK(!aeq->Match(m.getAtomWithIdx(1)));
   CHECK(aeq->Match(m.getAtomWithIdx(5)));
   CHECK(!aeq->Match(m.getAtomWithIdx(6)));
-  delete aeq;
-  aeq = makeAtomExplicitDegreeQuery(2);
+  aeq.reset(makeAtomExplicitDegreeQuery(2));
   CHECK(aeq->Match(m.getAtomWithIdx(0)));
   CHECK(aeq->Match(m.getAtomWithIdx(1)));
   CHECK(!aeq->Match(m.getAtomWithIdx(5)));
   CHECK(!aeq->Match(m.getAtomWithIdx(6)));
-  delete aeq;
 
-  aeq = makeAtomHCountQuery(1);
+  aeq.reset(makeAtomHCountQuery(1));
   CHECK(aeq->Match(m.getAtomWithIdx(0)));
   CHECK(aeq->Match(m.getAtomWithIdx(1)));
   CHECK(!aeq->Match(m.getAtomWithIdx(5)));
   CHECK(!aeq->Match(m.getAtomWithIdx(6)));
-  delete aeq;
 
-  aeq = makeAtomInNRingsQuery(1);
+  aeq.reset(makeAtomInNRingsQuery(1));
   CHECK(aeq->Match(m.getAtomWithIdx(0)));
   CHECK(aeq->Match(m.getAtomWithIdx(1)));
   CHECK(aeq->Match(m.getAtomWithIdx(5)));
   CHECK(!aeq->Match(m.getAtomWithIdx(6)));
-  delete aeq;
 
-  aeq = makeAtomInNRingsQuery(0);
+  aeq.reset(makeAtomInNRingsQuery(0));
   CHECK(!aeq->Match(m.getAtomWithIdx(0)));
   CHECK(!aeq->Match(m.getAtomWithIdx(1)));
   CHECK(!aeq->Match(m.getAtomWithIdx(5)));
   CHECK(aeq->Match(m.getAtomWithIdx(6)));
-  delete aeq;
 
-  aeq = makeAtomAromaticQuery();
+  aeq.reset(makeAtomAromaticQuery());
   CHECK(aeq->Match(m.getAtomWithIdx(0)));
   CHECK(aeq->Match(m.getAtomWithIdx(1)));
   CHECK(aeq->Match(m.getAtomWithIdx(5)));
   CHECK(!aeq->Match(m.getAtomWithIdx(6)));
-  delete aeq;
 
-  aeq = makeAtomAliphaticQuery();
+  aeq.reset(makeAtomAliphaticQuery());
   CHECK(!aeq->Match(m.getAtomWithIdx(0)));
   CHECK(!aeq->Match(m.getAtomWithIdx(1)));
   CHECK(!aeq->Match(m.getAtomWithIdx(5)));
   CHECK(aeq->Match(m.getAtomWithIdx(6)));
-  delete aeq;
 
-  aeq = makeAtomInRingQuery();
+  aeq.reset(makeAtomInRingQuery());
   CHECK(aeq->Match(m.getAtomWithIdx(0)));
   CHECK(aeq->Match(m.getAtomWithIdx(1)));
   CHECK(aeq->Match(m.getAtomWithIdx(5)));
@@ -197,9 +181,8 @@ TEST_CASE("atom and bond query operations") {
   CHECK(!aeq->Match(m.getAtomWithIdx(1)));
   CHECK(!aeq->Match(m.getAtomWithIdx(5)));
   CHECK(aeq->Match(m.getAtomWithIdx(6)));
-  delete aeq;
 
-  aeq = makeAtomInRingOfSizeQuery(6);
+  aeq.reset(makeAtomInRingOfSizeQuery(6));
   CHECK(aeq->Match(m.getAtomWithIdx(0)));
   CHECK(aeq->Match(m.getAtomWithIdx(1)));
   CHECK(aeq->Match(m.getAtomWithIdx(5)));
@@ -209,9 +192,8 @@ TEST_CASE("atom and bond query operations") {
   CHECK(!aeq->Match(m.getAtomWithIdx(1)));
   CHECK(!aeq->Match(m.getAtomWithIdx(5)));
   CHECK(aeq->Match(m.getAtomWithIdx(6)));
-  delete aeq;
 
-  aeq = makeAtomInRingOfSizeQuery(5);
+  aeq.reset(makeAtomInRingOfSizeQuery(5));
   CHECK(!aeq->Match(m.getAtomWithIdx(0)));
   CHECK(!aeq->Match(m.getAtomWithIdx(1)));
   CHECK(!aeq->Match(m.getAtomWithIdx(5)));
@@ -221,9 +203,8 @@ TEST_CASE("atom and bond query operations") {
   CHECK(aeq->Match(m.getAtomWithIdx(1)));
   CHECK(aeq->Match(m.getAtomWithIdx(5)));
   CHECK(aeq->Match(m.getAtomWithIdx(6)));
-  delete aeq;
 
-  BOND_EQUALS_QUERY *beq = makeBondIsInRingQuery();
+  std::unique_ptr<BOND_EQUALS_QUERY> beq(makeBondIsInRingQuery());
   CHECK(beq->Match(m.getBondWithIdx(0)));
   CHECK(!beq->Match(m.getBondWithIdx(6)));
   CHECK(beq->Match(m.getBondBetweenAtoms(0, 1)));
@@ -231,22 +212,19 @@ TEST_CASE("atom and bond query operations") {
   CHECK(!beq->Match(m.getBondBetweenAtoms(5, 6)));
   CHECK(!beq->Match(m.getBondBetweenAtoms(6, 5)));
 
-  delete beq;
 }
 
 TEST_CASE("null atom queries") {
   Mol m;
 
-  auto *a = new Atom(6);
-  // we copy in addAtom, so this is safe
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  delete a;
+  Atom a(6);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
   m.addBond(0, 1, Bond::SINGLE);
   m.addBond(1, 2, Bond::DOUBLE);
   m.addBond(2, 3, Bond::SINGLE);
@@ -256,28 +234,24 @@ TEST_CASE("null atom queries") {
   m.addBond(5, 6, Bond::SINGLE);
   MolOps::sanitizeMol(m);
 
-  ATOM_NULL_QUERY *aeq = makeAtomNullQuery();
+  std::unique_ptr<ATOM_NULL_QUERY> aeq(makeAtomNullQuery());
   CHECK(aeq->Match(m.getAtomWithIdx(0)));
   CHECK(aeq->Match(m.getAtomWithIdx(1)));
   CHECK(aeq->Match(m.getAtomWithIdx(5)));
   CHECK(aeq->Match(m.getAtomWithIdx(6)));
-  delete aeq;
-
 }
 
 TEST_CASE("query atom bond products") {
   Mol m;
 
-  auto *a = new Atom(6);
-  // we copy in addAtom, so this is safe
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  delete a;
+  Atom a(6);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
   m.addBond(0, 1, Bond::SINGLE);
   m.addBond(1, 2, Bond::DOUBLE);
   m.addBond(2, 3, Bond::SINGLE);
@@ -499,19 +473,18 @@ TEST_CASE("query-query matching") {
 TEST_CASE("query atom mass") {
   Mol m;
 
-  auto *a = new Atom(6);
+  Atom a(6);
 
   int massVal;
-  massVal = queryAtomMass(a);
+  massVal = queryAtomMass(&a);
   CHECK(massVal == static_cast<int>(
                              std::round(12.011 * massIntegerConversionFactor)));
 
-  a->setIsotope(13);
-  massVal = queryAtomMass(a);
+  a.setIsotope(13);
+  massVal = queryAtomMass(&a);
   CHECK(massVal == static_cast<int>(
                              std::round(13.003 * massIntegerConversionFactor)));
 
-  delete a;
 }
 
 TEST_CASE("ring query matches") {
