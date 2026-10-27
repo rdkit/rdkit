@@ -14,6 +14,8 @@
 #include <GraphMol/MacroMolTemplateLibrary.h>
 #include <GraphMol/MolFromMacroMol.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/QueryAtom.h>
+#include <GraphMol/QueryBond.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -479,5 +481,27 @@ TEST_CASE("MolFromMacroMol rejects invalid macro atoms and bonds",
         MolFromMacroMol(macroMol, templates),
         ContainsSubstring("Attachment point 2 of macro atom 0 is used by more "
                           "than one macro bond"));
+  }
+
+  SECTION("query atom") {
+    MacroMol macroMol;
+    macroMol.addMacroAtom("A", MonomerClass::AminoAcid);
+    macroMol.addAtom(new QueryAtom(6), false, true);
+    CHECK_THROWS_WITH(
+        MolFromMacroMol(macroMol, templates),
+        ContainsSubstring("Atom 1 is a query atom, which is not supported"));
+  }
+
+  SECTION("query bond") {
+    MacroMol macroMol;
+    macroMol.addAtom(new Atom(6), false, true);
+    macroMol.addAtom(new Atom(6), false, true);
+    auto *queryBond = new QueryBond(Bond::SINGLE);
+    queryBond->setBeginAtomIdx(0);
+    queryBond->setEndAtomIdx(1);
+    macroMol.addBond(queryBond, true);
+    CHECK_THROWS_WITH(
+        MolFromMacroMol(macroMol, templates),
+        ContainsSubstring("Bond 0 is a query bond, which is not supported"));
   }
 }
