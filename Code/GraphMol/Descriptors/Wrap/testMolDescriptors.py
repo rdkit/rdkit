@@ -2,7 +2,10 @@ import gc
 from os import environ
 from pathlib import Path
 import re
+import threading
 import unittest
+
+import numpy as np
 
 from rdkit import rdBase
 from rdkit import Chem, DataStructs
@@ -497,6 +500,130 @@ class TestCase(unittest.TestCase):
       self.assertEqual(v2, v5)
       self.assertEqual(v3, v6)
 
+  def _batchSmiles(self):
+    return [
+      'c1ccccc1C(=O)O', 'CCO', 'C1CC1CC', 'OC(=O)CCN', 'c1ccncc1Cl',
+      'CC(C)(C)OC(=O)N[C@@H](Cc1ccccc1)C(=O)O', 'C', 'O=S(=O)(N)c1ccccc1'
+    ]
+
+  def _batchMols(self):
+    return [Chem.MolFromSmiles(smi) for smi in self._batchSmiles()]
+
+  def testComputeProperties(self):
+    names = ['exactmw', 'tpsa', 'CrippenClogP', 'labuteASA', 'NumHBA', 'chi3v']
+    props = rdMD.Properties(names)
+    # computed on separate molecules so cached values can't leak into the batch
+    ref = np.array([list(props.ComputeProperties(m)) for m in self._batchMols()])
+    for numThreads in (1, 2, 4, 0, -1, 100):
+      res = props.ComputeProperties(self._batchMols(), numThreads=numThreads)
+      self.assertIsInstance(res, np.ndarray)
+      self.assertEqual(res.dtype, np.float64)
+      self.assertEqual(res.shape, (len(self._batchSmiles()), len(names)))
+      self.assertTrue(res.flags['C_CONTIGUOUS'])
+      np.testing.assert_array_equal(res, ref)
+
+    np.testing.assert_array_equal(props.ComputeProperties(tuple(self._batchMols())), ref)
+    np.testing.assert_array_equal(props.ComputeProperties(m for m in self._batchMols()), ref)
+
+    reversedProps = rdMD.Properties(list(reversed(names)))
+    np.testing.assert_array_equal(
+      reversedProps.ComputeProperties(self._batchMols(), numThreads=2), ref[:, ::-1])
+
+  def testComputePropertiesBatchEdgeCases(self):
+    names = ['NumHeavyAtoms', 'tpsa']
+    props = rdMD.Properties(names)
+    ref = np.array([list(props.ComputeProperties(m)) for m in self._batchMols()])
+
+    mols = self._batchMols()
+    res = props.ComputeProperties([None] + mols + [None], numThreads=4)
+    self.assertEqual(res.shape, (len(mols) + 2, len(names)))
+    self.assertTrue(np.isnan(res[0]).all())
+    self.assertTrue(np.isnan(res[-1]).all())
+    np.testing.assert_array_equal(res[1:-1], ref)
+
+    self.assertEqual(props.ComputeProperties([]).shape, (0, len(names)))
+    self.assertEqual(rdMD.Properties([]).ComputeProperties(mols).shape, (len(mols), 0))
+
+    res = props.ComputeProperties(self._batchMols() * 10, numThreads=4)
+    np.testing.assert_array_equal(res, np.tile(ref, (10, 1)))
+
+    with self.assertRaises(TypeError):
+      props.ComputeProperties(['CCO'])
+    # a single Mol goes to the single-molecule overload, not the batch one
+    np.testing.assert_array_equal(props.ComputeProperties(mols[0]), ref[0])
+
+    # any iterable is accepted, including a sequence with only __getitem__
+    class OldStyleSeq:
+
+      def __init__(self, items):
+        self._items = items
+
+      def __getitem__(self, i):
+        return self._items[i]
+
+    self.assertFalse(hasattr(OldStyleSeq, '__iter__'))
+    np.testing.assert_array_equal(props.ComputeProperties(OldStyleSeq(self._batchMols())), ref)
+
+    # non-iterable input is a TypeError
+    with self.assertRaises(TypeError):
+      props.ComputeProperties(42)
+    with self.assertRaises(TypeError):
+      props.ComputeProperties(None)
+
+    # failures in C++ calculators become NaN instead of raising
+    m = Chem.MolFromSmiles('CCO', sanitize=False)
+    hbdProps = rdMD.Properties(['NumHeavyAtoms', 'lipinskiHBD'])
+    with self.assertRaises(RuntimeError):
+      hbdProps.ComputeProperties(m)
+    res = hbdProps.ComputeProperties([m])
+    self.assertEqual(res[0, 0], 3)
+    self.assertTrue(np.isnan(res[0, 1]))
+
+  def testComputePropertiesBatchPythonProperty(self):
+
+    callerIds = []
+
+    class BatchTestNumAtoms(Descriptors.PropertyFunctor):
+
+      def __init__(self):
+        Descriptors.PropertyFunctor.__init__(self, 'BatchTestNumAtoms', '1.0.0')
+
+      def __call__(self, mol):
+        callerIds.append(threading.get_ident())
+        if mol.HasProp('_batchTestFail'):
+          raise ValueError('batch test failure')
+        return mol.GetNumAtoms()
+
+    rdMD.Properties.RegisterProperty(BatchTestNumAtoms())
+    props = rdMD.Properties(['BatchTestNumAtoms', 'exactmw'])
+    mols = self._batchMols()
+    ref = np.array([list(props.ComputeProperties(m)) for m in self._batchMols()])
+    callerIds.clear()
+    np.testing.assert_array_equal(props.ComputeProperties(mols, numThreads=4), ref)
+    # Python properties run on the calling thread whatever numThreads is
+    self.assertEqual(len(callerIds), len(mols))
+    self.assertEqual(set(callerIds), {threading.get_ident()})
+
+    mols[2].SetProp('_batchTestFail', '1')
+    with self.assertRaisesRegex(ValueError, 'batch test failure'):
+      props.ComputeProperties(mols, numThreads=4)
+
+    # mixed set: a failing C++ calculator gives NaN, the Python property is kept
+    mixed = rdMD.Properties(['BatchTestNumAtoms', 'lipinskiHBD'])
+    unsanitized = Chem.MolFromSmiles('CCO', sanitize=False)
+    for numThreads in (1, 4):
+      res = mixed.ComputeProperties([unsanitized], numThreads=numThreads)
+      self.assertEqual(res.shape, (1, 2))
+      self.assertEqual(res[0, 0], 3)
+      self.assertTrue(np.isnan(res[0, 1]))
+
+    # mixed set: a raising Python property still propagates past a failing C++ one
+    failing = self._batchMols()
+    failing[2].SetProp('_batchTestFail', '1')
+    failing.append(Chem.MolFromSmiles('CCO', sanitize=False))
+    with self.assertRaisesRegex(ValueError, 'batch test failure'):
+      mixed.ComputeProperties(failing, numThreads=4)
+
   def testProperties(self):
     props = rdMD.Properties()
     names = list(props.GetAvailableProperties())
@@ -523,6 +650,23 @@ class TestCase(unittest.TestCase):
       self.assertEqual("should not get here", "but did")
     except KeyError:
       pass
+
+  def testPropertiesMatchCalculators(self):
+    # Each registered property must be wired to the calculator of the same name. chi2v and chi2n
+    # were registered against calcChi3v/calcChi3n; nothing compared the two APIs, so the two names
+    # silently returned the chi3 values.
+    names = ['chi%d%s' % (i, v) for i in range(5) for v in 'nv']
+    names += ['kappa1', 'kappa2', 'kappa3']
+    # A halogenated molecule keeps the n and v variants apart. On a plain hydrocarbon several of
+    # the chi values coincide, which is enough to hide a mis-registration.
+    m = Chem.MolFromSmiles('BrCC(CBr)CBr')
+    props = rdMD.Properties(names)
+    computed = dict(zip(props.GetPropertyNames(), props.ComputeProperties(m)))
+    for name in names:
+      calculator = getattr(rdMD, 'Calc' + name[0].upper() + name[1:])
+      self.assertAlmostEqual(computed[name], calculator(m), 10,
+                             'Properties["%s"] does not match Calc%s%s' %
+                             (name, name[0].upper(), name[1:]))
 
   def testPythonDescriptorFunctor(self):
 

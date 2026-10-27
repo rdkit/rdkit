@@ -3584,6 +3584,39 @@ TEST_CASE("github #3912: cannot draw atom lists from SMARTS", "[query][bug]") {
   }
 }
 
+TEST_CASE("github #9607: Depiction code doesn't recognize all atom lists", "[queries]") {
+ SECTION("support all atom lists when depicting") {
+    auto m1 = R"CTAB(
+     RDKit          2D
+
+  0  0  0  0  0  0  0  0  0  0999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 3 2 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -14.969697 7.242424 0.000000 0
+M  V30 2 [C] -13.670659 7.992424 0.000000 0
+M  V30 3 C -12.371621 7.242424 0.000000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 1 2
+M  V30 2 1 2 3
+M  V30 END BOND
+M  V30 END CTAB
+M  END
+$$$$
+)CTAB"_ctab;
+      
+    CHECK(isAtomListQuery(m1->getAtomWithIdx(1)));
+    int panelWidth = -1;
+    int panelHeight = -1;
+    bool noFreeType = true;
+    // shouldn't throw precondition
+    MolDraw2DSVG drawer(300, 300, panelWidth, panelHeight, noFreeType);
+    drawer.drawMolecule(*m1);
+    drawer.finishDrawing();
+  }
+}
+
 TEST_CASE("github #2976: kekulizing reactions when drawing", "[reactions]") {
   SECTION("basics") {
     bool asSmiles = true;
@@ -7940,7 +7973,7 @@ TEST_CASE(
         DrawColour(0.0, 0.8, 0.8), DrawColour(0.0, 0.0, 0.8)};
 
     auto rings = m->getRingInfo();
-    auto &atomRings = rings->atomRings();
+    auto atomRings = rings->atomRings();
     std::map<int, std::vector<DrawColour>> atomCols;
     std::map<int, double> atomRads;
     for (auto i = 0u; i < atomRings.size(); ++i) {
@@ -7959,7 +7992,7 @@ TEST_CASE(
       }
     }
 
-    auto &bondRings = rings->bondRings();
+    auto bondRings = rings->bondRings();
     std::map<int, int> bondMults;
     std::map<int, std::vector<DrawColour>> bondCols;
     for (auto i = 0u; i < bondRings.size(); ++i) {

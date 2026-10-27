@@ -3,6 +3,7 @@ import unittest
 from rdkit import Chem
 from rdkit.Chem import rdDeprotect as rd
 
+import pickle
 
 class TestCase(unittest.TestCase):
 
@@ -13,6 +14,9 @@ class TestCase(unittest.TestCase):
     self.assertEqual(Chem.MolToSmiles(m2), Chem.CanonSmiles("NCc1ccccc1N"))
     self.assertEqual(list(m2.GetPropsAsDict()["DEPROTECTIONS"]), ["Boc", "Boc"])
     self.assertEqual(m2.GetPropsAsDict()["DEPROTECTION_COUNT"], 2)
+
+    m2 = rd.Deprotect(pickle.loads(pickle.dumps(m)))
+    rd.Deprotect(Chem.Mol(m))
 
   def testDeprotectInPlace(self):
     smiles = "N(C(=O)OC(C)(C)C)Cc1ccccc1NC(=O)OC(C)(C)C"

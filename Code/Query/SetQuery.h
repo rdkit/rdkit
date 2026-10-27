@@ -25,7 +25,7 @@ template <class MatchFuncArgType, class DataFuncArgType = MatchFuncArgType,
 class RDKIT_QUERY_EXPORT SetQuery
     : public Query<MatchFuncArgType, DataFuncArgType, needsConversion> {
  public:
-  typedef std::set<MatchFuncArgType> CONTAINER_TYPE;
+  using CONTAINER_TYPE = std::set<MatchFuncArgType>;
 
   SetQuery() : Query<MatchFuncArgType, DataFuncArgType, needsConversion>() {}
 

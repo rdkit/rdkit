@@ -8,7 +8,7 @@
 #
 """ functions to match a bunch of fragment descriptors from a file
 
-No user-servicable parts inside.  ;-)
+No user-serviceable parts inside.  ;-)
 
 """
 import os

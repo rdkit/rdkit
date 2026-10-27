@@ -32,6 +32,11 @@ RDKIT_DEPICTOR_EXPORT extern unsigned int MAX_COLL_ITERS;
 RDKIT_DEPICTOR_EXPORT extern double HETEROATOM_COLL_SCALE;
 RDKIT_DEPICTOR_EXPORT extern unsigned int NUM_BONDS_FLIPS;
 
+// Path angle expansion parameters
+RDKIT_DEPICTOR_EXPORT extern double ANGLE_EXPANSION_INCREMENT;
+RDKIT_DEPICTOR_EXPORT extern double MAX_ANGLE_EXPANSION;
+RDKIT_DEPICTOR_EXPORT extern unsigned int MAX_ANGLE_EXPANSION_ITERS;
+
 typedef std::vector<const RDGeom::Point2D *> VECT_C_POINT;
 
 typedef std::pair<int, int> PAIR_I_I;
@@ -404,7 +409,7 @@ RDKIT_DEPICTOR_EXPORT bool hasTerminalRGroupOrQueryHydrogen(
 RDKIT_DEPICTOR_EXPORT std::unique_ptr<RDKit::RWMol> prepareTemplateForRGroups(
     RDKit::RWMol &templateMol);
 RDKIT_DEPICTOR_EXPORT void reducedToFullMatches(
-    const RDKit::RWMol &reducedQuery, const RDKit::RWMol &molHs,
+    const RDKit::ROMol &reducedQuery, const RDKit::ROMol &molHs,
     std::vector<RDKit::MatchVectType> &matches);
 RDKIT_DEPICTOR_EXPORT bool invertWedgingIfMolHasFlipped(
     RDKit::ROMol &mol, const RDGeom::Transform3D &trans);
