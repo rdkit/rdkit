@@ -97,5 +97,123 @@ class TestCase(unittest.TestCase):
     matches = m.GetSubstructMatches(q)
     assert len(matches) == 10, 'negation match count'
 
+  def testBondRingCountQueryQueryMatches(self):
+    " testing query-query matching with not queries on bond ring counts "
+    params = Chem.SubstructMatchParameters()
+    params.useQueryQueryMatches = True
+
+    # --- @{0} vs @{0} ---
+    target = Chem.MolFromSmarts('*@{0}*')
+    query = Chem.MolFromSmarts('*@{0}*')
+    Chem.GetSymmSSSR(target)
+    Chem.GetSymmSSSR(query)
+    matches = target.GetSubstructMatches(query, params=params)
+    assert len(matches) == 1, 'positive @{0} should match positive @{0}'
+
+    # --- !@{0} vs @{0} (should NOT match) ---
+    target = Chem.MolFromSmarts('*!@{0}*')
+    query = Chem.MolFromSmarts('*@{0}*')
+    Chem.GetSymmSSSR(target)
+    Chem.GetSymmSSSR(query)
+    matches = target.GetSubstructMatches(query, params=params)
+    assert len(matches) == 0, 'not @{0} should NOT match positive @{0}'
+
+    # --- !@{0} vs !@{0} (should match) ---
+    target = Chem.MolFromSmarts('*!@{0}*')
+    query = Chem.MolFromSmarts('*!@{0}*')
+    Chem.GetSymmSSSR(target)
+    Chem.GetSymmSSSR(query)
+    matches = target.GetSubstructMatches(query, params=params)
+    assert len(matches) == 1, 'not @{0} should match not @{0}'
+
+    # --- @{0} vs !@{0} (should NOT match) ---
+    target = Chem.MolFromSmarts('*@{0}*')
+    query = Chem.MolFromSmarts('*!@{0}*')
+    Chem.GetSymmSSSR(target)
+    Chem.GetSymmSSSR(query)
+    matches = target.GetSubstructMatches(query, params=params)
+    assert len(matches) == 0, 'positive @{0} should NOT match not @{0}'
+
+    # --- @{2} vs @{2} ---
+    target = Chem.MolFromSmarts('*@{2}*')
+    query = Chem.MolFromSmarts('*@{2}*')
+    Chem.GetSymmSSSR(target)
+    Chem.GetSymmSSSR(query)
+    matches = target.GetSubstructMatches(query, params=params)
+    assert len(matches) == 1, 'positive @{2} should match positive @{2}'
+
+    # --- !@{2} vs @{2} (should NOT match) ---
+    target = Chem.MolFromSmarts('*!@{2}*')
+    query = Chem.MolFromSmarts('*@{2}*')
+    Chem.GetSymmSSSR(target)
+    Chem.GetSymmSSSR(query)
+    matches = target.GetSubstructMatches(query, params=params)
+    assert len(matches) == 0, 'not @{2} should NOT match positive @{2}'
+
+    # --- !@{2} vs !@{2} (should match) ---
+    target = Chem.MolFromSmarts('*!@{2}*')
+    query = Chem.MolFromSmarts('*!@{2}*')
+    Chem.GetSymmSSSR(target)
+    Chem.GetSymmSSSR(query)
+    matches = target.GetSubstructMatches(query, params=params)
+    assert len(matches) == 1, 'not @{2} should match not @{2}'
+
+    # --- @{2} vs !@{2} (should NOT match) ---
+    target = Chem.MolFromSmarts('*@{2}*')
+    query = Chem.MolFromSmarts('*!@{2}*')
+    Chem.GetSymmSSSR(target)
+    Chem.GetSymmSSSR(query)
+    matches = target.GetSubstructMatches(query, params=params)
+    assert len(matches) == 0, 'positive @{2} should NOT match not @{2}'
+
+    # --- @{1} vs @{2} (should NOT match, different ring counts) ---
+    target = Chem.MolFromSmarts('*@{1}*')
+    query = Chem.MolFromSmarts('*@{2}*')
+    Chem.GetSymmSSSR(target)
+    Chem.GetSymmSSSR(query)
+    matches = target.GetSubstructMatches(query, params=params)
+    assert len(matches) == 0, 'positive @{1} should NOT match positive @{2}'
+
+    # --- !@{1} vs !@{2} (should NOT match, different negated ring counts) ---
+    target = Chem.MolFromSmarts('*!@{1}*')
+    query = Chem.MolFromSmarts('*!@{2}*')
+    Chem.GetSymmSSSR(target)
+    Chem.GetSymmSSSR(query)
+    matches = target.GetSubstructMatches(query, params=params)
+    assert len(matches) == 0, 'not @{1} should NOT match not @{2}'
+
+    # --- @{1-2} vs @{1-2} (should match, same range) ---
+    target = Chem.MolFromSmarts('*@{1-2}*')
+    query = Chem.MolFromSmarts('*@{1-2}*')
+    Chem.GetSymmSSSR(target)
+    Chem.GetSymmSSSR(query)
+    matches = target.GetSubstructMatches(query, params=params)
+    assert len(matches) == 1, 'range @{1-2} should match range @{1-2}'
+
+    # --- @{1-2} vs @{3-4} (should NOT match, non-overlapping ranges) ---
+    target = Chem.MolFromSmarts('*@{1-2}*')
+    query = Chem.MolFromSmarts('*@{3-4}*')
+    Chem.GetSymmSSSR(target)
+    Chem.GetSymmSSSR(query)
+    matches = target.GetSubstructMatches(query, params=params)
+    assert len(matches) == 0, 'range @{1-2} should NOT match range @{3-4}'
+
+    # --- range vs exact: both directions should NOT match ---
+    # queriesMatch correctly returns false for range-vs-exact (different query types)
+    # and there is no fallback, so no match in either direction
+    target = Chem.MolFromSmarts('*@{1-3}*')
+    query = Chem.MolFromSmarts('*@{2}*')
+    Chem.GetSymmSSSR(target)
+    Chem.GetSymmSSSR(query)
+    matches = target.GetSubstructMatches(query, params=params)
+    assert len(matches) == 0, 'range @{1-3} should NOT match exact @{2}'
+
+    target = Chem.MolFromSmarts('*@{2}*')
+    query = Chem.MolFromSmarts('*@{1-3}*')
+    Chem.GetSymmSSSR(target)
+    Chem.GetSymmSSSR(query)
+    matches = target.GetSubstructMatches(query, params=params)
+    assert len(matches) == 0, 'exact @{2} should NOT match range @{1-3}'
+
 if __name__ == '__main__':
   unittest.main()
