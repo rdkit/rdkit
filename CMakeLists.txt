@@ -444,7 +444,7 @@ if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 
   #-------
   # pull in python:
-  find_package(Python COMPONENTS Interpreter Development.Module Development.Embed NumPy)
+  find_package(Python COMPONENTS Interpreter Development.Module NumPy REQUIRED)
   target_include_directories(rdkit_py_base INTERFACE ${Python_INCLUDE_DIRS})
   target_include_directories(rdkit_py_base INTERFACE ${Python_NumPy_INCLUDE_DIRS})
   target_compile_definitions(rdkit_py_base INTERFACE "-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION")
@@ -457,9 +457,7 @@ if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
       OUTPUT_STRIP_TRAILING_WHITESPACE
   )
 
-  if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
-    target_link_libraries(rdkit_py_base INTERFACE ${Python_LIBRARIES} )
-  endif()
+  target_link_libraries(rdkit_py_base INTERFACE Python::Module)
 
 
   find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS "python${Python_VERSION_MAJOR}${Python_VERSION_MINOR}" "numpy${Python_VERSION_MAJOR}${Python_VERSION_MINOR}" REQUIRED CONFIG)
