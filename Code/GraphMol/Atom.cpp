@@ -287,7 +287,15 @@ unsigned int Atom::getTotalDegree() const {
 //   and include any of them that are Hs in the count here
 //
 unsigned int Atom::getTotalNumHs(bool includeNeighbors) const {
-  int res = getNumExplicitHs() + getNumImplicitHs();
+  int res = getNumExplicitHs();
+  // we add the implicit Hs if df_noImplicit isn't set and we either don't have
+  // a query or the implicit valence on the query has been calculated.
+  //
+  // The idea is that getTotalNumHs() should fail on a normal atom that hasn't
+  // had its implicit valence calculated yet, but pass for query atoms.
+  if (!df_noImplicit && (!hasQuery() || d_implicitValence > -1)) {
+    res += getNumImplicitHs();
+  }
   if (includeNeighbors && dp_mol) {
     auto nbrs = dp_mol->atomNeighbors(this);
     res += std::count_if(nbrs.begin(), nbrs.end(), [](const auto nbr) {
