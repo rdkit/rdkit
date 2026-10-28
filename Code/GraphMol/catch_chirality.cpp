@@ -15,7 +15,6 @@
 
 #include <catch2/catch_all.hpp>
 
-
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/StereoGroup.h>
 #include <GraphMol/Chirality.h>
@@ -1649,8 +1648,9 @@ TEST_CASE("SHARED-12489: prefer wedging inner ring bonds",
     }
     mol.getAtomWithIdx(0)->setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
 
-    // Add the simple spiro ring first. The center-based ranking must not compare
-    // its candidates with candidates from the separate bridged component.
+    // Add the simple spiro ring first. The center-based ranking must not
+    // compare its candidates with candidates from the separate bridged
+    // component.
     mol.addBond(0, 6, Bond::SINGLE);
     mol.addBond(6, 7, Bond::SINGLE);
     mol.addBond(7, 8, Bond::SINGLE);
@@ -6089,7 +6089,7 @@ TEST_CASE("findMesoCenters") {
             {"C1[C@H](F)C[C@H]1C[C@H]1C[C@H](N)C1", {{1, 4}, {6, 8}}},
             // not sure if this next one is right:
             {"N[C@H]1[C@H](F)[C@@H](N)[C@@H]1F", {{1, 4}, {2, 6}}},
-        };
+    };
     for (auto &[smi, expected] : cases) {
       INFO(smi);
       auto m = v2::SmilesParse::MolFromSmiles(smi);
@@ -6892,4 +6892,17 @@ TEST_CASE("Github #9681: atropisomer ring-size cutoff",
     CHECK(parsed->getBondWithIdx(axis->getIdx())->getStereo() ==
           expectedStereo);
   }
+}
+
+TEST_CASE(
+    "GitHub Issue 9757: findPotentialStereo considers "
+    "cumulene as 3 consecutive double bonds") {
+  auto smiles = GENERATE("CC=C=CC", "CC=C=C=CC", "N=[N+]=[N-]");
+  CAPTURE(smiles);
+  auto m = v2::SmilesParse::MolFromSmiles(smiles);
+  REQUIRE(m);
+  auto potentialStereo = Chirality::findPotentialStereo(*m);
+
+  // till we support cumulene stereochemistry
+  CHECK(potentialStereo.size() == 0);
 }
