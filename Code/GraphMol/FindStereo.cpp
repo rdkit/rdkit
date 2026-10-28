@@ -169,7 +169,7 @@ StereoInfo getStereoInfo(const Bond *bond) {
     };
 
     if (!explore_bond_end(beginAtom) || !explore_bond_end(endAtom)) {
-      // This is not really a stereo double bon d-- it might be
+      // This is not really a stereo double bond -- it might be
       // an allene / cumulene like, but we don't support these yet
       sinfo.type = StereoType::Unspecified;
       sinfo.controllingAtoms.clear();
