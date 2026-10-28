@@ -1,1 +1,4 @@
-See [Getting Started with Contributing to the RDKit](Docs/Book/GettingStartedWithContributing.md).
+Before contributing, please read:
+
+- [Getting started with contributing](Docs/Book/GettingStartedWithContributing.md)
+- [RDKit contributor conventions](Docs/Book/ContributorConventions.md)

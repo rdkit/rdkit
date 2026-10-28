@@ -14,6 +14,7 @@ The RDKit Documentation
   GettingStartedInPython
   RDKit_Book
   GettingStartedWithContributing
+  ContributorConventions
   Cookbook
   Cartridge
   BackwardsIncompatibleChanges
