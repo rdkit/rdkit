@@ -446,7 +446,7 @@ if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 
   #-------
   # pull in python:
-  find_package(Python COMPONENTS Interpreter Development.Module NumPy)
+  find_package(Python COMPONENTS Interpreter Development.Module NumPy REQUIRED)
   # rdkit_py_base is exported, so it links imported targets, which
   # rdkitpython-config.cmake recreates for the consumer.
   # Python::Module links python3X.lib on Windows; elsewhere the interpreter

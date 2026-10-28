@@ -409,7 +409,7 @@ RDKIT_DEPICTOR_EXPORT bool hasTerminalRGroupOrQueryHydrogen(
 RDKIT_DEPICTOR_EXPORT std::unique_ptr<RDKit::RWMol> prepareTemplateForRGroups(
     RDKit::RWMol &templateMol);
 RDKIT_DEPICTOR_EXPORT void reducedToFullMatches(
-    const RDKit::RWMol &reducedQuery, const RDKit::RWMol &molHs,
+    const RDKit::ROMol &reducedQuery, const RDKit::ROMol &molHs,
     std::vector<RDKit::MatchVectType> &matches);
 RDKIT_DEPICTOR_EXPORT bool invertWedgingIfMolHasFlipped(
     RDKit::ROMol &mol, const RDGeom::Transform3D &trans);

@@ -1188,6 +1188,7 @@ M  END
     self.assertFalse(rxn.GetProductTemplate(0).GetBondWithIdx(0).GetIsAromatic())
     self.assertEqual(rxn.GetAgentTemplate(0).GetAtomWithIdx(1).GetFormalCharge(), 0)
 
+    rxn = pickle.loads(pickle.dumps(rxn))
     AllChem.SanitizeRxnAsMols(rxn)
     self.assertTrue(rxn.GetReactantTemplate(0).GetBondWithIdx(0).GetIsAromatic())
     self.assertTrue(rxn.GetProductTemplate(0).GetBondWithIdx(0).GetIsAromatic())
