@@ -6,6 +6,18 @@
 see your contribution acknowledged with your name, please set your name in
 GitHub)
 
+## Highlights
+
+## Backwards incompatible changes:
+- `RingInfo` now stores its rings in flat, contiguous arrays, and most of its
+  C++ methods that returned references to `std::vector`s now return
+  non-owning `std::span`s or span-based views. Specifically,
+  `RingInfo::atomRings()` and `RingInfo::bondRings()` now return a
+  `RingInfo::RingsView` instead of `const VECT_INT_VECT &`, and
+  `RingInfo::atomMembers()` and `RingInfo::bondMembers()` now return
+  `std::span<const int>` instead of `const INT_VECT &`. These views are
+  invalidated when the `RingInfo` is modified. `RingInfo::addRing()` now takes
+  `std::span<const int>` arguments. The Python, Java, and C# APIs are unchanged.
 
 ## Code removed in this release:
 - The PropertyMol class in python has been removed. Use a normal Chem.Mol and
@@ -23,10 +35,7 @@ GitHub)
 - The python packages Chem.MCS and Chem.fmcs have been removed. The C++ implementation in
   Chem.rdFMCS is more advanced and is being maintained.
 
-
 ## Deprecated code (to be removed in a future release):
-
-
 
 
 # Release_2026.09.1

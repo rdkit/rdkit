@@ -1,0 +1,18 @@
+name: Ubuntu_x64_minimallib_build
+
+on:
+  workflow_call:
+
+jobs:
+  Ubuntu_x64_minimallib_build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build MinimalLib JS bindings
+        env:
+          GET_SRC: copy
+          COMPOSE_BAKE: "false"
+        run: |
+          docker compose -p rdkit-minimallib-ci \
+            -f ./Code/MinimalLib/docker/docker_compose_build_minimallib.yml build

@@ -1,0 +1,41 @@
+name: Set up package management
+description: Ensure conda Miniforge is available, and remove Homebrew on MacOS to avoid conflicts
+runs:
+  using: composite
+  steps:
+    - name: Install conda
+      shell: bash
+      run: |
+        CONDA="${CONDA:-$HOME/miniforge}"
+        echo "CONDA=${CONDA}" >> "$GITHUB_ENV"
+
+        if [ -x "$CONDA/bin/conda" ]; then
+          echo "Conda is already installed at $CONDA; skipping installation."
+          exit 0
+        fi
+
+        installer_version="26.5.3-0"
+        case "$RUNNER_OS" in
+          macOS)
+            installer=Miniforge3-${installer_version}-MacOSX-arm64.sh
+            ;;
+          Linux)
+            installer=Miniforge3-${installer_version}-Linux-x86_64.sh
+            ;;
+          *)
+            echo "Unsupported runner OS: $RUNNER_OS" >&2
+            exit 1
+            ;;
+        esac
+
+        installer_url="https://github.com/conda-forge/miniforge/releases/download/${installer_version}/${installer}"
+        curl -fsSLO "$installer_url"
+        bash "$installer" -b -p "$CONDA"
+    - name: Remove homebrew
+      if: runner.os == 'macOS'
+      shell: bash
+      run: |
+        curl -fsSL https://raw.githubusercontent.com/Homebrew/install/be041513824fd2666a0e93cf5c3b0ca3bb0eb4b6/uninstall.sh > ~/uninstall_homebrew.sh
+        chmod +x ~/uninstall_homebrew.sh
+        ~/uninstall_homebrew.sh -f -q
+        rm ~/uninstall_homebrew.sh
