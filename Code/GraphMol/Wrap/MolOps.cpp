@@ -306,9 +306,7 @@ ROMol *addHs2(const ROMol &orig, MolOps::AddHsParameters params,
   if (onlyOnAtoms) {
     onlyOn = pythonObjectToVect(onlyOnAtoms, orig.getNumAtoms());
   }
-  auto res = std::make_unique<RWMol>(orig);
-  MolOps::addHs(*res, params, onlyOn.get());
-  return static_cast<ROMol *>(res.release());
+  return MolOps::addHs(orig, params, onlyOn.get());
 }
 
 ROMol *addHs(const ROMol &orig, bool explicitOnly, bool addCoords,
