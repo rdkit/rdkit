@@ -2951,6 +2951,17 @@ TEST_CASE("Stop caching ring finding results") {
   }
 }
 
+TEST_CASE("Symmetrized SSSR results retain their ring type", "[rings][bug]") {
+  auto algorithm = GENERATE(MolOps::SymmetrizeSSSRAlgorithm::LEGACY,
+                            MolOps::SymmetrizeSSSRAlgorithm::RDL);
+  CAPTURE(algorithm);
+  auto mol = "C1C2CC1CCC2"_smiles;
+  REQUIRE(mol);
+  VECT_INT_VECT rings;
+  CHECK(MolOps::symmetrizeSSSR(*mol, rings, algorithm) == 3);
+  CHECK(mol->getRingInfo()->isSymmSssr());
+}
+
 TEST_CASE("molecules with more than 255 rings produce a bad pickle") {
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/test_data/";
