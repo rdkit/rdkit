@@ -95,6 +95,7 @@ void updateEmbedParametersFromJSON(EmbedParameters &params,
   }
 
   if (auto opt = pt.get_child_optional("additionalChiralSets")) {
+    params.additionalChiralSets.clear();
     for (const auto &entry : *opt) {
       auto chiralSet = std::make_shared<DistGeom::ChiralSet>();
       if (const auto val = entry.second.get_optional<unsigned int>("d_idx0")) {
