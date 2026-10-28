@@ -101,7 +101,7 @@ jobs:
   steps:
   - template: .azure-pipelines/vs_build.yml
 - job: Windows_VS2022_x64_dll
-  timeoutInMinutes: 120
+  timeoutInMinutes: 150
   pool:
     vmImage: windows-2022
   variables:
