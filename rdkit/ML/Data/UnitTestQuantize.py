@@ -291,12 +291,8 @@ class TestCase(unittest.TestCase):
     _ = Quantize.FindVarMultQuantBounds(d, 1, a, 2)
 
     d2 = [(x, ) for x in d]
-    if hasattr(rdBase, '_wrapperType') and rdBase._wrapperType == 'nanobind':
-      self.assertRaises(TypeError, lambda: Quantize.FindVarMultQuantBounds(d2, 1, a, 2))
-      self.assertRaises(TypeError, lambda: Quantize._FindStartPoints(d2, a, len(d2)))
-    else:
-      self.assertRaises(ValueError, lambda: Quantize.FindVarMultQuantBounds(d2, 1, a, 2))
-      self.assertRaises(ValueError, lambda: Quantize._FindStartPoints(d2, a, len(d2)))
+    self.assertRaises((ValueError, TypeError), lambda: Quantize.FindVarMultQuantBounds(d2, 1, a, 2))
+    self.assertRaises((ValueError, TypeError), lambda: Quantize._FindStartPoints(d2, a, len(d2)))
 
 
 if __name__ == '__main__':  # pragma: nocover

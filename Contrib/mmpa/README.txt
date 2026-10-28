@@ -1,3 +1,7 @@
+*NOTE* As of RDKit release 2027.03.1, the scripts in this directory no longer
+work. There's now code in the RDKit core for doing MMP fragmentation and the
+MMPDB project provides a set of tools for doing the analysis and storing pairs.
+
 This directory contains the scripts used to generate matched molecular pairs (MMPs) from an input list of SMILES. 
 The fragment indexing algorithm used in the scripts is described in the following publications:
 

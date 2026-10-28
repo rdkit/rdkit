@@ -20,6 +20,20 @@ GitHub)
   `std::span<const int>` arguments. The Python, Java, and C# APIs are unchanged.
 
 ## Code removed in this release:
+- The PropertyMol class in python has been removed. Use a normal Chem.Mol and
+  the function
+  Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps) to ensure
+  the properties you are interested in are pickled.
+- The DbCLI code (found in Projects/DbCLI) has been removed. Since the Projects
+  directory is now empty, it has also been removed.
+- The cmake functionality that automatically downloads and installs the Eigen
+  library during RDKit builds has been removed. Users who are building the RDKit
+  and who want to use Eigen will need to install Eigen themselves. 
+- The python package ML.MLUtils has been removed.
+- The python package Chem.MolDb has been removed.
+- The python package Chem.Fingerprints has been removed.
+- The python packages Chem.MCS and Chem.fmcs have been removed. The C++ implementation in
+  Chem.rdFMCS is more advanced and is being maintained.
 
 ## Deprecated code (to be removed in a future release):
 
