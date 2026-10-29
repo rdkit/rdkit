@@ -841,8 +841,8 @@ TEST_CASE("query-query matches with ring queries") {
     REQUIRE(m1);
     std::vector<std::pair<std::string, size_t>> checks = {
         {"[R][R]", 1},
-        // {"[R][!R]", 0},
-        // {"[!R][!R]", 1},
+        {"[R][!R]", 0},
+        {"[!R][!R]", 1},
     };
     for (const auto &[smarts, expected_size] : checks) {
       INFO(smarts);

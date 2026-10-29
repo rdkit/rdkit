@@ -118,10 +118,18 @@ bool queriesMatch(QueryBond::QUERYBOND_QUERY const *q1,
   PRECONDITION(q1, "no q1");
   PRECONDITION(q2, "no q2");
 
-  static const unsigned int nQueries = 6;
+  static const unsigned int nQueries = 10;
   static std::string equalityQueries[nQueries] = {
-      "BondRingSize", "BondMinRingSize", "BondOrder",
-      "BondDir",      "BondInRing",      "BondInNRings"};
+      "BondRingSize",
+      "BondMinRingSize",
+      "BondOrder",
+      "BondDir",
+      "BondInRing",
+      "BondInNRings",
+      "SingleOrAromaticBond",
+      "DoubleOrAromaticBond",
+      "SingleOrDoubleBond",
+      "SingleOrDoubleOrAromaticBond"};
 
   bool res = false;
   std::string d1 = q1->getDescription();
