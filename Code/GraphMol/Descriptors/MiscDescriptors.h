@@ -18,6 +18,7 @@
 #define RD_MISCDESCRIPTORS_H
 
 #include <string>
+#include <vector>
 
 namespace RDKit {
 class ROMol;
