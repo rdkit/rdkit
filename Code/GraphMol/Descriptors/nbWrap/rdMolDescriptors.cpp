@@ -1863,8 +1863,7 @@ query.Match( mol ))DOC",
         "Returns 2D Autocorrelation descriptors vector");
 #endif
 
-  docString = R"DOC(Holds the maximum and minimum EState and absolute EState indices [Hall, Mohney and Kier].)DOC";
-  nb::class_<RDKit::Descriptors::EStates>(m, "EStates", docString.c_str())
+  nb::class_<RDKit::Descriptors::EStates>(m, "EStates",R"DOC(Holds the maximum and minimum EState and absolute EState indices [Hall, Mohney and Kier].)DOC")
     .def(nb::init<>())
     .def_ro("maxEState", &RDKit::Descriptors::EStates::maxEState,
 	    "Maximum EState index")
@@ -1875,7 +1874,7 @@ query.Match( mol ))DOC",
     .def_ro("minAbsEState", &RDKit::Descriptors::EStates::minAbsEState,
 	    "Minimum Absolute EState index")
     ;
-  m.def("CalcEState", RDKit::Descriptors::calcEState, "mol"_a,
+  m.def("CalcEStates", RDKit::Descriptors::calcEStates, "mol"_a,
         "Returns the maximum and minimum EState and absolute EState indices for the molecule (Hall, Mohney and Kier, "
         "JCICS 31, 76-81 (1991))");
       
@@ -1978,7 +1977,7 @@ query.Match( mol ))DOC",
   m.attr("_CalcNumRadicalElectrons_version") =
       RDKit::Descriptors::NumRadicalElectronsVersion;
 
-  nb::class_<RDKit::Descriptors::PartialCharges>("PartialCharges",
+  nb::class_<RDKit::Descriptors::PartialCharges>(m, "PartialCharges",
 						 "Computes max and min of Gasteiger partial charges and absolute partial charges")
     .def(nb::init<>())
     
