@@ -1007,14 +1007,14 @@ Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom) {
 }
 
 void finalizeAtomRingSizeQuery(Queries::Query<int, Atom const *, true> *query,
-                               RangeQueryType qtype) {
+                               detail::RangeQueryType qtype) {
   switch (qtype) {
-    case RangeQueryType::EQUAL: {
+    case detail::RangeQueryType::EQUAL: {
       auto tgt = static_cast<ATOM_EQUALS_QUERY *>(query)->getVal();
       query->setDataFunc(
           [tgt](Atom const *at) { return queryAtomIsInRingOfSize(at, tgt); });
     } break;
-    case RangeQueryType::RANGE: {
+    case detail::RangeQueryType::RANGE: {
       auto rq = static_cast<ATOM_RANGE_QUERY *>(query);
       auto uv = rq->getUpper();
       auto lv = rq->getLower();
@@ -1023,14 +1023,14 @@ void finalizeAtomRingSizeQuery(Queries::Query<int, Atom const *, true> *query,
         return queryAtomIsInRingOfSize(at, lv, uv, lo, uo);
       });
     } break;
-    case RangeQueryType::LESS: {
+    case detail::RangeQueryType::LESS: {
       auto lv = static_cast<ATOM_LESSEQUAL_QUERY *>(query)->getVal();
       auto uv = -1;
       query->setDataFunc([lv, uv](Atom const *at) {
         return queryAtomIsInRingOfSize(at, lv, uv);
       });
     } break;
-    case RangeQueryType::GREATER: {
+    case detail::RangeQueryType::GREATER: {
       auto lv = -1;
       auto uv = static_cast<ATOM_GREATEREQUAL_QUERY *>(query)->getVal();
       query->setDataFunc([lv, uv](Atom const *at) {
@@ -1045,7 +1045,7 @@ void finalizeAtomRingSizeQuery(Queries::Query<int, Atom const *, true> *query,
 void finalizeQueryFromDescription(
     Queries::Query<int, Atom const *, true> *query, Atom const *) {
   std::string descr = query->getDescription();
-  RangeQueryType qtype = parseRangeQueryType(descr);
+  detail::RangeQueryType qtype = detail::parseRangeQueryType(descr);
 
   if (descr == "AtomRingBondCount") {
     query->setDataFunc(queryAtomRingBondCount);
@@ -1126,7 +1126,7 @@ void finalizeQueryFromDescription(
 void finalizeQueryFromDescription(
     Queries::Query<int, Bond const *, true> *query, Bond const *) {
   std::string descr = query->getDescription();
-  parseRangeQueryType(descr);
+  detail::parseRangeQueryType(descr);
   Queries::Query<int, Bond const *, true> *tmpQuery;
   if (descr == "BondRingSize") {
     tmpQuery = makeBondInRingOfSizeQuery(

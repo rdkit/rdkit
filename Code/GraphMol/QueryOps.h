@@ -1238,7 +1238,8 @@ bool localMatch(EqQuery const *q1, EqQuery const *q2) {
   }
 }
 
-enum class RangeQueryType : char {
+namespace detail {
+enum class RangeQueryType : std::uint8_t {
   EQUAL,
   LESS,
   GREATER,
@@ -1258,6 +1259,7 @@ inline RangeQueryType parseRangeQueryType(std::string &descr) {
   }
   return RangeQueryType::EQUAL;
 }
+}  // namespace detail
 
 template <typename Traits>
 bool queriesMatch(typename Traits::BaseQuery const *q1,
@@ -1335,8 +1337,8 @@ bool queriesMatch(typename Traits::BaseQuery const *q1,
   } else {
     std::string bd1 = d1;
     std::string bd2 = d2;
-    parseRangeQueryType(bd1);
-    parseRangeQueryType(bd2);
+    detail::parseRangeQueryType(bd1);
+    detail::parseRangeQueryType(bd2);
     if (bd1 == bd2 && Traits::isEqualityQuery(bd1)) {
       auto *e1 = dynamic_cast<const typename Traits::EqQuery *>(q1);
       auto *e2 = dynamic_cast<const typename Traits::EqQuery *>(q2);
