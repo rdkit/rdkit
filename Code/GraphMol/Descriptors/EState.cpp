@@ -87,6 +87,33 @@ std::vector<double> calcEStateIndices(const ROMol &mol) {
   return accum;
 }
 
+EStates calcEStates(const ROMol &mol) {
+  auto estates = calcEStateIndices(mol);
+
+  if(estates.empty()) {
+    return {{}, 0.0, 0.0, 0.0, 0.0};
+  }
+
+  EStates res { estates, estates[0], estates[0], std::fabs(estates[0]), std::fabs(estates[0]) };
+  
+  for(auto estate : estates) {
+    if(res.maxEState < estate) {
+      res.maxEState = estate;
+    }
+    if(res.minEState > estate) {
+      res.minEState = estate;
+    }
+    estate = std::fabs(estate);
+    if(res.maxAbsEState < estate) {
+      res.maxAbsEState = estate;
+    }
+    if(res.minAbsEState > estate) {
+      res.minAbsEState = estate;
+    }
+  }
+  return res;
+}
+  
 double calcMaxEStateIndex(const ROMol &mol) {
   auto vals = calcEStateIndices(mol);
   if (vals.empty()) {

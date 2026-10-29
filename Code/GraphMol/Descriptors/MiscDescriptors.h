@@ -36,15 +36,30 @@ const std::string NumValenceElectronsVersion = "1.1.0";
 RDKIT_DESCRIPTORS_EXPORT unsigned int calcNumRadicalElectrons(const ROMol &mol);
 const std::string NumRadicalElectronsVersion = "1.1.0";
 
+struct PartialCharges {
+  std::vector<double> charges;
+  double maxPartialCharge;
+  double minPartialCharge;
+  double maxAbsPartialCharge;
+  double minAbsPartialCharge;
+};
+
 //! The largest Gasteiger partial charge in the molecule
 /*!
-  As in the python implementation, a molecule with no atoms returns -500
+  A molecule with no atoms returns 500 and -500 for max and min partial charges
+*/
+PartialCharges calcPartialCharges(const ROMol &mol);
+const std::string PartialChargeVersion = "1.0.0";
+  
+//! The largest Gasteiger partial charge in the molecule
+/*!
+  a molecule with no atoms returns -500
 */
 RDKIT_DESCRIPTORS_EXPORT double calcMaxPartialCharge(const ROMol &mol);
 const std::string MaxPartialChargeVersion = "1.0.0";
 //! The smallest Gasteiger partial charge in the molecule
 /*!
-  As in the python implementation, a molecule with no atoms returns 500
+  a molecule with no atoms returns 500
 */
 RDKIT_DESCRIPTORS_EXPORT double calcMinPartialCharge(const ROMol &mol);
 const std::string MinPartialChargeVersion = "1.0.0";

@@ -42,42 +42,46 @@ unsigned int calcNumRadicalElectrons(const ROMol &mol) {
   return res;
 }
 
-namespace {
-// returns (minCharge, maxCharge). The comparisons mirror python's builtin
-// min()/max() so that NaN charges are handled the same way.
-std::pair<double, double> chargeDescriptors(const ROMol &mol) {
+// The comparisons here mirror python's builtin
+// min()/max() so that NaN charges are handled the same way as
+// as the original descriptor calculations    
+PartialCharges calcPartialCharges(const ROMol &mol) {
+  if(mol.getNumAtoms() == 0) {
+    return {{}, -500, 500, 500, 500};
+  }
+  
+  PartialCharges charges { {}, -500, 500, 500, 500 };
   std::vector<double> chgs(mol.getNumAtoms(), 0.0);
   computeGasteigerCharges(mol, chgs);
-  double minChg = 500.;
-  double maxChg = -500.;
-  for (auto chg : chgs) {
-    minChg = (minChg < chg) ? minChg : chg;
-    maxChg = (maxChg > chg) ? maxChg : chg;
-  }
-  return std::make_pair(minChg, maxChg);
-}
-}  // namespace
 
+  for (auto chg : chgs) {
+    charges.minPartialCharge = (charges.minPartialCharge < chg) ? charges.minPartialCharge : chg;
+    charges.maxPartialCharge = (charges.maxPartialCharge > chg) ? charges.maxPartialCharge : chg;
+  }
+  
+  charges.charges.swap(chgs);
+  double v1 = std::fabs(charges.minPartialCharge);
+  double v2 = std::fabs(charges.maxPartialCharge);
+  charges.maxAbsPartialCharge = std::max(v1,v2);
+  charges.minAbsPartialCharge = std::min(v1,v2);
+  return charges;
+  
+}
+  
 double calcMaxPartialCharge(const ROMol &mol) {
-  return chargeDescriptors(mol).second;
+  return calcPartialCharges(mol).maxPartialCharge;
 }
 
 double calcMinPartialCharge(const ROMol &mol) {
-  return chargeDescriptors(mol).first;
+  return calcPartialCharges(mol).minPartialCharge;
 }
 
 double calcMaxAbsPartialCharge(const ROMol &mol) {
-  auto chgs = chargeDescriptors(mol);
-  double v1 = std::fabs(chgs.first);
-  double v2 = std::fabs(chgs.second);
-  return (v2 > v1) ? v2 : v1;
+  return calcPartialCharges(mol).maxAbsPartialCharge;
 }
 
 double calcMinAbsPartialCharge(const ROMol &mol) {
-  auto chgs = chargeDescriptors(mol);
-  double v1 = std::fabs(chgs.first);
-  double v2 = std::fabs(chgs.second);
-  return (v2 < v1) ? v2 : v1;
+  return calcPartialCharges(mol).minAbsPartialCharge;
 }
 
 double calcFpDensityMorgan(const ROMol &mol, unsigned int radius) {

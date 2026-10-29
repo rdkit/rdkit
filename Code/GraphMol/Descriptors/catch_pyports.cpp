@@ -111,9 +111,10 @@ TEST_CASE("python ported descriptors match the python reference values") {
     REQUIRE(m);
     ++nMols;
     for (size_t i = 1; i < names.size(); ++i) {
-      INFO(fields[0] << " " << names[i]);
       auto ref = std::stod(fields[i]);
       auto val = fns[names[i]](*m);
+      INFO(fields[0] << " " << names[i] << " ref:" << ref << " val:" << val);
+
       if (std::isnan(ref)) {
         // Gasteiger charges are NaN for some species
         CHECK(std::isnan(val));
@@ -185,6 +186,21 @@ TEST_CASE("QED") {
   }
 }
 
+TEST_CASE("EStates") {
+  std::vector<std::pair<std::string, double>> data = {
+    {"N=C(CCSCc1csc(N=C(N)N)n1)NS(N)(=O)=O", 0.253},
+    {"CNC(=NCCSCc1nc[nH]c1C)NC#N", 0.234},
+    {"CCCCCNC(=N)NN=Cc1c[nH]c2ccc(CO)cc12", 0.234}};
+  for (const auto &[smi, val] : data) {
+    std::unique_ptr<RWMol> m(SmilesToMol(smi));
+    auto estate = calcEStates(*m);
+    CHECK(estate.maxEState == calcMaxEStateIndex(*m));
+    CHECK(estate.minEState == calcMinEStateIndex(*m));
+    CHECK(estate.maxAbsEState == calcMaxAbsEStateIndex(*m));
+    CHECK(estate.minAbsEState == calcMinAbsEStateIndex(*m));
+  }
+
+}
 TEST_CASE("fragment descriptors") {
   const auto &names = getFragmentDescriptorNames();
   const auto &smarts = getFragmentDescriptorSmarts();

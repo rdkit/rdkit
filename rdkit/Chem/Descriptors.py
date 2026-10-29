@@ -14,7 +14,6 @@ import rdkit.Chem.ChemUtils.DescriptorUtilities as _du
 from rdkit import Chem
 from rdkit import rdBase
 from rdkit.Chem import rdMolDescriptors
-from rdkit.Chem import rdMolDescriptors as _rdMolDescriptors
 from rdkit.Chem.EState.EState import (MaxAbsEStateIndex, MaxEStateIndex, MinAbsEStateIndex,
                                       MinEStateIndex)
 from rdkit.Chem.QED import qed
@@ -71,8 +70,8 @@ def _setupDescriptors(namespace):
   descList = _descList
 
 
-MolWt = lambda *x, **y: _rdMolDescriptors._CalcMolWt(*x, **y)
-MolWt.version = _rdMolDescriptors._CalcMolWt_version
+MolWt = lambda *x, **y: rdMolDescriptors._CalcMolWt(*x, **y)
+MolWt.version = rdMolDescriptors._CalcMolWt_version
 MolWt.__doc__ = """The average molecular weight of the molecule
 
   >>> MolWt(Chem.MolFromSmiles('CC'))
@@ -97,8 +96,8 @@ HeavyAtomMolWt.__doc__ = """The average molecular weight of the molecule ignorin
 """
 HeavyAtomMolWt.version = "1.0.0"
 
-ExactMolWt = lambda *x, **y: _rdMolDescriptors.CalcExactMolWt(*x, **y)
-ExactMolWt.version = _rdMolDescriptors._CalcExactMolWt_version
+ExactMolWt = lambda *x, **y: rdMolDescriptors.CalcExactMolWt(*x, **y)
+ExactMolWt.version = rdMolDescriptors._CalcExactMolWt_version
 ExactMolWt.__doc__ = """The exact molecular weight of the molecule
 
   >>> ExactMolWt(Chem.MolFromSmiles('CC'))
@@ -122,7 +121,7 @@ def NumValenceElectrons(mol):
     12
 
     """
-  return _rdMolDescriptors.CalcNumValenceElectrons(mol)
+  return rdMolDescriptors.CalcNumValenceElectrons(mol)
 
 
 NumValenceElectrons.version = "1.1.0"
@@ -144,7 +143,7 @@ def NumRadicalElectrons(mol):
     3
 
     """
-  return _rdMolDescriptors.CalcNumRadicalElectrons(mol)
+  return rdMolDescriptors.CalcNumRadicalElectrons(mol)
 
 
 NumRadicalElectrons.version = "1.1.0"
@@ -153,7 +152,8 @@ NumRadicalElectrons.version = "1.1.0"
 def _ChargeDescriptors(mol, force=False):
   if not force and hasattr(mol, '_chargeDescriptors'):
     return mol._chargeDescriptors
-  res = (_rdMolDescriptors.CalcMinPartialCharge(mol), _rdMolDescriptors.CalcMaxPartialCharge(mol))
+  charges = rdMolDescriptors.CalcPartialCharges(mol)
+  res = charges.minPartialCharge, charges.maxPartialCharge
   mol._chargeDescriptors = res
   return res
 
@@ -191,15 +191,15 @@ MinAbsPartialCharge.version = "1.0.0"
 
 
 def FpDensityMorgan1(x):
-  return _rdMolDescriptors.CalcFpDensityMorgan(x, 1)
+  return rdMolDescriptors.CalcFpDensityMorgan(x, 1)
 
 
 def FpDensityMorgan2(x):
-  return _rdMolDescriptors.CalcFpDensityMorgan(x, 2)
+  return rdMolDescriptors.CalcFpDensityMorgan(x, 2)
 
 
 def FpDensityMorgan3(x):
-  return _rdMolDescriptors.CalcFpDensityMorgan(x, 3)
+  return rdMolDescriptors.CalcFpDensityMorgan(x, 3)
 
 
 _du.setDescriptorVersion('1.0.0')(FpDensityMorgan1)
@@ -211,14 +211,14 @@ if hasattr(rdMolDescriptors, 'BCUT2D'):
     "BCUT2D_%s" % s
     for s in ('MWHI', "MWLOW", "CHGHI", "CHGLO", "LOGPHI", "LOGPLOW", "MRHI", "MRLOW")
   ]
-  _du.VectorDescriptorWrapper(_rdMolDescriptors.BCUT2D, names=names, version="1.0.0",
+  _du.VectorDescriptorWrapper(rdMolDescriptors.BCUT2D, names=names, version="1.0.0",
                               namespace=locals())
 
 _setupDescriptors(locals())
 
 if hasattr(rdMolDescriptors, 'CalcAUTOCORR2D'):
   names = ["AUTOCORR2D_%s" % str(i + 1) for i in range(192)]
-  autocorr = _du.VectorDescriptorWrapper(_rdMolDescriptors.CalcAUTOCORR2D, names=names,
+  autocorr = _du.VectorDescriptorWrapper(rdMolDescriptors.CalcAUTOCORR2D, names=names,
                                          version="1.0.0", namespace=locals())
 
   def setupAUTOCorrDescriptors():

@@ -1863,6 +1863,22 @@ query.Match( mol ))DOC",
         "Returns 2D Autocorrelation descriptors vector");
 #endif
 
+  docString = R"DOC(Holds the maximum and minimum EState and absolute EState indices [Hall, Mohney and Kier].)DOC";
+  nb::class_<RDKit::Descriptors::EStates>(m, "EStates", docString.c_str())
+    .def(nb::init<>())
+    .def_ro("maxEState", &RDKit::Descriptors::EState::maxEState,
+	    "Maximum EState index")
+    .def_ro("minEState", &RDKit::Descriptors::EState::minEState,
+	    "Minimum EState index")
+    .def_ro("maxAbsEState", &RDKit::Descriptors::EState::maxAbsEState,
+	    "Maximum Absolute EState index")
+    .def_ro("minAbsEState", &RDKit::Descriptors::EState::minAbsEState,
+	    "Minimum Absolute EState index")
+    ;
+  m.def("CalcEState", RDKit::Descriptors::calcEState, "mol"_a,
+        "Returns the maximum and minimum EState and absolute EState indices for the molecule (Hall, Mohney and Kier, "
+        "JCICS 31, 76-81 (1991))");
+      
   // descriptors ported from python
   m.def("CalcEStateIndices", RDKit::Descriptors::calcEStateIndices, "mol"_a,
         "Returns the EState indices of the atoms (Hall, Mohney and Kier, "
@@ -1961,6 +1977,26 @@ query.Match( mol ))DOC",
         "mol"_a, "Returns the number of radical electrons");
   m.attr("_CalcNumRadicalElectrons_version") =
       RDKit::Descriptors::NumRadicalElectronsVersion;
+
+  nb::class_<RDKit::Descriptors::PartialCharges>("PartialCharges",
+						 "Computes max and min of Gasteiger partial charges and absolute partial charges")
+    .def(nb::init<>())
+    
+    .def_ro("maxPartialCharge", &RDKit::Descriptors::PartialCharges::maxPartialCharge,
+	    "Maximum partial charge")
+    .def_ro("minPartialCharge", &RDKit::Descriptors::PartialCharges::minPartialCharge,
+	    "Minimum partial charge")
+    .def_ro("maxAbsPartialCharge", &RDKit::Descriptors::PartialCharges::maxAbsPartialCharge,
+	    "Maximum Absolute partial charge")
+    .def_ro("minAbsPartialCharge", &RDKit::Descriptors::PartialCharges::minAbsPartialCharge,
+	    "Minimum Absolute partial charge")
+    ;
+
+  m.def("CalcPartialCharges", RDKit::Descriptors::calcPartialCharges,
+	"mol"_a,
+	"Returns Computes max and min of Gasteiger partial charges and absolute partial charges"
+	"molecule with no atoms return -500 for max and 500 for minimum charges");
+
   m.def("CalcMaxPartialCharge", RDKit::Descriptors::calcMaxPartialCharge,
         "mol"_a,
         "Returns the largest Gasteiger partial charge (-500 for a molecule "

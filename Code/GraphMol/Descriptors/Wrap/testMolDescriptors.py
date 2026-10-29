@@ -975,6 +975,13 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(rdMD.CalcMinEStateIndex(m), min(estate))
     self.assertAlmostEqual(rdMD.CalcMaxAbsEStateIndex(m), max(abs(x) for x in estate))
     self.assertAlmostEqual(rdMD.CalcMinAbsEStateIndex(m), min(abs(x) for x in estate))
+    
+    estateStruct = rdMD.CalcEStates(m)
+    self.assertAlmostEqual(estateStruct.maxEState, max(estate))
+    self.assertAlmostEqual(estateStruct.minEState, min(estate))
+    self.assertAlmostEqual(estateStruct.maxAbsEState, max(abs(x) for x in estate))
+    self.assertAlmostEqual(estateStruct.minAbsEState, min(abs(x) for x in estate))
+    
     self.assertEqual(len(rdMD.CalcEState_VSA(m)), 11)
     self.assertEqual(len(rdMD.CalcVSA_EState(m)), 10)
     self.assertEqual(len(rdMD.CalcEState_VSA(m, bins=[0.0, 1.0])), 3)
