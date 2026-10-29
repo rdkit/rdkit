@@ -1866,13 +1866,13 @@ query.Match( mol ))DOC",
   docString = R"DOC(Holds the maximum and minimum EState and absolute EState indices [Hall, Mohney and Kier].)DOC";
   nb::class_<RDKit::Descriptors::EStates>(m, "EStates", docString.c_str())
     .def(nb::init<>())
-    .def_ro("maxEState", &RDKit::Descriptors::EState::maxEState,
+    .def_ro("maxEState", &RDKit::Descriptors::EStates::maxEState,
 	    "Maximum EState index")
-    .def_ro("minEState", &RDKit::Descriptors::EState::minEState,
+    .def_ro("minEState", &RDKit::Descriptors::EStates::minEState,
 	    "Minimum EState index")
-    .def_ro("maxAbsEState", &RDKit::Descriptors::EState::maxAbsEState,
+    .def_ro("maxAbsEState", &RDKit::Descriptors::EStates::maxAbsEState,
 	    "Maximum Absolute EState index")
-    .def_ro("minAbsEState", &RDKit::Descriptors::EState::minAbsEState,
+    .def_ro("minAbsEState", &RDKit::Descriptors::EStates::minAbsEState,
 	    "Minimum Absolute EState index")
     ;
   m.def("CalcEState", RDKit::Descriptors::calcEState, "mol"_a,
