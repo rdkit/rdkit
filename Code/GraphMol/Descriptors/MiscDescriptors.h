@@ -49,7 +49,7 @@ struct PartialCharges {
 /*!
   A molecule with no atoms returns 500 and -500 for max and min partial charges
 */
-PartialCharges calcPartialCharges(const ROMol &mol);
+RDKIT_DESCRIPTORS_EXPORT PartialCharges calcPartialCharges(const ROMol &mol);
 const std::string PartialChargeVersion = "1.0.0";
   
 //! The largest Gasteiger partial charge in the molecule
