@@ -591,7 +591,7 @@ TEST_CASE("do not use non-structural information in unification") {
     CHECK(countWithNoProps == countWithProp);
   }
 
-  SECTION("atom labels") {
+  SECTION("mol values") {
     auto m2 = ROMol(*m);
     for (auto at : m2.atoms()) {
       at->setProp(common_properties::molFileValue, at->getIdx());
