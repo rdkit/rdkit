@@ -727,33 +727,13 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
     }
     arings = std::move(aringsRemaining);
 
-    // make a neighbor map for the rings i.e. a ring is a
-    // neighbor to another candidate ring if it shares at least
-    // one bond
-    // useful to figure out fused systems
-    INT_INT_VECT_MAP neighMap;
-    RingUtils::makeRingNeighborMap(brings, neighMap);
-
-    int curr = 0;
-    int cnrs = rdcast<int>(arings.size());
-    boost::dynamic_bitset<> fusDone(cnrs);
-    while (curr < cnrs) {
-      INT_VECT fused;
-      RingUtils::pickFusedRings(curr, neighMap, fused, fusDone);
+    // group the rings into fused systems, i.e. rings that share at least one
+    // bond
+    for (const auto &fused : RingUtils::findFusedRingSystems(brings)) {
       VECT_INT_VECT frings(fused.size());
       std::transform(fused.begin(), fused.end(), frings.begin(),
                      [&arings](const int ri) { return arings[ri]; });
       kekulizeFused(mol, frings, atomRanks, maxBackTracks);
-      int rix;
-      for (rix = 0; rix < cnrs; ++rix) {
-        if (!fusDone[rix]) {
-          curr = rix;
-          break;
-        }
-      }
-      if (rix == cnrs) {
-        break;
-      }
     }
   }
   if (markAtomsBonds) {
