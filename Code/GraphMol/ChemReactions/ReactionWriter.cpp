@@ -41,6 +41,7 @@
 #include <GraphMol/MolOps.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
+#include <GraphMol/Depictor/RDDepictor.h>
 
 #include <sstream>
 
@@ -132,6 +133,14 @@ void write_template(std::ostringstream &res, RDKit::ROMol &tpl) {
     trwmol.updatePropertyCache(false);
   }
   RDKit::FileParserUtils::moveAdditionalPropertiesToSGroups(trwmol);
+
+  // The regular molfile writer generates a 2D conformer before selecting
+  // wedge bonds.  Reaction V3000 templates used to bypass that step, so
+  // stereochemistry from SMILES was silently omitted when no conformer was
+  // already present.
+  if (!trwmol.getNumConformers()) {
+    RDDepict::compute2DCoords(trwmol);
+  }
 
   res << RDKit::FileParserUtils::getV3000CTAB(trwmol, -1);
 }

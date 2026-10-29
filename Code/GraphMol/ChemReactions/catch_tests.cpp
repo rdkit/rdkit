@@ -1402,6 +1402,23 @@ TEST_CASE("V3K rxn blocks") {
     CHECK(rxnb.find("ATOMS=(1 5) XBONDS=(2 4 5) XBHEAD=(1 4) XBCORR=(2 4 5)") !=
           std::string::npos);
   }
+
+  SECTION("stereochemistry survives reaction V3K round-trip") {
+    for (const auto &smarts : {"F[C@](Cl)(Br)I>>F[C@](Cl)(Br)I",
+                               "[C@H:1](F)(Cl)Br>>[C@H:1](F)(Cl)Br",
+                               "C/C=C/C>>C/C=C/C",
+                               "C/C=C\\C>>C/C=C\\C"}) {
+      std::unique_ptr<ChemicalReaction> original(
+          RxnSmartsToChemicalReaction(smarts));
+      REQUIRE(original);
+      auto expected = ChemicalReactionToRxnSmiles(*original);
+      auto block = ChemicalReactionToV3KRxnBlock(*original);
+      std::unique_ptr<ChemicalReaction> roundtripped(
+          RxnBlockToChemicalReaction(block));
+      REQUIRE(roundtripped);
+      CHECK(ChemicalReactionToRxnSmiles(*roundtripped) == expected);
+    }
+  }
 }
 
 TEST_CASE("CDXML Parser") {
