@@ -110,11 +110,7 @@ double calcBertzCT(const ROMol &mol, unsigned int cutoff,
     if (bond->getIsAromatic()) {
       order = 1.5;
     } else {
-      // the python code uses the integer value of the bond type enum
-      order = static_cast<double>(bond->getBondType());
       order = bond->getBondTypeAsDouble();
-      if (order != static_cast<double>(bond->getBondType()))
-	std::cerr << bond->getBondTypeAsDouble() << " != " << static_cast<double>(bond->getBondType()) << std::endl;
     }
 //double order = bond->getIsAromatic() ? 1.5 : bond->getBondTypeAsDouble();
     bondOrders[std::make_pair(a1, a2)] = order;
