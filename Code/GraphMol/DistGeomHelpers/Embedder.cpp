@@ -41,7 +41,9 @@
 #include <RDGeneral/RDThreads.h>
 #include <cmath>
 #include <cstddef>
+#include <functional>
 #include <memory>
+#include <string_view>
 #include <vector>
 #include <chrono>  // for time-related functions
 #include <array>
@@ -645,8 +647,8 @@ bool checkChiralCenters(const RDGeom::PointPtrVect *positions,
 
 bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
                              const detail::EmbedArgs &eargs,
-                             EmbedParameters &embedParams,
-                             TimePoint *end_time) {
+                             const EmbedParameters &embedParams,
+                             const TimePoint *end_time) {
   // now redo the minimization if we have a chiral center
   // or have started from random coords. This
   // time removing the chiral constraints and
@@ -761,7 +763,8 @@ bool minimizeWithExpTorsions(RDGeom::PointPtrVect &positions,
 
 bool minimizeAllInOne(RDGeom::PointPtrVect *positions,
                       const detail::EmbedArgs &eargs,
-                      const EmbedParameters &embedParams, TimePoint *end_time) {
+                      const EmbedParameters &embedParams,
+                      const TimePoint *end_time) {
   boost::dynamic_bitset<> fixedPts(positions->size());
   if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
     for (const auto &v : *embedParams.coordMap) {
@@ -874,8 +877,7 @@ bool doubleBondGeometryChecks(const RDGeom::PointPtrVect &positions,
 }
 
 bool doubleBondStereoChecks(const RDGeom::PointPtrVect &positions,
-                            const detail::EmbedArgs &eargs,
-                            EmbedParameters &embedParams) {
+                            const detail::EmbedArgs &eargs) {
   for (const auto &itm : *eargs.stereoDoubleBonds) {
     // itm is a pair with [controlling_atoms], sign
     // where the sign tells us about cis/trans
@@ -902,16 +904,14 @@ bool doubleBondStereoChecks(const RDGeom::PointPtrVect &positions,
     auto dihedral = RDGeom::computeDihedralAngle(p0, p1, p2, p3);
     if ((dihedral - M_PI_2) * itm.second < 0) {
       // closer to incorrect than correct... it's a bad geometry
-      recordFailure(embedParams, EmbedFailureCauses::BAD_DOUBLE_BOND_STEREO);
       return false;
     }
   }
   return true;
 }
 
-bool distMatrixChiralityTest(RDGeom::PointPtrVect *positions,
-                             const detail::EmbedArgs &eargs,
-                             EmbedParameters &embedParams) {
+bool distMatrixChiralityTest(const RDGeom::PointPtrVect *positions,
+                             const detail::EmbedArgs &eargs) {
   // "distance matrix" chirality test
   std::set<std::size_t> atoms;
   for (const auto &chiralSet : *eargs.chiralCenters) {
@@ -930,17 +930,14 @@ bool distMatrixChiralityTest(RDGeom::PointPtrVect *positions,
       std::cerr << " fail3a! (" << atomsToCheck[0] << ") iter: "  //<< iter
                 << std::endl;
 #endif
-      recordFailure(embedParams, EmbedFailureCauses::FINAL_CHIRAL_BOUNDS);
-
       return false;
     }
   }
   return true;
 }
 
-bool _checkFinalCenterInVolume(RDGeom::PointPtrVect *positions,
-                               const detail::EmbedArgs &eargs,
-                               EmbedParameters &embedParams) {
+bool _checkFinalCenterInVolume(const RDGeom::PointPtrVect *positions,
+                               const detail::EmbedArgs &eargs) {
   for (const auto &chiralSet : *eargs.chiralCenters) {
     // it could happen that the centroid is outside the volume defined
     // by the other four points. That is also a fail.
@@ -949,7 +946,6 @@ bool _checkFinalCenterInVolume(RDGeom::PointPtrVect *positions,
       std::cerr << " fail3b! (" << chiralSet->d_idx0 << ") iter: "  //<< iter
                 << std::endl;
 #endif
-      recordFailure(embedParams, EmbedFailureCauses::FINAL_CENTER_IN_VOLUME);
       return false;
     }
   }
@@ -959,25 +955,210 @@ bool _checkFinalCenterInVolume(RDGeom::PointPtrVect *positions,
   return true;
 }
 
-bool finalChiralChecks(RDGeom::PointPtrVect *positions,
+// The coordinates and inputs that the stages of an embedding attempt work on.
+struct AttemptContext {
+  RDGeom::PointPtrVect &positions;
+  const detail::EmbedArgs &eargs;
+  const EmbedParameters &params;
+  RDNumeric::DoubleSymmMatrix &distMat;
+  RDKit::double_source_type &rng;
+  const TimePoint *end_time;
+};
+
+// One step of an embedding attempt. It modifies and/or checks the
+// coordinates and returns false if the attempt should be abandoned, in which
+// case the driver records `cause`.
+struct Stage {
+  std::string_view name;
+  EmbedFailureCauses cause;
+  std::function<bool(AttemptContext &)> run;
+};
+
+bool checkKTerms(const RDGeom::PointPtrVect &positions,
+                 const detail::EmbedArgs &eargs) {
+  std::vector<RDGeom::Point3D> storage;
+  storage.reserve(positions.size());
+  RDGeom::Point3DPtrVect positions3D;
+  positions3D.reserve(positions.size());
+  for (const auto *p : positions) {
+    storage.emplace_back((*p)[0], (*p)[1], (*p)[2]);
+    positions3D.push_back(&storage.back());
+  }
+  return _checkKTerms(positions3D, eargs);
+}
+
+Stage initialCoordsStage(const EmbedParameters &params) {
+  if (params.optimizeConfWithId.has_value()) {
+    return {"set initial coordinates", EmbedFailureCauses::INITIAL_COORDS,
+            [](AttemptContext &ctx) {
+              return setInitialCoords(&ctx.positions, ctx.params);
+            }};
+  }
+  return {"generate initial coordinates", EmbedFailureCauses::INITIAL_COORDS,
+          [](AttemptContext &ctx) {
+            return generateInitialCoords(&ctx.positions, ctx.eargs, ctx.params,
+                                         ctx.distMat, &ctx.rng);
+          }};
+}
+
+// Final chirality and double bond stereo checks, shared by both pipelines.
+// They differ only in how a chiral volume failure is reported.
+void addStereoStages(std::vector<Stage> &stages, const detail::EmbedArgs &eargs,
+                     const EmbedParameters &params,
+                     EmbedFailureCauses chiralVolumeCause) {
+  if (!params.enforceChirality) {
+    return;
+  }
+  if (!eargs.chiralCenters->empty()) {
+    stages.push_back(
+        {"chiral volumes", chiralVolumeCause, [](AttemptContext &ctx) {
+           return checkChiralCenters(&ctx.positions, ctx.eargs, ctx.params);
+         }});
+    stages.push_back({"chiral bounds", EmbedFailureCauses::FINAL_CHIRAL_BOUNDS,
+                      [](AttemptContext &ctx) {
+                        return distMatrixChiralityTest(&ctx.positions,
+                                                       ctx.eargs);
+                      }});
+    stages.push_back(
+        {"chiral center in volume", EmbedFailureCauses::FINAL_CENTER_IN_VOLUME,
+         [](AttemptContext &ctx) {
+           return _checkFinalCenterInVolume(&ctx.positions, ctx.eargs);
+         }});
+  }
+  if (!eargs.stereoDoubleBonds->empty()) {
+    stages.push_back({"double bond stereo",
+                      EmbedFailureCauses::BAD_DOUBLE_BOND_STEREO,
+                      [](AttemptContext &ctx) {
+                        return doubleBondStereoChecks(ctx.positions, ctx.eargs);
+                      }});
+  }
+}
+
+void addLegacyStages(std::vector<Stage> &stages, const detail::EmbedArgs &eargs,
+                     const EmbedParameters &params) {
+  const bool haveChiralCenters = !eargs.chiralCenters->empty();
+  stages.push_back(
+      {"first minimization", EmbedFailureCauses::FIRST_MINIMIZATION,
+       [](AttemptContext &ctx) {
+         return firstMinimization(&ctx.positions, ctx.eargs, ctx.params);
+       }});
+  stages.push_back({"tetrahedral centers",
+                    EmbedFailureCauses::CHECK_TETRAHEDRAL_CENTERS,
+                    [](AttemptContext &ctx) {
+                      return checkTetrahedralCenters(&ctx.positions, ctx.eargs);
+                    }});
+  // Check if any of our chiral centers are badly out of whack.
+  if (params.enforceChirality && haveChiralCenters) {
+    stages.push_back(
+        {"chiral centers", EmbedFailureCauses::CHECK_CHIRAL_CENTERS,
+         [](AttemptContext &ctx) {
+           return checkChiralCenters(&ctx.positions, ctx.eargs, ctx.params);
+         }});
+  }
+  // redo the minimization if we have a chiral center
+  // or have started from random coords.
+  if (haveChiralCenters || params.useRandomCoords) {
+    stages.push_back({"fourth dimension minimization",
+                      EmbedFailureCauses::MINIMIZE_FOURTH_DIMENSION,
+                      [](AttemptContext &ctx) {
+                        return minimizeFourthDimension(&ctx.positions,
+                                                       ctx.eargs, ctx.params,
+                                                       ctx.end_time);
+                      }});
+  }
+  // (ET)(K)DG
+  if (params.useExpTorsionAnglePrefs || params.useBasicKnowledge) {
+    stages.push_back(
+        {"experimental torsion minimization",
+         EmbedFailureCauses::ETK_MINIMIZATION, [](AttemptContext &ctx) {
+           return minimizeWithExpTorsions(ctx.positions, ctx.eargs, ctx.params);
+         }});
+  }
+  stages.push_back({"double bond geometry",
+                    EmbedFailureCauses::LINEAR_DOUBLE_BOND,
+                    [](AttemptContext &ctx) {
+                      return doubleBondGeometryChecks(ctx.positions, ctx.eargs);
+                    }});
+  addStereoStages(stages, eargs, params,
+                  EmbedFailureCauses::CHECK_CHIRAL_CENTERS2);
+}
+
+void addAllInOneStages(std::vector<Stage> &stages,
                        const detail::EmbedArgs &eargs,
-                       EmbedParameters &embedParams) {
-  // confirm chiral volumes
-  if (!checkChiralCenters(positions, eargs, embedParams)) {
-    recordFailure(embedParams, EmbedFailureCauses::CHECK_CHIRAL_CENTERS2);
-    return false;
+                       const EmbedParameters &params) {
+  stages.push_back({"all-in-one minimization", EmbedFailureCauses::MINIMIZATION,
+                    [](AttemptContext &ctx) {
+                      return minimizeAllInOne(&ctx.positions, ctx.eargs,
+                                              ctx.params, ctx.end_time);
+                    }});
+  if (params.useBasicKnowledge) {
+    stages.push_back({"K terms", EmbedFailureCauses::KTERM_VIOLATION,
+                      [](AttemptContext &ctx) {
+                        return checkKTerms(ctx.positions, ctx.eargs);
+                      }});
   }
+  stages.push_back({"tetrahedral centers",
+                    EmbedFailureCauses::CHECK_TETRAHEDRAL_CENTERS,
+                    [](AttemptContext &ctx) {
+                      return checkTetrahedralCenters(&ctx.positions, ctx.eargs);
+                    }});
+  addStereoStages(stages, eargs, params,
+                  EmbedFailureCauses::CHECK_CHIRAL_CENTERS);
+  stages.push_back(
+      {"clashes", EmbedFailureCauses::CLASH, [](AttemptContext &ctx) {
+         return clashCheck(&ctx.positions, ctx.eargs.mmat);
+       }});
+  stages.push_back(
+      {"double bond geometry", EmbedFailureCauses::LINEAR_DOUBLE_BOND,
+       [](AttemptContext &ctx) {
+         return doubleBondGeometryChecks(ctx.positions, ctx.eargs, 3e-3, true);
+       }});
+}
 
-  if (!distMatrixChiralityTest(positions, eargs, embedParams)) {
-    return false;
+std::vector<Stage> buildStages(const detail::EmbedArgs &eargs,
+                               const EmbedParameters &params) {
+  std::vector<Stage> stages{initialCoordsStage(params)};
+  // we only return initial embedding if successful
+  if (params.onlyInitialEmbedding) {
+    return stages;
   }
+  if (params.useLegacyImplementation) {
+    addLegacyStages(stages, eargs, params);
+  } else {
+    addAllInOneStages(stages, eargs, params);
+  }
+  return stages;
+}
 
-  // "center in volume" chirality test
-  return _checkFinalCenterInVolume(positions, eargs, embedParams);
+enum class AttemptResult {
+  Success,
+  Failure,
+  Interrupted
+};
+
+AttemptResult runAttempt(const std::vector<Stage> &stages, AttemptContext &ctx,
+                         EmbedParameters &params) {
+  for (const auto &stage : stages) {
+    if (ControlCHandler::getGotSignal()) {
+      return AttemptResult::Interrupted;
+    }
+    if (!stage.run(ctx)) {
+#ifdef DEBUG_EMBEDDING
+      std::cerr << " stage failed: " << stage.name << std::endl;
+#endif
+      // a stage that fails once the timeout has expired was cut short by it
+      recordFailure(params, pastDeadline(ctx.end_time)
+                                ? EmbedFailureCauses::EXCEEDED_TIMEOUT
+                                : stage.cause);
+      return AttemptResult::Failure;
+    }
+  }
+  return AttemptResult::Success;
 }
 
 bool embedPoints(RDGeom::PointPtrVect *positions,
-                 const detail::EmbedArgs &eargs, EmbedParameters &embedParams,
+                 const detail::EmbedArgs &eargs,
+                 const std::vector<Stage> &stages, EmbedParameters &embedParams,
                  int seed, TimePoint *end_time) {
   PRECONDITION(positions, "bogus positions");
   if (embedParams.maxIterations == 0) {
@@ -994,243 +1175,24 @@ bool embedPoints(RDGeom::PointPtrVect *positions,
   }
 
   EmbedRng embedRng(seed);
-  auto *rng = &embedRng.get();
+  AttemptContext ctx{*positions, eargs,          embedParams,
+                     distMat,    embedRng.get(), end_time};
 
-  bool gotCoords = false;
   unsigned int iter = 0;
-  while (!gotCoords && iter < embedParams.maxIterations) {
-    ++iter;
-    if (!beginAttempt(iter, embedParams, end_time)) {
-      return false;
-    }
-    gotCoords = embedParams.optimizeConfWithId.has_value()
-                    ? EmbeddingOps::setInitialCoords(positions, embedParams)
-                    : EmbeddingOps::generateInitialCoords(
-                          positions, eargs, embedParams, distMat, rng);
-
-    if (!gotCoords) {
-      recordFailure(embedParams, EmbedFailureCauses::INITIAL_COORDS);
-    } else {
-      if (ControlCHandler::getGotSignal()) {
-        return false;
-      }
-      // we only return initial embedding if successful
-      if (embedParams.onlyInitialEmbedding) {
-        return gotCoords;
-      }
-      gotCoords =
-          EmbeddingOps::firstMinimization(positions, eargs, embedParams);
-      if (!gotCoords) {
-        recordFailure(embedParams, EmbedFailureCauses::FIRST_MINIMIZATION);
-      } else {
-        gotCoords = EmbeddingOps::checkTetrahedralCenters(positions, eargs);
-        if (!gotCoords) {
-          recordFailure(embedParams,
-                        EmbedFailureCauses::CHECK_TETRAHEDRAL_CENTERS);
-        }
-      }
-
-      // Check if any of our chiral centers are badly out of whack.
-      if (gotCoords && embedParams.enforceChirality &&
-          eargs.chiralCenters->size() > 0) {
-        gotCoords =
-            EmbeddingOps::checkChiralCenters(positions, eargs, embedParams);
-        if (!gotCoords) {
-          recordFailure(embedParams, EmbedFailureCauses::CHECK_CHIRAL_CENTERS);
-        }
-      }
-      // redo the minimization if we have a chiral center
-      // or have started from random coords.
-      if (gotCoords &&
-          (eargs.chiralCenters->size() > 0 || embedParams.useRandomCoords)) {
-        if (ControlCHandler::getGotSignal()) {
-          return false;
-        }
-        gotCoords = EmbeddingOps::minimizeFourthDimension(
-            positions, eargs, embedParams, end_time);
-        if (!gotCoords) {
-          if (pastDeadline(end_time)) {
-            recordFailure(embedParams, EmbedFailureCauses::EXCEEDED_TIMEOUT);
-          } else {
-            recordFailure(embedParams,
-                          EmbedFailureCauses::MINIMIZE_FOURTH_DIMENSION);
-          }
-        }
-      }
-
-      // (ET)(K)DG
-      if (gotCoords && (embedParams.useExpTorsionAnglePrefs ||
-                        embedParams.useBasicKnowledge)) {
-        if (ControlCHandler::getGotSignal()) {
-          return false;
-        }
-        gotCoords = EmbeddingOps::minimizeWithExpTorsions(*positions, eargs,
-                                                          embedParams);
-        if (!gotCoords) {
-          recordFailure(embedParams, EmbedFailureCauses::ETK_MINIMIZATION);
-        }
-      }
-      if (gotCoords) {
-        gotCoords = EmbeddingOps::doubleBondGeometryChecks(*positions, eargs);
-        if (!gotCoords) {
-          recordFailure(embedParams, EmbedFailureCauses::LINEAR_DOUBLE_BOND);
-        }
-      }
-      // test if stereo is correct
-      if (embedParams.enforceChirality && gotCoords) {
-        if (!eargs.chiralCenters->empty()) {
-          // test if chirality is correct. Any additional test failures
-          // will be tracked there if necessary.
-          gotCoords =
-              EmbeddingOps::finalChiralChecks(positions, eargs, embedParams);
-        }
-        if (gotCoords && !eargs.stereoDoubleBonds->empty()) {
-          gotCoords = EmbeddingOps::doubleBondStereoChecks(*positions, eargs,
-                                                           embedParams);
-        }
-      }
-    }
-
-  }  // while
-
-  return gotCoords;
-}
-
-bool embedPointsAIO(RDGeom::PointPtrVect *positions,
-                    const detail::EmbedArgs &eargs,
-                    EmbedParameters &embedParams, int seed,
-                    TimePoint *end_time) {
-  PRECONDITION(positions, "bogus positions");
-  if (embedParams.maxIterations == 0) {
-    embedParams.maxIterations = 10 * positions->size();
-  }
-  if (embedParams.useRandomCoords) {
-    embedParams.basinThresh = 1e8;
-  }
-  RDNumeric::DoubleSymmMatrix distMat(positions->size(), 0.0);
-  EmbedRng embedRng(seed);
-  auto *rng = &embedRng.get();
-
-  bool gotCoords = false;
-  unsigned int iter = 0;
-
   while (iter < embedParams.maxIterations) {
     ++iter;
     if (!beginAttempt(iter, embedParams, end_time)) {
       return false;
     }
-
-    // Get Initial positions
-
-    gotCoords = embedParams.optimizeConfWithId
-                    ? EmbeddingOps::setInitialCoords(positions, embedParams)
-                    : EmbeddingOps::generateInitialCoords(
-                          positions, eargs, embedParams, distMat, rng);
-
-    if (!gotCoords) {
-      recordFailure(embedParams, EmbedFailureCauses::INITIAL_COORDS);
-      continue;
+    switch (runAttempt(stages, ctx, embedParams)) {
+      case AttemptResult::Success:
+        return true;
+      case AttemptResult::Interrupted:
+        return false;
+      case AttemptResult::Failure:
+        break;
     }
-
-    // check ctrl-C
-    if (ControlCHandler::getGotSignal()) {
-      return false;
-    }
-
-    if (embedParams.onlyInitialEmbedding) {
-      return gotCoords;
-    }
-
-    // run Minimization
-    gotCoords =
-        EmbeddingOps::minimizeAllInOne(positions, eargs, embedParams, end_time);
-    if (!gotCoords) {
-      recordFailure(embedParams, pastDeadline(end_time)
-                                     ? EmbedFailureCauses::EXCEEDED_TIMEOUT
-                                     : EmbedFailureCauses::MINIMIZATION);
-      continue;
-    }
-
-    // Check K Terms
-    if (embedParams.useBasicKnowledge) {
-      RDGeom::Point3DPtrVect positions3D;
-      for (const auto &p : *positions) {
-        positions3D.push_back(new RDGeom::Point3D((*p)[0], (*p)[1], (*p)[2]));
-      }
-      gotCoords = _checkKTerms(positions3D, eargs);
-      for (const auto &i : positions3D) {
-        delete i;
-      }
-      if (!gotCoords) {
-        recordFailure(embedParams, EmbedFailureCauses::KTERM_VIOLATION);
-        continue;
-      }
-    }
-
-    // check ctrl-C
-    if (ControlCHandler::getGotSignal()) {
-      return false;
-    }
-
-    // Check Tetrahedral Centers
-    gotCoords = EmbeddingOps::checkTetrahedralCenters(positions, eargs);
-    if (!gotCoords) {
-      recordFailure(embedParams, EmbedFailureCauses::CHECK_TETRAHEDRAL_CENTERS);
-      continue;
-    }
-
-    // Check Chiral Centers
-    if (embedParams.enforceChirality) {
-      if (!eargs.chiralCenters->empty()) {
-        gotCoords =
-            EmbeddingOps::checkChiralCenters(positions, eargs, embedParams);
-        if (!gotCoords) {
-          recordFailure(embedParams, EmbedFailureCauses::CHECK_CHIRAL_CENTERS);
-          continue;
-        }
-
-        gotCoords = distMatrixChiralityTest(positions, eargs, embedParams);
-        if (!gotCoords) {
-          continue;
-        }
-
-        gotCoords = _checkFinalCenterInVolume(positions, eargs, embedParams);
-        if (!gotCoords) {
-          continue;
-        }
-      }
-
-      if (!eargs.stereoDoubleBonds->empty()) {
-        gotCoords = EmbeddingOps::doubleBondStereoChecks(*positions, eargs,
-                                                         embedParams);
-        if (!gotCoords) {
-          continue;
-        }
-      }
-    }
-
-    // Check for clashing atoms
-    gotCoords = clashCheck(positions, eargs.mmat);
-    if (!gotCoords) {
-      recordFailure(embedParams, EmbedFailureCauses::CLASH);
-      continue;
-    }
-
-    // Check Double Bond Geometry
-    gotCoords =
-        EmbeddingOps::doubleBondGeometryChecks(*positions, eargs, 3e-3, true);
-    if (!gotCoords) {
-      recordFailure(embedParams, EmbedFailureCauses::LINEAR_DOUBLE_BOND);
-      continue;
-    }
-
-    // check ctrl-C
-    if (ControlCHandler::getGotSignal()) {
-      return false;
-    }
-    return true;
   }
-
   return false;
 }
 
@@ -1617,6 +1579,7 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
       (*positions[i])[2] = conf.getAtomPos(i).z;
     }
   }
+  const auto stages = EmbeddingOps::buildStages(*eargs, *params);
   for (size_t ci = 0; ci < eargs->confs->size(); ci++) {
     if (ControlCHandler::getGotSignal() || pastDeadline(end_time)) {
       return;
@@ -1668,11 +1631,8 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
     CHECK_INVARIANT(new_seed >= -1,
                     "Something went wrong calculating a new seed");
 
-    const auto embedFunc = params->useLegacyImplementation
-                               ? EmbeddingOps::embedPoints
-                               : EmbeddingOps::embedPointsAIO;
-    const bool gotCoords =
-        embedFunc(&positions, *eargs, *params, new_seed, end_time);
+    const bool gotCoords = EmbeddingOps::embedPoints(
+        &positions, *eargs, stages, *params, new_seed, end_time);
 
     // copy the coordinates into the correct conformer
     if (gotCoords) {
