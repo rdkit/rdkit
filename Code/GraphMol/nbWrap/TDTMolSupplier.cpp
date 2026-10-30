@@ -11,12 +11,14 @@
 #include <string>
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/string.h>
 
 // ours
 #include <RDGeneral/FileParseException.h>
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/RDKitBase.h>
+#include <RDBoost/Wrap_nb.h>
 #include "ContextManagers.h"
 
 namespace nb = nanobind;
@@ -32,7 +34,7 @@ T *MolSupplIter(T *suppl) {
 }
 
 template <typename T>
-ROMol *MolSupplNext(T *suppl) {
+Nullable<ROMol *> MolSupplNext(T *suppl) {
   ROMol *res = nullptr;
   if (!suppl->atEnd()) {
     try {
@@ -50,7 +52,7 @@ ROMol *MolSupplNext(T *suppl) {
 }
 
 template <typename T>
-ROMol *MolSupplGetItem(T *suppl, int idx) {
+Nullable<ROMol *> MolSupplGetItem(T *suppl, int idx) {
   ROMol *res = nullptr;
   if (idx < 0) {
     idx = static_cast<int>(suppl->length()) + idx;
@@ -110,9 +112,16 @@ struct tdtmolsup_wrap {
     nb::class_<TDTMolSupplier>(m, "TDTMolSupplier",
                                tdtMolSupplierClassDoc.c_str())
         .def(nb::init<>())
-        .def(nb::init<std::string, std::string, int, int, bool>(), "fileName"_a,
-             "nameRecord"_a = "", "confId2D"_a = -1, "confId3D"_a = -1,
-             "sanitize"_a = true)
+        .def(
+            "__init__",
+            [](TDTMolSupplier *self, const std::filesystem::path &fileName,
+               const std::string &nameRecord, int confId2D, int confId3D,
+               bool sanitize) {
+              new (self) TDTMolSupplier(fileName.string(), nameRecord, confId2D,
+                                        confId3D, sanitize);
+            },
+            "fileName"_a, "nameRecord"_a = "", "confId2D"_a = -1,
+            "confId3D"_a = -1, "sanitize"_a = true)
         .def("__enter__", &MolIOEnter<TDTMolSupplier>,
              nb::rv_policy::reference_internal)
         .def("__exit__", &MolIOExit<TDTMolSupplier>, "excType"_a = nb::none(),
@@ -130,9 +139,17 @@ struct tdtmolsup_wrap {
              R"DOC(Resets our position in the file to the beginning.
 )DOC")
         .def("__len__", &TDTMolSupplier::length)
-        .def("SetData", &TDTMolSupplier::setData, "data"_a, "nameRecord"_a = "",
-             "confId2D"_a = -1, "confId3D"_a = -1, "sanitize"_a = true,
-             R"DOC(Sets the text to be parsed.)DOC")
+        .def(
+            "SetData",
+            [](TDTMolSupplier &self, const StringOrBytes &data,
+               const std::string &nameRecord, int confId2D, int confId3D,
+               bool sanitize) {
+              self.setData(pyObjectToString(data), nameRecord, confId2D,
+                           confId3D, sanitize);
+            },
+            "data"_a, "nameRecord"_a = "", "confId2D"_a = -1,
+            "confId3D"_a = -1, "sanitize"_a = true,
+            R"DOC(Sets the text to be parsed.)DOC")
         .def("GetItemText", &TDTMolSupplier::getItemText, "index"_a,
              R"DOC(Returns the text for an item.)DOC");
   };

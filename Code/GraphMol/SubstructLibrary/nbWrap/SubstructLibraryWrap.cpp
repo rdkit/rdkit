@@ -8,7 +8,9 @@
 //  of the RDKit source tree.
 //
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
 #include <RDBoost/boost_shared_ptr.h>
@@ -184,10 +186,11 @@ nb::tuple getSearchOrderHelper(const SubstructLibrary &self) {
   return nb::tuple(res);
 }
 
-void setSearchOrderHelper(SubstructLibrary &self, nb::handle seq) {
-  nb::object seq_obj = nb::borrow(seq);
+void setSearchOrderHelper(
+    SubstructLibrary &self,
+    const std::optional<PyIterableOf<unsigned int>> &seq) {
   std::unique_ptr<std::vector<unsigned int>> sorder =
-      pythonObjectToVect<unsigned int>(seq_obj);
+      pythonObjectToVect<unsigned int>(seq);
   if (sorder) {
     self.setSearchOrder(*sorder);
   } else {
@@ -483,8 +486,14 @@ void wrap_substructlibrary(nb::module_ &m) {
       .def("__len__", &MolHolderBase::size)
       .def("AddMol", &MolHolderBase::addMol, "m"_a,
            "Adds molecule to the molecule holder")
-      .def("GetMol", &MolHolderBase::getMol, "arg1"_a,
-           R"DOC(Returns a particular molecule in the molecule holder
+      .def(
+          "GetMol",
+          [](const MolHolderBase &self,
+             unsigned int idx) -> Nullable<boost::shared_ptr<ROMol>> {
+            return self.getMol(idx);
+          },
+          "arg1"_a,
+          R"DOC(Returns a particular molecule in the molecule holder
 
   ARGUMENTS:
     - idx: which molecule to return
@@ -512,14 +521,24 @@ void wrap_substructlibrary(nb::module_ &m) {
   nb::class_<CachedSmilesMolHolder, MolHolderBase>(m, "CachedSmilesMolHolder",
                                                    CachedSmilesMolHolderDoc)
       .def(nb::init<>())
-      .def("AddSmiles", &CachedSmilesMolHolder::addSmiles, "smiles"_a,
+      .def(
+          "AddSmiles",
+          [](CachedSmilesMolHolder &self, const StringOrBytes &smiles) {
+            return self.addSmiles(pyObjectToString(smiles));
+          },
+          "smiles"_a,
            "Add a trusted smiles string to the molecule holder, no checking "
            "is done on the input data");
 
   nb::class_<CachedTrustedSmilesMolHolder, MolHolderBase>(
       m, "CachedTrustedSmilesMolHolder", CachedTrustedSmilesMolHolderDoc)
       .def(nb::init<>())
-      .def("AddSmiles", &CachedTrustedSmilesMolHolder::addSmiles, "smiles"_a,
+      .def(
+          "AddSmiles",
+          [](CachedTrustedSmilesMolHolder &self, const StringOrBytes &smiles) {
+            return self.addSmiles(pyObjectToString(smiles));
+          },
+          "smiles"_a,
            "Add a trusted smiles string to the molecule holder, no checking "
            "is done on the input data");
 
@@ -635,8 +654,14 @@ void wrap_substructlibrary(nb::module_ &m) {
       LARGE_DEF(ExtendedQueryMol)
       // clang-format on
 
-      .def("GetMol", &SubstructLibrary::getMol, "idx"_a,
-           R"DOC(Returns a particular molecule in the molecule holder
+      .def(
+          "GetMol",
+          [](const SubstructLibrary &self,
+             unsigned int idx) -> Nullable<boost::shared_ptr<ROMol>> {
+            return self.getMol(idx);
+          },
+          "idx"_a,
+          R"DOC(Returns a particular molecule in the molecule holder
 
   ARGUMENTS:
     - idx: which molecule to return

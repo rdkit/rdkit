@@ -9,36 +9,40 @@
 //  of the RDKit source tree.
 //
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>
 
 #include <boost/dynamic_bitset.hpp>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 #include "RDGeneral/ControlCHandler.h"
+#include <RDBoost/Wrap_nb.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
 using RDKit::CIPLabeler::assignCIPLabels;
 
 namespace {
-boost::dynamic_bitset<> pyObjToBitset(nb::object obj, size_t n) {
+boost::dynamic_bitset<> pyObjToBitset(
+    const std::optional<PyIterableOf<size_t>> &obj, size_t n) {
   boost::dynamic_bitset<> result(n);
-  if (!obj.is_none()) {
-    for (nb::handle h : nb::iter(obj)) {
+  if (obj) {
+    for (nb::handle h : *obj) {
       result.set(nb::cast<size_t>(h));
     }
   }
   return result;
 }
 
-void assignCIPLabelsHelper(RDKit::ROMol &mol, nb::object atomsToLabel,
-                           nb::object bondsToLabel,
-                           unsigned int maxRecursiveIterations) {
+void assignCIPLabelsHelper(
+    RDKit::ROMol &mol, const std::optional<PyIterableOf<size_t>> &atomsToLabel,
+    const std::optional<PyIterableOf<size_t>> &bondsToLabel,
+    unsigned int maxRecursiveIterations) {
   auto atoms = pyObjToBitset(atomsToLabel, mol.getNumAtoms());
   auto bonds = pyObjToBitset(bondsToLabel, mol.getNumBonds());
 
   // If both atoms and bonds are None, assign all the mol.
-  if (atomsToLabel.is_none() && bondsToLabel.is_none()) {
+  if (!atomsToLabel && !bondsToLabel) {
     atoms.set();
     bonds.set();
   }

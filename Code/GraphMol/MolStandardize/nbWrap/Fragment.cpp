@@ -9,6 +9,8 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/filesystem.h>
+#include <RDBoost/Wrap_nb.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/Fragment.h>
@@ -39,10 +41,10 @@ void chooseInPlaceHelper(MolStandardize::LargestFragmentChooser &self,
   self.chooseInPlace(static_cast<RWMol &>(mol));
 }
 
-MolStandardize::FragmentRemover *removerFromParams(const std::string &data,
+MolStandardize::FragmentRemover *removerFromParams(const StringOrBytes &data,
                                                    bool leave_last,
                                                    bool skip_if_all_match) {
-  std::istringstream sstr(data);
+  std::istringstream sstr(pyObjectToString(data));
   return new MolStandardize::FragmentRemover(sstr, leave_last,
                                              skip_if_all_match);
 }
@@ -52,8 +54,16 @@ MolStandardize::FragmentRemover *removerFromParams(const std::string &data,
 void wrap_fragment(nb::module_ &m) {
   nb::class_<MolStandardize::FragmentRemover>(m, "FragmentRemover")
       .def(nb::init<>())
-      .def(nb::init<std::string, bool, bool>(), "fragmentFilename"_a = "",
-           "leave_last"_a = true, "skip_if_all_match"_a = false)
+      .def(
+          "__init__",
+          [](MolStandardize::FragmentRemover *self,
+             const std::filesystem::path &fragmentFilename, bool leave_last,
+             bool skip_if_all_match) {
+            new (self) MolStandardize::FragmentRemover(
+                fragmentFilename.string(), leave_last, skip_if_all_match);
+          },
+          "fragmentFilename"_a = "", "leave_last"_a = true,
+          "skip_if_all_match"_a = false)
       .def("remove", &removeHelper, "mol"_a, "",
            nb::rv_policy::take_ownership)
       .def("removeInPlace", &removeInPlaceHelper, "mol"_a,

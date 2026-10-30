@@ -592,6 +592,20 @@ M  END''')
     sgs[0].ClearAttachPoints()
     self.assertEqual(len(sgs[0].GetAttachPoints()), 0)
 
+  def testSetNoneClearsLists(self):
+    mol = Chem.RWMol(Chem.MolFromSmiles('c1ccccc1O'))
+    sg = Chem.CreateMolSubstanceGroup(mol, 'SRU')
+    sg.SetAtoms([0, 1])
+    sg.SetBonds([0])
+    sg.SetParentAtoms([1])
+    # None empties a list, as an empty sequence does
+    sg.SetAtoms(None)
+    sg.SetBonds(None)
+    sg.SetParentAtoms(None)
+    self.assertEqual(list(sg.GetAtoms()), [])
+    self.assertEqual(list(sg.GetBonds()), [])
+    self.assertEqual(list(sg.GetParentAtoms()), [])
+
   def testCreateDataSGroup(self):
     mol = Chem.MolFromSmiles('CC(=O)O')
     sg = Chem.CreateMolDataSubstanceGroup(mol, "pKa", "4.5")

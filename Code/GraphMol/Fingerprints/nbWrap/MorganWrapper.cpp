@@ -24,25 +24,24 @@ FingerprintGenerator<OutputType> *getMorganGenerator(
     unsigned int radius, bool countSimulation, bool includeChirality,
     bool useBondTypes, bool onlyNonzeroInvariants,
     bool,  // includeRingMembership
-    nb::object py_countBounds, std::uint32_t fpSize, nb::object py_atomInvGen,
-    nb::object py_bondInvGen, bool includeRedundantEnvironments) {
+    const std::optional<PyIterableOf<std::uint32_t>> &py_countBounds,
+    std::uint32_t fpSize, AtomInvariantsGenerator *py_atomInvGen,
+    BondInvariantsGenerator *py_bondInvGen, bool includeRedundantEnvironments) {
   AtomInvariantsGenerator *atomInvariantsGenerator = nullptr;
   BondInvariantsGenerator *bondInvariantsGenerator = nullptr;
 
-  if (!py_atomInvGen.is_none()) {
-    atomInvariantsGenerator =
-        nb::cast<AtomInvariantsGenerator *>(py_atomInvGen)->clone();
+  if (py_atomInvGen) {
+    atomInvariantsGenerator = py_atomInvGen->clone();
   }
 
-  if (!py_bondInvGen.is_none()) {
-    bondInvariantsGenerator =
-        nb::cast<BondInvariantsGenerator *>(py_bondInvGen)->clone();
+  if (py_bondInvGen) {
+    bondInvariantsGenerator = py_bondInvGen->clone();
   }
 
   std::vector<std::uint32_t> countBounds = {1, 2, 4, 8};
-  if (!py_countBounds.is_none()) {
+  if (py_countBounds) {
     countBounds.clear();
-    for (auto item : py_countBounds) {
+    for (auto item : *py_countBounds) {
       countBounds.push_back(nb::cast<std::uint32_t>(item));
     }
   }
@@ -119,12 +118,13 @@ RETURNS: AtomInvariantsGenerator
 
   m.def(
       "GetMorganFeatureAtomInvGen",
-      [](nb::object py_patterns) -> AtomInvariantsGenerator * {
-        if (py_patterns.is_none()) {
+      [](const std::optional<PyIterableOf<ROMol>> &py_patterns)
+          -> AtomInvariantsGenerator * {
+        if (!py_patterns) {
           return new MorganFingerprint::MorganFeatureAtomInvGenerator(nullptr);
         }
         std::vector<const ROMol *> patterns;
-        for (auto item : py_patterns) {
+        for (auto item : *py_patterns) {
           patterns.push_back(nb::cast<const ROMol *>(item));
         }
         return new MorganFingerprint::MorganFeatureAtomInvGenerator(&patterns);

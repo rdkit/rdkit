@@ -10,6 +10,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/variant.h>
 
 #include <optional>
 #include <GraphMol/RDKitBase.h>
@@ -210,7 +211,7 @@ void tautomerParentInPlaceHelper(
 
 template <typename FUNCTYPE>
 void mtinPlaceHelper(
-    nb::object pymols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &pymols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params,
     FUNCTYPE func) {
   nb::list molList(pymols);
@@ -229,7 +230,7 @@ void mtinPlaceHelper(
 
 template <typename FUNCTYPE>
 void mtinPlaceHelper2(
-    nb::object pymols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &pymols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params,
     bool skip_standardize, FUNCTYPE func) {
   nb::list molList(pymols);
@@ -247,7 +248,7 @@ void mtinPlaceHelper2(
 }
 
 void mtcleanupInPlaceHelper(
-    nb::object mols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &mols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params) {
   mtinPlaceHelper(
       mols, numThreads, params,
@@ -257,7 +258,7 @@ void mtcleanupInPlaceHelper(
 }
 
 void mtnormalizeInPlaceHelper(
-    nb::object mols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &mols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params) {
   mtinPlaceHelper(
       mols, numThreads, params,
@@ -267,7 +268,7 @@ void mtnormalizeInPlaceHelper(
 }
 
 void mtreionizeInPlaceHelper(
-    nb::object mols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &mols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params) {
   mtinPlaceHelper(
       mols, numThreads, params,
@@ -277,7 +278,7 @@ void mtreionizeInPlaceHelper(
 }
 
 void mtremoveFragmentsInPlaceHelper(
-    nb::object mols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &mols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params) {
   mtinPlaceHelper(
       mols, numThreads, params,
@@ -287,7 +288,7 @@ void mtremoveFragmentsInPlaceHelper(
 }
 
 void mtfragmentParentInPlaceHelper(
-    nb::object mols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &mols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params,
     bool skip_standardize) {
   mtinPlaceHelper2(mols, numThreads, params, skip_standardize,
@@ -298,7 +299,7 @@ void mtfragmentParentInPlaceHelper(
 }
 
 void mtstereoParentInPlaceHelper(
-    nb::object mols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &mols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params,
     bool skip_standardize) {
   mtinPlaceHelper2(
@@ -309,7 +310,7 @@ void mtstereoParentInPlaceHelper(
 }
 
 void mtisotopeParentInPlaceHelper(
-    nb::object mols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &mols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params,
     bool skip_standardize) {
   mtinPlaceHelper2(
@@ -320,7 +321,7 @@ void mtisotopeParentInPlaceHelper(
 }
 
 void mtchargeParentInPlaceHelper(
-    nb::object mols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &mols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params,
     bool skip_standardize) {
   mtinPlaceHelper2(
@@ -331,7 +332,7 @@ void mtchargeParentInPlaceHelper(
 }
 
 void mtsuperParentInPlaceHelper(
-    nb::object mols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &mols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params,
     bool skip_standardize) {
   mtinPlaceHelper2(
@@ -342,7 +343,7 @@ void mtsuperParentInPlaceHelper(
 }
 
 void mttautomerParentInPlaceHelper(
-    nb::object mols, int numThreads,
+    const PyIterableOf<RDKit::ROMol> &mols, int numThreads,
     const std::optional<RDKit::MolStandardize::CleanupParameters *> &params,
     bool skip_standardize) {
   mtinPlaceHelper2(mols, numThreads, params, skip_standardize,
@@ -507,12 +508,18 @@ NB_MODULE(rdMolStandardize, m) {
                   largestFragmentChooserCountHeavyAtomsOnly,
               "whether LargestFragmentChooser should only count "
               "heavy atoms (defaults to False)")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
-  m.def("UpdateParamsFromJSON",
-        &RDKit::MolStandardize::updateCleanupParamsFromJSON, "params"_a,
-        "json"_a,
-        "updates the cleanup parameters from the provided JSON string");
+  m.def(
+      "UpdateParamsFromJSON",
+      [](RDKit::MolStandardize::CleanupParameters &params,
+         const StringOrBytes &json) {
+        RDKit::MolStandardize::updateCleanupParamsFromJSON(
+            params, pyObjectToString(json));
+      },
+      "params"_a, "json"_a,
+      "updates the cleanup parameters from the provided JSON string");
 
   m.def("Cleanup", cleanupHelper, nb::arg("mol").none(),
         "params"_a = nb::none(), "Standardizes a molecule",
@@ -521,8 +528,13 @@ NB_MODULE(rdMolStandardize, m) {
         "params"_a = nb::none(), "Standardizes a molecule in place");
   m.def("CleanupInPlace", mtcleanupInPlaceHelper, "mols"_a, "numThreads"_a,
         "params"_a = nb::none(), "Standardizes multiple molecules in place");
-  m.def("StandardizeSmiles", RDKit::MolStandardize::standardizeSmiles,
-        "smiles"_a, "Convenience function for standardizing a SMILES");
+  m.def(
+      "StandardizeSmiles",
+      [](const StringOrBytes &smiles) {
+        return RDKit::MolStandardize::standardizeSmiles(
+            pyObjectToString(smiles));
+      },
+      "smiles"_a, "Convenience function for standardizing a SMILES");
   m.def(
       "TautomerParent", tautomerParentHelper, nb::arg("mol").none(),
       "params"_a = nb::none(), "skipStandardize"_a = false,

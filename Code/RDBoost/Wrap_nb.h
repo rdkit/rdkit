@@ -18,13 +18,17 @@
 #include <cstdint>
 
 #include <list>
+#include <optional>
+#include <string>
 #include <string_view>
+#include <variant>
 #include <vector>
 #include <RDGeneral/Exceptions.h>
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
+#include <nanobind/stl/variant.h>
 namespace nb = nanobind;
 
 // pattern for this from the "Better alternative" section of this StackOverflow
@@ -61,6 +65,10 @@ std::shared_ptr<T> toStd(boost::shared_ptr<T> bptr) {
 
   \throws AttributeError if the attribute does not exist
   \throws Python error if assignment fails
+
+  nanobind rejects None for an nb::object argument not annotated with .none(),
+  so register it with nb::arg("name"), nb::arg("value").none() to let
+  attributes whose setters accept None be set to None.
 */
 inline void safeSetattr(nb::object self, std::string const &name,
                         nb::object const &value) {
@@ -80,6 +88,81 @@ RDKIT_RDBOOST_EXPORT void throw_runtime_error(
     const std::string err);  //!< construct and throw a \c ValueError
 RDKIT_RDBOOST_EXPORT void translate_invariant_error(Invar::Invariant const &e);
 #endif
+
+//! A Python iterable whose elements convert to \c T. nanobind renders this as
+//! collections.abc.Iterable[T] in generated signatures and rejects
+//! non-iterables at the call boundary; element types are checked as they are
+//! converted. Wrap it in std::optional for arguments that also accept None.
+template <typename T>
+using PyIterableOf = nb::typed<nb::iterable, T>;
+
+//! Python containers that name their element types in generated signatures:
+//! PyTupleOf<int> renders as tuple[int, ...], and they nest, so
+//! PyTupleOf<PyTupleOf<int>> renders as tuple[tuple[int, ...], ...]. A fixed
+//! length heterogeneous tuple is spelled out instead, as
+//! nb::typed<nb::tuple, double, int>. nanobind checks only the container: a
+//! returned value is not validated against the declared type, and an argument
+//! must be a tuple, list or dict, with its elements converted where they are
+//! read.
+template <typename T>
+using PyTupleOf = nb::typed<nb::tuple, T, nb::ellipsis>;
+template <typename T>
+using PyListOf = nb::typed<nb::list, T>;
+template <typename K, typename V>
+using PyDictOf = nb::typed<nb::dict, K, V>;
+
+//! A list an argument fills in place, at a length the caller chooses. Its
+//! element type is Any because list[T] is invariant: naming it would reject the
+//! placeholders a caller preallocates with, such as [0] * n or [None] * n,
+//! which the wrapper overwrites without reading.
+using PyOutputList = nb::typed<nb::list, nb::any>;
+
+//! A Python sequence whose elements convert to \c T, for arguments that are
+//! indexed or measured with len() rather than only iterated. Accepts anything
+//! passing PySequence_Check, which excludes sets and generators.
+template <typename T>
+using PySequenceOf = nb::typed<nb::sequence, T>;
+
+//! A returned pointer that can be null, such as the result of a parser that
+//! fails. It converts as \c Pointer does, with a null pointer becoming None,
+//! and nanobind renders it as "T | None" in generated signatures. \c Pointer is
+//! a raw, shared or unique pointer.
+template <typename Pointer>
+struct Nullable {
+  Nullable() = default;
+  Nullable(Pointer pointer) : pointer(std::move(pointer)) {}
+  Pointer pointer{};
+};
+
+namespace nanobind::detail {
+template <typename Pointer>
+struct type_caster<Nullable<Pointer>> {
+  using Caster = make_caster<Pointer>;
+  NB_TYPE_CASTER(Nullable<Pointer>, optional_name(Caster::Name))
+
+  bool from_python(handle, uint8_t, cleanup_list *) noexcept { return false; }
+
+  template <typename T>
+  static handle from_cpp(T &&value, rv_policy policy,
+                         cleanup_list *cleanup) noexcept {
+    return Caster::from_cpp(std::forward<T>(value).pointer, policy, cleanup);
+  }
+};
+}  // namespace nanobind::detail
+
+//! Text that reached us as either \c str or \c bytes. nanobind renders this
+//! as "str | bytes" in generated signatures and rejects anything else before
+//! the call is dispatched; pyObjectToString() gets at the text itself.
+using StringOrBytes = std::variant<std::string, nb::bytes>;
+
+inline std::string pyObjectToString(const StringOrBytes &input) {
+  if (std::holds_alternative<std::string>(input)) {
+    return std::get<std::string>(input);
+  }
+  const auto &bytes = std::get<nb::bytes>(input);
+  return std::string(static_cast<const char *>(bytes.data()),
+                     static_cast<size_t>(bytes.size()));
+}
 
 //! NOTE: this returns a nullptr if obj is None or empty
 template <typename T>
@@ -116,6 +199,28 @@ void pythonObjectToVect(const nb::object &obj, std::vector<T> &res) {
     res.clear();
     std::transform(obj.begin(), obj.end(), std::back_inserter(res),
                    [](const auto &v) { return nb::cast<T>(v); });
+  } else {
+    res.clear();
+  }
+}
+
+//! Overloads for arguments that accept None as well as an iterable. An empty
+//! optional produces a null vector, or clears the output vector.
+template <typename T>
+std::unique_ptr<std::vector<T>> pythonObjectToVect(
+    const std::optional<PyIterableOf<T>> &obj, T maxV) {
+  return obj ? pythonObjectToVect<T>(*obj, maxV) : nullptr;
+}
+template <typename T>
+std::unique_ptr<std::vector<T>> pythonObjectToVect(
+    const std::optional<PyIterableOf<T>> &obj) {
+  return obj ? pythonObjectToVect<T>(*obj) : nullptr;
+}
+template <typename T>
+void pythonObjectToVect(const std::optional<PyIterableOf<T>> &obj,
+                        std::vector<T> &res) {
+  if (obj) {
+    pythonObjectToVect<T>(*obj, res);
   } else {
     res.clear();
   }
