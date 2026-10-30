@@ -53,7 +53,7 @@ class EEM_arrays {
 };
 }  // namespace
 
-const std::string EEMVersion = "1.0.0";
+const std::string EEMVersion = "1.0.1";
 void RDKIT_DESCRIPTORS_EXPORT EEM(ROMol &mol, std::vector<double> &res,
                                   int confId);
 }  // namespace Descriptors

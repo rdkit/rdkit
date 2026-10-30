@@ -12,8 +12,7 @@ import unittest
 
 from rdkit import Chem, DataStructs
 from rdkit.Chem.Fingerprints.FingerprintMols import FingerprinterDetails
-from rdkit.DataStructs import (BitUtils, FingerprintSimilarity, LazySignature,
-                               VectCollection)
+from rdkit.DataStructs import (BitUtils, FingerprintSimilarity, LazySignature, VectCollection)
 
 
 def load_tests(loader, tests, ignore):
@@ -78,11 +77,14 @@ class TestCaseAdditional(unittest.TestCase):
     self.assertAlmostEqual(FingerprintSimilarity(fps[1], fps[0]), 0.555, places=2)
 
     fpArgs['fpSize'] = 1024
-    fpArgs['tgtDensity'] = 0.8
+    fpArgs['tgtDensity'] = 0.02
     fp = FingerprintMols.FingerprintMol(ms[0], **fpArgs)
-    self.assertEqual(len(fp), 64)
-    fp = DataStructs.FoldToTargetDensity(fp, density=0.1, minLength=2)
-    self.assertEqual(len(fp), 4)
+    self.assertEqual(len(fp), 256)
+    fp2 = DataStructs.FoldToTargetDensity(fp, density=0.1)
+    self.assertEqual(len(fp2), 64)
+    fp2 = DataStructs.FoldToTargetDensity(fp, density=0.1, minLength=128)
+    self.assertEqual(len(fp2), 128)
+    self.assertGreater(0.1, fp2.GetNumOnBits() / len(fp2))
 
 
 if __name__ == '__main__':  # pragma: nocover

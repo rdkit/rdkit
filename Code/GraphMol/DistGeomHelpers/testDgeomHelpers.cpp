@@ -620,29 +620,32 @@ TEST_CASE("testIssue355") {
   }
 
   SECTION("2") {
+    // If the central carbon is not bonded to another carbon, it's no longer considered
+    // to be an aminde. Thus cases 2 and 3 are no longer forced to be trans
     const std::string smi = "CNC(=O)NC";
     const auto bm = _getBoundsMatrix(smi);
     CHECK(bm->getLowerBound(0, 3) < 3.0);
-    CHECK(bm->getUpperBound(0, 3) < 3.0);
+    CHECK(bm->getUpperBound(0, 3) >
+          3.0);  // can be cis or trans => allow full range
     CHECK(bm->getUpperBound(0, 4) > 3.2);
-    CHECK(bm->getLowerBound(0, 4) > 3.2);
+    CHECK(bm->getLowerBound(0, 4) < 3.2);
     CHECK(bm->getLowerBound(5, 3) < 3.0);
-    CHECK(bm->getUpperBound(5, 3) < 3.0);
+    CHECK(bm->getUpperBound(5, 3) > 3.0);
     CHECK(bm->getUpperBound(5, 1) > 3.2);
-    CHECK(bm->getLowerBound(5, 1) > 3.2);
+    CHECK(bm->getLowerBound(5, 1) < 3.2);
   }
 
   SECTION("3") {
     const std::string smi = "CNC(=O)Nc1ccccc1";
     const auto bm = _getBoundsMatrix(smi);
     CHECK(bm->getLowerBound(0, 3) < 3.0);
-    CHECK(bm->getUpperBound(0, 3) < 3.0);
+    CHECK(bm->getUpperBound(0, 3) > 3.0);
     CHECK(bm->getUpperBound(0, 4) > 3.2);
-    CHECK(bm->getLowerBound(0, 4) > 3.2);
+    CHECK(bm->getLowerBound(0, 4) < 3.2);
     CHECK(bm->getLowerBound(5, 3) < 3.0);
-    CHECK(bm->getUpperBound(5, 3) < 3.0);
+    CHECK(bm->getUpperBound(5, 3) > 3.0);
     CHECK(bm->getUpperBound(5, 1) > 3.2);
-    CHECK(bm->getLowerBound(5, 1) > 3.2);
+    CHECK(bm->getLowerBound(5, 1) < 3.2);
   }
 }
 
@@ -1354,7 +1357,8 @@ TEST_CASE("testGithub971") {
 
 TEST_CASE("testEmbedParameters") {
   auto runTest = [](const std::string &smiles, const std::string &fname,
-                    DGeomHelpers::EmbedParameters &params, const unsigned int randomSeed = 42) {
+                    DGeomHelpers::EmbedParameters &params,
+                    const unsigned int randomSeed = 42) {
     auto getPath = [](const std::string &file, const bool legacy) {
       std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
       if (!legacy) {
