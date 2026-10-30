@@ -113,6 +113,20 @@ bool pastDeadline(const TimePoint *end_time) {
   return end_time != nullptr && Clock::now() > *end_time;
 }
 
+// Bookkeeping shared by every embedding attempt: honors the timeout, reports
+// progress, and checks for ctrl-C. Returns false if the attempt loop should
+// stop.
+bool beginAttempt(unsigned int iter, const EmbedParameters &params,
+                  const TimePoint *end_time) {
+  if (pastDeadline(end_time)) {
+    return false;
+  }
+  if (params.callback != nullptr) {
+    params.callback(iter);
+  }
+  return !ControlCHandler::getGotSignal();
+}
+
 }  // namespace
 
 const EmbedParameters DG{};
@@ -984,15 +998,8 @@ bool embedPoints(RDGeom::PointPtrVect *positions,
   bool gotCoords = false;
   unsigned int iter = 0;
   while (!gotCoords && iter < embedParams.maxIterations) {
-    if (pastDeadline(end_time)) {
-      break;
-    }
-
     ++iter;
-    if (embedParams.callback != nullptr) {
-      embedParams.callback(iter);
-    }
-    if (ControlCHandler::getGotSignal()) {
+    if (!beginAttempt(iter, embedParams, end_time)) {
       return false;
     }
     gotCoords = embedParams.optimizeConfWithId.has_value()
@@ -1154,14 +1161,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions,
 
   while (iter < embedParams.maxIterations) {
     ++iter;
-    if (pastDeadline(end_time)) {
-      break;
-    }
-    // Clear trajectories in cases we write the minimization positions
-    if (embedParams.callback != nullptr) {
-      embedParams.callback(iter);
-    }
-    if (ControlCHandler::getGotSignal()) {
+    if (!beginAttempt(iter, embedParams, end_time)) {
       return false;
     }
 
