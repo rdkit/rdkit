@@ -184,8 +184,11 @@ static void addResult(std::vector<std::pair<ROMOL_SPTR, ROMOL_SPTR>>
     bondIndices.push_back(oldBond->getIdx());
     dummyLabels.emplace_back(isotope, isotope);
   }
-  std::unique_ptr<ROMol> fragmentedMol(
-      MolFragmenter::fragmentOnBonds(mol, bondIndices, true, &dummyLabels));
+
+  // all ROMols are RWMols, but if this changes, this code will crash
+  std::unique_ptr<RWMol> fragmentedMol(static_cast<RWMol*>(
+      MolFragmenter::fragmentOnBonds(mol, bondIndices, true, &dummyLabels)));
+
   for (auto ai = mol.getNumAtoms(); ai < fragmentedMol->getNumAtoms(); ++ai) {
     auto a = fragmentedMol->getAtomWithIdx(ai);
     isotope = a->getIsotope();

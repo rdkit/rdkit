@@ -38,8 +38,8 @@ Alternatively, you can also send Cookbook revisions and addition requests to the
 .. note::
 
    The Index ID# (e.g., **RDKitCB_##**) is simply a way to track Cookbook entries and image file names. 
-   New Cookbook additions are sequentially index numbered, regardless of where they are placed 
-   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_41**.
+    New Cookbook additions are sequentially index numbered, regardless of where they are placed 
+    within the document. As such, for reference, the next Cookbook entry is **RDKitCB_42**.
 
 Drawing Molecules (Jupyter)
 *******************************
@@ -1387,6 +1387,38 @@ Macrocycles with SMARTS queries
 .. image:: images/RDKitCB_13_im1.png
 
 
+Find Bonds Shared by Multiple Rings
+====================================
+
+| **Author:** Malte Korn
+| **Index ID#:** RDKitCB_41
+| **Summary:** Use the ``@{n}`` SMARTS extension to match bonds that belong to a specific number of rings.
+
+The ``@{n}`` bond SMARTS (RDKit extension) matches bonds that are part of exactly ``n`` SSSR rings.
+Variants ``@{n-m}``, ``@{n-}``, and ``@{-m}`` support range queries.
+This is useful for identifying ring-fusion bonds in polycyclic systems.
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem.Draw import IPythonConsole
+   from rdkit.Chem import Draw
+   phen = Chem.MolFromSmiles("C1C=CC=C2C3C=CC=CC=3C=CC=12")
+   # Match bonds shared by exactly 2 rings (the two fusion bonds in phenanthrene)
+   pat = Chem.MolFromSmarts("*@{2}*")
+   print(phen.GetSubstructMatches(pat))
+
+.. testoutput::
+
+   ((4, 13), (5, 10))
+
+.. testcode::
+
+   phen
+
+.. image:: images/RDKitCB_41_im0.png
+
+
 Returning Substructure Matches as SMILES
 =========================================
 
@@ -2153,7 +2185,7 @@ use GetTotalNumHs(); the total number of Hs for each atom is one:
     from rdkit import Chem
     pyrrole = Chem.MolFromSmiles('C1=CNC=C1')
     for atom in pyrrole.GetAtoms():
-       print(atom.GetSymbol(), atom.GetExplicitValence(), atom.GetTotalNumHs())
+       print(atom.GetSymbol(), atom.GetValence(Chem.ValenceType.EXPLICIT), atom.GetTotalNumHs())
 
 .. testoutput::
 
@@ -2176,7 +2208,7 @@ in the SMILES, it becomes an "explicit" hydrogen as far as atom.GetNumExplicitHs
 .. testcode::
 
    for atom in pyrrole.GetAtoms():
-       print(atom.GetSymbol(), atom.GetExplicitValence(), atom.GetNumImplicitHs(), atom.GetNumExplicitHs(), atom.GetTotalNumHs())
+       print(atom.GetSymbol(), atom.GetValence(Chem.ValenceType.EXPLICIT), atom.GetNumImplicitHs(), atom.GetNumExplicitHs(), atom.GetTotalNumHs())
 
 .. testoutput::
 
@@ -2189,7 +2221,7 @@ in the SMILES, it becomes an "explicit" hydrogen as far as atom.GetNumExplicitHs
 .. testcode::
    
     for atom in mol1.GetAtoms():
-       print(atom.GetSymbol(), atom.GetExplicitValence(), atom.GetNumImplicitHs(), atom.GetNumExplicitHs(), atom.GetTotalNumHs())
+       print(atom.GetSymbol(), atom.GetValence(Chem.ValenceType.EXPLICIT), atom.GetNumImplicitHs(), atom.GetNumExplicitHs(), atom.GetTotalNumHs())
 
 .. testoutput::
 
@@ -2202,7 +2234,7 @@ in the SMILES, it becomes an "explicit" hydrogen as far as atom.GetNumExplicitHs
 .. testcode::
     
     for atom in mol2.GetAtoms():
-       print(atom.GetSymbol(), atom.GetExplicitValence(), atom.GetNumImplicitHs(), atom.GetNumExplicitHs(), atom.GetTotalNumHs())
+       print(atom.GetSymbol(), atom.GetValence(Chem.ValenceType.EXPLICIT), atom.GetNumImplicitHs(), atom.GetNumExplicitHs(), atom.GetTotalNumHs())
 
 .. testoutput::
 
@@ -2285,7 +2317,7 @@ Organometallics with Dative Bonds
         for metal in metals:
             for nbr in metal.GetNeighbors():
                 if nbr.GetAtomicNum() in fromAtoms and \
-                   nbr.GetExplicitValence()>pt.GetDefaultValence(nbr.GetAtomicNum()) and \
+                   nbr.GetValence(Chem.ValenceType.EXPLICIT)>pt.GetDefaultValence(nbr.GetAtomicNum()) and \
                    rwmol.GetBondBetweenAtoms(nbr.GetIdx(),metal.GetIdx()).GetBondType() == Chem.BondType.SINGLE:
                     rwmol.RemoveBond(nbr.GetIdx(),metal.GetIdx())
                     rwmol.AddBond(nbr.GetIdx(),metal.GetIdx(),Chem.BondType.DATIVE)

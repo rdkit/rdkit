@@ -13,7 +13,7 @@
 
 #include <vector>
 #include <map>
-#include <list>
+#include <memory>
 #include <string_view>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/smart_ptr.hpp>
@@ -31,9 +31,9 @@ class RWMol;
 class Atom;
 class Bond;
 class Conformer;
-typedef std::vector<double> INVAR_VECT;
-typedef INVAR_VECT::iterator INVAR_VECT_I;
-typedef INVAR_VECT::const_iterator INVAR_VECT_CI;
+using INVAR_VECT = std::vector<double>;
+using INVAR_VECT_I = INVAR_VECT::iterator;
+using INVAR_VECT_CI = INVAR_VECT::const_iterator;
 
 //! \brief Groups a variety of molecular query and transformation operations.
 namespace MolOps {
@@ -203,6 +203,27 @@ struct RDKIT_GRAPHMOL_EXPORT AddHsParameters {
  */
 RDKIT_GRAPHMOL_EXPORT void addHs(RWMol &mol, const AddHsParameters &params,
                                  const UINT_VECT *onlyOnAtoms = nullptr);
+
+//! adds Hs to a molecule as explicit Atoms
+/*!
+    \param mol          the molecule to add Hs to
+    \param params       parameters controlling which Hs are added.
+    \param onlyOnAtoms   (optional) if provided, this should be a vector of
+                IDs of the atoms that will be considered for H addition.
+
+    <b>Notes:</b>
+       - it makes no sense to use the \c addCoords option if the molecule's
+   heavy atoms don't already have coordinates.
+       - the caller is responsible for <tt>delete</tt>ing the pointer this
+   returns.
+ */
+inline RDKIT_GRAPHMOL_EXPORT ROMol *addHs(
+    const ROMol &mol, const AddHsParameters &params,
+    const UINT_VECT *onlyOnAtoms = nullptr) {
+  std::unique_ptr<RWMol> res{new RWMol(mol)};
+  addHs(*res, params, onlyOnAtoms);
+  return static_cast<ROMol *>(res.release());
+}
 
 //! returns a copy of a molecule with hydrogens added in as explicit Atoms
 /*!
@@ -395,7 +416,7 @@ RDKIT_GRAPHMOL_EXPORT void mergeQueryHs(RWMol &mol,
 */
 RDKIT_GRAPHMOL_EXPORT std::pair<bool, bool> hasQueryHs(const ROMol &mol);
 
-typedef enum {
+enum AdjustQueryWhichFlags {
   ADJUST_IGNORENONE = 0x0,
   ADJUST_IGNORECHAINS = 0x1,
   ADJUST_IGNORERINGS = 0x4,
@@ -403,7 +424,7 @@ typedef enum {
   ADJUST_IGNORENONDUMMIES = 0x8,
   ADJUST_IGNOREMAPPED = 0x10,
   ADJUST_IGNOREALL = 0xFFFFFFF
-} AdjustQueryWhichFlags;
+};
 
 //! Parameters controlling the behavior of MolOps::adjustQueryProperties
 /*!
@@ -613,14 +634,14 @@ does not consider the outer envelope of fused rings)
 - \c AROMATICIT_MMFF94 the aromaticity model used by the MMFF94 force field
 - \c AROMATICITY_CUSTOM uses a caller-provided function
 */
-typedef enum {
+enum AromaticityModel {
   AROMATICITY_DEFAULT = 0x0,  ///< future proofing
   AROMATICITY_RDKIT = 0x1,
   AROMATICITY_SIMPLE = 0x2,
   AROMATICITY_MDL = 0x4,
   AROMATICITY_MMFF94 = 0x8,
   AROMATICITY_CUSTOM = 0xFFFFFFF  ///< use a function
-} AromaticityModel;
+};
 
 //! sets the aromaticity model for a molecule to MMFF94
 RDKIT_GRAPHMOL_EXPORT void setMMFFAromaticity(RWMol &mol);

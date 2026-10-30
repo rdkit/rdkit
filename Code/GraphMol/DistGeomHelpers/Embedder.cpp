@@ -44,7 +44,6 @@
 #include <memory>
 #include <vector>
 #include <chrono>  // for time-related functions
-#include <variant>
 #include <array>
 #include <algorithm>
 #include <memory>
@@ -475,6 +474,24 @@ bool generateInitialCoords(RDGeom::PointPtrVect *positions,
   }
   return gotCoords;
 }
+
+bool setInitialCoords(RDGeom::PointPtrVect *positions,
+                      const EmbedParameters &embedParams) {
+  if (embedParams.useRandomCoords && embedParams.coordMap != nullptr) {
+    for (const auto &v : *embedParams.coordMap) {
+      auto p = positions->at(v.first);
+      for (unsigned int ci = 0; ci < v.second.dimension(); ++ci) {
+        (*p)[ci] = v.second[ci];
+      }
+      // zero out any higher dimensional components:
+      for (unsigned int ci = v.second.dimension(); ci < p->dimension(); ++ci) {
+        (*p)[ci] = 0.0;
+      }
+    }
+  }
+  return true;
+}
+
 bool firstMinimization(RDGeom::PointPtrVect *positions,
                        const detail::EmbedArgs &eargs,
                        const EmbedParameters &embedParams) {
@@ -967,8 +984,10 @@ bool embedPoints(RDGeom::PointPtrVect *positions,
     if (ControlCHandler::getGotSignal()) {
       return false;
     }
-    gotCoords = EmbeddingOps::generateInitialCoords(positions, eargs,
-                                                    embedParams, distMat, rng);
+    gotCoords = embedParams.optimizeConfWithId.has_value()
+                    ? EmbeddingOps::setInitialCoords(positions, embedParams)
+                    : EmbeddingOps::generateInitialCoords(
+                          positions, eargs, embedParams, distMat, rng);
 
     if (!gotCoords) {
       if (embedParams.trackFailures) {
@@ -1136,8 +1155,11 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions,
     }
 
     // Get Initial positions
-    gotCoords = EmbeddingOps::generateInitialCoords(positions, eargs,
-                                                    embedParams, distMat, rng);
+
+    gotCoords = embedParams.optimizeConfWithId
+                    ? EmbeddingOps::setInitialCoords(positions, embedParams)
+                    : EmbeddingOps::generateInitialCoords(
+                          positions, eargs, embedParams, distMat, rng);
 
     if (!gotCoords) {
       if (embedParams.trackFailures) {
@@ -1445,6 +1467,8 @@ bool setupInitialBoundsMatrix(
 void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
                     DistGeom::VECT_CHIRALSET &tetrahedralCenters,
                     const std::map<int, RDGeom::Point3D> *coordMap) {
+  const auto ringInfo = mol.getRingInfo();
+  const auto atomRings = ringInfo->atomRings();
   for (const auto &atom : mol.atoms()) {
     if (atom->getAtomicNum() != 1) {  // skip hydrogens
       Atom::ChiralType chiralType = atom->getChiralTag();
@@ -1481,7 +1505,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
         // set a flag for tetrahedral centers that are in multiple small rings
         auto numSmallRings = 0u;
         constexpr int smallRingSize = 5;
-        for (const auto sz : mol.getRingInfo()->atomRingSizes(atom->getIdx())) {
+        for (const auto ringIdx : ringInfo->atomMembers(atom->getIdx())) {
+          const auto sz = atomRings[ringIdx].size();
           if (sz < smallRingSize) {
             ++numSmallRings;
           }
@@ -1524,8 +1549,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }  // if block - heavy atom check
-  }  // for loop over atoms
+    }    // if block - heavy atom check
+  }      // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {
@@ -1644,6 +1669,8 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
   // pointers from those
   std::vector<std::unique_ptr<RDGeom::Point>> positionsStore;
   positionsStore.reserve(nAtoms);
+  const bool onlyRefine = params->optimizeConfWithId.has_value();
+
   for (unsigned int i = 0; i < nAtoms; ++i) {
     if (eargs->fourD) {
       positionsStore.emplace_back(new RDGeom::PointND(4));
@@ -1651,6 +1678,15 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
       positionsStore.emplace_back(new RDGeom::Point3D());
     }
     positions[i] = positionsStore[i].get();
+  }
+
+  if (onlyRefine) {
+    auto &conf = *eargs->confs->at(0);
+    for (std::size_t i = 0; i < nAtoms; ++i) {
+      (*positions[i])[0] = conf.getAtomPos(i).x;
+      (*positions[i])[1] = conf.getAtomPos(i).y;
+      (*positions[i])[2] = conf.getAtomPos(i).z;
+    }
   }
   for (size_t ci = 0; ci < eargs->confs->size(); ci++) {
     if (ControlCHandler::getGotSignal() ||
@@ -1821,21 +1857,25 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
   }
 
   // initialize the conformers we're going to be creating:
-  if (params.clearConfs) {
-    res.clear();
-    mol.clearConformers();
-  }
   std::vector<std::unique_ptr<Conformer>> confs;
-  confs.reserve(numConfs);
-  for (unsigned int i = 0; i < numConfs; ++i) {
-    confs.emplace_back(new Conformer(mol.getNumAtoms()));
-  }
+  if (params.optimizeConfWithId.has_value()) {
+    confs.emplace_back(
+        new Conformer(mol.getConformer(*params.optimizeConfWithId)));
 
-  boost::dynamic_bitset<> confsOk(numConfs);
-  confsOk.set();
+  } else {
+    if (params.clearConfs) {
+      res.clear();
+      mol.clearConformers();
+    }
+    confs.reserve(numConfs);
+    for (unsigned int i = 0; i < numConfs; ++i) {
+      confs.emplace_back(new Conformer(mol.getNumAtoms()));
+    }
+  }
 
   INT_VECT fragMapping;
   std::vector<ROMOL_SPTR> molFrags;
+
   if (params.embedFragmentsSeparately) {
     molFrags = MolOps::getMolFrags(mol, true, &fragMapping);
   } else {
@@ -1843,6 +1883,7 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     fragMapping.resize(mol.getNumAtoms());
     std::fill(fragMapping.begin(), fragMapping.end(), 0);
   }
+
   const std::map<int, RDGeom::Point3D> *coordMap = params.coordMap;
   if (molFrags.size() > 1 && coordMap) {
     BOOST_LOG(rdWarningLog)
@@ -1851,6 +1892,33 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
         << std::endl;
     coordMap = nullptr;
   }
+
+  if (params.optimizeConfWithId.has_value()) {
+    if (molFrags.size() > 1) {
+      BOOST_LOG(rdWarningLog)
+          << "Seeded conformer generation (via the optimizeConfWithId argument) "
+             "does not work with molecules that have multiple fragments. Aborting."
+          << std::endl;
+      res.push_back(-1);
+      return;
+    }
+    numConfs = 1;
+    // If a coordmap is provided, we need to set random coords to true,
+    // otherwise the mechanism is not activated.
+    if (coordMap) {
+      BOOST_LOG(rdWarningLog)
+          << "optimizeConfWithId and coordMap are provided, "
+             "initialEmbeddingMode is overwritten to RANDOM_COORDINATE_EMBEDDING"
+          << std::endl;
+      params.useRandomCoords = true;
+      params.initialEmbeddingMode =
+          InitialEmbeddingMode::RANDOM_COORDINATE_EMBEDDING;
+    }
+  }
+
+  boost::dynamic_bitset<> confsOk(numConfs);
+  confsOk.set();
+
   boost::dynamic_bitset<> constrainedAtoms(mol.getNumAtoms());
   if (coordMap) {
     for (const auto &entry : *coordMap) {
@@ -1883,15 +1951,9 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     ROMOL_SPTR piece = molFrags[fragIdx];
     unsigned int nAtoms = piece->getNumAtoms();
 
-    std::unique_ptr<detail::cf::CrystalFFDetails> etkdgDetails;
     namespace CFF = ForceFields::CrystalFF;
 
-    if (params.ETversion == 1 || params.ETversion == 2 ||
-        params.ETversion == 4) {
-      etkdgDetails = std::make_unique<CFF::CrystalFFDetails>();
-    } else {
-      throw std::invalid_argument("ETversion needs to be either 1, 2 or 4.");
-    }
+    auto etkdgDetails = std::make_unique<CFF::CrystalFFDetails>();
 
     etkdgDetails->constrainedAtoms = constrainedAtoms;
     etkdgDetails->distMat = MolOps::getDistanceMat(*piece.get());
@@ -1946,7 +2008,8 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     MolOps::assignStereochemistry(*piece);
     DistGeom::VECT_CHIRALSET chiralCenters;
     DistGeom::VECT_CHIRALSET tetrahedralCarbons;
-    EmbeddingOps::findChiralSets(*piece, chiralCenters, tetrahedralCarbons, coordMap);
+    EmbeddingOps::findChiralSets(*piece, chiralCenters, tetrahedralCarbons,
+                                 coordMap);
 
     DistGeom::ZMatPtr zmat = std::make_shared<DistGeom::ZMatrix>(nAtoms);
     if (params.initialEmbeddingMode ==
@@ -1972,8 +2035,8 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
          (chiralCenters.size() > 0 || tetrahedralCarbons.size() > 0))) {
       fourD = true;
     }
-
-    int numThreads = getNumThreadsToUse(params.numThreads);
+    int numThreads =
+        getNumThreadsToUse(params.optimizeConfWithId ? 1 : params.numThreads);
 
     ControlCHandler hdlr;
 
@@ -2028,6 +2091,21 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
 
   for (unsigned int ci = 0; ci < confs.size(); ++ci) {
     auto &conf = confs[ci];
+    if (params.optimizeConfWithId.has_value()) {
+      if (!confsOk[ci]) {
+        BOOST_LOG(rdWarningLog)
+            << "Failed to refine the conformer with the provided id, cancelling"
+            << std::endl;
+        res.push_back(-1);
+        return;
+      }
+      auto &dest = mol.getConformer(*params.optimizeConfWithId);
+      for (std::size_t i = 0; i < mol.getNumAtoms(); ++i) {
+        dest.setAtomPos(i, conf->getAtomPos(i));
+      }
+      res.push_back(*params.optimizeConfWithId);
+      return;
+    }
     if (confsOk[ci]) {
       // check if we are pruning away conformations and
       // a close-by conformation has already been chosen :

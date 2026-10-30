@@ -16,6 +16,7 @@
 #include <GraphMol/ForceFieldHelpers/CrystalFF/TorsionPreferences.h>
 
 #include <GraphMol/GraphMol.h>
+#include <GraphMol/Conformer.h>
 #include <RDBoost/Wrap.h>
 #include <DistGeom/ChiralSet.h>
 #include <RDGeneral/ControlCHandler.h>
@@ -739,6 +740,18 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
                      "Only generates the initial 3D embedding")
       .def("SetCoordMap", &PyEmbedParameters::setCoordMap, python::args("self"),
            "sets the coordmap to be used")
+      .add_property(
+          "optimizeConfWithId",
+          +[](const PyEmbedParameters &s) -> python::object {
+            return s.optimizeConfWithId ? python::object(*s.optimizeConfWithId)
+                                        : python::object();
+          },
+          +[](PyEmbedParameters &s, python::object v) {
+            s.optimizeConfWithId =
+                v.is_none() ? std::nullopt
+                            : std::optional(python::extract<unsigned int>(v)());
+          },
+          "If provided, the Conformer with this ID in the molecule (if present) is optimized with the ETKDG force field in place.")
       .def_readwrite("embedForceField", &PyEmbedParameters::embedForceField,
                      "Force Field to use for ideal 1-2 and 1-3 distances.")
       .def("__setattr__", &safeSetattr);
@@ -746,6 +759,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   docString =
       "Use distance geometry to obtain multiple sets of \n\
  coordinates for a molecule\n\
+ Be aware that this function can alter the EmbedParameters object, caution \n\
+ is advised when reusing EmbedParameters objects for different embedding runs.\n\
  \n\
  ARGUMENTS:\n\n\
   - mol : the molecule of interest\n\
@@ -762,6 +777,8 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
   docString =
       "Use distance geometry to obtain intial \n\
  coordinates for a molecule\n\n\
+ Be aware that this function can alter the EmbedParameters object, caution \n\
+ is advised when reusing EmbedParameters objects for different embedding runs.\n\
  \n\
  ARGUMENTS:\n\n\
     - mol : the molecule of interest\n\
