@@ -385,8 +385,11 @@ void testIssue248() {
        ++token) {
     std::string smi = *token;
     RWMol *m = SmilesToMol(smi, 0, 1);
-    unsigned int confId =
-        RDDepict::compute2DCoords(*m, nullptr, false, true, 3, 100);
+    RDDepict::Compute2DCoordParameters params;
+    params.nFlipsPerSample = 3;
+    params.nSamples = 100;
+    params.useBranchDepthPrioritization = false;
+    unsigned int confId = RDDepict::compute2DCoords(*m, params);
     // check that there are no collisions in the molecules
     int natms = m->getNumAtoms();
     int i, j;
@@ -1487,7 +1490,7 @@ M  END)RES"_ctab;
 
     // test that using a reference with query atoms including H works
     auto scaffold = R"CTAB(
-  MJ201100                      
+  MJ201100
 
  12 13  0  0  0  0  0  0  0  0999 V2000
    -0.5398    0.0400    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -1743,7 +1746,7 @@ M  END
     // towards a 30-degree angle rotate since it has no bonds
     // whose angle with the X axis is multiple of 60 degrees
     auto cpSittingOnHorizontalBondCTab = R"RES(
-  MJ201100                      
+  MJ201100
 
   5  5  0  0  0  0  0  0  0  0999 V2000
    -2.3660    0.3892    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0

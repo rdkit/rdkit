@@ -32,6 +32,15 @@ constexpr double NEIGH_RADIUS = 2.5;
 
 namespace RDDepict {
 namespace {
+// Targeted flips are a best-effort cleanup step, not an exhaustive optimizer.
+// A small, fixed pass limit prevents pathological structures from spending
+// disproportionate time moving the same clashes around.
+constexpr unsigned int MAX_TARGETED_COLLISION_PASSES = 5;
+
+// A nearby ring often represents a visually important branch even though the
+// acyclic depth calculation intentionally stops when it reaches that ring.
+constexpr double RING_BRANCH_SCORE_BONUS = 1.5;
+
 // returns the atomic degree to be used for coordinate generation
 unsigned int getDepictDegree(const RDKit::Atom *atom) {
   PRECONDITION(atom, "no atom");
@@ -231,6 +240,33 @@ int EmbeddedFrag::findNumNeigh(const RDGeom::Point2D &pt, double radius) {
   return res;
 }
 
+bool EmbeddedFrag::subtreeHasRing(unsigned int atomIdx,
+                                  unsigned int parentIdx) const {
+  PRECONDITION(dp_mol, "");
+
+  const auto atom = dp_mol->getAtomWithIdx(atomIdx);
+
+  if (atom->getOwningMol().getRingInfo()->numAtomRings(atomIdx) > 0) {
+    return true;
+  }
+
+  for (const auto nbr : dp_mol->atomNeighbors(atom)) {
+    const auto nbrIdx = nbr->getIdx();
+
+    // Stay inside the unembedded subtree and do not walk back toward the
+    // branch point.
+    if (nbrIdx == parentIdx || d_eatoms.find(nbrIdx) != d_eatoms.end()) {
+      continue;
+    }
+
+    if (subtreeHasRing(nbrIdx, atomIdx)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 void EmbeddedFrag::updateNewNeighs(
     unsigned int aid) {  //, const RDKit::ROMol *mol) {
   PRECONDITION(dp_mol, "");
@@ -250,15 +286,75 @@ void EmbeddedFrag::updateNewNeighs(
                               hIndices.end());
 
   auto deg = getDepictDegree(dp_mol->getAtomWithIdx(aid));
-  // order the neighbors by their CIPranks, if the number is between > 0 but
-  // less than 3
-  if ((d_eatoms[aid].neighs.size() > 0) &&
-      ((deg < 4) || (d_eatoms[aid].neighs.size() < 3))) {
+
+  if ((deg >= 4) && (d_eatoms[aid].neighs.size() >= 3)) {
+    // Preserve the degree-4 placement scheme: one neighbor is opposite the
+    // incoming bond, and the other two are left/right at 90 degrees. Extended
+    // branch prioritization may choose those roles from branch-depth/size;
+    // without it, keep the historical rank-based ordering.
+    if (dp_branchDepths) {
+      auto rankedNbrs = rankAtomsByRank(*dp_mol, d_eatoms[aid].neighs);
+      RDKit::INT_VECT continuationNbrs;
+      RDKit::INT_VECT sideNbrs;
+      const auto distanceFromSeed = d_eatoms[aid].d_distanceFromSeed;
+
+      for (auto nbr : rankedNbrs) {
+        auto key = std::make_pair(aid, static_cast<unsigned int>(nbr));
+        auto depthIt = dp_branchDepths->find(key);
+        auto depth =
+            depthIt != dp_branchDepths->end() ? depthIt->second : 0;
+        if (depth > distanceFromSeed && depth > 1) {
+          continuationNbrs.push_back(nbr);
+        } else {
+          sideNbrs.push_back(nbr);
+        }
+      }
+
+      if (deg == 4 && continuationNbrs.size() == 2 &&
+          sideNbrs.size() == 1) {
+        // Balanced degree-4 intersection: the incoming path is not continued
+        // straight. Instead, the two long branches become the new chain and
+        // are placed in the left/right 90-degree slots.
+        d_eatoms[aid].neighs = {continuationNbrs[0], sideNbrs[0],
+                                continuationNbrs[1]};
+      } else {
+        d_eatoms[aid].neighs =
+            setNbrOrderByBranchSize(aid, d_eatoms[aid].neighs, *dp_mol);
+      }
+    } else {
+      d_eatoms[aid].neighs = setNbrOrder(aid, d_eatoms[aid].neighs, *dp_mol);
+    }
+  } else if (dp_branchDepths && d_eatoms[aid].neighs.size() > 0) {
+    // First use the normal depiction atom ranking, then stable-sort by branch
+    // score so ties keep the existing rankAtomsByRank() behavior.
     d_eatoms[aid].neighs = rankAtomsByRank(*dp_mol, d_eatoms[aid].neighs);
-  } else if ((deg >= 4) && (d_eatoms[aid].neighs.size() >= 3)) {
-    // now if we have more more than 2 neighbors change the order so that atoms
-    // with the highest rank fall on opposite sides of each other
-    d_eatoms[aid].neighs = setNbrOrder(aid, d_eatoms[aid].neighs, *dp_mol);
+    std::stable_sort(
+        d_eatoms[aid].neighs.begin(), d_eatoms[aid].neighs.end(),
+        [this, aid](int a, int b) {
+          auto keyA = std::make_pair(aid, static_cast<unsigned int>(a));
+          auto keyB = std::make_pair(aid, static_cast<unsigned int>(b));
+          auto itA = dp_branchDepths->find(keyA);
+          auto itB = dp_branchDepths->find(keyB);
+
+          unsigned int depthA =
+              (itA != dp_branchDepths->end()) ? itA->second : 0;
+          unsigned int depthB =
+              (itB != dp_branchDepths->end()) ? itB->second : 0;
+
+          bool hasRingA = (dp_mol->getRingInfo()->numAtomRings(a) > 0) ||
+                          this->subtreeHasRing(a, aid);
+          bool hasRingB = (dp_mol->getRingInfo()->numAtomRings(b) > 0) ||
+                          this->subtreeHasRing(b, aid);
+
+          const auto scoreA =
+              depthA + (hasRingA ? RING_BRANCH_SCORE_BONUS : 0.0);
+          const auto scoreB =
+              depthB + (hasRingB ? RING_BRANCH_SCORE_BONUS : 0.0);
+          return scoreA > scoreB;
+        });
+  } else if (d_eatoms[aid].neighs.size() > 0) {
+    // Historical behavior: order the remaining neighbors by atom rank.
+    d_eatoms[aid].neighs = rankAtomsByRank(*dp_mol, d_eatoms[aid].neighs);
   }
 
   if (d_eatoms[aid].neighs.size() > 0) {
@@ -278,6 +374,15 @@ void EmbeddedFrag::setupNewNeighs() {  // const RDKit::ROMol *mol) {
   }
   // arrange the d_attachPts so that they are traversed in the order of CIPRanks
   d_attachPts = rankAtomsByRank(*dp_mol, d_attachPts);
+}
+
+void EmbeddedFrag::setBranchDepths(const BRANCH_DEPTH_MAP *depthMap) {
+  dp_branchDepths = depthMap;
+  // Fragments prepare their neighbor lists in their constructors. Refresh
+  // those lists after installing the depth map so that the first expansion
+  // from a ring, supplied-coordinate fragment, or single-atom seed uses the
+  // same branch ordering as atoms discovered later during expansion.
+  setupNewNeighs();
 }
 
 int EmbeddedFrag::findNeighbor(
@@ -911,6 +1016,36 @@ void EmbeddedFrag::addNonRingAtom(unsigned int aid, unsigned int toAid) {
   PRECONDITION(d_eatoms.find(aid) == d_eatoms.end(), "");
   // and that toAid is already in the embedded system
   PRECONDITION(d_eatoms.find(toAid) != d_eatoms.end(), "");
+
+  // Detect a balanced branch point before adding aid; afterwards aid is no
+  // longer present in the unembedded-neighbor list.
+  if (dp_branchDepths &&
+      getDepictDegree(dp_mol->getAtomWithIdx(toAid)) < 4 &&
+      d_eatoms[toAid].neighs.size() == 2 &&
+      !d_eatoms[toAid].d_isBalancedBranchPoint) {
+
+    unsigned int nbr1_id = d_eatoms[toAid].neighs[0];
+    unsigned int nbr2_id = d_eatoms[toAid].neighs[1];
+
+    auto key1 = std::make_pair(toAid, nbr1_id);
+    auto key2 = std::make_pair(toAid, nbr2_id);
+    auto it1 = dp_branchDepths->find(key1);
+    auto it2 = dp_branchDepths->find(key2);
+
+    if (it1 != dp_branchDepths->end() && it2 != dp_branchDepths->end()) {
+      unsigned int depth1 = it1->second;
+      unsigned int depth2 = it2->second;
+      const auto distanceFromSeed = d_eatoms[toAid].d_distanceFromSeed;
+
+      // Both are chain continuations only if they extend beyond the distance
+      // already traveled to this atom.
+      if (depth1 > distanceFromSeed && depth2 > distanceFromSeed &&
+          depth1 > 1 && depth2 > 1) {
+        d_eatoms[toAid].d_isBalancedBranchPoint = true;
+      }
+    }
+  }
+
   if (d_eatoms[toAid].angle > 0.0) {
     addAtomToAtomWithAng(aid, toAid);
   } else {
@@ -939,8 +1074,9 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
   auto currAngle = remAngle / (1 + nnbr);
   d_eatoms[toAid].angle += currAngle;
 
+  const auto prevNbr2 = refAtom.nbr2;
   const auto &nb1 = d_eatoms.at(refAtom.nbr1).loc;
-  const auto &nb2 = d_eatoms.at(refAtom.nbr2).loc;
+  const auto &nb2 = d_eatoms.at(prevNbr2).loc;
   const auto canChooseDirection = refAtom.rotDir == 0;
   if (canChooseDirection) {
     d_eatoms[toAid].rotDir = rotationDir(refLoc, nb1, nb2, remAngle);
@@ -974,6 +1110,7 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
   eatm.loc = currLoc;
   eatm.nbr1 = toAid;
   eatm.angle = -1.0;
+  eatm.d_distanceFromSeed = d_eatoms[toAid].d_distanceFromSeed + 1;
 
   // now compute the normal at this atom - which gives the direction in which we
   // want to add the next atom. We will go in the direction that seem to be
@@ -983,18 +1120,50 @@ void EmbeddedFrag::addAtomToAtomWithAng(unsigned int aid, unsigned int toAid) {
   auto tp1 = currLoc + norm;
   auto tp2 = currLoc - norm;
 
-  auto nccw = findNumNeigh(
-      tp1, NEIGH_RADIUS);  // number of neighbors if we go counter-clockwise
-  auto ncw = findNumNeigh(
-      tp2, NEIGH_RADIUS);  // number of neighbors if we go clockwise
-
   norm.normalize();
-  if (nccw < ncw) {
-    eatm.normal = norm;
-    eatm.ccw = false;
+
+  // For balanced bifurcations, keep the zig-zag phase consistent across the
+  // two chain continuations.
+  if (d_eatoms[toAid].d_isBalancedBranchPoint) {
+    const auto aidAtom = dp_mol->getAtomWithIdx(aid);
+    auto nextAngle =
+        computeSubAngle(getDepictDegree(aidAtom), aidAtom->getHybridization()) -
+        M_PI / 2;
+
+    RDGeom::Point2D targetDir = refLoc - nb2;
+    targetDir.normalize();
+
+    RDGeom::Point2D samePhaseDir = norm;
+    RDGeom::Transform2D nextTrans;
+    nextTrans.SetTransform(origin, -nextAngle);
+    nextTrans.TransformPoint(samePhaseDir);
+
+    RDGeom::Point2D flippedPhaseDir = -norm;
+    nextTrans.SetTransform(origin, nextAngle);
+    nextTrans.TransformPoint(flippedPhaseDir);
+
+    if (samePhaseDir.dotProduct(targetDir) >=
+        flippedPhaseDir.dotProduct(targetDir)) {
+      eatm.normal = norm;
+      eatm.ccw = false;
+    } else {
+      eatm.normal = -norm;
+      eatm.ccw = true;
+    }
   } else {
-    eatm.normal = (-norm);
-    eatm.ccw = true;
+    // Existing logic: choose the side based on density
+    auto nccw = findNumNeigh(
+        tp1, NEIGH_RADIUS);  // number of neighbors if we go counter-clockwise
+    auto ncw = findNumNeigh(
+        tp2, NEIGH_RADIUS);  // number of neighbors if we go clockwise
+
+    if (nccw < ncw) {
+      eatm.normal = norm;
+      eatm.ccw = false;
+    } else {
+      eatm.normal = (-norm);
+      eatm.ccw = true;
+    }
   }
 
   d_eatoms[aid] = eatm;
@@ -1086,8 +1255,14 @@ void EmbeddedFrag::addAtomToAtomWithNoAng(unsigned int aid,
   eatm.nbr1 = toAid;
 
   eatm.angle = -1.0;
+  eatm.d_distanceFromSeed = d_eatoms[toAid].d_distanceFromSeed + 1;
 
   eatm.ccw = (!refAtomCCW) ^ flipNorm;
+  if (d_eatoms[toAid].d_isBalancedBranchPoint &&
+      d_eatoms[toAid].neighs.size() == 2) {
+    eatm.normal *= -1.0;
+    eatm.ccw = !eatm.ccw;
+  }
   d_eatoms[aid] = eatm;
 }
 
@@ -1760,6 +1935,12 @@ void EmbeddedFrag::randomSampleFlipsAndPermutations(
 std::vector<PAIR_I_I> EmbeddedFrag::findCollisions(const double *dmat,
                                                    bool includeBonds,
                                                    bool includeBondedAtoms) {
+  return findCollisions(dmat, includeBonds, includeBondedAtoms, 0);
+}
+
+std::vector<PAIR_I_I> EmbeddedFrag::findCollisions(
+    const double *dmat, bool includeBonds, bool includeBondedAtoms,
+    unsigned int collisionCountLimit) {
   // find a pair of atoms that are too close to each other
   std::vector<PAIR_I_I> res;
   for (auto &d_eatom : d_eatoms) {
@@ -1795,8 +1976,10 @@ std::vector<PAIR_I_I> EmbeddedFrag::findCollisions(const double *dmat,
       if (d2 < colThres2 &&
           (includeBondedAtoms ||
            !dp_mol->getBondBetweenAtoms(efi->first, efj->first))) {
-        PAIR_I_I cAids(efi->first, efj->first);
-        res.push_back(cAids);
+        res.emplace_back(efi->first, efj->first);
+        if (collisionCountLimit && res.size() > collisionCountLimit) {
+          return res;
+        }
       }
     }
   }
@@ -1827,9 +2010,12 @@ std::vector<PAIR_I_I> EmbeddedFrag::findCollisions(const double *dmat,
               // downstream getRotatableBonds() call deliberately skips the
               // two outer bonds on this path, so they will not themselves be
               // flipped; their adjacent bonds remain available as candidates.
-              auto cAids =
+              auto collidingAtoms =
                   _findFarthestPair(beg1, end1, beg2, end2, *dp_mol, dmat);
-              res.push_back(cAids);
+              res.push_back(collidingAtoms);
+              if (collisionCountLimit && res.size() > collisionCountLimit) {
+                return res;
+              }
             }
           }
         }
@@ -2113,10 +2299,12 @@ void EmbeddedFrag::openAngles(const double *dmat, unsigned int aid1,
 }
 
 bool EmbeddedFrag::tryResolvingCollisionWithBondFlip(
-    const std::pair<unsigned int, unsigned int> &cAids, unsigned int ncols,
-    double prevDensity, std::map<int, unsigned int> &doneBonds,
-    const double *dmat) {
-  auto rotBonds = getRotatableBonds(*dp_mol, cAids.first, cAids.second);
+    const std::pair<unsigned int, unsigned int> &collidingAtoms,
+    unsigned int collisionCount, double previousDensity,
+    std::map<int, unsigned int> &doneBonds,
+    std::vector<PAIR_I_I> &acceptedCollisions, const double *dmat) {
+  auto rotBonds = getRotatableBonds(*dp_mol, collidingAtoms.first,
+                                    collidingAtoms.second);
 
   for (auto ri : rotBonds) {
     auto doneBondsRiIt = doneBonds.find(ri);
@@ -2129,24 +2317,31 @@ bool EmbeddedFrag::tryResolvingCollisionWithBondFlip(
       }
 
       flipAboutBond(ri);
-      auto colls = this->findCollisions(dmat);
+      auto collisions =
+          this->findCollisions(dmat, true, true, collisionCount);
       auto newDensity = this->totalDensity();
-      if (colls.size() < ncols) {
+      if (collisions.size() < collisionCount) {
         doneBonds[ri] = NUM_BONDS_FLIPS;  // lock this rotatable bond
+        acceptedCollisions = std::move(collisions);
         return true;
-      } else if (colls.size() == ncols && newDensity < prevDensity) {
+      } else if (collisions.size() == collisionCount &&
+                 newDensity < previousDensity) {
+        acceptedCollisions = std::move(collisions);
         return true;
       } else {
-        // we made the wrong move earlier - reject the flip move it back
+        // Reject the first orientation, restore it, and try flipping the
+        // opposite end of the bond.
         flipAboutBond(ri);
-        // and try the other end:
         flipAboutBond(ri, false);
-        colls = this->findCollisions(dmat);
+        collisions = this->findCollisions(dmat, true, true, collisionCount);
         newDensity = this->totalDensity();
-        if (colls.size() < ncols) {
+        if (collisions.size() < collisionCount) {
           doneBonds[ri] = NUM_BONDS_FLIPS;  // lock this rotatable bond
+          acceptedCollisions = std::move(collisions);
           return true;
-        } else if (colls.size() == ncols && newDensity < prevDensity) {
+        } else if (collisions.size() == collisionCount &&
+                   newDensity < previousDensity) {
+          acceptedCollisions = std::move(collisions);
           return true;
         } else {
           flipAboutBond(ri, false);
@@ -2158,13 +2353,15 @@ bool EmbeddedFrag::tryResolvingCollisionWithBondFlip(
 }
 
 bool EmbeddedFrag::tryResolvingCollisionWithSpiroFlip(
-    const std::pair<unsigned int, unsigned int> &cAids, unsigned int ncols,
-    double prevDensity, std::map<int, unsigned int> &doneSpiros,
-    const boost::dynamic_bitset<> &spiroCenters, const double *dmat) {
+    const std::pair<unsigned int, unsigned int> &collidingAtoms,
+    unsigned int collisionCount, double previousDensity,
+    std::map<int, unsigned int> &doneSpiros,
+    const boost::dynamic_bitset<> &spiroCenters,
+    std::vector<PAIR_I_I> &acceptedCollisions, const double *dmat) {
   // Find spiro centers on the path using our cached bitset (avoid expensive
   // re-checks)
-  RDKit::INT_LIST path =
-      RDKit::MolOps::getShortestPath(*dp_mol, cAids.first, cAids.second);
+  RDKit::INT_LIST path = RDKit::MolOps::getShortestPath(
+      *dp_mol, collidingAtoms.first, collidingAtoms.second);
   std::vector<unsigned int> spiros;
   for (auto aid : path) {
     if (spiroCenters.test(aid)) {
@@ -2182,20 +2379,24 @@ bool EmbeddedFrag::tryResolvingCollisionWithSpiroFlip(
     }
     // Flip the first ring
     flipAboutSpiroCenter(spiroAid);
-    auto colls = this->findCollisions(dmat);
+    auto collisions =
+        this->findCollisions(dmat, true, true, collisionCount);
     auto newDensity = this->totalDensity();
 
-    if (colls.size() < ncols) {
+    if (collisions.size() < collisionCount) {
       // Success! Lock this spiro
       doneSpiros[spiroAid] = NUM_BONDS_FLIPS;
+      acceptedCollisions = std::move(collisions);
       return true;
-    } else if (colls.size() == ncols && newDensity < prevDensity) {
+    } else if (collisions.size() == collisionCount &&
+               newDensity < previousDensity) {
       // Same collisions but better density - keep it
       if (doneSpiroIt == doneSpiros.end()) {
         doneSpiros[spiroAid] = 1;
       } else {
         doneSpiroIt->second++;
       }
+      acceptedCollisions = std::move(collisions);
       return true;
     } else {
       // Didn't help - undo the flip
@@ -2214,38 +2415,51 @@ void EmbeddedFrag::removeCollisionsBondAndSpiroFlip() {
     }
   }
 
-  // try to remove collisions in a structure by flipping rotatable bonds and
-  // spiro centers along the shortest path between the colliding atoms. we will
-  // limit the number of times we are going to do this since we may fall into
-  // spiral where removing a collision may create a new one
+  // Try local flips along the shortest path between the first colliding pair.
+  // The loop accepts a move only if it reduces the collision count or preserves
+  // that count while lowering density. Strict bounds avoid cycling between
+  // equally crowded layouts.
   auto dmat = RDKit::MolOps::getDistanceMat(*dp_mol);
-  auto colls = this->findCollisions(dmat);
+  auto collisions = this->findCollisions(dmat);
   std::map<int, unsigned int> doneBonds;
   std::map<int, unsigned int> doneSpiros;
-  unsigned int iter = 0;
+  unsigned int pass = 0;
+  unsigned int densityOnlyPasses = 0;
 
-  while (iter < MAX_COLL_ITERS && colls.size()) {
-    auto ncols = colls.size();
-    if (ncols > 0) {
-      // we have a collision
-      auto cAids = colls[0];
-      auto prevDensity = this->totalDensity();
-      bool resolved = false;
+  while (pass < MAX_TARGETED_COLLISION_PASSES && !collisions.empty()) {
+    const auto collisionCount = collisions.size();
+    const auto collidingAtoms = collisions.front();
+    const auto previousDensity = this->totalDensity();
+    std::vector<PAIR_I_I> acceptedCollisions;
 
-      // Try bond flipping first
-      resolved = tryResolvingCollisionWithBondFlip(cAids, ncols, prevDensity,
-                                                   doneBonds, dmat);
+    auto accepted = tryResolvingCollisionWithBondFlip(
+        collidingAtoms, collisionCount, previousDensity, doneBonds,
+        acceptedCollisions, dmat);
 
-      // Try spiro flipping if bond flipping didn't resolve the collision
-      if (!resolved) {
-        resolved = tryResolvingCollisionWithSpiroFlip(
-            cAids, ncols, prevDensity, doneSpiros, spiroCenters, dmat);
-      }
-
-      // Re-check collisions after flipping
-      colls = this->findCollisions(dmat);
+    if (!accepted) {
+      accepted = tryResolvingCollisionWithSpiroFlip(
+          collidingAtoms, collisionCount, previousDensity, doneSpiros,
+          spiroCenters, acceptedCollisions, dmat);
     }
-    ++iter;
+
+    if (!accepted) {
+      // Every eligible move was rejected and restored. The coordinates and
+      // collision set are unchanged, so another pass would repeat the work.
+      break;
+    }
+
+    if (acceptedCollisions.size() < collisionCount) {
+      densityOnlyPasses = 0;
+    } else if (++densityOnlyPasses >= NUM_BONDS_FLIPS) {
+      // Density-only moves may unlock a later collision reduction, but a short
+      // plateau is enough evidence that this structure will not benefit. Reuse
+      // the standard per-bond flip budget as the plateau limit.
+      collisions = std::move(acceptedCollisions);
+      break;
+    }
+
+    collisions = std::move(acceptedCollisions);
+    ++pass;
   }
 }
 
