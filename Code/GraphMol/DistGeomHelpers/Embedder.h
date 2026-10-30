@@ -19,13 +19,13 @@
 #include <utility>
 #include <vector>
 #include <GraphMol/ROMol.h>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include "ZMatrixBuilder.h"
 
 namespace DistGeom {
 class BoundsMatrix;
 class ChiralSet;
-using VECT_CHIRALSET = std::vector<boost::shared_ptr<ChiralSet>>;
+using VECT_CHIRALSET = std::vector<std::shared_ptr<ChiralSet>>;
 }  // namespace DistGeom
 
 namespace RDGeom {
@@ -192,6 +192,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool symmetrizeConjugatedTerminalGroupsForPruning{true};
   EmbedFF embedForceField{EmbedFF::UFF};
   std::optional<unsigned int> optimizeConfWithId{std::nullopt};
+  std::vector<std::shared_ptr<DistGeom::ChiralSet>> additionalChiralSets{};
 };
 
 //! update parameters from a JSON string
@@ -204,14 +205,16 @@ RDKIT_DISTGEOMHELPERS_EXPORT std::string embedParametersToJSON(
 
 //! Embed multiple conformations for a molecule
 /// Be aware that this function can alter the EmbedParameters object, caution
-/// is advised when reusing EmbedParameters objects for different embedding runs.
+/// is advised when reusing EmbedParameters objects for different embedding
+/// runs.
 RDKIT_DISTGEOMHELPERS_EXPORT void EmbedMultipleConfs(ROMol &mol, INT_VECT &res,
                                                      unsigned int numConfs,
                                                      EmbedParameters &params);
 
 //! Embed multiple conformations for a molecule
 /// Be aware that this function can alter the EmbedParameters object, caution
-/// is advised when reusing EmbedParameters objects for different embedding runs.
+/// is advised when reusing EmbedParameters objects for different embedding
+/// runs.
 inline INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
                                    EmbedParameters &params) {
   INT_VECT res;
@@ -222,7 +225,8 @@ inline INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
 //! Compute an embedding (in 3D) for the specified molecule using Distance
 /// Geometry
 /// Be aware that this function can alter the EmbedParameters object, caution
-/// is advised when reusing EmbedParameters objects for different embedding runs.
+/// is advised when reusing EmbedParameters objects for different embedding
+/// runs.
 inline int EmbedMolecule(ROMol &mol, EmbedParameters &params) {
   INT_VECT confIds;
   EmbedMultipleConfs(mol, confIds, 1, params);

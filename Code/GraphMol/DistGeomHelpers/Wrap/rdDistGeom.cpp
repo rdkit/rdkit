@@ -100,6 +100,14 @@ struct PyEmbedParameters
     this->boundsMat = boost::shared_ptr<const DistGeom::BoundsMatrix>(
         new DistGeom::BoundsMatrix(nrows, sdata));
   }
+  void setAdditionalChiralSets(const python::list &chiralSets) {
+    additionalChiralSets.clear();
+    unsigned int n = python::len(chiralSets);
+    for (unsigned int i = 0; i < n; ++i) {
+      additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+          python::extract<DistGeom::ChiralSet>(chiralSets[i])));
+    }
+  }
 
  private:
   std::unique_ptr<std::map<int, RDGeom::Point3D>> d_coordMap;
@@ -630,6 +638,23 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
       .value("MMFF", RDKit::DGeomHelpers::EmbedFF::MMFF)
       .export_values();
 
+  python::class_<DistGeom::ChiralSet>(
+      "ChiralSet",
+      R"DOC(Captures a set of atoms defining a chiral volume in a molecule. 
+  The chiral volume is calculated using points 1-4. 
+  Point 0 is considered to be the centroid; if the chiral set does not have a centroid, set it to the same value as d_idx4.)DOC",
+      python::init<int, int, int, int, int, double, double>())
+      .def_readwrite("idx0", &DistGeom::ChiralSet::d_idx0)
+      .def_readwrite("idx1", &DistGeom::ChiralSet::d_idx1)
+      .def_readwrite("idx2", &DistGeom::ChiralSet::d_idx2)
+      .def_readwrite("idx3", &DistGeom::ChiralSet::d_idx3)
+      .def_readwrite("idx4", &DistGeom::ChiralSet::d_idx4)
+      .def_readwrite("volumeLowerBound",
+                     &DistGeom::ChiralSet::d_volumeLowerBound)
+      .def_readwrite("volumeUpperBound",
+                     &DistGeom::ChiralSet::d_volumeUpperBound)
+      .def_readwrite("structureFlags", &DistGeom::ChiralSet::d_structureFlags);
+
   python::class_<PyEmbedParameters, boost::noncopyable>(
       "EmbedParameters", "Parameters controlling embedding")
       .def_readwrite("maxIterations", &PyEmbedParameters::maxIterations,
@@ -754,6 +779,9 @@ BOOST_PYTHON_MODULE(rdDistGeom) {
           "If provided, the Conformer with this ID in the molecule (if present) is optimized with the ETKDG force field in place.")
       .def_readwrite("embedForceField", &PyEmbedParameters::embedForceField,
                      "Force Field to use for ideal 1-2 and 1-3 distances.")
+      .def("SetAdditionalChiralSets",
+           &PyEmbedParameters::setAdditionalChiralSets, python::args("self"),
+           "sets the additional chiral sets to be used")
       .def("__setattr__", &safeSetattr);
 
   docString =
