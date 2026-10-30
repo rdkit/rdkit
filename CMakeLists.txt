@@ -28,6 +28,8 @@ set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/Code/cmake/Modules/")
 
 add_library(rdkit_base INTERFACE)
+# The headers need this standard too, so projects linking the exported targets get it.
+target_compile_features(rdkit_base INTERFACE cxx_std_${CMAKE_CXX_STANDARD})
 
 option(RDK_BUILD_SWIG_WRAPPERS "build the SWIG wrappers" OFF )
 option(RDK_BUILD_PYTHON_WRAPPERS "if this is OFF, no python wrappers will be built" ON )
@@ -445,8 +447,12 @@ if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   #-------
   # pull in python:
   find_package(Python COMPONENTS Interpreter Development.Module NumPy REQUIRED)
-  target_include_directories(rdkit_py_base INTERFACE ${Python_INCLUDE_DIRS})
-  target_include_directories(rdkit_py_base INTERFACE ${Python_NumPy_INCLUDE_DIRS})
+  # rdkit_py_base is exported, so it links imported targets, which
+  # rdkitpython-config.cmake recreates for the consumer.
+  # Python::Module links python3X.lib on Windows; elsewhere the interpreter
+  # that loads the modules supplies the Python symbols (macOS links with
+  # -undefined dynamic_lookup).
+  target_link_libraries(rdkit_py_base INTERFACE Python::Module Python::NumPy)
   target_compile_definitions(rdkit_py_base INTERFACE "-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION")
 
   # determine linkage of python
@@ -456,9 +462,6 @@ if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
       OUTPUT_VARIABLE Py_ENABLE_SHARED
       OUTPUT_STRIP_TRAILING_WHITESPACE
   )
-
-  target_link_libraries(rdkit_py_base INTERFACE Python::Module)
-
 
   find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS "python${Python_VERSION_MAJOR}${Python_VERSION_MINOR}" "numpy${Python_VERSION_MAJOR}${Python_VERSION_MINOR}" REQUIRED CONFIG)
 
@@ -701,13 +704,13 @@ if(NOT RDK_INSTALL_INTREE)
     if(RDK_INSTALL_PYTHON_TESTS)
       install(DIRECTORY Scripts DESTINATION
         ${RDKit_ShareDir}
-        COMPONENT data
+        COMPONENT python
         PATTERN ".svn" EXCLUDE
         )
     else(RDK_INSTALL_PYTHON_TESTS)
       install(DIRECTORY Scripts DESTINATION
         ${RDKit_ShareDir}
-        COMPONENT data
+        COMPONENT python
         PATTERN ".svn" EXCLUDE
         PATTERN "run_python_tests.py" EXCLUDE
         )
@@ -791,6 +794,14 @@ install(FILES
     ${RDKit_BINARY_DIR}/rdkit-config-version.cmake
     DESTINATION ${RDKit_LibDir}/cmake/rdkit
     COMPONENT dev)
+
+# MolDraw2D links Cairo::Cairo, which only this find module defines.
+if(RDK_BUILD_CAIRO_SUPPORT)
+  install(FILES
+      ${RDKit_SOURCE_DIR}/Code/cmake/Modules/FindCairo.cmake
+      DESTINATION ${RDKit_LibDir}/cmake/rdkit
+      COMPONENT dev)
+endif()
 
 # then manage the targets for the python bindings
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
