@@ -1266,7 +1266,7 @@ void SynthonSpaceShapeSearcher::processToTrySet(
     newToTry.push_back(toTry[as.first]);
   }
   toTry = std::move(newToTry);
-  details::sortAndUniquifyToTry(toTry);
+  details::uniquifyToTry(toTry);
   makeHitsFromToTry(toTry, endTime, results, numHitsFound, numPossHitsWritten);
 }
 
