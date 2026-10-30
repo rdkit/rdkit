@@ -175,6 +175,8 @@ class RDKIT_GRAPHMOL_EXPORT MacroMolTemplateLibrary {
   //! Returns a matching template, or nullptr if none has been added.
   const MacroMolTemplate *getBySymbol(
       MonomerClass monomerClass, const std::string &symbol) const;
+  //! Returns non-owning views of all templates in key order.
+  std::vector<const MacroMolTemplate *> getTemplates() const;
 
  private:
   using MacroMolTemplateKey = std::pair<MonomerClass, std::string>;
