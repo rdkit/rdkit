@@ -103,13 +103,13 @@ bool isParitySwapped(const RDKit::ROMol &mol, const RDKit::ROMol &pattern,
 }  // namespace
 
 // Lazily initialize the patterns
-const std::vector<ROMol> &getRingSystemFilterPatterns() {
+const std::vector<std::pair<RDKit::ROMol, std::vector<std::pair<unsigned int, int>>>> &getRingSystemFilterPatterns() {
   // Note: the "1" and "-1" values for the "parity" atom property are arbitrary:
   // We just care whether the parities for each pair of atoms are the same or
   // different. They don't represent any specific CW/CCW value, since depending
   // on construction of the mol being matched, they can be one or the other as
   // long as the same/opposite relationships are preserved.
-  static std::vector<ROMol> patterns = {
+  static std::vector<std::pair<ROMol, std::vector<std::pair<unsigned int, int>>>> patterns = {
 
       /**
        Norbornane
@@ -120,9 +120,10 @@ const std::vector<ROMol> &getRingSystemFilterPatterns() {
             4 - 3
       */
 
-      std::move(
-          *R"SMARTS([#6-0,#7-0,#7+1,#8-0,#16-0]1~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4]2[#6-0,#7-0,#7+1,#8-0,#16-0]~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4]1[#6-0,#7-0,#7+1,#8-0,#16-0]2)SMARTS"
-           R"SMARTS( |atomProp:2.parity.-1:5.parity.1|)SMARTS"_smarts),
+      {std::move(
+           *R"SMARTS([#6-0,#7-0,#7+1,#8-0,#16-0]1~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4]2[#6-0,#7-0,#7+1,#8-0,#16-0]~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4]1[#6-0,#7-0,#7+1,#8-0,#16-0]2)SMARTS"
+            R"SMARTS( |atomProp:2.parity.-1:5.parity.1|)SMARTS"_smarts),
+       {{2, -1}, {5, 1}}},
 
       /**
        Adamantane
@@ -137,9 +138,10 @@ const std::vector<ROMol> &getRingSystemFilterPatterns() {
            4  -   3
       */
 
-      std::move(
-          *R"SMARTS([#6-0,#7-0,#7+1,#8-0,#16-0]1[C-0X4]2[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4]3[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4]1[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4]([#6-0,#7-0,#7+1,#8-0,#16-0]2)[#6-0,#7-0,#7+1,#8-0,#16-0]3)SMARTS"
-           R"SMARTS( |atomProp:1.parity.1:3.parity.1:5.parity.-1:7.parity.1|)SMARTS"_smarts),
+      {std::move(
+           *R"SMARTS([#6-0,#7-0,#7+1,#8-0,#16-0]1[C-0X4]2[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4]3[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4]1[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4]([#6-0,#7-0,#7+1,#8-0,#16-0]2)[#6-0,#7-0,#7+1,#8-0,#16-0]3)SMARTS"
+            R"SMARTS( |atomProp:1.parity.1:3.parity.1:5.parity.-1:7.parity.1|)SMARTS"_smarts),
+       {{1, 1}, {3, 1}, {5, -1}, {7, 1}}},
 
       /**
         C5_O
@@ -150,9 +152,10 @@ const std::vector<ROMol> &getRingSystemFilterPatterns() {
             5 - 4
        */
 
-      std::move(
-          *R"SMARTS([#6-0,#7-0,#7+1,#8-0,#16-0]~1~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4]2[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4]2[#6-0,#7-0,#7+1,#8-0,#16-0]~1)SMARTS"
-           R"SMARTS( |atomProp:2.parity.-1:4.parity.-1|)SMARTS"_smarts),
+      {std::move(
+           *R"SMARTS([#6-0,#7-0,#7+1,#8-0,#16-0]~1~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4]2[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4]2[#6-0,#7-0,#7+1,#8-0,#16-0]~1)SMARTS"
+            R"SMARTS( |atomProp:2.parity.-1:4.parity.-1|)SMARTS"_smarts),
+       {{2, -1}, {4, -1}}},
 
       /**
        321-bicyclooctane
@@ -165,9 +168,10 @@ const std::vector<ROMol> &getRingSystemFilterPatterns() {
         4 -  -  - 3
       */
 
-      std::move(
-          *R"SMARTS([#6-0,#7-0,#7+1,#8-0,#16-0]~1~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4]2[#6-0,#7-0,#7+1,#8-0,#16-0]~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4]([#6-0,#7-0,#7+1,#8-0,#16-0]~1)[#6-0,#7-0,#7+1,#8-0,#16-0]2)SMARTS"
-           R"SMARTS( |atomProp:2.parity.-1:5.parity.-1|)SMARTS"_smarts),
+      {std::move(
+           *R"SMARTS([#6-0,#7-0,#7+1,#8-0,#16-0]~1~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4]2[#6-0,#7-0,#7+1,#8-0,#16-0]~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4]([#6-0,#7-0,#7+1,#8-0,#16-0]~1)[#6-0,#7-0,#7+1,#8-0,#16-0]2)SMARTS"
+            R"SMARTS( |atomProp:2.parity.-1:5.parity.-1|)SMARTS"_smarts),
+       {{2, -1}, {5, -1}}},
 
       /**
        14-bicyclohept-1,4-dione
@@ -178,9 +182,10 @@ const std::vector<ROMol> &getRingSystemFilterPatterns() {
            5 - 3
       */
 
-      std::move(
-          *R"SMARTS([#6-0,#7-0,#7+1,#8-0,#16-0]-1~[#6-0,#7-0,#7+1,#8-0,#16-0]-[C-0X3]-[C-0X4]2[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4]2-[C-0X3]-1)SMARTS"
-           R"SMARTS( |atomProp:3.parity.1:5.parity.1|)SMARTS"_smarts),
+      {std::move(
+           *R"SMARTS([#6-0,#7-0,#7+1,#8-0,#16-0]-1~[#6-0,#7-0,#7+1,#8-0,#16-0]-[C-0X3]-[C-0X4]2[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4]2-[C-0X3]-1)SMARTS"
+            R"SMARTS( |atomProp:3.parity.1:5.parity.1|)SMARTS"_smarts),
+       {{3, 1}, {5, 1}}},
 
       /**
        2,2,2-bicyclooctane
@@ -191,9 +196,10 @@ const std::vector<ROMol> &getRingSystemFilterPatterns() {
            4 - 3
       */
 
-      std::move(
-          *R"SMARTS([#6-0,#7-0,#7+1,#8-0,#16-0]1~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]2[#6-0,#7-0,#7+1,#8-0,#16-0]~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]1[#6-0,#7-0,#7+1,#8-0,#16-0]~[#6-0,#7-0,#7+1,#8-0,#16-0]2)SMARTS"
-           R"SMARTS( |atomProp:2.parity.1:5.parity.-1|)SMARTS"_smarts),
+      {std::move(
+           *R"SMARTS([#6-0,#7-0,#7+1,#8-0,#16-0]1~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]2[#6-0,#7-0,#7+1,#8-0,#16-0]~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]1[#6-0,#7-0,#7+1,#8-0,#16-0]~[#6-0,#7-0,#7+1,#8-0,#16-0]2)SMARTS"
+            R"SMARTS( |atomProp:2.parity.1:5.parity.-1|)SMARTS"_smarts),
+       {{2, 1}, {5, -1}}},
 
       /**
        2,2,3-bicyclononane
@@ -206,9 +212,10 @@ const std::vector<ROMol> &getRingSystemFilterPatterns() {
            4 - 3
       */
 
-      std::move(
-          *R"SMARTS([#6-0,#7-0,#7+1,#8-0,#16-0]~1~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]2[#6-0,#7-0,#7+1,#8-0,#16-0]~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]([#6-0,#7-0,#7+1,#8-0,#16-0]~1)[#6-0,#7-0,#7+1,#8-0,#16-0]~[#6-0,#7-0,#7+1,#8-0,#16-0]2)SMARTS"
-           R"SMARTS( |atomProp:2.parity.1:5.parity.1|)SMARTS"_smarts),
+      {std::move(
+           *R"SMARTS([#6-0,#7-0,#7+1,#8-0,#16-0]~1~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]2[#6-0,#7-0,#7+1,#8-0,#16-0]~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]([#6-0,#7-0,#7+1,#8-0,#16-0]~1)[#6-0,#7-0,#7+1,#8-0,#16-0]~[#6-0,#7-0,#7+1,#8-0,#16-0]2)SMARTS"
+            R"SMARTS( |atomProp:2.parity.1:5.parity.1|)SMARTS"_smarts),
+       {{2, 1}, {5, 1}}},
 
       /**
        1,1,3-bicycloheptane
@@ -219,9 +226,10 @@ const std::vector<ROMol> &getRingSystemFilterPatterns() {
            4 - 3
       */
 
-      std::move(
-          *R"SMARTS([#6-0,#7-0,#7+1,#8-0,#16-0]~1~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]2[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]([#6-0,#7-0,#7+1,#8-0,#16-0]~1)[#6-0,#7-0,#7+1,#8-0,#16-0]2)SMARTS"
-           R"SMARTS( |atomProp:2.parity.-1:4.parity.-1|)SMARTS"_smarts),
+      {std::move(
+           *R"SMARTS([#6-0,#7-0,#7+1,#8-0,#16-0]~1~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]2[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]([#6-0,#7-0,#7+1,#8-0,#16-0]~1)[#6-0,#7-0,#7+1,#8-0,#16-0]2)SMARTS"
+            R"SMARTS( |atomProp:2.parity.-1:4.parity.-1|)SMARTS"_smarts),
+       {{2, -1}, {4, -1}}},
 
       /**
        misc_3
@@ -240,9 +248,10 @@ const std::vector<ROMol> &getRingSystemFilterPatterns() {
              7
       */
 
-      std::move(
-          *R"SMARTS([#6-0,#7-0,#7+1,#8-0,#16-0]1[C-0X4,N+1X4]2[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]3[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]4[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]2[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]4[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]13)SMARTS"
-           R"SMARTS( |atomProp:1.parity.1:3.parity.-1:5.parity.-1:7.parity.1:9.parity.-1:11.parity.-1|)SMARTS"_smarts),
+      {std::move(
+           *R"SMARTS([#6-0,#7-0,#7+1,#8-0,#16-0]1[C-0X4,N+1X4]2[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]3[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]4[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]2[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]4[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]13)SMARTS"
+            R"SMARTS( |atomProp:1.parity.1:3.parity.-1:5.parity.-1:7.parity.1:9.parity.-1:11.parity.-1|)SMARTS"_smarts),
+       {{1, 1}, {3, -1}, {5, -1}, {7, 1}, {9, -1}, {11, -1}}},
 
       /**
        misc_4
@@ -255,10 +264,10 @@ const std::vector<ROMol> &getRingSystemFilterPatterns() {
         0 -  -  - 1
       */
 
-      std::move(
-          *R"SMARTS([#6-0,#7-0,#7+1,#8-0,#16-0]1~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]2[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]3[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]1[C-0X4,N+1X4]2[#6-0,#7-0,#7+1,#8-0,#16-0]~[#6-0,#7-0,#7+1,#8-0,#16-0]3)SMARTS"
-           R"SMARTS( |atomProp:2.parity.1:4.parity.1:6.parity.-1:7.parity.-1|)SMARTS"_smarts),
-
+      {std::move(
+           *R"SMARTS([#6-0,#7-0,#7+1,#8-0,#16-0]1~[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]2[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]3[#6-0,#7-0,#7+1,#8-0,#16-0][C-0X4,N+1X4]1[C-0X4,N+1X4]2[#6-0,#7-0,#7+1,#8-0,#16-0]~[#6-0,#7-0,#7+1,#8-0,#16-0]3)SMARTS"
+            R"SMARTS( |atomProp:2.parity.1:4.parity.1:6.parity.-1:7.parity.-1|)SMARTS"_smarts),
+       {{2, 1}, {4, 1}, {6, -1}, {7, -1}}},
   };
   return patterns;
 }
@@ -277,7 +286,7 @@ void getRingPatternsParityRelations(
 
   std::vector<int> forwardMapping;
   std::vector<int> reverseMapping;
-  for (const auto &pattern : getRingSystemFilterPatterns()) {
+  for (const auto &[pattern, parityRelations] : getRingSystemFilterPatterns()) {
     // The SubstructMatch is limited to 1000 matches, so we might miss
     // some matches. If this happens, and we miss some parity paris,
     // we might see some stereoisomers that would have been filtered
@@ -305,21 +314,11 @@ void getRingPatternsParityRelations(
       // For patterns with more than 2 parities, these will
       // be visited multiple times, so cache them here.
       std::unordered_map<int, bool> swappedParitiesCache;
-
-      int iParity = 0;
-      int jParity = 0;
-      for (auto i = 0u; i + 1 < pattern.getNumAtoms(); ++i) {
-        auto iQAtom = pattern.getAtomWithIdx(i);
-        if (!iQAtom->getPropIfPresent("parity", iParity)) {
-          continue;
-        }
-
-        for (auto j = i + 1; j < pattern.getNumAtoms(); ++j) {
-          auto jQAtom = pattern.getAtomWithIdx(j);
-          if (!jQAtom->getPropIfPresent("parity", jParity)) {
-            continue;
+      for(auto [i, iParity] : parityRelations) {
+        for(auto [j, jParity] : parityRelations) {
+          if (i >= j){ 
+            continue; 
           }
-
           bool paritiesSame = iParity == jParity;
           if (isParitySwapped(mol, pattern, forwardMapping, reverseMapping,
                               swappedParitiesCache, i)) {

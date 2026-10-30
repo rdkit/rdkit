@@ -17,7 +17,7 @@ namespace RDKit {
 class ROMol;
 }
 
-const std::vector<RDKit::ROMol> &getRingSystemFilterPatterns();
+const std::vector<std::pair<RDKit::ROMol, std::vector<std::pair<unsigned int, int>>>> &getRingSystemFilterPatterns();
 
 void getRingPatternsParityRelations(
     const RDKit::ROMol &mol,

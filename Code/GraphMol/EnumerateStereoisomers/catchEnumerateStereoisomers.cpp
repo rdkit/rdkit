@@ -737,45 +737,45 @@ TEST_CASE("Ring system patterns") {
   static const auto &patterns = getRingSystemFilterPatterns();
 
   SECTION("Norbornane") {
-    checkResults(patterns[0], "C1CC2CCC1C2", "C1C[C@H]2CC[C@@H]1C2");
+    checkResults(patterns[0].first, "C1CC2CCC1C2", "C1C[C@H]2CC[C@@H]1C2");
   }
 
   SECTION("adamantane") {
-    checkResults(patterns[1], "C1C2CC3CC1CC(C2)C3", "C1C2CC3CC1CC(C2)C3");
+    checkResults(patterns[1].first, "C1C2CC3CC1CC(C2)C3", "C1C2CC3CC1CC(C2)C3");
   }
 
   SECTION("C5_O") {
-    checkResults(patterns[2], "C1CC2CC2C1", "C1C[C@@H]2C[C@@H]2C1");
+    checkResults(patterns[2].first, "C1CC2CC2C1", "C1C[C@@H]2C[C@@H]2C1");
   }
 
   SECTION("321-bicyclooctane") {
-    checkResults(patterns[3], "C1CC2CCC(C1)C2", "C1C[C@@H]2CC[C@H](C1)C2");
+    checkResults(patterns[3].first, "C1CC2CCC(C1)C2", "C1C[C@@H]2CC[C@H](C1)C2");
   }
 
   SECTION("14-bicyclohept-1,4-dione") {
-    checkResults(patterns[4], "[CH]1CC[CH]C2CC12",
+    checkResults(patterns[4].first, "[CH]1CC[CH]C2CC12",
                  "[CH]1CC[CH][C@H]2C[C@@H]12");
   }
 
   SECTION("2,2,2-bicyclooctane") {
-    checkResults(patterns[5], "C1CC2CCC1CC2", "C1CC2CCC1CC2");
+    checkResults(patterns[5].first, "C1CC2CCC1CC2", "C1CC2CCC1CC2");
   }
 
   SECTION("2,2,3-bicyclononane") {
-    checkResults(patterns[6], "C1CC2CCC(C1)CC2", "C1C[C@H]2CC[C@@H](C1)CC2");
+    checkResults(patterns[6].first, "C1CC2CCC(C1)CC2", "C1C[C@H]2CC[C@@H](C1)CC2");
   }
 
   SECTION("1,1,3-bicycloheptane") {
-    checkResults(patterns[7], "C1CC2CC(C1)C2", "C1C[C@H]2C[C@@H](C1)C2");
+    checkResults(patterns[7].first, "C1CC2CC(C1)C2", "C1C[C@H]2C[C@@H](C1)C2");
   }
 
   SECTION("misc_3") {
-    checkResults(patterns[8], "C1C2CC3CC4CC3CC2CC14",
+    checkResults(patterns[8].first, "C1C2CC3CC4CC3CC2CC14",
                  "C1[C@H]2C[C@H]3C[C@@H]4C[C@H]3C[C@H]2C[C@H]14");
   }
 
   SECTION("misc_4") {
-    checkResults(patterns[9], "C1CC2C3CCC2CC1C3",
+    checkResults(patterns[9].first, "C1CC2C3CCC2CC1C3",
                  "C1C[C@H]2[C@@H]3CC[C@H]2C[C@H]1C3");
   }
 
