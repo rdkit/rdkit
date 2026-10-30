@@ -13,6 +13,7 @@
 import numpy
 
 from rdkit import Chem
+from rdkit.Chem import rdMolDescriptors
 
 
 def GetPrincipleQuantumNumber(atNum):
@@ -40,30 +41,7 @@ def EStateIndices(mol, force=True):
   """
   if not force and hasattr(mol, '_eStateIndices'):
     return mol._eStateIndices
-
-  tbl = Chem.GetPeriodicTable()
-  nAtoms = mol.GetNumAtoms()
-  Is = numpy.zeros(nAtoms, dtype=numpy.float64)
-  for i in range(nAtoms):
-    at = mol.GetAtomWithIdx(i)
-    d = at.GetDegree()
-    if d > 0:
-      atNum = at.GetAtomicNum()
-      dv = tbl.GetNOuterElecs(atNum) - at.GetTotalNumHs()
-      N = GetPrincipleQuantumNumber(atNum)
-      Is[i] = (4. / (N * N) * dv + 1) / d
-  dists = Chem.GetDistanceMatrix(mol, useBO=False, useAtomWts=False) + 1
-
-  accum = numpy.zeros(nAtoms, dtype=numpy.float64)
-  for i in range(nAtoms):
-    for j in range(i + 1, nAtoms):
-      p = dists[i, j]
-      if p < 1e6:
-        tmp = (Is[i] - Is[j]) / (p * p)
-        accum[i] += tmp
-        accum[j] -= tmp
-
-  res = accum + Is
+  res = numpy.array(rdMolDescriptors.CalcEStateIndices(mol), dtype=numpy.float64)
   mol._eStateIndices = res
   return res
 
@@ -72,28 +50,28 @@ EStateIndices.version = '1.0.0'
 
 
 def MaxEStateIndex(mol, force=1):
-  return max(EStateIndices(mol, force))
+  return rdMolDescriptors.CalcMaxEStateIndex(mol)
 
 
 MaxEStateIndex.version = "1.0.0"
 
 
 def MinEStateIndex(mol, force=1):
-  return min(EStateIndices(mol, force))
+  return rdMolDescriptors.CalcMinEStateIndex(mol)
 
 
 MinEStateIndex.version = "1.0.0"
 
 
 def MaxAbsEStateIndex(mol, force=1):
-  return max(abs(x) for x in EStateIndices(mol, force))
+  return rdMolDescriptors.CalcMaxAbsEStateIndex(mol)
 
 
 MaxAbsEStateIndex.version = "1.0.0"
 
 
 def MinAbsEStateIndex(mol, force=1):
-  return min(abs(x) for x in EStateIndices(mol, force))
+  return rdMolDescriptors.CalcMinAbsEStateIndex(mol)
 
 
 MinAbsEStateIndex.version = "1.0.0"

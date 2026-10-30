@@ -64,7 +64,7 @@ double ChiSquare(T *dMat, long int dim1, long int dim2) {
 }
 
 template <class T>
-double InfoEntropy(T *tPtr, long int dim) {
+double InfoEntropy(const T *tPtr, long int dim) {
   int i;
   T nInstances = 0;
   double accum = 0.0, d;
@@ -82,6 +82,11 @@ double InfoEntropy(T *tPtr, long int dim) {
     }
   }
   return accum / log(2.0);
+}
+
+template <class T>
+double InfoEntropy(const std::vector<T> &vec) {
+  return InfoEntropy(vec.data(), vec.size());
 }
 
 template <class T>
