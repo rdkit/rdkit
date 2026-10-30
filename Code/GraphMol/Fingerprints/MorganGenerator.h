@@ -60,7 +60,9 @@ class RDKIT_FINGERPRINTS_EXPORT MorganFeatureAtomInvGenerator
    \brief Construct a new MorganFeatureAtomInvGenerator object
 
    \param patterns : if provided should contain the queries used to assign
-   atom-types. if not provided, feature definitions adapted from reference:
+   atom-types, at most MorganFingerprints::maxFeatureInvariantPatterns of them,
+   none of them null. if not provided, feature definitions adapted from
+   reference:
    Gobbi and Poppinger, Biotech. Bioeng. _61_ 47-54 (1998) will be used for
    Donor, Acceptor, Aromatic, Halogen, Basic, Acidic.
    */
