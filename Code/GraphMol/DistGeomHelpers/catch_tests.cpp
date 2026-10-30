@@ -3295,3 +3295,30 @@ M  END)CTAB"_ctab;
   CHECK_THAT(mmat->getLowerBound(22, 8),
              Catch::Matchers::WithinAbs(mmat->getLowerBound(21, 36), 5.e-1));
 }
+
+TEST_CASE("all-in-one ETKDG checks the total improper energy") {
+  // DMF with the amide N and its neighbours pinned 8 degrees out of plane:
+  // no single improper term exceeds its limit, but the total does
+  auto mol = "CN(C)C=O"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  const double phi = 8.0 * std::numbers::pi / 180.0;
+  std::map<int, RDGeom::Point3D> cmap{{1, RDGeom::Point3D(0, 0, 0)}};
+  const std::vector<unsigned int> nbrs{0, 2, 3};
+  for (unsigned int i = 0; i < nbrs.size(); ++i) {
+    const double t = 2.0 * std::numbers::pi * i / 3.0;
+    cmap[nbrs[i]] = RDGeom::Point3D(1.45 * std::cos(phi) * std::cos(t),
+                                    1.45 * std::cos(phi) * std::sin(t),
+                                    1.45 * std::sin(phi));
+  }
+  auto ps = DGeomHelpers::ETKDGv3;
+  ps.useLegacyImplementation = false;
+  ps.randomSeed = 42;
+  ps.useRandomCoords = true;
+  ps.coordMap = &cmap;
+  ps.maxIterations = 200;
+  ps.trackFailures = true;
+  // like the legacy implementation, every attempt must be rejected
+  CHECK(DGeomHelpers::EmbedMolecule(*mol, ps) == -1);
+  CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::KTERM_VIOLATION] > 0);
+}
