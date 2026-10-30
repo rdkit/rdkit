@@ -2951,6 +2951,17 @@ TEST_CASE("Stop caching ring finding results") {
   }
 }
 
+TEST_CASE("Symmetrized SSSR results retain their ring type", "[rings][bug]") {
+  auto algorithm = GENERATE(MolOps::SymmetrizeSSSRAlgorithm::LEGACY,
+                            MolOps::SymmetrizeSSSRAlgorithm::RDL);
+  CAPTURE(algorithm);
+  auto mol = "C1C2CC1CCC2"_smiles;
+  REQUIRE(mol);
+  VECT_INT_VECT rings;
+  CHECK(MolOps::symmetrizeSSSR(*mol, rings, algorithm) == 3);
+  CHECK(mol->getRingInfo()->isSymmSssr());
+}
+
 TEST_CASE("molecules with more than 255 rings produce a bad pickle") {
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/test_data/";
@@ -5217,5 +5228,20 @@ TEST_CASE(
 
     bool expectKekulizeError = true;
     runCheck("c1ccc[cH3]c1", expectKekulizeError);
+  }
+}
+
+TEST_CASE("getTotalNumHs() and query atoms") {
+  SECTION("basics") {
+    auto m = "C[CH][CH][CH,NH2]"_smarts;
+    REQUIRE(m);
+    m->getAtomWithIdx(2)->setNoImplicit(false);
+    CHECK(m->getAtomWithIdx(0)->getTotalNumHs(false) == 0);
+    CHECK(m->getAtomWithIdx(1)->getTotalNumHs(false) == 1);
+    CHECK_THROWS_AS(
+        m->getAtomWithIdx(2)->getValence(Atom::ValenceType::IMPLICIT),
+        std::runtime_error);
+    CHECK(m->getAtomWithIdx(2)->getTotalNumHs(false) == 1);
+    CHECK(m->getAtomWithIdx(3)->getTotalNumHs(false) == 0);
   }
 }

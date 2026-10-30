@@ -65,116 +65,25 @@ void QueryAtom::expandQuery(QUERYATOM_QUERY *what,
 }
 
 namespace {
-bool localMatch(ATOM_EQUALS_QUERY const *q1, ATOM_EQUALS_QUERY const *q2) {
-  if (q1->getNegation() == q2->getNegation()) {
-    return q1->getVal() == q2->getVal();
-  } else {
-    return q1->getVal() != q2->getVal();
+struct AtomQueryTraits {
+  using BaseQuery = QueryAtom::QUERYATOM_QUERY;
+  using RangeQuery = ATOM_RANGE_QUERY;
+  using EqQuery = ATOM_EQUALS_QUERY;
+  static constexpr std::string_view NullDesc = "AtomNull";
+  static constexpr std::string_view OrDesc = "AtomOr";
+  static constexpr std::string_view AndDesc = "AtomAnd";
+  static bool isEqualityQuery(std::string_view s) {
+    static const std::string queries[] = {
+        "AtomType", "AtomRingBondCount", "AtomRingSize", "AtomMinRingSize",
+        "AtomImplicitValence", "AtomExplicitValence", "AtomTotalValence",
+        "AtomAtomicNum", "AtomExplicitDegree", "AtomTotalDegree", "AtomHCount",
+        "AtomIsAromatic", "AtomIsAliphatic", "AtomUnsaturated", "AtomMass",
+        "AtomFormalCharge", "AtomNegativeFormalCharge", "AtomHybridization",
+        "AtomInRing", "AtomInNRings"};
+    return std::find(std::begin(queries), std::end(queries), s) !=
+           std::end(queries);
   }
-}
-bool queriesMatch(QueryAtom::QUERYATOM_QUERY const *q1,
-                  QueryAtom::QUERYATOM_QUERY const *q2) {
-  PRECONDITION(q1, "no q1");
-  PRECONDITION(q2, "no q2");
-
-  static const unsigned int nQueries = 20;
-  static std::string equalityQueries[nQueries] = {"AtomType",
-                                                  "AtomRingBondCount",
-                                                  "AtomRingSize",
-                                                  "AtomMinRingSize",
-                                                  "AtomImplicitValence",
-                                                  "AtomExplicitValence",
-                                                  "AtomTotalValence",
-                                                  "AtomAtomicNum",
-                                                  "AtomExplicitDegree",
-                                                  "AtomTotalDegree",
-                                                  "AtomHCount",
-                                                  "AtomIsAromatic",
-                                                  "AtomIsAliphatic",
-                                                  "AtomUnsaturated",
-                                                  "AtomMass",
-                                                  "AtomFormalCharge",
-                                                  "AtomNegativeFormalCharge",
-                                                  "AtomHybridization",
-                                                  "AtomInRing",
-                                                  "AtomInNRings"};
-
-  bool res = false;
-  std::string d1 = q1->getDescription();
-  std::string d2 = q2->getDescription();
-  if (d1 == "AtomNull" || d2 == "AtomNull") {
-    res = true;
-  } else if (d1 == "AtomOr") {
-    // FIX: handle negation on AtomOr and AtomAnd
-    for (auto iter1 = q1->beginChildren(); iter1 != q1->endChildren();
-         ++iter1) {
-      if (d2 == "AtomOr") {
-        for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
-             ++iter2) {
-          if (queriesMatch(iter1->get(), iter2->get())) {
-            res = true;
-            break;
-          }
-        }
-      } else {
-        if (queriesMatch(iter1->get(), q2)) {
-          res = true;
-        }
-      }
-      if (res) {
-        break;
-      }
-    }
-  } else if (d1 == "AtomAnd") {
-    res = true;
-    for (auto iter1 = q1->beginChildren(); iter1 != q1->endChildren();
-         ++iter1) {
-      bool matched = false;
-      if (d2 == "AtomAnd") {
-        for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
-             ++iter2) {
-          if (queriesMatch(iter1->get(), iter2->get())) {
-            matched = true;
-            break;
-          }
-        }
-      } else {
-        matched = queriesMatch(iter1->get(), q2);
-      }
-      if (!matched) {
-        res = false;
-        break;
-      }
-    }
-    // FIX : handle AtomXOr
-  } else if (d2 == "AtomOr") {
-    // FIX: handle negation on AtomOr and AtomAnd
-    for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
-         ++iter2) {
-      if (queriesMatch(q1, iter2->get())) {
-        res = true;
-        break;
-      }
-    }
-  } else if (d2 == "AtomAnd") {
-    res = true;
-    for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
-         ++iter2) {
-      if (!queriesMatch(q1, iter2->get())) {
-        res = false;
-        break;
-      }
-    }
-  } else if (d1 == d2) {
-    if (std::find(&equalityQueries[0], &equalityQueries[nQueries], d1) !=
-        &equalityQueries[nQueries]) {
-      res = localMatch(static_cast<ATOM_EQUALS_QUERY const *>(q1),
-                       static_cast<ATOM_EQUALS_QUERY const *>(q2));
-    }
-  } else {
-  }
-  return res;
-}
+};
 }  // namespace
 
 bool QueryAtom::Match(Atom const *what) const {
@@ -188,7 +97,7 @@ bool QueryAtom::QueryMatch(QueryAtom const *what) const {
   if (!what->hasQuery()) {
     return dp_query->Match(what);
   } else {
-    return queriesMatch(dp_query, what->getQuery());
+    return QueryOps::queriesMatch<AtomQueryTraits>(dp_query, what->getQuery());
   }
 }
 
