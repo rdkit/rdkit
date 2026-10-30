@@ -55,6 +55,11 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
   */
   RWMol(const ROMol &other, bool quickCopy = false, int confId = -1)
       : ROMol(other, quickCopy, confId) {}
+  //! construct a molecule from a pickle string
+  explicit RWMol(const std::string &binStr) : ROMol(binStr) {}
+  //! construct a molecule from a pickle string
+  RWMol(const std::string &binStr, unsigned int propertyFlags)
+      : ROMol(binStr, propertyFlags) {}
   RWMol(const RWMol &other) : ROMol(other) {}
   RWMol &operator=(const RWMol &);
   RWMol(RWMol &&other) noexcept : ROMol(std::move(other)) {}

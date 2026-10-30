@@ -9,6 +9,11 @@ class TestCase(unittest.TestCase):
   def setUp(self):
     pass
 
+  def testHashFunctionValuesAreNotModuleAttributes(self):
+    for name in ('AnonymousGraph', 'MurckoScaffold', 'HetAtomTautomerv2'):
+      self.assertTrue(hasattr(rdMolHash.HashFunction, name))
+      self.assertFalse(hasattr(rdMolHash, name))
+
   def test1(self):
     m = Chem.MolFromSmiles('C1CCCC(O)C1c1ccnc(OC)c1')
     self.assertEqual(rdMolHash.MolHash(m, rdMolHash.HashFunction.AnonymousGraph),
