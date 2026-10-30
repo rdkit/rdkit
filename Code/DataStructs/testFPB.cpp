@@ -547,3 +547,46 @@ TEST_CASE("Github Issue 1118") {
   }
   BOOST_LOG(rdInfoLog) << "Finished" << std::endl;
 }
+
+TEST_CASE("truncated FPID offset table does not read out of bounds") {
+  // a crafted .fpb with a bogus element count in the FPID chunk used to make
+  // the identifier offset pointer run off the start of the chunk buffer, so
+  // getId() read out of bounds (confirmed with ASan). See the read path in
+  // detail::extractId / extractIds.
+  std::string pathName = getenv("RDBASE");
+  pathName += "/Code/DataStructs/testData/zim.head100.fpb";
+  std::ifstream ifs(pathName.c_str(), std::ios_base::binary);
+  std::string data((std::istreambuf_iterator<char>(ifs)),
+                   std::istreambuf_iterator<char>());
+  REQUIRE(data.size() > 16);
+
+  // walk the chunks (8 byte magic, then <uint64 size><4 byte name><size bytes>)
+  // and overwrite the num4ByteElements field at the start of the FPID body.
+  auto readU64 = [&](size_t p) {
+    std::uint64_t v = 0;
+    memcpy(&v, data.data() + p, 8);
+    return v;
+  };
+  size_t p = 8, fpidBody = 0;
+  while (p + 12 <= data.size()) {
+    std::uint64_t sz = readU64(p);
+    std::string nm = data.substr(p + 8, 4);
+    if (nm == "FPID") {
+      fpidBody = p + 12;
+      break;
+    }
+    p += 12 + sz;
+    if (nm == "FEND") {
+      break;
+    }
+  }
+  REQUIRE(fpidBody != 0);
+  std::uint32_t bogus = 0x40000000;
+  memcpy(&data[fpidBody], &bogus, 4);
+
+  for (bool lazy : {false, true}) {
+    std::istringstream iss(data, std::ios_base::binary);
+    FPBReader fps(&iss, false, lazy);
+    REQUIRE_THROWS_AS(fps.init(), BadFileException);
+  }
+}
