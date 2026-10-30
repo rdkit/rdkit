@@ -553,3 +553,52 @@ TEST_CASE("wiggly bonds and EnumerateStereoisomers") {
     CHECK(std::find(got.begin(), got.end(), "C[C@@](F)(Cl)Br") != got.end());
   }
 }
+
+TEST_CASE("do not use non-structural information in unification") {
+  auto m = "FC1CC2CCC(C1)C2"_smiles;
+  REQUIRE(m);
+
+  auto countStereoisomers = [](const auto &mol) {
+    StereoisomerEnumerator enu(mol);
+    unsigned int count = 0;
+    while (auto isomer = enu.next()) {
+      ++count;
+    }
+    return count;
+  };
+
+  auto countWithNoProps = countStereoisomers(*m);
+
+  SECTION("random atom properties") {
+    auto m2 = ROMol(*m);
+    for (auto at : m2.atoms()) {
+      at->setProp("mapped_index", at->getIdx());
+    }
+
+    auto countWithProp = countStereoisomers(m2);
+
+    CHECK(countWithNoProps == countWithProp);
+  }
+
+  SECTION("atom labels") {
+    auto m2 = ROMol(*m);
+    for (auto at : m2.atoms()) {
+      at->setProp(common_properties::atomLabel, at->getIdx());
+    }
+
+    auto countWithProp = countStereoisomers(m2);
+
+    CHECK(countWithNoProps == countWithProp);
+  }
+
+  SECTION("mol values") {
+    auto m2 = ROMol(*m);
+    for (auto at : m2.atoms()) {
+      at->setProp(common_properties::molFileValue, at->getIdx());
+    }
+
+    auto countWithProp = countStereoisomers(m2);
+
+    CHECK(countWithNoProps == countWithProp);
+  }
+}
