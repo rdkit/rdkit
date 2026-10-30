@@ -273,7 +273,8 @@ double calcVolAndGrads(const double *ref, const double *refAlphas,
   for (int i = 0, i_idx = 0; i < numRefPts * 3; i += 3, i_idx++) {
     const auto ai = refAlphas[i_idx];
     const auto aType = refTypes[i_idx];
-    for (int j = 0, j_idx = 0, k = 0; j < numFitPts * 3;
+    // the converters for these features start after the shape points
+    for (int j = 0, j_idx = 0, k = 12 * numFitShape; j < numFitPts * 3;
          j += 3, j_idx++, k += 12) {
       const auto bType = fitTypes[j_idx];
       if (aType != bType) {
