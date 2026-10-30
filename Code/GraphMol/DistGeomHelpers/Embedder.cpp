@@ -1059,9 +1059,10 @@ bool embedPoints(RDGeom::PointPtrVect *positions,
 #endif
             if (end_time != nullptr && Clock::now() > *end_time) {
               embedParams.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++;
+            } else {
+              embedParams
+                  .failures[EmbedFailureCauses::MINIMIZE_FOURTH_DIMENSION]++;
             }
-            embedParams
-                .failures[EmbedFailureCauses::MINIMIZE_FOURTH_DIMENSION]++;
           }
         }
       }
