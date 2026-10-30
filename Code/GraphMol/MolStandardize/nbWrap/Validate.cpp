@@ -64,8 +64,7 @@ MolStandardize::AllowedAtomsValidation *getAllowedAtomsValidation(
     nb::object atoms) {
   std::vector<std::shared_ptr<Atom>> satoms;
   for (nb::handle h : atoms) {
-    auto ap = nb::cast<Atom *>(h);
-    satoms.push_back(std::shared_ptr<Atom>(ap->copy()));
+    satoms.push_back(std::shared_ptr<Atom>(nb::cast<const Atom &>(h).copy()));
   }
   if (satoms.empty()) {
     throw nb::value_error("allowedAtoms argument must be non-empty");
@@ -77,8 +76,7 @@ MolStandardize::DisallowedAtomsValidation *getDisallowedAtomsValidation(
     nb::object atoms) {
   std::vector<std::shared_ptr<Atom>> satoms;
   for (nb::handle h : atoms) {
-    auto ap = nb::cast<Atom *>(h);
-    satoms.push_back(std::shared_ptr<Atom>(ap->copy()));
+    satoms.push_back(std::shared_ptr<Atom>(nb::cast<const Atom &>(h).copy()));
   }
   if (satoms.empty()) {
     throw nb::value_error("disallowedAtoms must be non-empty");

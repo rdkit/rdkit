@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from rdkit import Chem, DataStructs
+from rdkit import Chem, DataStructs, rdBase
 from rdkit.Chem import rdFingerprintGenerator
 
 
@@ -425,6 +425,55 @@ class TestCase(unittest.TestCase):
     fp = g.GetSparseCountFingerprint(m, ignoreAtoms=[2])
     nz = fp.GetNonzeroElements()
     self.assertEqual(len(nz), 0)
+
+  def testFeatureAtomInvGenFromGenerator(self):
+    smarts = ['[OX2]', '[NX3]']
+    m = Chem.MolFromSmiles('OCCN')
+    invGen = rdFingerprintGenerator.GetMorganFeatureAtomInvGen(
+      [Chem.MolFromSmarts(sma) for sma in smarts])
+    g = rdFingerprintGenerator.GetMorganGenerator(radius=2, atomInvariantsGenerator=invGen)
+    expected = g.GetSparseCountFingerprint(m).GetNonzeroElements()
+    # Each pattern is referenced only by the generator that yields it.
+    invGen = rdFingerprintGenerator.GetMorganFeatureAtomInvGen(
+      Chem.MolFromSmarts(sma) for sma in smarts)
+    g = rdFingerprintGenerator.GetMorganGenerator(radius=2, atomInvariantsGenerator=invGen)
+    self.assertEqual(g.GetSparseCountFingerprint(m).GetNonzeroElements(), expected)
+    patterns = [Chem.MolFromSmarts(smarts[0]), None]
+    if rdBase._wrapperType == 'nanobind':
+      with self.assertRaisesRegex(RuntimeError, 'bad[ _]cast'):
+        rdFingerprintGenerator.GetMorganFeatureAtomInvGen(patterns)
+    else:
+      # Boost ignores the patterns (#9601), so this only checks that it does not crash.
+      rdFingerprintGenerator.GetMorganFeatureAtomInvGen(patterns)
+
+  def testFingerprintsFromIterables(self):
+    smiles = ['c1ccccc1O', 'c1ccccc1N', 'CCOC(=O)C', 'CC(C)CC(=O)O']
+    g = rdFingerprintGenerator.GetMorganGenerator(radius=2)
+    mols = [Chem.MolFromSmiles(smi) for smi in smiles]
+    expected = [fp.ToBitString() for fp in g.GetFingerprints(mols)]
+    bulkExpected = [fp.ToBitString() for fp in rdFingerprintGenerator.GetFPs(mols)]
+
+    class Mols:
+      """Builds a new molecule each time it is indexed, and defines only __getitem__."""
+
+      def __getitem__(self, i):
+        return Chem.MolFromSmiles(smiles[i])
+
+    # Each molecule below is referenced only by the generator, supplier or sequence that yields
+    # it; the supplier and the sequence build a new molecule each time they are indexed.
+    for label, make in (
+      ('generator', lambda: (Chem.MolFromSmiles(smi) for smi in smiles)),
+      ('supplier',
+       lambda: Chem.SmilesMolSupplierFromText('\n'.join(smiles), nameColumn=-1, titleLine=False)),
+      ('sequence', Mols),
+    ):
+      with self.subTest(argument=label):
+        self.assertEqual([fp.ToBitString() for fp in g.GetFingerprints(make())], expected)
+        self.assertEqual([fp.ToBitString() for fp in rdFingerprintGenerator.GetFPs(make())],
+                         bulkExpected)
+    # Boost raises TypeError for a None element and nanobind RuntimeError.
+    with self.assertRaisesRegex((TypeError, RuntimeError), 'NoneType|bad[ _]cast'):
+      rdFingerprintGenerator.GetFPs(mols + [None])
 
 
 if __name__ == '__main__':

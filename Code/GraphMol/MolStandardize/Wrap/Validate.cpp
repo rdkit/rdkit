@@ -59,28 +59,38 @@ MolStandardize::MolVSValidation *getMolVSValidation(
   return new MolStandardize::MolVSValidation(vs);
 }
 
+//! Copies each atom of \c atoms as it is read, holding one at a time. None
+//! gives an empty vector.
+std::vector<std::shared_ptr<Atom>> copyAtoms(const python::object &atoms) {
+  std::vector<std::shared_ptr<Atom>> res;
+  if (!atoms) {
+    return res;
+  }
+  for (python::stl_input_iterator<python::object> it(pythonIterator(atoms)),
+       end;
+       it != end; ++it) {
+    // A generator may hold no other reference to the atom.
+    python::object item = *it;
+    res.push_back(
+        std::shared_ptr<Atom>(python::extract<const Atom &>(item)().copy()));
+  }
+  return res;
+}
+
 MolStandardize::AllowedAtomsValidation *getAllowedAtomsValidation(
     python::object atoms) {
-  auto p_atomList = pythonObjectToVect<Atom *>(atoms);
-  if (!p_atomList) {
+  auto satoms = copyAtoms(atoms);
+  if (satoms.empty()) {
     throw_value_error("allowedAtoms argument must be non-empty");
-  }
-  std::vector<std::shared_ptr<Atom>> satoms;
-  for (auto ap : *p_atomList) {
-    satoms.push_back(std::shared_ptr<Atom>(ap->copy()));
   }
   return new MolStandardize::AllowedAtomsValidation(satoms);
 }
 
 MolStandardize::DisallowedAtomsValidation *getDisallowedAtomsValidation(
     python::object atoms) {
-  auto p_atomList = pythonObjectToVect<Atom *>(atoms);
-  if (!p_atomList) {
+  auto satoms = copyAtoms(atoms);
+  if (satoms.empty()) {
     throw_value_error("disallowedAtoms must be non-empty");
-  }
-  std::vector<std::shared_ptr<Atom>> satoms;
-  for (auto ap : *p_atomList) {
-    satoms.push_back(std::shared_ptr<Atom>(ap->copy()));
   }
   return new MolStandardize::DisallowedAtomsValidation(satoms);
 }
