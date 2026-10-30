@@ -114,9 +114,16 @@ struct BondQueryTraits {
   static constexpr std::string_view OrDesc = "BondOr";
   static constexpr std::string_view AndDesc = "BondAnd";
   static bool isEqualityQuery(std::string_view s) {
-    static const std::string queries[] = {
-        "BondRingSize", "BondMinRingSize", "BondOrder",
-        "BondDir",      "BondInRing",      "BondInNRings"};
+    static const std::string queries[] = {"BondRingSize",
+                                          "BondMinRingSize",
+                                          "BondOrder",
+                                          "BondDir",
+                                          "BondInRing",
+                                          "BondInNRings",
+                                          "SingleOrAromaticBond",
+                                          "DoubleOrAromaticBond",
+                                          "SingleOrDoubleBond",
+                                          "SingleOrDoubleOrAromaticBond"};
     return std::find(std::begin(queries), std::end(queries), s) !=
            std::end(queries);
   }

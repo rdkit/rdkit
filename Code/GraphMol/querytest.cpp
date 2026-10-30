@@ -7,9 +7,10 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
-#include <RDGeneral/test.h>
-#include <RDGeneral/Invariant.h>
-#include <RDGeneral/RDLog.h>
+#include <catch2/catch_all.hpp>
+
+#include <memory>
+
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -19,123 +20,105 @@ using namespace RDKit;
 using namespace std;
 typedef class RWMol Mol;
 
-void test1() {
-  BOOST_LOG(rdErrorLog) << "---------------------- Test1" << std::endl;
+TEST_CASE("query atom and bond matching") {
   Mol qM;
   Mol m;
 
-  auto *a = new Atom(6);
-  // we copy in addAtom, so this is safe
-  m.addAtom(a);
-  m.addAtom(a);
-  delete a;
+  Atom a(6);
+  m.addAtom(&a);
+  m.addAtom(&a);
   m.addBond(0, 1, Bond::SINGLE);
-  a = new Atom(8);
-  m.addAtom(a);
-  delete a;
+  a.setAtomicNum(8);
+  m.addAtom(&a);
   m.addBond(1, 2, Bond::DOUBLE);
   MolOps::sanitizeMol(m);
 
-  auto *qA = new QueryAtom(6);
-  CHECK_INVARIANT(qA->Match(m.getAtomWithIdx(0)), "");
-  CHECK_INVARIANT(qA->Match(m.getAtomWithIdx(1)), "");
-  CHECK_INVARIANT(!qA->Match(m.getAtomWithIdx(2)), "");
-  qA->expandQuery(makeAtomImplicitValenceQuery(3));
-  CHECK_INVARIANT(qA->Match(m.getAtomWithIdx(0)), "");
-  CHECK_INVARIANT(!qA->Match(m.getAtomWithIdx(1)), "");
-  CHECK_INVARIANT(!qA->Match(m.getAtomWithIdx(2)), "");
+  QueryAtom qA(6);
+  CHECK(qA.Match(m.getAtomWithIdx(0)));
+  CHECK(qA.Match(m.getAtomWithIdx(1)));
+  CHECK(!qA.Match(m.getAtomWithIdx(2)));
+  qA.expandQuery(makeAtomImplicitValenceQuery(3));
+  CHECK(qA.Match(m.getAtomWithIdx(0)));
+  CHECK(!qA.Match(m.getAtomWithIdx(1)));
+  CHECK(!qA.Match(m.getAtomWithIdx(2)));
 
-  qM.addAtom(qA);
-  delete qA;
-  qA = new QueryAtom(6);
-  qA->expandQuery(makeAtomNumQuery(8), Queries::COMPOSITE_OR);
-  qM.addAtom(qA);
-  delete qA;
-  qM.addAtom(new QueryAtom(8), true, true);
+  qM.addAtom(&qA);
+  QueryAtom qA2(6);
+  qA2.expandQuery(makeAtomNumQuery(8), Queries::COMPOSITE_OR);
+  qM.addAtom(&qA2);
+  QueryAtom qA3(8);
+  qM.addAtom(&qA3);
 
-  QueryBond *qB;
-  qB = new QueryBond(Bond::UNSPECIFIED);
-  qB->setOwningMol(qM);
-  qB->setBeginAtomIdx(0);
-  qB->setEndAtomIdx(1);
+  QueryBond qB(Bond::UNSPECIFIED);
+  qB.setOwningMol(qM);
+  qB.setBeginAtomIdx(0);
+  qB.setEndAtomIdx(1);
 
-  CHECK_INVARIANT(qB->Match(m.getBondWithIdx(0)), "");
-  CHECK_INVARIANT(qB->Match(m.getBondWithIdx(1)), "");
-  qM.addBond(qB, true);
-  qB = new QueryBond(Bond::DOUBLE);
-  qB->setOwningMol(qM);
-  qB->setBeginAtomIdx(1);
-  qB->setEndAtomIdx(2);
-  qM.addBond(qB, true);
+  CHECK(qB.Match(m.getBondWithIdx(0)));
+  CHECK(qB.Match(m.getBondWithIdx(1)));
+  qM.addBond(&qB);
+  QueryBond qB2(Bond::DOUBLE);
+  qB2.setOwningMol(qM);
+  qB2.setBeginAtomIdx(1);
+  qB2.setEndAtomIdx(2);
+  qM.addBond(&qB2);
 
-  CHECK_INVARIANT(qM.getAtomWithIdx(0)->Match(m.getAtomWithIdx(0)), "");
-  CHECK_INVARIANT(!qM.getAtomWithIdx(0)->Match(m.getAtomWithIdx(1)), "");
-  CHECK_INVARIANT(!qM.getAtomWithIdx(0)->Match(m.getAtomWithIdx(2)), "");
-  CHECK_INVARIANT(qM.getAtomWithIdx(1)->Match(m.getAtomWithIdx(0)), "");
-  CHECK_INVARIANT(qM.getAtomWithIdx(1)->Match(m.getAtomWithIdx(1)), "");
-  CHECK_INVARIANT(qM.getAtomWithIdx(1)->Match(m.getAtomWithIdx(2)), "");
-  CHECK_INVARIANT(!qM.getAtomWithIdx(2)->Match(m.getAtomWithIdx(0)), "");
-  CHECK_INVARIANT(!qM.getAtomWithIdx(2)->Match(m.getAtomWithIdx(1)), "");
-  CHECK_INVARIANT(qM.getAtomWithIdx(2)->Match(m.getAtomWithIdx(2)), "");
+  CHECK(qM.getAtomWithIdx(0)->Match(m.getAtomWithIdx(0)));
+  CHECK(!qM.getAtomWithIdx(0)->Match(m.getAtomWithIdx(1)));
+  CHECK(!qM.getAtomWithIdx(0)->Match(m.getAtomWithIdx(2)));
+  CHECK(qM.getAtomWithIdx(1)->Match(m.getAtomWithIdx(0)));
+  CHECK(qM.getAtomWithIdx(1)->Match(m.getAtomWithIdx(1)));
+  CHECK(qM.getAtomWithIdx(1)->Match(m.getAtomWithIdx(2)));
+  CHECK(!qM.getAtomWithIdx(2)->Match(m.getAtomWithIdx(0)));
+  CHECK(!qM.getAtomWithIdx(2)->Match(m.getAtomWithIdx(1)));
+  CHECK(qM.getAtomWithIdx(2)->Match(m.getAtomWithIdx(2)));
 
-  CHECK_INVARIANT(qM.getBondWithIdx(0)->Match(m.getBondWithIdx(0)), "");
-  CHECK_INVARIANT(qM.getBondWithIdx(0)->Match(m.getBondWithIdx(1)), "");
-  CHECK_INVARIANT(!qM.getBondWithIdx(1)->Match(m.getBondWithIdx(0)), "");
-  CHECK_INVARIANT(qM.getBondWithIdx(1)->Match(m.getBondWithIdx(1)), "");
-
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+  CHECK(qM.getBondWithIdx(0)->Match(m.getBondWithIdx(0)));
+  CHECK(qM.getBondWithIdx(0)->Match(m.getBondWithIdx(1)));
+  CHECK(!qM.getBondWithIdx(1)->Match(m.getBondWithIdx(0)));
+  CHECK(qM.getBondWithIdx(1)->Match(m.getBondWithIdx(1)));
 }
 
-void test2() {
-  BOOST_LOG(rdErrorLog) << "---------------------- Test2" << std::endl;
+TEST_CASE("query bond order matching") {
   Mol qM;
   Mol m;
 
-  auto *a = new Atom(6);
-  // we copy in addAtom, so this is safe
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  delete a;
+  Atom a(6);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
   m.addBond(0, 1, Bond::TRIPLE);
   m.addBond(1, 2, Bond::SINGLE);
-  a = new Atom(8);
-  m.addAtom(a);
-  delete a;
+  a.setAtomicNum(8);
+  m.addAtom(&a);
   m.addBond(2, 3, Bond::DOUBLE);
   MolOps::sanitizeMol(m);
 
-  QueryBond *qB;
-  qB = new QueryBond(Bond::SINGLE);
+  auto qB = std::make_unique<QueryBond>(Bond::SINGLE);
 
-  CHECK_INVARIANT(!qB->Match(m.getBondWithIdx(0)), "");
-  CHECK_INVARIANT(qB->Match(m.getBondWithIdx(1)), "");
-  CHECK_INVARIANT(!qB->Match(m.getBondWithIdx(2)), "");
+  CHECK(!qB->Match(m.getBondWithIdx(0)));
+  CHECK(qB->Match(m.getBondWithIdx(1)));
+  CHECK(!qB->Match(m.getBondWithIdx(2)));
 
-  BOND_EQUALS_QUERY *newQ = makeBondOrderEqualsQuery(Bond::DOUBLE);
-  qB->expandQuery(newQ, Queries::COMPOSITE_OR);
-  CHECK_INVARIANT(!qB->Match(m.getBondWithIdx(0)), "");
-  CHECK_INVARIANT(qB->Match(m.getBondWithIdx(1)), "");
-  CHECK_INVARIANT(qB->Match(m.getBondWithIdx(2)), "");
-
-  delete qB;
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+  auto newQ = std::unique_ptr<BOND_EQUALS_QUERY>(
+      makeBondOrderEqualsQuery(Bond::DOUBLE));
+  qB->expandQuery(newQ.release(), Queries::COMPOSITE_OR);
+  CHECK(!qB->Match(m.getBondWithIdx(0)));
+  CHECK(qB->Match(m.getBondWithIdx(1)));
+  CHECK(qB->Match(m.getBondWithIdx(2)));
 }
 
-void test3() {
-  BOOST_LOG(rdErrorLog) << "---------------------- Test3" << std::endl;
+TEST_CASE("atom and bond query operations") {
   Mol m;
 
-  auto *a = new Atom(6);
-  // we copy in addAtom, so this is safe
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  delete a;
+  Atom a(6);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
   m.addBond(0, 1, Bond::SINGLE);
   m.addBond(1, 2, Bond::DOUBLE);
   m.addBond(2, 3, Bond::SINGLE);
@@ -145,116 +128,100 @@ void test3() {
   m.addBond(5, 6, Bond::SINGLE);
   MolOps::sanitizeMol(m);
 
-  ATOM_EQUALS_QUERY *aeq = makeAtomExplicitDegreeQuery(3);
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(0)), "");
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(1)), "");
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(5)), "");
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(6)), "");
-  delete aeq;
-  aeq = makeAtomExplicitDegreeQuery(2);
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(0)), "");
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(1)), "");
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(5)), "");
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(6)), "");
-  delete aeq;
+  std::unique_ptr<ATOM_EQUALS_QUERY> aeq(makeAtomExplicitDegreeQuery(3));
+  CHECK(!aeq->Match(m.getAtomWithIdx(0)));
+  CHECK(!aeq->Match(m.getAtomWithIdx(1)));
+  CHECK(aeq->Match(m.getAtomWithIdx(5)));
+  CHECK(!aeq->Match(m.getAtomWithIdx(6)));
+  aeq.reset(makeAtomExplicitDegreeQuery(2));
+  CHECK(aeq->Match(m.getAtomWithIdx(0)));
+  CHECK(aeq->Match(m.getAtomWithIdx(1)));
+  CHECK(!aeq->Match(m.getAtomWithIdx(5)));
+  CHECK(!aeq->Match(m.getAtomWithIdx(6)));
 
-  aeq = makeAtomHCountQuery(1);
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(0)), "");
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(1)), "");
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(5)), "");
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(6)), "");
-  delete aeq;
+  aeq.reset(makeAtomHCountQuery(1));
+  CHECK(aeq->Match(m.getAtomWithIdx(0)));
+  CHECK(aeq->Match(m.getAtomWithIdx(1)));
+  CHECK(!aeq->Match(m.getAtomWithIdx(5)));
+  CHECK(!aeq->Match(m.getAtomWithIdx(6)));
 
-  aeq = makeAtomInNRingsQuery(1);
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(0)), "");
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(1)), "");
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(5)), "");
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(6)), "");
-  delete aeq;
+  aeq.reset(makeAtomInNRingsQuery(1));
+  CHECK(aeq->Match(m.getAtomWithIdx(0)));
+  CHECK(aeq->Match(m.getAtomWithIdx(1)));
+  CHECK(aeq->Match(m.getAtomWithIdx(5)));
+  CHECK(!aeq->Match(m.getAtomWithIdx(6)));
 
-  aeq = makeAtomInNRingsQuery(0);
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(0)), "");
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(1)), "");
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(5)), "");
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(6)), "");
-  delete aeq;
+  aeq.reset(makeAtomInNRingsQuery(0));
+  CHECK(!aeq->Match(m.getAtomWithIdx(0)));
+  CHECK(!aeq->Match(m.getAtomWithIdx(1)));
+  CHECK(!aeq->Match(m.getAtomWithIdx(5)));
+  CHECK(aeq->Match(m.getAtomWithIdx(6)));
 
-  aeq = makeAtomAromaticQuery();
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(0)), "");
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(1)), "");
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(5)), "");
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(6)), "");
-  delete aeq;
+  aeq.reset(makeAtomAromaticQuery());
+  CHECK(aeq->Match(m.getAtomWithIdx(0)));
+  CHECK(aeq->Match(m.getAtomWithIdx(1)));
+  CHECK(aeq->Match(m.getAtomWithIdx(5)));
+  CHECK(!aeq->Match(m.getAtomWithIdx(6)));
 
-  aeq = makeAtomAliphaticQuery();
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(0)), "");
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(1)), "");
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(5)), "");
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(6)), "");
-  delete aeq;
+  aeq.reset(makeAtomAliphaticQuery());
+  CHECK(!aeq->Match(m.getAtomWithIdx(0)));
+  CHECK(!aeq->Match(m.getAtomWithIdx(1)));
+  CHECK(!aeq->Match(m.getAtomWithIdx(5)));
+  CHECK(aeq->Match(m.getAtomWithIdx(6)));
 
-  aeq = makeAtomInRingQuery();
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(0)), "");
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(1)), "");
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(5)), "");
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(6)), "");
+  aeq.reset(makeAtomInRingQuery());
+  CHECK(aeq->Match(m.getAtomWithIdx(0)));
+  CHECK(aeq->Match(m.getAtomWithIdx(1)));
+  CHECK(aeq->Match(m.getAtomWithIdx(5)));
+  CHECK(!aeq->Match(m.getAtomWithIdx(6)));
   aeq->setNegation(true);
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(0)), "");
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(1)), "");
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(5)), "");
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(6)), "");
-  delete aeq;
+  CHECK(!aeq->Match(m.getAtomWithIdx(0)));
+  CHECK(!aeq->Match(m.getAtomWithIdx(1)));
+  CHECK(!aeq->Match(m.getAtomWithIdx(5)));
+  CHECK(aeq->Match(m.getAtomWithIdx(6)));
 
-  aeq = makeAtomInRingOfSizeQuery(6);
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(0)), "");
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(1)), "");
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(5)), "");
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(6)), "");
+  aeq.reset(makeAtomInRingOfSizeQuery(6));
+  CHECK(aeq->Match(m.getAtomWithIdx(0)));
+  CHECK(aeq->Match(m.getAtomWithIdx(1)));
+  CHECK(aeq->Match(m.getAtomWithIdx(5)));
+  CHECK(!aeq->Match(m.getAtomWithIdx(6)));
   aeq->setNegation(true);
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(0)), "");
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(1)), "");
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(5)), "");
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(6)), "");
-  delete aeq;
+  CHECK(!aeq->Match(m.getAtomWithIdx(0)));
+  CHECK(!aeq->Match(m.getAtomWithIdx(1)));
+  CHECK(!aeq->Match(m.getAtomWithIdx(5)));
+  CHECK(aeq->Match(m.getAtomWithIdx(6)));
 
-  aeq = makeAtomInRingOfSizeQuery(5);
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(0)), "");
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(1)), "");
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(5)), "");
-  CHECK_INVARIANT(!aeq->Match(m.getAtomWithIdx(6)), "");
+  aeq.reset(makeAtomInRingOfSizeQuery(5));
+  CHECK(!aeq->Match(m.getAtomWithIdx(0)));
+  CHECK(!aeq->Match(m.getAtomWithIdx(1)));
+  CHECK(!aeq->Match(m.getAtomWithIdx(5)));
+  CHECK(!aeq->Match(m.getAtomWithIdx(6)));
   aeq->setNegation(true);
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(0)), "");
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(1)), "");
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(5)), "");
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(6)), "");
-  delete aeq;
+  CHECK(aeq->Match(m.getAtomWithIdx(0)));
+  CHECK(aeq->Match(m.getAtomWithIdx(1)));
+  CHECK(aeq->Match(m.getAtomWithIdx(5)));
+  CHECK(aeq->Match(m.getAtomWithIdx(6)));
 
-  BOND_EQUALS_QUERY *beq = makeBondIsInRingQuery();
-  CHECK_INVARIANT(beq->Match(m.getBondWithIdx(0)), "");
-  CHECK_INVARIANT(!beq->Match(m.getBondWithIdx(6)), "");
-  CHECK_INVARIANT(beq->Match(m.getBondBetweenAtoms(0, 1)), "");
-  CHECK_INVARIANT(beq->Match(m.getBondBetweenAtoms(1, 0)), "");
-  CHECK_INVARIANT(!beq->Match(m.getBondBetweenAtoms(5, 6)), "");
-  CHECK_INVARIANT(!beq->Match(m.getBondBetweenAtoms(6, 5)), "");
-
-  delete beq;
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+  std::unique_ptr<BOND_EQUALS_QUERY> beq(makeBondIsInRingQuery());
+  CHECK(beq->Match(m.getBondWithIdx(0)));
+  CHECK(!beq->Match(m.getBondWithIdx(6)));
+  CHECK(beq->Match(m.getBondBetweenAtoms(0, 1)));
+  CHECK(beq->Match(m.getBondBetweenAtoms(1, 0)));
+  CHECK(!beq->Match(m.getBondBetweenAtoms(5, 6)));
+  CHECK(!beq->Match(m.getBondBetweenAtoms(6, 5)));
 }
 
-void test4() {
-  BOOST_LOG(rdErrorLog) << "---------------------- Test4" << std::endl;
+TEST_CASE("null atom queries") {
   Mol m;
 
-  auto *a = new Atom(6);
-  // we copy in addAtom, so this is safe
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  delete a;
+  Atom a(6);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
   m.addBond(0, 1, Bond::SINGLE);
   m.addBond(1, 2, Bond::DOUBLE);
   m.addBond(2, 3, Bond::SINGLE);
@@ -264,30 +231,24 @@ void test4() {
   m.addBond(5, 6, Bond::SINGLE);
   MolOps::sanitizeMol(m);
 
-  ATOM_NULL_QUERY *aeq = makeAtomNullQuery();
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(0)), "");
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(1)), "");
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(5)), "");
-  CHECK_INVARIANT(aeq->Match(m.getAtomWithIdx(6)), "");
-  delete aeq;
-
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+  std::unique_ptr<ATOM_NULL_QUERY> aeq(makeAtomNullQuery());
+  CHECK(aeq->Match(m.getAtomWithIdx(0)));
+  CHECK(aeq->Match(m.getAtomWithIdx(1)));
+  CHECK(aeq->Match(m.getAtomWithIdx(5)));
+  CHECK(aeq->Match(m.getAtomWithIdx(6)));
 }
 
-void test5() {
-  BOOST_LOG(rdErrorLog) << "---------------------- Test5" << std::endl;
+TEST_CASE("query atom bond products") {
   Mol m;
 
-  auto *a = new Atom(6);
-  // we copy in addAtom, so this is safe
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  m.addAtom(a);
-  delete a;
+  Atom a(6);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
+  m.addAtom(&a);
   m.addBond(0, 1, Bond::SINGLE);
   m.addBond(1, 2, Bond::DOUBLE);
   m.addBond(2, 3, Bond::SINGLE);
@@ -299,26 +260,21 @@ void test5() {
 
   unsigned int valenceProd;
   valenceProd = queryAtomBondProduct(m.getAtomWithIdx(0));
-  TEST_ASSERT(valenceProd == 1681);  // aromatic*aromatic = 41 * 41 = 1681
+  CHECK(valenceProd == 1681);  // aromatic*aromatic = 41 * 41 = 1681
   valenceProd = queryAtomBondProduct(m.getAtomWithIdx(1));
-  TEST_ASSERT(valenceProd == 1681);
+  CHECK(valenceProd == 1681);
 
   valenceProd = queryAtomBondProduct(m.getAtomWithIdx(5));
-  TEST_ASSERT(valenceProd == 5043);
+  CHECK(valenceProd == 5043);
 
   valenceProd = queryAtomBondProduct(m.getAtomWithIdx(6));
-  TEST_ASSERT(valenceProd == 3);
+  CHECK(valenceProd == 3);
 
   valenceProd = queryAtomAllBondProduct(m.getAtomWithIdx(6));
-  TEST_ASSERT(valenceProd == 81);
-
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+  CHECK(valenceProd == 81);
 }
 
-void testQueryQueryMatches() {
-  BOOST_LOG(rdInfoLog) << "-------------------------------------" << std::endl;
-  BOOST_LOG(rdInfoLog) << "Testing query--query matches" << std::endl;
-
+TEST_CASE("query-query matching") {
   // =====================================
   // ATOMS
   // =====================================
@@ -326,90 +282,90 @@ void testQueryQueryMatches() {
     QueryAtom a1, a2;
     a1.setQuery(makeAtomNullQuery());
     a2.setQuery(makeAtomNullQuery());
-    TEST_ASSERT(a1.QueryMatch(&a2));
-    TEST_ASSERT(a2.QueryMatch(&a1));
+    CHECK(a1.QueryMatch(&a2));
+    CHECK(a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1, a2(6);
     a1.setQuery(makeAtomNullQuery());
-    TEST_ASSERT(a1.QueryMatch(&a2));
-    TEST_ASSERT(a2.QueryMatch(&a1));
+    CHECK(a1.QueryMatch(&a2));
+    CHECK(a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1(6), a2(8);
-    TEST_ASSERT(!a1.QueryMatch(&a2));
-    TEST_ASSERT(!a2.QueryMatch(&a1));
+    CHECK(!a1.QueryMatch(&a2));
+    CHECK(!a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1(6), a2(6);
-    TEST_ASSERT(a1.QueryMatch(&a2));
-    TEST_ASSERT(a2.QueryMatch(&a1));
+    CHECK(a1.QueryMatch(&a2));
+    CHECK(a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1, a2;
     a1.setQuery(makeAtomAromaticQuery());
     a2.setQuery(makeAtomAromaticQuery());
-    TEST_ASSERT(a1.QueryMatch(&a2));
-    TEST_ASSERT(a2.QueryMatch(&a1));
+    CHECK(a1.QueryMatch(&a2));
+    CHECK(a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1, a2;
     a1.setQuery(makeAtomAromaticQuery());
     a2.setQuery(makeAtomAliphaticQuery());
-    TEST_ASSERT(!a1.QueryMatch(&a2));
-    TEST_ASSERT(!a2.QueryMatch(&a1));
+    CHECK(!a1.QueryMatch(&a2));
+    CHECK(!a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1(6), a2(8);
     a1.expandQuery(makeAtomNumQuery(8), Queries::COMPOSITE_OR);
     a2.expandQuery(makeAtomNumQuery(9), Queries::COMPOSITE_OR);
-    TEST_ASSERT(a1.QueryMatch(&a2));
-    TEST_ASSERT(a2.QueryMatch(&a1));
+    CHECK(a1.QueryMatch(&a2));
+    CHECK(a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1(6), a2(8);
     a1.expandQuery(makeAtomNumQuery(7), Queries::COMPOSITE_OR);
     a2.expandQuery(makeAtomNumQuery(9), Queries::COMPOSITE_OR);
-    TEST_ASSERT(!a1.QueryMatch(&a2));
-    TEST_ASSERT(!a2.QueryMatch(&a1));
+    CHECK(!a1.QueryMatch(&a2));
+    CHECK(!a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1(6), a2(6);
     a1.expandQuery(makeAtomExplicitValenceQuery(3), Queries::COMPOSITE_AND);
     a2.expandQuery(makeAtomExplicitValenceQuery(3), Queries::COMPOSITE_AND);
-    TEST_ASSERT(a1.QueryMatch(&a2));
-    TEST_ASSERT(a2.QueryMatch(&a1));
+    CHECK(a1.QueryMatch(&a2));
+    CHECK(a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1(6), a2(6);
     a1.expandQuery(makeAtomExplicitValenceQuery(3), Queries::COMPOSITE_AND);
     a2.expandQuery(makeAtomExplicitValenceQuery(4), Queries::COMPOSITE_AND);
-    TEST_ASSERT(!a1.QueryMatch(&a2));
-    TEST_ASSERT(!a2.QueryMatch(&a1));
+    CHECK(!a1.QueryMatch(&a2));
+    CHECK(!a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1(6), a2(8);
     a1.expandQuery(makeAtomExplicitValenceQuery(3), Queries::COMPOSITE_AND);
     a2.expandQuery(makeAtomExplicitValenceQuery(3), Queries::COMPOSITE_AND);
-    TEST_ASSERT(!a1.QueryMatch(&a2));
-    TEST_ASSERT(!a2.QueryMatch(&a1));
+    CHECK(!a1.QueryMatch(&a2));
+    CHECK(!a2.QueryMatch(&a1));
   }
 
   {
     QueryAtom a1(6), a2(8);
     a1.expandQuery(makeAtomNumQuery(8), Queries::COMPOSITE_OR);
-    TEST_ASSERT(a1.QueryMatch(&a2));
-    TEST_ASSERT(a2.QueryMatch(&a1));
+    CHECK(a1.QueryMatch(&a2));
+    CHECK(a2.QueryMatch(&a1));
   }
 
   {
@@ -421,7 +377,7 @@ void testQueryQueryMatches() {
     } catch (std::exception &e) {
       excStr = e.what();
     }
-    CHECK_INVARIANT(excStr == "Can't expand empty query", "");
+    CHECK(excStr == "Can't expand empty query");
   }
 
   // =====================================
@@ -432,27 +388,27 @@ void testQueryQueryMatches() {
     QueryBond a1, a2;
     a1.setQuery(makeBondNullQuery());
     a2.setQuery(makeBondNullQuery());
-    TEST_ASSERT(a1.Match(&a2));
-    TEST_ASSERT(a2.QueryMatch(&a1));
+    CHECK(a1.Match(&a2));
+    CHECK(a2.QueryMatch(&a1));
   }
 
   {
     QueryBond a1, a2(Bond::SINGLE);
     a1.setQuery(makeBondNullQuery());
-    TEST_ASSERT(a1.QueryMatch(&a2));
-    TEST_ASSERT(a2.QueryMatch(&a1));
+    CHECK(a1.QueryMatch(&a2));
+    CHECK(a2.QueryMatch(&a1));
   }
 
   {
     QueryBond a1(Bond::SINGLE), a2(Bond::SINGLE);
-    TEST_ASSERT(a1.QueryMatch(&a2));
-    TEST_ASSERT(a2.QueryMatch(&a1));
+    CHECK(a1.QueryMatch(&a2));
+    CHECK(a2.QueryMatch(&a1));
   }
 
   {
     QueryBond a1(Bond::SINGLE), a2(Bond::DOUBLE);
-    TEST_ASSERT(!a1.QueryMatch(&a2));
-    TEST_ASSERT(!a2.QueryMatch(&a1));
+    CHECK(!a1.QueryMatch(&a2));
+    CHECK(!a2.QueryMatch(&a1));
   }
 
   {
@@ -461,8 +417,8 @@ void testQueryQueryMatches() {
                    Queries::COMPOSITE_OR);
     a2.expandQuery(makeBondOrderEqualsQuery(Bond::AROMATIC),
                    Queries::COMPOSITE_OR);
-    TEST_ASSERT(a1.QueryMatch(&a2));
-    TEST_ASSERT(a2.QueryMatch(&a1));
+    CHECK(a1.QueryMatch(&a2));
+    CHECK(a2.QueryMatch(&a1));
   }
 
   {
@@ -471,390 +427,349 @@ void testQueryQueryMatches() {
                    Queries::COMPOSITE_OR);
     a2.expandQuery(makeBondOrderEqualsQuery(Bond::AROMATIC),
                    Queries::COMPOSITE_OR);
-    TEST_ASSERT(!a1.QueryMatch(&a2));
-    TEST_ASSERT(!a2.QueryMatch(&a1));
+    CHECK(!a1.QueryMatch(&a2));
+    CHECK(!a2.QueryMatch(&a1));
   }
 
   {
     QueryBond a1(Bond::SINGLE), a2(Bond::DOUBLE);
     a1.expandQuery(makeBondMinRingSizeQuery(4), Queries::COMPOSITE_OR);
     a2.expandQuery(makeBondMinRingSizeQuery(4), Queries::COMPOSITE_OR);
-    TEST_ASSERT(a1.QueryMatch(&a2));
-    TEST_ASSERT(a2.QueryMatch(&a1));
+    CHECK(a1.QueryMatch(&a2));
+    CHECK(a2.QueryMatch(&a1));
   }
 
   {
     QueryBond a1(Bond::SINGLE), a2(Bond::DOUBLE);
     a1.expandQuery(makeBondMinRingSizeQuery(4), Queries::COMPOSITE_AND);
     a2.expandQuery(makeBondMinRingSizeQuery(4), Queries::COMPOSITE_AND);
-    TEST_ASSERT(!a1.QueryMatch(&a2));
-    TEST_ASSERT(!a2.QueryMatch(&a1));
+    CHECK(!a1.QueryMatch(&a2));
+    CHECK(!a2.QueryMatch(&a1));
   }
 
   {
     QueryBond a1(Bond::SINGLE), a2(Bond::SINGLE);
     a1.expandQuery(makeBondMinRingSizeQuery(5), Queries::COMPOSITE_AND);
     a2.expandQuery(makeBondMinRingSizeQuery(4), Queries::COMPOSITE_AND);
-    TEST_ASSERT(!a1.QueryMatch(&a2));
-    TEST_ASSERT(!a2.QueryMatch(&a1));
+    CHECK(!a1.QueryMatch(&a2));
+    CHECK(!a2.QueryMatch(&a1));
   }
 
   {
     QueryBond a1(Bond::SINGLE), a2(Bond::AROMATIC);
     a1.expandQuery(makeBondOrderEqualsQuery(Bond::AROMATIC),
                    Queries::COMPOSITE_OR);
-    TEST_ASSERT(a1.QueryMatch(&a2));
-    TEST_ASSERT(a2.QueryMatch(&a1));
+    CHECK(a1.QueryMatch(&a2));
+    CHECK(a2.QueryMatch(&a1));
   }
-
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 
-void testIssue2892580() {
-  BOOST_LOG(rdErrorLog) << "---------------------- Test issue 2892580"
-                        << std::endl;
+TEST_CASE("query atom mass") {
   Mol m;
 
-  auto *a = new Atom(6);
+  Atom a(6);
 
   int massVal;
-  massVal = queryAtomMass(a);
-  TEST_ASSERT(massVal == static_cast<int>(
-                             std::round(12.011 * massIntegerConversionFactor)));
+  massVal = queryAtomMass(&a);
+  CHECK(massVal ==
+        static_cast<int>(std::round(12.011 * massIntegerConversionFactor)));
 
-  a->setIsotope(13);
-  massVal = queryAtomMass(a);
-  TEST_ASSERT(massVal == static_cast<int>(
-                             std::round(13.003 * massIntegerConversionFactor)));
-
-  delete a;
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+  a.setIsotope(13);
+  massVal = queryAtomMass(&a);
+  CHECK(massVal ==
+        static_cast<int>(std::round(13.003 * massIntegerConversionFactor)));
 }
 
-void testGithub153() {
-  BOOST_LOG(rdErrorLog) << "---------------------- Test github issue 53: query "
-                           "molecules not matching [R]"
-                        << std::endl;
-  RWMol *m = SmartsToMol("[C]1-[C]-[C]1");
+TEST_CASE("ring query matches") {
+  std::unique_ptr<RWMol> m(SmartsToMol("[C]1-[C]-[C]1"));
+  REQUIRE(m);
   MolOps::findSSSR(*m);
 
-  RWMol *q = SmartsToMol("[R]");
+  std::unique_ptr<RWMol> q(SmartsToMol("[R]"));
+  REQUIRE(q);
 
   std::vector<MatchVectType> mvv;
-  TEST_ASSERT(SubstructMatch(*m, *q, mvv));
-  TEST_ASSERT(mvv.size() == 3);
-  TEST_ASSERT(mvv[0].size() == 1);
-
-  delete m;
-  delete q;
-
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+  CHECK(SubstructMatch(*m, *q, mvv));
+  CHECK(mvv.size() == 3);
+  CHECK(mvv[0].size() == 1);
 }
 
-void testQualifiedQueries() {
-  BOOST_LOG(rdErrorLog)
-      << "---------------------- Test queries using qualifiers instead of =="
-      << std::endl;
-  RWMol *m = SmilesToMol("CNO");
+TEST_CASE("qualified atom queries") {
+  std::unique_ptr<RWMol> m(SmilesToMol("CNO"));
+  REQUIRE(m);
 
   {
     QueryAtom qA;
     qA.setQuery(makeAtomNumQuery<ATOM_GREATER_QUERY>(7, "test"));
-    TEST_ASSERT(qA.Match(m->getAtomWithIdx(0)));
-    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(1)));
-    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(2)));
+    CHECK(qA.Match(m->getAtomWithIdx(0)));
+    CHECK(!qA.Match(m->getAtomWithIdx(1)));
+    CHECK(!qA.Match(m->getAtomWithIdx(2)));
   }
   {
     QueryAtom qA;
     qA.setQuery(makeAtomNumQuery<ATOM_GREATEREQUAL_QUERY>(7, "test"));
-    TEST_ASSERT(qA.Match(m->getAtomWithIdx(0)));
-    TEST_ASSERT(qA.Match(m->getAtomWithIdx(1)));
-    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(2)));
+    CHECK(qA.Match(m->getAtomWithIdx(0)));
+    CHECK(qA.Match(m->getAtomWithIdx(1)));
+    CHECK(!qA.Match(m->getAtomWithIdx(2)));
   }
   {
     QueryAtom qA;
     qA.setQuery(makeAtomNumQuery<ATOM_LESS_QUERY>(7, "test"));
-    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(0)));
-    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(1)));
-    TEST_ASSERT(qA.Match(m->getAtomWithIdx(2)));
+    CHECK(!qA.Match(m->getAtomWithIdx(0)));
+    CHECK(!qA.Match(m->getAtomWithIdx(1)));
+    CHECK(qA.Match(m->getAtomWithIdx(2)));
   }
   {
     QueryAtom qA;
     qA.setQuery(makeAtomNumQuery<ATOM_LESSEQUAL_QUERY>(7, "test"));
-    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(0)));
-    TEST_ASSERT(qA.Match(m->getAtomWithIdx(1)));
-    TEST_ASSERT(qA.Match(m->getAtomWithIdx(2)));
+    CHECK(!qA.Match(m->getAtomWithIdx(0)));
+    CHECK(qA.Match(m->getAtomWithIdx(1)));
+    CHECK(qA.Match(m->getAtomWithIdx(2)));
   }
-
-  delete m;
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 
-void testGithub165() {
-  BOOST_LOG(rdErrorLog) << "---------------------- Test Github issue 165: "
-                           "radicals not used in atom-atom matching"
-                        << std::endl;
-
+TEST_CASE("radicals in atom matching") {
   Atom a1(6);
   Atom a2(6);
 
-  TEST_ASSERT(a1.Match(&a2));
-  TEST_ASSERT(a2.Match(&a1));
+  CHECK(a1.Match(&a2));
+  CHECK(a2.Match(&a1));
   a1.setNumRadicalElectrons(2);
-  TEST_ASSERT(!a1.Match(&a2));
-  TEST_ASSERT(a2.Match(&a1));
+  CHECK(!a1.Match(&a2));
+  CHECK(a2.Match(&a1));
   a2.setNumRadicalElectrons(2);
-  TEST_ASSERT(a1.Match(&a2));
-  TEST_ASSERT(a2.Match(&a1));
+  CHECK(a1.Match(&a2));
+  CHECK(a2.Match(&a1));
   a2.setNumRadicalElectrons(3);
-  TEST_ASSERT(!a1.Match(&a2));
-  TEST_ASSERT(!a2.Match(&a1));
-
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+  CHECK(!a1.Match(&a2));
+  CHECK(!a2.Match(&a1));
 }
 
-void testHasPropMatch() {
+TEST_CASE("atom has-property queries") {
   QueryAtom qA;
   qA.setQuery(makeHasPropQuery<Atom>("foo"));
   Atom a1(6);
-  TEST_ASSERT(!qA.Match(&a1));
+  CHECK(!qA.Match(&a1));
   a1.setProp<int>("foo", 1);
-  TEST_ASSERT(qA.Match(&a1));
+  CHECK(qA.Match(&a1));
 }
 
-void testHasPropWithValueMatch() {
+TEST_CASE("atom and bond property-value queries") {
   {
     QueryAtom qA;
     qA.setQuery(makePropQuery<Atom, int>("foo", 2));
     Atom a1(6);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
     a1.setProp<int>("foo", 1);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
     a1.setProp<int>("foo", 2);
-    TEST_ASSERT(qA.Match(&a1));
+    CHECK(qA.Match(&a1));
 
     a1.clearProp("foo");
     a1.setProp<double>("foo", 2);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
   }
 
   {
     QueryAtom qA;
     qA.setQuery(makePropQuery<Atom, std::string>("foo", "bar"));
     Atom a1(6);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
     a1.setProp<std::string>("foo", "bar");
-    TEST_ASSERT(qA.Match(&a1));
+    CHECK(qA.Match(&a1));
   }
 
   {
     QueryBond qA;
     qA.setQuery(makePropQuery<Bond, int>("foo", 2));
     Bond a1;
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
     a1.setProp<int>("foo", 1);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
     a1.setProp<int>("foo", 2);
-    TEST_ASSERT(qA.Match(&a1));
+    CHECK(qA.Match(&a1));
 
     a1.clearProp("foo");
     a1.setProp<double>("foo", 2);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
   }
 
   {
     QueryBond qA;
     qA.setQuery(makePropQuery<Bond, std::string>("foo", "bar"));
     Bond a1;
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
     a1.setProp<std::string>("foo", "bar");
-    TEST_ASSERT(qA.Match(&a1));
+    CHECK(qA.Match(&a1));
   }
 }
 
-void testHasPropWithDoubleValueMatch() {
+TEST_CASE("double property-value queries") {
   {
     QueryAtom qA;
     qA.setQuery(makePropQuery<Atom, double>("foo", 2));
     Atom a1(6);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
     a1.setProp<double>("foo", 1);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
     a1.setProp<double>("foo", 2);
-    TEST_ASSERT(qA.Match(&a1));
+    CHECK(qA.Match(&a1));
   }
   {
     QueryBond qA;
     qA.setQuery(makePropQuery<Bond, double>("foo", 2));
     Bond a1;
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
     a1.setProp<double>("foo", 1);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
     a1.setProp<double>("foo", 2);
-    TEST_ASSERT(qA.Match(&a1));
+    CHECK(qA.Match(&a1));
   }
 }
 
-void testExtraAtomQueries() {
-  BOOST_LOG(rdErrorLog) << "---------------------- Test extra atom queries"
-                        << std::endl;
-
+TEST_CASE("additional atom queries") {
   {  // radicals
     QueryAtom qA;
     qA.setQuery(makeAtomNumRadicalElectronsQuery(1));
     Atom a1(6);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
     a1.setNumRadicalElectrons(1);
-    TEST_ASSERT(qA.Match(&a1));
+    CHECK(qA.Match(&a1));
     a1.setNumRadicalElectrons(2);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
     qA.getQuery()->setNegation(true);
-    TEST_ASSERT(qA.Match(&a1));
+    CHECK(qA.Match(&a1));
     a1.setNumRadicalElectrons(0);
-    TEST_ASSERT(qA.Match(&a1));
+    CHECK(qA.Match(&a1));
     a1.setNumRadicalElectrons(1);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
   }
   {  // chiral tags
     QueryAtom qA;
     qA.setQuery(makeAtomHasChiralTagQuery());
     Atom a1(6);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
     a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-    TEST_ASSERT(qA.Match(&a1));
+    CHECK(qA.Match(&a1));
     a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
-    TEST_ASSERT(qA.Match(&a1));
+    CHECK(qA.Match(&a1));
     a1.setChiralTag(Atom::CHI_OTHER);
-    TEST_ASSERT(qA.Match(&a1));
+    CHECK(qA.Match(&a1));
     qA.getQuery()->setNegation(true);
     a1.setChiralTag(Atom::CHI_UNSPECIFIED);
-    TEST_ASSERT(qA.Match(&a1));
+    CHECK(qA.Match(&a1));
     a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
     a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
     a1.setChiralTag(Atom::CHI_OTHER);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
   }
 
   {  // missing chiral tags
     QueryAtom qA;
     qA.setQuery(makeAtomMissingChiralTagQuery());
     Atom a1(6);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
     a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
     a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
     a1.setChiralTag(Atom::CHI_OTHER);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
 
     a1.setChiralTag(Atom::CHI_UNSPECIFIED);
     a1.setProp(common_properties::_ChiralityPossible, 1);
-    TEST_ASSERT(qA.Match(&a1));
+    CHECK(qA.Match(&a1));
     a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
     a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
     a1.setChiralTag(Atom::CHI_OTHER);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
 
     qA.getQuery()->setNegation(true);
     a1.clearProp(common_properties::_ChiralityPossible);
     a1.setChiralTag(Atom::CHI_UNSPECIFIED);
-    TEST_ASSERT(qA.Match(&a1));
+    CHECK(qA.Match(&a1));
     a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CW);
-    TEST_ASSERT(qA.Match(&a1));
+    CHECK(qA.Match(&a1));
     a1.setChiralTag(Atom::CHI_TETRAHEDRAL_CCW);
-    TEST_ASSERT(qA.Match(&a1));
+    CHECK(qA.Match(&a1));
     a1.setChiralTag(Atom::CHI_OTHER);
-    TEST_ASSERT(qA.Match(&a1));
+    CHECK(qA.Match(&a1));
 
     a1.setChiralTag(Atom::CHI_UNSPECIFIED);
     a1.setProp(common_properties::_ChiralityPossible, 1);
-    TEST_ASSERT(!qA.Match(&a1));
+    CHECK(!qA.Match(&a1));
   }
-
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
-void testExtraBondQueries() {
-  BOOST_LOG(rdErrorLog) << "---------------------- Test extra bond queries"
-                        << std::endl;
-
+TEST_CASE("additional bond queries") {
   {  // stereo
     QueryBond qB;
     qB.setQuery(makeBondHasStereoQuery());
     Bond b1(Bond::DOUBLE);
-    TEST_ASSERT(!qB.Match(&b1));
+    CHECK(!qB.Match(&b1));
     b1.setStereo(Bond::STEREOE);
-    TEST_ASSERT(qB.Match(&b1));
+    CHECK(qB.Match(&b1));
     b1.setStereo(Bond::STEREOANY);
-    TEST_ASSERT(qB.Match(&b1));
+    CHECK(qB.Match(&b1));
     qB.getQuery()->setNegation(true);
     b1.setStereo(Bond::STEREONONE);
-    TEST_ASSERT(qB.Match(&b1));
+    CHECK(qB.Match(&b1));
     b1.setStereo(Bond::STEREOE);
-    TEST_ASSERT(!qB.Match(&b1));
+    CHECK(!qB.Match(&b1));
     b1.setStereo(Bond::STEREOANY);
-    TEST_ASSERT(!qB.Match(&b1));
+    CHECK(!qB.Match(&b1));
   }
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
-void testNumHeteroatomNeighborQueries() {
-  BOOST_LOG(rdErrorLog)
-      << "---------------------- Test num heteroatom neighbor queries"
-      << std::endl;
-
-  RWMol *m = SmilesToMol("CCNCOO");
+TEST_CASE("heteroatom neighbor queries") {
+  std::unique_ptr<RWMol> m(SmilesToMol("CCNCOO"));
+  REQUIRE(m);
   {
     QueryAtom qA;
     qA.setQuery(makeAtomNumHeteroatomNbrsQuery(1));
-    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(0)));
-    TEST_ASSERT(qA.Match(m->getAtomWithIdx(1)));
-    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(2)));
-    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(3)));
-    TEST_ASSERT(qA.Match(m->getAtomWithIdx(5)));
+    CHECK(!qA.Match(m->getAtomWithIdx(0)));
+    CHECK(qA.Match(m->getAtomWithIdx(1)));
+    CHECK(!qA.Match(m->getAtomWithIdx(2)));
+    CHECK(!qA.Match(m->getAtomWithIdx(3)));
+    CHECK(qA.Match(m->getAtomWithIdx(5)));
   }
   {
     QueryAtom qA;
     qA.setQuery(
         makeAtomRangeQuery(0, 3, true, true, queryAtomNumHeteroatomNbrs));
-    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(0)));
-    TEST_ASSERT(qA.Match(m->getAtomWithIdx(1)));
-    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(2)));
-    TEST_ASSERT(qA.Match(m->getAtomWithIdx(3)));
-    TEST_ASSERT(qA.Match(m->getAtomWithIdx(5)));
+    CHECK(!qA.Match(m->getAtomWithIdx(0)));
+    CHECK(qA.Match(m->getAtomWithIdx(1)));
+    CHECK(!qA.Match(m->getAtomWithIdx(2)));
+    CHECK(qA.Match(m->getAtomWithIdx(3)));
+    CHECK(qA.Match(m->getAtomWithIdx(5)));
   }
   {
     QueryAtom qA;
     qA.setQuery(
         makeAtomRangeQuery(1, 2, false, false, queryAtomNumHeteroatomNbrs));
-    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(0)));
-    TEST_ASSERT(qA.Match(m->getAtomWithIdx(1)));
-    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(2)));
-    TEST_ASSERT(qA.Match(m->getAtomWithIdx(3)));
-    TEST_ASSERT(qA.Match(m->getAtomWithIdx(5)));
+    CHECK(!qA.Match(m->getAtomWithIdx(0)));
+    CHECK(qA.Match(m->getAtomWithIdx(1)));
+    CHECK(!qA.Match(m->getAtomWithIdx(2)));
+    CHECK(qA.Match(m->getAtomWithIdx(3)));
+    CHECK(qA.Match(m->getAtomWithIdx(5)));
   }
   {
     QueryAtom qA;
     qA.setQuery(
         makeAtomRangeQuery(0, 2, true, false, queryAtomNumHeteroatomNbrs));
-    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(0)));
-    TEST_ASSERT(qA.Match(m->getAtomWithIdx(1)));
-    TEST_ASSERT(!qA.Match(m->getAtomWithIdx(2)));
-    TEST_ASSERT(qA.Match(m->getAtomWithIdx(3)));
-    TEST_ASSERT(qA.Match(m->getAtomWithIdx(5)));
+    CHECK(!qA.Match(m->getAtomWithIdx(0)));
+    CHECK(qA.Match(m->getAtomWithIdx(1)));
+    CHECK(!qA.Match(m->getAtomWithIdx(2)));
+    CHECK(qA.Match(m->getAtomWithIdx(3)));
+    CHECK(qA.Match(m->getAtomWithIdx(5)));
   }
-  delete m;
-
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 
-void testAtomTypeQueries() {
-  BOOST_LOG(rdErrorLog) << "---------------------- Test atom type queries"
-                        << std::endl;
-
-  RWMol *m = SmilesToMol("CCc1ccccc1");
+TEST_CASE("atom type queries") {
+  std::unique_ptr<RWMol> m(SmilesToMol("CCc1ccccc1"));
+  REQUIRE(m);
   {
     QueryAtom qA1;
     qA1.setQuery(makeAtomTypeQuery(6, true));
@@ -862,90 +777,129 @@ void testAtomTypeQueries() {
     qA2.setQuery(makeAtomTypeQuery(6, false));
     QueryAtom qA3;
     qA3.setQuery(makeAtomTypeQuery(7, true));
-    TEST_ASSERT(!qA1.Match(m->getAtomWithIdx(0)));
-    TEST_ASSERT(qA2.Match(m->getAtomWithIdx(0)));
-    TEST_ASSERT(!qA3.Match(m->getAtomWithIdx(0)));
-    TEST_ASSERT(qA1.Match(m->getAtomWithIdx(2)));
-    TEST_ASSERT(!qA2.Match(m->getAtomWithIdx(2)));
-    TEST_ASSERT(!qA3.Match(m->getAtomWithIdx(2)));
+    CHECK(!qA1.Match(m->getAtomWithIdx(0)));
+    CHECK(qA2.Match(m->getAtomWithIdx(0)));
+    CHECK(!qA3.Match(m->getAtomWithIdx(0)));
+    CHECK(qA1.Match(m->getAtomWithIdx(2)));
+    CHECK(!qA2.Match(m->getAtomWithIdx(2)));
+    CHECK(!qA3.Match(m->getAtomWithIdx(2)));
   }
-
-  delete m;
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 
-void testGithub2471() {
-  BOOST_LOG(rdErrorLog) << "---------------------- Test Github #2471: dummy "
-                           "atom queries are flagged as complex"
-                        << std::endl;
-
+TEST_CASE("dummy atoms in recursive queries") {
   auto m = "[*;$(CC)][*]"_smarts;
-  TEST_ASSERT(m);
-  TEST_ASSERT(m->getAtomWithIdx(0)->hasQuery());
-  TEST_ASSERT(m->getAtomWithIdx(1)->hasQuery());
-  TEST_ASSERT(isComplexQuery(m->getAtomWithIdx(0)));
-  TEST_ASSERT(!isComplexQuery(m->getAtomWithIdx(1)));
-
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
+  REQUIRE(m);
+  CHECK(m->getAtomWithIdx(0)->hasQuery());
+  CHECK(m->getAtomWithIdx(1)->hasQuery());
+  CHECK(isComplexQuery(m->getAtomWithIdx(0)));
+  CHECK(!isComplexQuery(m->getAtomWithIdx(1)));
 }
 
-void testHasBondTypeQuery() {
-  BOOST_LOG(rdErrorLog) << "---------------------- Testing hasBondTypeQuery() "
-                           "and hasComplexBondTypeQuery()"
-                        << std::endl;
-
+TEST_CASE("bond type queries") {
   {
     auto m = "C-C-@C@-C@CC-,=C!-C"_smarts;
-    TEST_ASSERT(m);
+    REQUIRE(m);
     for (const auto bond : m->bonds()) {
       bool hasQ = QueryOps::hasBondTypeQuery(*bond);
       if (bond->getIdx() != 3) {
-        TEST_ASSERT(hasQ);
+        CHECK(hasQ);
       } else {
-        TEST_ASSERT(!hasQ);
+        CHECK(!hasQ);
       }
     }
     for (const auto bond : m->bonds()) {
       bool hasQ = QueryOps::hasComplexBondTypeQuery(*bond);
       if (bond->getIdx() < 4) {
-        TEST_ASSERT(!hasQ);
+        CHECK(!hasQ);
       } else {
-        TEST_ASSERT(hasQ);
+        CHECK(hasQ);
       }
     }
   }
   {
     auto m = "CC-C"_smiles;
-    TEST_ASSERT(m);
+    REQUIRE(m);
     for (const auto bond : m->bonds()) {
-      TEST_ASSERT(!QueryOps::hasBondTypeQuery(*bond));
+      CHECK(!QueryOps::hasBondTypeQuery(*bond));
     }
   }
-  BOOST_LOG(rdErrorLog) << "Done!" << std::endl;
 }
 
-int main() {
-  RDLog::InitLogs();
-#if 1
-  test1();
-  test2();
-  test3();
-  test4();
-  test5();
-  testQueryQueryMatches();
-  testIssue2892580();
-  testGithub153();
-  testQualifiedQueries();
-  testGithub165();
-  testHasPropMatch();
-  testHasPropWithValueMatch();
-  testHasPropWithDoubleValueMatch();
-#endif
-  testExtraAtomQueries();
-  testExtraBondQueries();
-  testNumHeteroatomNeighborQueries();
-  testAtomTypeQueries();
-  testGithub2471();
-  testHasBondTypeQuery();
-  return 0;
+TEST_CASE("query-query matches with ring queries") {
+  SECTION("atom basics") {
+    std::vector<std::tuple<std::string, std::string, bool>> checks = {
+        {"[R]", "[R]", true},
+        {"[R]", "[!R]", false},
+        {"[R]", "[R3]", false},
+        {"[R]", "[!R3]", false}};
+    for (const auto &[smarts1, smarts2, expected] : checks) {
+      INFO(smarts1 << " " << smarts2);
+      auto a1 = v2::SmilesParse::AtomFromSmarts(smarts1);
+      REQUIRE(a1);
+      CHECK(a1->hasQuery());
+      auto a2 = v2::SmilesParse::AtomFromSmarts(smarts2);
+      REQUIRE(a2);
+      CHECK(a2->hasQuery());
+      CHECK(dynamic_cast<QueryAtom *>(a1.get())->QueryMatch(
+                dynamic_cast<QueryAtom *>(a2.get())) == expected);
+      CHECK(dynamic_cast<QueryAtom *>(a2.get())->QueryMatch(
+                dynamic_cast<QueryAtom *>(a1.get())) == expected);
+    }
+  }
+  SECTION("atoms in molecules basics") {
+    std::vector<std::tuple<std::string, std::string, size_t>> checks = {
+        {"[R][R]", "[R][R]", 1},
+        {"[R][R]", "[R][!R]", 0},
+        {"[R][R]", "[!R][!R]", 0},
+        //
+        {"[!R][R]", "[R][R]", 0},
+        {"[!R][R]", "[R][!R]", 1},
+        {"[!R][R]", "[!R][!R]", 0},
+        //
+        {"[!R][!R]", "[R][R]", 0},
+        {"[!R][!R]", "[R][!R]", 0},
+        {"[!R][!R]", "[!R][!R]", 1}};
+    for (const auto &[smarts1, smarts2, expected_size] : checks) {
+      INFO(smarts1 << " " << smarts2);
+      auto m1 = v2::SmilesParse::MolFromSmarts(smarts1);
+      REQUIRE(m1);
+      auto m2 = v2::SmilesParse::MolFromSmarts(smarts2);
+      REQUIRE(m2);
+      SubstructMatchParameters params;
+      params.useQueryQueryMatches = true;
+      CHECK(SubstructMatch(*m1, *m2, params).size() == expected_size);
+    }
+  }
+  SECTION("bond basics") {
+    std::vector<std::tuple<std::string, std::string, bool>> checks = {
+        {"@", "@", true}, {"@", "!@", false}};
+    for (const auto &[smarts1, smarts2, expected] : checks) {
+      INFO(smarts1 << " " << smarts2);
+      auto b1 = v2::SmilesParse::BondFromSmarts(smarts1);
+      REQUIRE(b1);
+      auto b2 = v2::SmilesParse::BondFromSmarts(smarts2);
+      REQUIRE(b2);
+      CHECK(dynamic_cast<QueryBond *>(b1.get())->QueryMatch(
+                dynamic_cast<QueryBond *>(b2.get())) == expected);
+      CHECK(dynamic_cast<QueryBond *>(b2.get())->QueryMatch(
+                dynamic_cast<QueryBond *>(b1.get())) == expected);
+    }
+  }
+  SECTION("bonds in molecules basics") {
+    std::vector<std::tuple<std::string, std::string, size_t>> checks = {
+        {"[R]@[R]", "[R]@[R]", 1},
+        {"[R]@[R]", "[R]!@[R]", 0},
+        {"[R]!@[R]", "[R]@[R]", 0},
+        {"[R]!@[R]", "[R]!@[R]", 1}};
+    for (const auto &[smarts1, smarts2, expected_size] : checks) {
+      INFO(smarts1 << " " << smarts2);
+      auto m1 = v2::SmilesParse::MolFromSmarts(smarts1);
+      REQUIRE(m1);
+      auto m2 = v2::SmilesParse::MolFromSmarts(smarts2);
+      REQUIRE(m2);
+      SubstructMatchParameters params;
+      params.useQueryQueryMatches = true;
+      CHECK(SubstructMatch(*m1, *m2, params).size() == expected_size);
+    }
+  }
 }
