@@ -3467,3 +3467,78 @@ TEST_CASE(
     }
   }
 }
+TEST_CASE(
+    "Github 9646: SMILES rooted at a chiral atom with an implicit H loses "
+    "stereochemistry") {
+  SECTION("first atom with implicit H and no ring closures") {
+    // the tag written for a chiral root atom must account for its implicit H
+    // the same way the parser does
+    RWMol mol;
+    auto *c0 = new Atom(6);
+    c0->setChiralTag(Atom::ChiralType::CHI_TETRAHEDRAL_CCW);
+    mol.addAtom(c0);
+    mol.addAtom(new Atom(9));
+    mol.addAtom(new Atom(17));
+    mol.addAtom(new Atom(35));
+    mol.addBond(0, 1, Bond::BondType::SINGLE);
+    mol.addBond(0, 2, Bond::BondType::SINGLE);
+    mol.addBond(0, 3, Bond::BondType::SINGLE);
+    MolOps::sanitizeMol(mol);
+    MolOps::assignStereochemistry(mol);
+    REQUIRE(mol.getAtomWithIdx(0)->getNumImplicitHs() == 1);
+    std::string cip;
+    mol.getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip);
+
+    SmilesWriteParams ps;
+    ps.canonical = false;
+    ps.rootedAtAtom = 0;
+    auto smi = MolToSmiles(mol, ps);
+    auto mol2 = v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(mol2);
+    MolOps::assignStereochemistry(*mol2);
+    std::string cip2;
+    mol2->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip2);
+    CHECK(cip2 == cip);
+  }
+  SECTION("bridgehead atom opening two ring closures") {
+    // the case reported in the issue: an oxanorbornene bridgehead
+    RWMol mol;
+    auto tags = std::vector<Atom::ChiralType>{
+        Atom::ChiralType::CHI_UNSPECIFIED, Atom::ChiralType::CHI_UNSPECIFIED,
+        Atom::ChiralType::CHI_TETRAHEDRAL_CCW,
+        Atom::ChiralType::CHI_UNSPECIFIED,
+        Atom::ChiralType::CHI_TETRAHEDRAL_CW,
+        Atom::ChiralType::CHI_TETRAHEDRAL_CW,
+        Atom::ChiralType::CHI_TETRAHEDRAL_CCW};
+    auto symbols = std::vector<unsigned int>{6, 6, 6, 8, 6, 6, 6};
+    for (unsigned int i = 0; i < symbols.size(); ++i) {
+      auto *atom = new Atom(symbols[i]);
+      atom->setChiralTag(tags[i]);
+      mol.addAtom(atom);
+    }
+    for (const auto &bnd : std::vector<std::tuple<unsigned int, unsigned int,
+                                                  Bond::BondType>>{
+             {2, 3, Bond::BondType::SINGLE}, {3, 4, Bond::BondType::SINGLE},
+             {2, 1, Bond::BondType::SINGLE}, {4, 0, Bond::BondType::SINGLE},
+             {1, 0, Bond::BondType::DOUBLE}, {5, 6, Bond::BondType::SINGLE},
+             {2, 6, Bond::BondType::SINGLE}, {4, 5, Bond::BondType::SINGLE}}) {
+      mol.addBond(std::get<0>(bnd), std::get<1>(bnd), std::get<2>(bnd));
+    }
+    MolOps::sanitizeMol(mol);
+    MolOps::assignStereochemistry(mol);
+    std::string cip;
+    mol.getAtomWithIdx(2)->getProp(common_properties::_CIPCode, cip);
+    REQUIRE(mol.getAtomWithIdx(2)->getNumImplicitHs() == 1);
+
+    SmilesWriteParams ps;
+    ps.canonical = false;
+    ps.rootedAtAtom = 2;
+    auto smi = MolToSmiles(mol, ps);
+    auto mol2 = v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(mol2);
+    MolOps::assignStereochemistry(*mol2);
+    std::string cip2;
+    mol2->getAtomWithIdx(0)->getProp(common_properties::_CIPCode, cip2);
+    CHECK(cip2 == cip);
+  }
+}
