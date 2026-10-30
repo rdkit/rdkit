@@ -826,50 +826,80 @@ TEST_CASE("bond type queries") {
 }
 
 TEST_CASE("query-query matches with ring queries") {
-  // SECTION("atom basics") {
-  //   auto a1 = v2::SmilesParse::AtomFromSmarts("[R]");
-  //   REQUIRE(a1);
-  //   auto a2 = v2::SmilesParse::AtomFromSmarts("[R]");
-  //   REQUIRE(a2);
-  //   CHECK(a1->hasQuery());
-  //   CHECK(a2->hasQuery());
-  //   CHECK(dynamic_cast<QueryAtom *>(a1.get())->QueryMatch(
-  //       dynamic_cast<QueryAtom *>(a2.get())));
-  // }
+  SECTION("atom basics") {
+    std::vector<std::tuple<std::string, std::string, bool>> checks = {
+        {"[R]", "[R]", true},
+        {"[R]", "[!R]", false},
+        {"[R]", "[R3]", false},
+        {"[R]", "[!R3]", false}};
+    for (const auto &[smarts1, smarts2, expected] : checks) {
+      INFO(smarts1 << " " << smarts2);
+      auto a1 = v2::SmilesParse::AtomFromSmarts(smarts1);
+      REQUIRE(a1);
+      CHECK(a1->hasQuery());
+      auto a2 = v2::SmilesParse::AtomFromSmarts(smarts2);
+      REQUIRE(a2);
+      CHECK(a2->hasQuery());
+      CHECK(dynamic_cast<QueryAtom *>(a1.get())->QueryMatch(
+                dynamic_cast<QueryAtom *>(a2.get())) == expected);
+      CHECK(dynamic_cast<QueryAtom *>(a2.get())->QueryMatch(
+                dynamic_cast<QueryAtom *>(a1.get())) == expected);
+    }
+  }
   SECTION("atoms in molecules basics") {
-    auto m1 = "[R][R]"_smarts;
-    REQUIRE(m1);
-    std::vector<std::pair<std::string, size_t>> checks = {
-        {"[R][R]", 1},
-        {"[R][!R]", 0},
-        {"[!R][!R]", 1},
-    };
-    for (const auto &[smarts, expected_size] : checks) {
-      INFO(smarts);
-      auto m2 = v2::SmilesParse::MolFromSmarts(smarts);
+    std::vector<std::tuple<std::string, std::string, size_t>> checks = {
+        {"[R][R]", "[R][R]", 1},
+        {"[R][R]", "[R][!R]", 0},
+        {"[R][R]", "[!R][!R]", 0},
+        //
+        {"[!R][R]", "[R][R]", 0},
+        {"[!R][R]", "[R][!R]", 1},
+        {"[!R][R]", "[!R][!R]", 0},
+        //
+        {"[!R][!R]", "[R][R]", 0},
+        {"[!R][!R]", "[R][!R]", 0},
+        {"[!R][!R]", "[!R][!R]", 1}};
+    for (const auto &[smarts1, smarts2, expected_size] : checks) {
+      INFO(smarts1 << " " << smarts2);
+      auto m1 = v2::SmilesParse::MolFromSmarts(smarts1);
+      REQUIRE(m1);
+      auto m2 = v2::SmilesParse::MolFromSmarts(smarts2);
       REQUIRE(m2);
       SubstructMatchParameters params;
       params.useQueryQueryMatches = true;
       CHECK(SubstructMatch(*m1, *m2, params).size() == expected_size);
     }
   }
-  // SECTION("bond basics") {
-  //   auto b1 = v2::SmilesParse::BondFromSmarts("@");
-  //   REQUIRE(b1);
-  //   auto b2 = v2::SmilesParse::BondFromSmarts("@");
-  //   REQUIRE(b2);
-  //   CHECK(b1->hasQuery());
-  //   CHECK(b2->hasQuery());
-  //   CHECK(dynamic_cast<QueryBond *>(b1.get())->QueryMatch(
-  //       dynamic_cast<QueryBond *>(b2.get())));
-  // }
-  // SECTION("bonds in molecules basics") {
-  //   auto m1 = "[R]@[R]"_smarts;
-  //   REQUIRE(m1);
-  //   auto m2 = "[R]@[R]"_smarts;
-  //   REQUIRE(m2);
-  //   std::vector<MatchVectType> mvv;
-  //   CHECK(SubstructMatch(*m1, *m2, mvv));
-  //   CHECK(mvv.size() == 1);
-  // }
+  SECTION("bond basics") {
+    std::vector<std::tuple<std::string, std::string, bool>> checks = {
+        {"@", "@", true}, {"@", "!@", false}};
+    for (const auto &[smarts1, smarts2, expected] : checks) {
+      INFO(smarts1 << " " << smarts2);
+      auto b1 = v2::SmilesParse::BondFromSmarts(smarts1);
+      REQUIRE(b1);
+      auto b2 = v2::SmilesParse::BondFromSmarts(smarts2);
+      REQUIRE(b2);
+      CHECK(dynamic_cast<QueryBond *>(b1.get())->QueryMatch(
+                dynamic_cast<QueryBond *>(b2.get())) == expected);
+      CHECK(dynamic_cast<QueryBond *>(b2.get())->QueryMatch(
+                dynamic_cast<QueryBond *>(b1.get())) == expected);
+    }
+  }
+  SECTION("bonds in molecules basics") {
+    std::vector<std::tuple<std::string, std::string, size_t>> checks = {
+        {"[R]@[R]", "[R]@[R]", 1},
+        {"[R]@[R]", "[R]!@[R]", 0},
+        {"[R]!@[R]", "[R]@[R]", 0},
+        {"[R]!@[R]", "[R]!@[R]", 1}};
+    for (const auto &[smarts1, smarts2, expected_size] : checks) {
+      INFO(smarts1 << " " << smarts2);
+      auto m1 = v2::SmilesParse::MolFromSmarts(smarts1);
+      REQUIRE(m1);
+      auto m2 = v2::SmilesParse::MolFromSmarts(smarts2);
+      REQUIRE(m2);
+      SubstructMatchParameters params;
+      params.useQueryQueryMatches = true;
+      CHECK(SubstructMatch(*m1, *m2, params).size() == expected_size);
+    }
+  }
 }

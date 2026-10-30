@@ -102,8 +102,6 @@ struct AtomQueryTraits {
 bool QueryAtom::Match(Atom const *what) const {
   PRECONDITION(what, "bad query atom");
   PRECONDITION(dp_query, "no query set");
-  std::cerr << "match: " << dp_query->getDescription() << " vs "
-            << what->hasQuery() << std::endl;
   return dp_query->Match(what);
 }
 bool QueryAtom::QueryMatch(QueryAtom const *what) const {
