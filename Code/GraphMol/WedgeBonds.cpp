@@ -404,11 +404,11 @@ Bond::BondDir determineBondWedgeState(
     return bond->getBondDir();
   }
 
-  if (wbi->second->getType() ==
-      Chirality::WedgeInfoType::WedgeInfoTypeAtropisomer) {
-    return wbi->second->getDir();
-  } else {
+  if (wbi->second->getType() == Chirality::WedgeInfoType::WedgeInfoTypeChiral) {
     return determineBondWedgeState(bond, wbi->second->getIdx(), conf);
+  } else {
+    // atropisomers and wiggly bonds carry their direction directly
+    return wbi->second->getDir();
   }
 }
 
@@ -582,6 +582,21 @@ std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
   if (!params) {
     params = &defaultWedgingParams;
   }
+  std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> wedgeInfo;
+
+  // Claim the wiggly bonds first. They are stereo annotations in their own
+  // right, so they have to be re-applied by wedgeMolBonds() and written out by
+  // the mol file writers just like wedges and dashes are. Claiming them up
+  // front also keeps pickBondToWedge() from handing one of them to a
+  // neighboring chiral atom, which would silently discard the annotation.
+  for (const auto bond : mol.bonds()) {
+    if (!detail::isWigglyBond(bond, bond->getBeginAtom())) {
+      continue;
+    }
+    wedgeInfo[bond->getIdx()] =
+        std::make_unique<Chirality::WedgeInfoWiggly>(bond->getBeginAtomIdx());
+  }
+
   std::vector<unsigned int> indices(mol.getNumAtoms());
   std::iota(indices.begin(), indices.end(), 0);
   static int noNbrs = 100;
@@ -592,7 +607,6 @@ std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
                 return nChiralNbrs[i1] < nChiralNbrs[i2];
               });
   }
-  std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> wedgeInfo;
   for (auto idx : indices) {
     if (nChiralNbrs[idx] > noNbrs) {
       // std::cerr << " SKIPPING2: " << idx << std::endl;
@@ -694,7 +708,8 @@ void wedgeMolBonds(ROMol &mol, const Conformer *conf,
   // loop over the bonds we need to wedge:
   for (const auto &[wbi, wedgeInfo] : wedgeBonds) {
     if (wedgeInfo->getType() ==
-        Chirality::WedgeInfoType::WedgeInfoTypeAtropisomer) {
+            Chirality::WedgeInfoType::WedgeInfoTypeAtropisomer ||
+        wedgeInfo->getType() == Chirality::WedgeInfoType::WedgeInfoTypeWiggly) {
       mol.getBondWithIdx(wbi)->setBondDir(wedgeInfo->getDir());
     } else {  // chiral atom needs wedging
       auto bond = mol.getBondWithIdx(wbi);
