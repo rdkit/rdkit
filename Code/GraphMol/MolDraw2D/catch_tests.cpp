@@ -3584,8 +3584,9 @@ TEST_CASE("github #3912: cannot draw atom lists from SMARTS", "[query][bug]") {
   }
 }
 
-TEST_CASE("github #9607: Depiction code doesn't recognize all atom lists", "[queries]") {
- SECTION("support all atom lists when depicting") {
+TEST_CASE("github #9607: Depiction code doesn't recognize all atom lists",
+          "[queries]") {
+  SECTION("support all atom lists when depicting") {
     auto m1 = R"CTAB(
      RDKit          2D
 
@@ -3605,7 +3606,7 @@ M  V30 END CTAB
 M  END
 $$$$
 )CTAB"_ctab;
-      
+
     CHECK(isAtomListQuery(m1->getAtomWithIdx(1)));
     int panelWidth = -1;
     int panelHeight = -1;
@@ -11719,8 +11720,8 @@ TEST_CASE("colourScheme option from JSON", "[drawing]") {
     setDarkMode(reference);
 
     MolDrawOptions opts;
-    MolDraw2DUtils::updateMolDrawOptionsFromJSON(
-        opts, R"({"colourScheme": "dark"})");
+    MolDraw2DUtils::updateMolDrawOptionsFromJSON(opts,
+                                                 R"({"colourScheme": "dark"})");
     CHECK(opts.backgroundColour == reference.backgroundColour);
     CHECK(opts.backgroundColour != defaults.backgroundColour);
     CHECK(opts.legendColour == reference.legendColour);
@@ -11744,8 +11745,8 @@ TEST_CASE("colourScheme option from JSON", "[drawing]") {
   SECTION("scheme name is case-insensitive and darkmode is an alias") {
     MolDrawOptions reference;
     setDarkMode(reference);
-    for (const auto *json : {R"({"colourScheme": "Dark"})",
-                             R"({"colourScheme": "DARKMODE"})"}) {
+    for (const auto *json :
+         {R"({"colourScheme": "Dark"})", R"({"colourScheme": "DARKMODE"})"}) {
       MolDrawOptions opts;
       MolDraw2DUtils::updateMolDrawOptionsFromJSON(opts, json);
       CHECK(opts.backgroundColour == reference.backgroundColour);
@@ -11759,8 +11760,7 @@ TEST_CASE("colourScheme option from JSON", "[drawing]") {
 
     MolDrawOptions opts;
     MolDraw2DUtils::updateMolDrawOptionsFromJSON(
-        opts,
-        R"({"colourScheme": "dark", "backgroundColour": [0, 0, 1, 1]})");
+        opts, R"({"colourScheme": "dark", "backgroundColour": [0, 0, 1, 1]})");
     CHECK(opts.backgroundColour == blue);
     // everything else still comes from the scheme
     CHECK(opts.legendColour == reference.legendColour);
@@ -11798,4 +11798,26 @@ TEST_CASE("colourScheme option from JSON", "[drawing]") {
     CHECK(opts.backgroundColour == defaults.backgroundColour);
     CHECK(opts.atomColourPalette == defaults.atomColourPalette);
   }
+}
+
+TEST_CASE("Github 9779 - No wedge for chiral P and S") {
+  auto mol = "C[C@@H]1CC[P@]1C(C)(C)C"_smiles;
+  REQUIRE(mol);
+  MolDraw2DSVG drawer(250, 200, -1, -1, NO_FREETYPE);
+  drawer.drawOptions().addAtomIndices = true;
+  drawer.drawOptions().addBondIndices = true;
+  MolDraw2DUtils::prepareAndDrawMolecule(drawer, *mol);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::ofstream outs("testGithub9779_MissingWedgeToP.svg");
+  outs << text;
+  outs.close();
+  // Bond 4, the wedge from P to the t-butyl wasn't being drawn at all,
+  // so just test that it comes in twice in the text - one for the
+  // black bit, one for the orange bit.
+  const static std::regex bond4("<path class='bond-4 atom-4 atom-5'");
+  std::ptrdiff_t const bond4_count(
+      std::distance(std::sregex_iterator(text.begin(), text.end(), bond4),
+                    std::sregex_iterator()));
+  CHECK(bond4_count == 2);
 }

@@ -465,7 +465,7 @@ void DrawShapeSolidWedge::myDraw(MolDraw2D &drawer) const {
     drawer.setActiveAtmIdx(atom1_, atom2_);
   }
   drawer.setActiveBndIdx(bond_);
-  if (points_.size() == 3 || points_.size() == 9) {
+  if (points_.size() == 3 || points_.size() == 9 || points_.size() == 12) {
     drawer.drawTriangle(points_[0], points_[1], points_[2], true);
   }
   if (points_.size() == 6) {
@@ -483,6 +483,16 @@ void DrawShapeSolidWedge::myDraw(MolDraw2D &drawer) const {
     std::vector<Point2D> quadPoints{points_[4], points_[5], points_[6],
                                     points_[7]};
     drawer.drawPolygon(quadPoints, true);
+  } else if (points_.size() == 12) {
+    // This is a conventional 2 colour wedge drawn as 3 triangles because
+    // the wedge end is not a straight line.
+    if (drawer.drawOptions().splitBonds) {
+      drawer.setActiveAtmIdx(atom2_);
+    }
+    drawer.setColour(col2_);
+    std::vector<Point2D> pentPoints{points_[3],  points_[4], points_[5],
+                                    points_[10], points_[7], points_[11]};
+    drawer.drawPolygon(pentPoints, true);
   }
 }
 
@@ -501,6 +511,12 @@ bool DrawShapeSolidWedge::doesRectClash(const StringRect &rect,
     }
     if (points_.size() >= 9) {
       if (doesTriangleIntersect(rect, points_[6], points_[7], points_[8],
+                                padding)) {
+        return true;
+      }
+    }
+    if (points_.size() == 12) {
+      if (doesTriangleIntersect(rect, points_[9], points_[10], points_[11],
                                 padding)) {
         return true;
       }
