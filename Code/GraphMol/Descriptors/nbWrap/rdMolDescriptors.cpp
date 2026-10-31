@@ -29,6 +29,7 @@
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/AtomFeat.h>
 #include <GraphMol/Descriptors/OxidationNumbers.h>
+#include <GraphMol/Descriptors/SAScore.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/MACCS.h>
@@ -1541,6 +1542,16 @@ assigning hybridization)DOC");
         "atoms"_a = nb::none(),
         "Returns the number of bridgehead atoms (atoms shared between rings "
         "that share at least two bonds)");
+
+  m.def("CalcSAScore",
+        static_cast<double (*)(const RDKit::ROMol &)>(
+            RDKit::Descriptors::calcSAScore),
+        "mol"_a,
+        "Returns the synthetic accessibility score of Ertl and Schuffenhauer, "
+        "from 1 (easy to make) to 10 (hard to make).\n\n"
+        "Stereocenters are counted with the new stereo perception, so results "
+        "differ from Contrib/SA_Score/sascorer.py where the two perceptions "
+        "disagree.");
 
   m.attr("_CalcNumAtomStereoCenters_version") =
       RDKit::Descriptors::NumAtomStereoCentersVersion;
