@@ -115,7 +115,7 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
                                            unsigned char radius = 3,
                                            bool rings = true,
                                            bool isomeric = false,
-                                           bool kekulize = true,
+                                           bool kekulize = false,
                                            unsigned char min_radius = 1);
 
   //! \overload
@@ -123,7 +123,7 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
                                            unsigned char radius = 3,
                                            bool rings = true,
                                            bool isomeric = false,
-                                           bool kekulize = true,
+                                           bool kekulize = false,
                                            unsigned char min_radius = 1);
 
   /*!
@@ -152,7 +152,7 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
    */
   std::vector<uint32_t> Encode(ROMol &mol, unsigned char radius = 3,
                                bool rings = true, bool isomeric = false,
-                               bool kekulize = true,
+                               bool kekulize = false,
                                unsigned char min_radius = 1);
 
   //! \overload
@@ -160,13 +160,13 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
                                             unsigned char radius = 3,
                                             bool rings = true,
                                             bool isomeric = false,
-                                            bool kekulize = true,
+                                            bool kekulize = false,
                                             unsigned char min_radius = 1);
 
   //! \overload
   std::vector<uint32_t> Encode(std::string &smiles, unsigned char radius = 3,
                                bool rings = true, bool isomeric = false,
-                               bool kekulize = true,
+                               bool kekulize = false,
                                unsigned char min_radius = 1);
 
   //! \overload
@@ -174,7 +174,7 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
                                             unsigned char radius = 3,
                                             bool rings = true,
                                             bool isomeric = false,
-                                            bool kekulize = true,
+                                            bool kekulize = false,
                                             unsigned char min_radius = 1);
 
   /*!
@@ -204,27 +204,27 @@ class RDKIT_FINGERPRINTS_EXPORT MHFPEncoder {
    */
   ExplicitBitVect EncodeSECFP(ROMol &mol, unsigned char radius = 3,
                               bool rings = true, bool isomeric = false,
-                              bool kekulize = true,
+                              bool kekulize = false,
                               unsigned char min_radius = 1,
                               size_t length = 2048);
 
   //! \overload
   std::vector<ExplicitBitVect> EncodeSECFP(
       std::vector<ROMol> &mols, unsigned char radius = 3, bool rings = true,
-      bool isomeric = false, bool kekulize = true, unsigned char min_radius = 1,
-      size_t length = 2048);
+      bool isomeric = false, bool kekulize = false,
+      unsigned char min_radius = 1, size_t length = 2048);
 
   //! \overload
   ExplicitBitVect EncodeSECFP(std::string &smiles, unsigned char radius = 3,
                               bool rings = true, bool isomeric = false,
-                              bool kekulize = true,
+                              bool kekulize = false,
                               unsigned char min_radius = 1,
                               size_t length = 2048);
 
   //! \overload
   std::vector<ExplicitBitVect> EncodeSECFP(
       std::vector<std::string> &smiles, unsigned char radius = 3,
-      bool rings = true, bool isomeric = false, bool kekulize = true,
+      bool rings = true, bool isomeric = false, bool kekulize = false,
       unsigned char min_radius = 1, size_t length = 2048);
 
   /*!

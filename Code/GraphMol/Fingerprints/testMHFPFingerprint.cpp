@@ -141,7 +141,7 @@ void testMHFPDistance() {
   TEST_ASSERT(feq(MHFPFingerprints::MHFPEncoder::Distance(fp_s, fp_s), 0.0));
 
   TEST_ASSERT(
-      feq(MHFPFingerprints::MHFPEncoder::Distance(fp_s, fp_t), 0.460449));
+      feq(MHFPFingerprints::MHFPEncoder::Distance(fp_s, fp_t), 0.727051));
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
@@ -160,8 +160,6 @@ void testOrderDependence() {
   auto fp_s = enc.Encode(*m1);
   auto fp_t = enc.Encode(*m2);
 
-  std::cerr << "Distance between fp_s and fp_t: "
-            << MHFPFingerprints::MHFPEncoder::Distance(fp_s, fp_t) << std::endl;
   TEST_ASSERT(feq(MHFPFingerprints::MHFPEncoder::Distance(fp_s, fp_t), 0.0));
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
