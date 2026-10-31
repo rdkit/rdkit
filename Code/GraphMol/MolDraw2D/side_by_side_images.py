@@ -6,10 +6,14 @@ from pathlib import Path
 
 def file_hash(path):
     hasher = hashlib.sha256()
-    with open(path, 'rb') as file:
-        for chunk in iter(lambda: file.read(4096), b""):
-            hasher.update(chunk)
-    return hasher.hexdigest()
+    try:
+        with open(path, 'rb') as file:
+            for chunk in iter(lambda: file.read(4096), b""):
+                hasher.update(chunk)
+            return hasher.hexdigest()
+    except FileNotFoundError:
+        return 0
+    
 
 parser = argparse.ArgumentParser(description='Make an HTML table for comparing images.')
 parser.add_argument('--dir1', required=True, help='Name of first directory.')
