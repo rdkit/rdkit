@@ -23,6 +23,7 @@
 
 #include <RDGeneral/types.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/new_canon.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -96,18 +97,26 @@ std::vector<uint32_t> MHFPEncoder::FromArray(const std::vector<uint32_t> &vec) {
 std::vector<std::string> MHFPEncoder::CreateShingling(
     const ROMol &mol, unsigned char radius, bool rings, bool isomeric,
     bool kekulize, unsigned char min_radius) {
-  RWMol tmol(mol);
+  auto nAtoms = mol.getNumAtoms();
+  std::vector<unsigned int> atomRanks(nAtoms);
+  Canon::rankMolAtoms(mol, atomRanks);
+  std::vector<unsigned int> atomIndices(nAtoms);
+  for (auto i = 0u; i < nAtoms; ++i) {
+    atomIndices[atomRanks[i]] = i;
+  }
+  std::unique_ptr<RWMol> tmol{
+      static_cast<RWMol *>(MolOps::renumberAtoms(mol, atomIndices))};
   if (kekulize) {
-    MolOps::Kekulize(tmol);
+    MolOps::Kekulize(*dynamic_cast<RWMol *>(tmol.get()));
   }
 
   std::vector<std::string> shingling;
 
   if (rings) {
-    const VECT_INT_VECT bonds_vect = tmol.getRingInfo()->bondRings();
+    const VECT_INT_VECT bonds_vect = tmol->getRingInfo()->bondRings();
 
     for (size_t i = 0; i < bonds_vect.size(); i++) {
-      std::unique_ptr<ROMol> m(Subgraphs::pathToSubmol(tmol, bonds_vect[i]));
+      std::unique_ptr<ROMol> m(Subgraphs::pathToSubmol(*tmol, bonds_vect[i]));
       shingling.emplace_back(MolToSmiles(*m));
     }
   }
@@ -115,7 +124,7 @@ std::vector<std::string> MHFPEncoder::CreateShingling(
   unsigned char min_radius_internal = min_radius;
 
   if (!min_radius) {
-    for (auto atom : tmol.atoms()) {
+    for (auto atom : tmol->atoms()) {
       bool do_kekule = false;
       const RDKit::Bond *bond_in = nullptr;
       bool all_hs_explicit = false;
@@ -128,13 +137,13 @@ std::vector<std::string> MHFPEncoder::CreateShingling(
     min_radius_internal++;
   }
 
-  for (uint32_t index = 0; index < tmol.getNumAtoms(); ++index) {
+  for (uint32_t index = 0; index < tmol->getNumAtoms(); ++index) {
     for (unsigned char r = min_radius_internal; r < radius + 1; ++r) {
-      const PATH_TYPE path = findAtomEnvironmentOfRadiusN(tmol, r, index);
+      const PATH_TYPE path = findAtomEnvironmentOfRadiusN(*tmol, r, index);
       INT_MAP_INT amap;
       bool use_query = false;
       std::unique_ptr<ROMol> submol(
-          Subgraphs::pathToSubmol(tmol, path, use_query, amap));
+          Subgraphs::pathToSubmol(*tmol, path, use_query, amap));
 
       if (amap.find(index) == amap.end()) {
         continue;
