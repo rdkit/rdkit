@@ -109,6 +109,31 @@ namespace DGeomHelpers {
 
 namespace {
 
+// The random source for a single conformer: a locally seeded generator when
+// seed > -1, otherwise the global source.
+class EmbedRng {
+ public:
+  explicit EmbedRng(int seed) {
+    CHECK_INVARIANT(
+        seed >= -1,
+        "random seed must either be positive, zero, or negative one");
+    if (seed > -1) {
+      d_generator = std::make_unique<RDKit::rng_type>(42u);
+      d_generator->seed(seed);
+      d_source = std::make_unique<RDKit::double_source_type>(
+          *d_generator, RDKit::uniform_double(0.0, 1.0));
+    }
+  }
+
+  RDKit::double_source_type &get() {
+    return d_source ? *d_source : RDKit::getDoubleRandomSource();
+  }
+
+ private:
+  std::unique_ptr<RDKit::rng_type> d_generator;
+  std::unique_ptr<RDKit::double_source_type> d_source;
+};
+  
 void recordFailure(EmbedParameters &params, EmbedFailureCauses cause) {
   if (!params.trackFailures) {
     return;
@@ -950,22 +975,8 @@ bool embedPoints(RDGeom::PointPtrVect *positions,
     embedParams.basinThresh = 1e8;
   }
 
-  std::unique_ptr<RDKit::rng_type> generator;
-  std::unique_ptr<RDKit::uniform_double> distrib;
-  std::unique_ptr<RDKit::double_source_type> rngMgr;
-
-  RDKit::double_source_type *rng = nullptr;
-  CHECK_INVARIANT(seed >= -1,
-                  "random seed must either be positive, zero, or negative one");
-  if (seed > -1) {
-    generator.reset(new RDKit::rng_type(42u));
-    generator->seed(seed);
-    distrib.reset(new RDKit::uniform_double(0.0, 1.0));
-    rngMgr.reset(new RDKit::double_source_type(*generator, *distrib));
-    rng = rngMgr.get();
-  } else {
-    rng = &RDKit::getDoubleRandomSource();
-  }
+  EmbedRng embedRng(seed);
+  auto *rng = &embedRng.get();
 
   bool gotCoords = false;
   unsigned int iter = 0;
@@ -1086,22 +1097,8 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions,
     embedParams.basinThresh = 1e8;
   }
   RDNumeric::DoubleSymmMatrix distMat(positions->size(), 0.0);
-  std::unique_ptr<RDKit::rng_type> generator;
-  std::unique_ptr<RDKit::uniform_double> distrib;
-  std::unique_ptr<RDKit::double_source_type> rngMgr;
-
-  RDKit::double_source_type *rng = nullptr;
-  CHECK_INVARIANT(seed >= -1,
-                  "random seed must either be positive, zero, or negative one");
-  if (seed > -1) {
-    generator.reset(new RDKit::rng_type(42u));
-    generator->seed(seed);
-    distrib.reset(new RDKit::uniform_double(0.0, 1.0));
-    rngMgr.reset(new RDKit::double_source_type(*generator, *distrib));
-    rng = rngMgr.get();
-  } else {
-    rng = &RDKit::getDoubleRandomSource();
-  }
+  EmbedRng embedRng(seed);
+  auto *rng = &embedRng.get();
 
   bool gotCoords = false;
   unsigned int iter = 0;
