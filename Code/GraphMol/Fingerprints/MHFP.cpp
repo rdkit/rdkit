@@ -98,8 +98,13 @@ std::vector<uint32_t> MHFPEncoder::FromArray(const std::vector<uint32_t> &vec) {
 std::vector<std::string> MHFPEncoder::CreateShingling(
     const ROMol &mol, unsigned char radius, bool rings, bool isomeric,
     bool kekulize, unsigned char min_radius) {
-  std::vector<unsigned int> atomIndices(mol.getNumAtoms());
-  Canon::rankMolAtoms(mol, atomIndices);
+  auto nAtoms = mol.getNumAtoms();
+  std::vector<unsigned int> atomRanks(nAtoms);
+  Canon::rankMolAtoms(mol, atomRanks);
+  std::vector<unsigned int> atomIndices(nAtoms);
+  for (auto i = 0u; i < nAtoms; ++i) {
+    atomIndices[atomRanks[i]] = i;
+  }
   std::unique_ptr<RWMol> tmol{
       static_cast<RWMol *>(MolOps::renumberAtoms(mol, atomIndices))};
   if (kekulize) {

@@ -141,7 +141,7 @@ void testMHFPDistance() {
   TEST_ASSERT(feq(MHFPFingerprints::MHFPEncoder::Distance(fp_s, fp_s), 0.0));
 
   TEST_ASSERT(
-      feq(MHFPFingerprints::MHFPEncoder::Distance(fp_s, fp_t), 0.727051));
+      feq(MHFPFingerprints::MHFPEncoder::Distance(fp_s, fp_t), 0.724121));
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
