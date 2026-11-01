@@ -204,3 +204,44 @@ TEST_CASE("bulk performance") {
             << " seconds." << std::endl;
 }
 #endif
+
+TEST_CASE("max number of relevant cycles") {
+  SECTION("clipping") {
+    std::string unit = "-C1CCC(CC1)";
+    std::string smiles = "C12CCC(CC1)";
+    for (auto i = 0; i < 20; ++i) {
+      smiles += unit;
+    }
+    smiles += "-C1CCC2(CC1)";
+    v2::SmilesParse::SmilesParserParams params;
+    params.sanitize = false;
+    auto m = v2::SmilesParse::MolFromSmiles(smiles, params);
+    REQUIRE(m);
+    MolOps::findRingFamilies(*m);
+    auto ri = m->getRingInfo();
+    CHECK(ri->numRingFamilies() == 23);
+    CHECK(ri->numRelevantCycles() == 4194326);
+    std::vector<std::vector<int>> rings;
+    CHECK(MolOps::symmetrizeSSSR(*m, rings) == MAX_SYMMETRIZED_RINGS);
+    CHECK(rings.size() == MAX_SYMMETRIZED_RINGS);
+  }
+  SECTION("max-out") {
+    std::string unit = "-C1CCC(CC1)";
+    std::string smiles = "C12CCC(CC1)";
+    for (auto i = 0; i < 31; ++i) {
+      smiles += unit;
+    }
+    smiles += "-C1CCC2(CC1)";
+    v2::SmilesParse::SmilesParserParams params;
+    params.sanitize = false;
+    auto m = v2::SmilesParse::MolFromSmiles(smiles, params);
+    REQUIRE(m);
+    MolOps::findRingFamilies(*m);
+    auto ri = m->getRingInfo();
+    CHECK(ri->numRingFamilies() == 34);
+    CHECK_THROWS_AS(ri->numRelevantCycles(), ValueErrorException);
+    std::vector<std::vector<int>> rings;
+    CHECK(MolOps::symmetrizeSSSR(*m, rings) == MAX_SYMMETRIZED_RINGS);
+    CHECK(rings.size() == MAX_SYMMETRIZED_RINGS);
+  }
+}
