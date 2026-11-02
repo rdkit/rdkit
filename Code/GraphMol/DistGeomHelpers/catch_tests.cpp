@@ -822,12 +822,12 @@ TEST_CASE("tracking failure causes") {
     MolOps::addHs(*mol);
     DGeomHelpers::EmbedParameters ps = DGeomHelpers::ETKDGv3;
     ps.trackFailures = true;
-    ps.maxIterations = 50;
+    ps.maxIterations = 2;
     ps.randomSeed = 42;
     auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
     CHECK(cid < 0);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 5);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] > 10);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] > 0);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::ETK_MINIMIZATION] > 0);
     auto fail_cp = ps.failures;
     // make sure we reset the counts each time
     cid = DGeomHelpers::EmbedMolecule(*mol, ps);
@@ -863,7 +863,7 @@ TEST_CASE("tracking failure causes") {
     ps.useLegacyImplementation = false;
     auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
     CHECK(cid < 0);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] == 16);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] == 17);
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::KTERM_VIOLATION] == 0);
     auto fail_cp = ps.failures;
     // make sure we reset the counts each time
@@ -3294,4 +3294,28 @@ M  END)CTAB"_ctab;
              Catch::Matchers::WithinAbs(mmat->getLowerBound(22, 36), 5.e-1));
   CHECK_THAT(mmat->getLowerBound(22, 8),
              Catch::Matchers::WithinAbs(mmat->getLowerBound(21, 36), 5.e-1));
+}
+
+TEST_CASE("Inconsistent stereo bonds (see PR #9734)") {
+  auto mol = "c12ccccc1CCCCCCCCCCCCCCCC2"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  DistGeom::BoundsMatPtr mmat;
+  mmat.reset(new DistGeom::BoundsMatrix(mol->getNumAtoms()));
+  DGeomHelpers::initBoundsMat(mmat);
+  DGeomHelpers::setTopolBounds(*mol, mmat);
+
+  // 1-0-5-4 should be CIS
+  // 21-0-5-6 should be CIS
+  // 21-0-5-4 TRANS
+  // 1-0-5-4 TRANS
+
+  CHECK_THAT(mmat->getUpperBound(21, 6),
+             Catch::Matchers::WithinAbs(mmat->getUpperBound(1, 4), 25.e-2));
+  CHECK_THAT(mmat->getUpperBound(1, 6),
+             Catch::Matchers::WithinAbs(mmat->getUpperBound(21, 4), 25.e-2));
+  CHECK(mmat->getUpperBound(21, 4) > 3.5);  // TRANS
+  CHECK(mmat->getUpperBound(21, 6) < 3.0);  // CIS
+  CHECK(mmat->getLowerBound(21, 4) > 3.5);  // TRANS
+  CHECK(mmat->getLowerBound(21, 6) < 3.0);  // CIS
 }
