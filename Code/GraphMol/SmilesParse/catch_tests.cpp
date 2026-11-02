@@ -2990,6 +2990,27 @@ TEST_CASE("Remove CX extension from SMILES", "[cxsmiles]") {
   }
 }
 
+TEST_CASE("Github #9701: SMILES round trip preserves pseudoasymmetric ring stereo",
+          "[SMILES][bug]") {
+  UseLegacyStereoPerceptionFixture resetStereoPerception(false);
+  SmilesWriteParams writeParams;
+  writeParams.canonical = GENERATE(true, false);
+  CAPTURE(writeParams.canonical);
+  const std::string expected = "O[C@@H]1[C@@H](O)[C@H](O)[C@H]1O";
+  auto mol = v2::SmilesParse::MolFromSmiles(expected);
+  REQUIRE(mol);
+  auto smiles = MolToSmiles(*mol, writeParams);
+  CHECK(smiles == expected);
+  if (writeParams.canonical) {
+    auto mol2 = "[C@H]1(O)[C@H](O)[C@@H](O)[C@H](O)1"_smiles;
+    REQUIRE(mol2);
+    CHECK(MolToSmiles(*mol2, writeParams) == expected);
+  }
+  auto roundtrip = v2::SmilesParse::MolFromSmiles(smiles);
+  REQUIRE(roundtrip);
+  CHECK(MolToSmiles(*roundtrip, writeParams) == expected);
+}
+
 TEST_CASE("Canonicalization of meso structures") {
   SECTION("basics") {
     std::vector<std::pair<std::vector<std::string>, std::string>> data = {

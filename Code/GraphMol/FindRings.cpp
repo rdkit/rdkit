@@ -989,6 +989,8 @@ namespace {
 void legacySymmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res,
                           bool includeDativeBonds, bool includeHydrogenBonds) {
   findSSSR(mol, res, includeDativeBonds, includeHydrogenBonds);
+  // Mark this as symmetrized so later code does not discard the extra rings.
+  mol.getRingInfo()->initialize(FIND_RING_TYPE_SYMM_SSSR);
 
   // now check if there are any extra rings on the molecule.
   // We do this using the legacy way: using the modified Figueras

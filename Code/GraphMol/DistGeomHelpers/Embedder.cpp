@@ -107,6 +107,63 @@ std::mutex &GetFailMutex() {
 namespace RDKit {
 namespace DGeomHelpers {
 
+namespace {
+
+// The random source for a single conformer: a locally seeded generator when
+// seed > -1, otherwise the global source.
+class EmbedRng {
+ public:
+  explicit EmbedRng(int seed) {
+    CHECK_INVARIANT(
+        seed >= -1,
+        "random seed must either be positive, zero, or negative one");
+    if (seed > -1) {
+      d_generator = std::make_unique<RDKit::rng_type>(42u);
+      d_generator->seed(seed);
+      d_source = std::make_unique<RDKit::double_source_type>(
+          *d_generator, RDKit::uniform_double(0.0, 1.0));
+    }
+  }
+
+  RDKit::double_source_type &get() {
+    return d_source ? *d_source : RDKit::getDoubleRandomSource();
+  }
+
+ private:
+  std::unique_ptr<RDKit::rng_type> d_generator;
+  std::unique_ptr<RDKit::double_source_type> d_source;
+};
+
+void recordFailure(EmbedParameters &params, EmbedFailureCauses cause) {
+  if (!params.trackFailures) {
+    return;
+  }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  std::lock_guard<std::mutex> lock(GetFailMutex());
+#endif
+  ++params.failures[cause];
+}
+
+bool pastDeadline(const TimePoint *end_time) {
+  return end_time != nullptr && Clock::now() > *end_time;
+}
+
+// Bookkeeping shared by every embedding attempt: honors the timeout, reports
+// progress, and checks for ctrl-C. Returns false if the attempt loop should
+// stop.
+bool beginAttempt(unsigned int iter, const EmbedParameters &params,
+                  const TimePoint *end_time) {
+  if (pastDeadline(end_time)) {
+    return false;
+  }
+  if (params.callback != nullptr) {
+    params.callback(iter);
+  }
+  return !ControlCHandler::getGotSignal();
+}
+
+}  // namespace
+
 const EmbedParameters DG{};
 
 const EmbedParameters KDG{.useExpTorsionAnglePrefs = false,
@@ -612,7 +669,7 @@ bool minimizeFourthDimension(RDGeom::PointPtrVect *positions,
   if (field2->calcEnergy() > ERROR_TOL) {
     int needMore = 1;
     while (needMore) {
-      if (end_time != nullptr && Clock::now() > *end_time) {
+      if (pastDeadline(end_time)) {
         return false;
       }
       needMore = field2->minimize(200, embedParams.optimizerForceTol);
@@ -738,7 +795,7 @@ bool minimizeAllInOne(RDGeom::PointPtrVect *positions,
     std::size_t iter{0};
     int needMore = 1;
     while (needMore and iter < 8) {
-      if (end_time != nullptr && Clock::now() > *end_time) {
+      if (pastDeadline(end_time)) {
         return false;
       }
       needMore = field->minimize(100u, embedParams.optimizerForceTol);
@@ -845,12 +902,7 @@ bool doubleBondStereoChecks(const RDGeom::PointPtrVect &positions,
     auto dihedral = RDGeom::computeDihedralAngle(p0, p1, p2, p3);
     if ((dihedral - M_PI_2) * itm.second < 0) {
       // closer to incorrect than correct... it's a bad geometry
-      if (embedParams.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-        std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-        embedParams.failures[EmbedFailureCauses::BAD_DOUBLE_BOND_STEREO]++;
-      }
+      recordFailure(embedParams, EmbedFailureCauses::BAD_DOUBLE_BOND_STEREO);
       return false;
     }
   }
@@ -878,12 +930,7 @@ bool distMatrixChiralityTest(RDGeom::PointPtrVect *positions,
       std::cerr << " fail3a! (" << atomsToCheck[0] << ") iter: "  //<< iter
                 << std::endl;
 #endif
-      if (embedParams.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-        std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-        embedParams.failures[EmbedFailureCauses::FINAL_CHIRAL_BOUNDS]++;
-      }
+      recordFailure(embedParams, EmbedFailureCauses::FINAL_CHIRAL_BOUNDS);
 
       return false;
     }
@@ -902,12 +949,7 @@ bool _checkFinalCenterInVolume(RDGeom::PointPtrVect *positions,
       std::cerr << " fail3b! (" << chiralSet->d_idx0 << ") iter: "  //<< iter
                 << std::endl;
 #endif
-      if (embedParams.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-        std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-        embedParams.failures[EmbedFailureCauses::FINAL_CENTER_IN_VOLUME]++;
-      }
+      recordFailure(embedParams, EmbedFailureCauses::FINAL_CENTER_IN_VOLUME);
       return false;
     }
   }
@@ -922,12 +964,7 @@ bool finalChiralChecks(RDGeom::PointPtrVect *positions,
                        EmbedParameters &embedParams) {
   // confirm chiral volumes
   if (!checkChiralCenters(positions, eargs, embedParams)) {
-    if (embedParams.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-      std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-      embedParams.failures[EmbedFailureCauses::CHECK_CHIRAL_CENTERS2]++;
-    }
+    recordFailure(embedParams, EmbedFailureCauses::CHECK_CHIRAL_CENTERS2);
     return false;
   }
 
@@ -956,35 +993,14 @@ bool embedPoints(RDGeom::PointPtrVect *positions,
     embedParams.basinThresh = 1e8;
   }
 
-  std::unique_ptr<RDKit::rng_type> generator;
-  std::unique_ptr<RDKit::uniform_double> distrib;
-  std::unique_ptr<RDKit::double_source_type> rngMgr;
-
-  RDKit::double_source_type *rng = nullptr;
-  CHECK_INVARIANT(seed >= -1,
-                  "random seed must either be positive, zero, or negative one");
-  if (seed > -1) {
-    generator.reset(new RDKit::rng_type(42u));
-    generator->seed(seed);
-    distrib.reset(new RDKit::uniform_double(0.0, 1.0));
-    rngMgr.reset(new RDKit::double_source_type(*generator, *distrib));
-    rng = rngMgr.get();
-  } else {
-    rng = &RDKit::getDoubleRandomSource();
-  }
+  EmbedRng embedRng(seed);
+  auto *rng = &embedRng.get();
 
   bool gotCoords = false;
   unsigned int iter = 0;
   while (!gotCoords && iter < embedParams.maxIterations) {
-    if (end_time != nullptr && Clock::now() > *end_time) {
-      break;
-    }
-
     ++iter;
-    if (embedParams.callback != nullptr) {
-      embedParams.callback(iter);
-    }
-    if (ControlCHandler::getGotSignal()) {
+    if (!beginAttempt(iter, embedParams, end_time)) {
       return false;
     }
     gotCoords = embedParams.optimizeConfWithId.has_value()
@@ -993,12 +1009,7 @@ bool embedPoints(RDGeom::PointPtrVect *positions,
                           positions, eargs, embedParams, distMat, rng);
 
     if (!gotCoords) {
-      if (embedParams.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-        std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-        embedParams.failures[EmbedFailureCauses::INITIAL_COORDS]++;
-      }
+      recordFailure(embedParams, EmbedFailureCauses::INITIAL_COORDS);
     } else {
       if (ControlCHandler::getGotSignal()) {
         return false;
@@ -1010,22 +1021,12 @@ bool embedPoints(RDGeom::PointPtrVect *positions,
       gotCoords =
           EmbeddingOps::firstMinimization(positions, eargs, embedParams);
       if (!gotCoords) {
-        if (embedParams.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-          std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-          embedParams.failures[EmbedFailureCauses::FIRST_MINIMIZATION]++;
-        }
+        recordFailure(embedParams, EmbedFailureCauses::FIRST_MINIMIZATION);
       } else {
         gotCoords = EmbeddingOps::checkTetrahedralCenters(positions, eargs);
         if (!gotCoords) {
-          if (embedParams.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-            std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-            embedParams
-                .failures[EmbedFailureCauses::CHECK_TETRAHEDRAL_CENTERS]++;
-          }
+          recordFailure(embedParams,
+                        EmbedFailureCauses::CHECK_TETRAHEDRAL_CENTERS);
         }
       }
 
@@ -1035,12 +1036,7 @@ bool embedPoints(RDGeom::PointPtrVect *positions,
         gotCoords =
             EmbeddingOps::checkChiralCenters(positions, eargs, embedParams);
         if (!gotCoords) {
-          if (embedParams.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-            std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-            embedParams.failures[EmbedFailureCauses::CHECK_CHIRAL_CENTERS]++;
-          }
+          recordFailure(embedParams, EmbedFailureCauses::CHECK_CHIRAL_CENTERS);
         }
       }
       // redo the minimization if we have a chiral center
@@ -1053,15 +1049,11 @@ bool embedPoints(RDGeom::PointPtrVect *positions,
         gotCoords = EmbeddingOps::minimizeFourthDimension(
             positions, eargs, embedParams, end_time);
         if (!gotCoords) {
-          if (embedParams.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-            std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-            if (end_time != nullptr && Clock::now() > *end_time) {
-              embedParams.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++;
-            }
-            embedParams
-                .failures[EmbedFailureCauses::MINIMIZE_FOURTH_DIMENSION]++;
+          if (pastDeadline(end_time)) {
+            recordFailure(embedParams, EmbedFailureCauses::EXCEEDED_TIMEOUT);
+          } else {
+            recordFailure(embedParams,
+                          EmbedFailureCauses::MINIMIZE_FOURTH_DIMENSION);
           }
         }
       }
@@ -1075,21 +1067,13 @@ bool embedPoints(RDGeom::PointPtrVect *positions,
         gotCoords = EmbeddingOps::minimizeWithExpTorsions(*positions, eargs,
                                                           embedParams);
         if (!gotCoords) {
-          if (embedParams.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-            std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-            embedParams.failures[EmbedFailureCauses::ETK_MINIMIZATION]++;
-          }
+          recordFailure(embedParams, EmbedFailureCauses::ETK_MINIMIZATION);
         }
       }
       if (gotCoords) {
         gotCoords = EmbeddingOps::doubleBondGeometryChecks(*positions, eargs);
-        if (!gotCoords && embedParams.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-          std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-          embedParams.failures[EmbedFailureCauses::LINEAR_DOUBLE_BOND]++;
+        if (!gotCoords) {
+          recordFailure(embedParams, EmbedFailureCauses::LINEAR_DOUBLE_BOND);
         }
       }
       // test if stereo is correct
@@ -1124,36 +1108,15 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions,
     embedParams.basinThresh = 1e8;
   }
   RDNumeric::DoubleSymmMatrix distMat(positions->size(), 0.0);
-  std::unique_ptr<RDKit::rng_type> generator;
-  std::unique_ptr<RDKit::uniform_double> distrib;
-  std::unique_ptr<RDKit::double_source_type> rngMgr;
-
-  RDKit::double_source_type *rng = nullptr;
-  CHECK_INVARIANT(seed >= -1,
-                  "random seed must either be positive, zero, or negative one");
-  if (seed > -1) {
-    generator.reset(new RDKit::rng_type(42u));
-    generator->seed(seed);
-    distrib.reset(new RDKit::uniform_double(0.0, 1.0));
-    rngMgr.reset(new RDKit::double_source_type(*generator, *distrib));
-    rng = rngMgr.get();
-  } else {
-    rng = &RDKit::getDoubleRandomSource();
-  }
+  EmbedRng embedRng(seed);
+  auto *rng = &embedRng.get();
 
   bool gotCoords = false;
   unsigned int iter = 0;
 
   while (iter < embedParams.maxIterations) {
     ++iter;
-    if (end_time != nullptr && Clock::now() > *end_time) {
-      break;
-    }
-    // Clear trajectories in cases we write the minimization positions
-    if (embedParams.callback != nullptr) {
-      embedParams.callback(iter);
-    }
-    if (ControlCHandler::getGotSignal()) {
+    if (!beginAttempt(iter, embedParams, end_time)) {
       return false;
     }
 
@@ -1165,12 +1128,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions,
                           positions, eargs, embedParams, distMat, rng);
 
     if (!gotCoords) {
-      if (embedParams.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-        std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-        embedParams.failures[EmbedFailureCauses::INITIAL_COORDS]++;
-      }
+      recordFailure(embedParams, EmbedFailureCauses::INITIAL_COORDS);
       continue;
     }
 
@@ -1187,16 +1145,9 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions,
     gotCoords =
         EmbeddingOps::minimizeAllInOne(positions, eargs, embedParams, end_time);
     if (!gotCoords) {
-      if (embedParams.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-        std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-        if (end_time != nullptr && Clock::now() > *end_time) {
-          embedParams.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++;
-        } else {
-          embedParams.failures[EmbedFailureCauses::MINIMIZATION]++;
-        }
-      }
+      recordFailure(embedParams, pastDeadline(end_time)
+                                     ? EmbedFailureCauses::EXCEEDED_TIMEOUT
+                                     : EmbedFailureCauses::MINIMIZATION);
       continue;
     }
 
@@ -1211,12 +1162,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions,
         delete i;
       }
       if (!gotCoords) {
-        if (embedParams.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-          std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-          embedParams.failures[EmbedFailureCauses::KTERM_VIOLATION]++;
-        }
+        recordFailure(embedParams, EmbedFailureCauses::KTERM_VIOLATION);
         continue;
       }
     }
@@ -1229,12 +1175,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions,
     // Check Tetrahedral Centers
     gotCoords = EmbeddingOps::checkTetrahedralCenters(positions, eargs);
     if (!gotCoords) {
-      if (embedParams.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-        std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-        embedParams.failures[EmbedFailureCauses::CHECK_TETRAHEDRAL_CENTERS]++;
-      }
+      recordFailure(embedParams, EmbedFailureCauses::CHECK_TETRAHEDRAL_CENTERS);
       continue;
     }
 
@@ -1244,12 +1185,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions,
         gotCoords =
             EmbeddingOps::checkChiralCenters(positions, eargs, embedParams);
         if (!gotCoords) {
-          if (embedParams.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-            std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-            embedParams.failures[EmbedFailureCauses::CHECK_CHIRAL_CENTERS]++;
-          }
+          recordFailure(embedParams, EmbedFailureCauses::CHECK_CHIRAL_CENTERS);
           continue;
         }
 
@@ -1276,12 +1212,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions,
     // Check for clashing atoms
     gotCoords = clashCheck(positions, eargs.mmat);
     if (!gotCoords) {
-      if (embedParams.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-        std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-        embedParams.failures[EmbedFailureCauses::CLASH]++;
-      }
+      recordFailure(embedParams, EmbedFailureCauses::CLASH);
       continue;
     }
 
@@ -1289,12 +1220,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions,
     gotCoords =
         EmbeddingOps::doubleBondGeometryChecks(*positions, eargs, 3e-3, true);
     if (!gotCoords) {
-      if (embedParams.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-        std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-        embedParams.failures[EmbedFailureCauses::LINEAR_DOUBLE_BOND]++;
-      }
+      recordFailure(embedParams, EmbedFailureCauses::LINEAR_DOUBLE_BOND);
       continue;
     }
 
@@ -1552,8 +1478,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }    // if block - heavy atom check
-  }      // for loop over atoms
+    }  // if block - heavy atom check
+  }  // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {
@@ -1692,8 +1618,7 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
     }
   }
   for (size_t ci = 0; ci < eargs->confs->size(); ci++) {
-    if (ControlCHandler::getGotSignal() ||
-        (end_time != nullptr && Clock::now() > *end_time)) {
+    if (ControlCHandler::getGotSignal() || pastDeadline(end_time)) {
       return;
     }
 
@@ -2072,13 +1997,8 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
       }
     }
 #endif
-    if (end_time != nullptr && Clock::now() > *end_time) {
-      if (params.trackFailures) {
-#ifdef RDK_BUILD_THREADSAFE_SSS
-        std::lock_guard<std::mutex> lock(GetFailMutex());
-#endif
-        params.failures[EmbedFailureCauses::EXCEEDED_TIMEOUT]++;
-      }
+    if (pastDeadline(end_time)) {
+      recordFailure(params, EmbedFailureCauses::EXCEEDED_TIMEOUT);
       res.push_back(-1);
       return;
     }

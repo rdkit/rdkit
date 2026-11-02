@@ -43,7 +43,7 @@ FromArray(MHFPEncoder *mhfpEnc, python::list &vec) {
 STR_VECT
 CreateShinglingFromSmiles(MHFPEncoder *mhfpEnc, std::string smiles,
                           unsigned char radius = 3, bool rings = true,
-                          bool isomeric = false, bool kekulize = true,
+                          bool isomeric = false, bool kekulize = false,
                           unsigned char min_radius = 1) {
   return mhfpEnc->CreateShingling(smiles, radius, rings, isomeric, kekulize,
                                   min_radius);
@@ -52,7 +52,7 @@ CreateShinglingFromSmiles(MHFPEncoder *mhfpEnc, std::string smiles,
 STR_VECT
 CreateShinglingFromMol(MHFPEncoder *mhfpEnc, ROMol mol,
                        unsigned char radius = 3, bool rings = true,
-                       bool isomeric = false, bool kekulize = true,
+                       bool isomeric = false, bool kekulize = false,
                        unsigned char min_radius = 1) {
   return mhfpEnc->CreateShingling(mol, radius, rings, isomeric, kekulize,
                                   min_radius);
@@ -60,21 +60,21 @@ CreateShinglingFromMol(MHFPEncoder *mhfpEnc, ROMol mol,
 
 UINT_VECT
 EncodeSmiles(MHFPEncoder *mhfpEnc, std::string smiles, unsigned char radius = 3,
-             bool rings = true, bool isomeric = false, bool kekulize = true,
+             bool rings = true, bool isomeric = false, bool kekulize = false,
              unsigned char min_radius = 1) {
   return mhfpEnc->Encode(smiles, radius, rings, isomeric, kekulize, min_radius);
 }
 
 UINT_VECT
 EncodeMol(MHFPEncoder *mhfpEnc, ROMol mol, unsigned char radius = 3,
-          bool rings = true, bool isomeric = false, bool kekulize = true,
+          bool rings = true, bool isomeric = false, bool kekulize = false,
           unsigned char min_radius = 1) {
   return mhfpEnc->Encode(mol, radius, rings, isomeric, kekulize, min_radius);
 }
 
 python::object EncodeSmilesBulk(MHFPEncoder *mhfpEnc, python::list &smiles,
                                 unsigned char radius = 3, bool rings = true,
-                                bool isomeric = false, bool kekulize = true,
+                                bool isomeric = false, bool kekulize = false,
                                 unsigned char min_radius = 1) {
   std::vector<std::string> vec = ListToVector<std::string>(smiles);
   auto resVect =
@@ -91,7 +91,7 @@ python::object EncodeSmilesBulk(MHFPEncoder *mhfpEnc, python::list &smiles,
 // So let's fallback to a unefficient Python list.
 python::object EncodeMolsBulk(MHFPEncoder *mhfpEnc, python::list &mols,
                               unsigned char radius = 3, bool rings = true,
-                              bool isomeric = false, bool kekulize = true,
+                              bool isomeric = false, bool kekulize = false,
                               unsigned char min_radius = 1) {
   std::vector<ROMol> vec = ListToVector<ROMol>(mols);
   auto resVect =
@@ -107,7 +107,7 @@ python::object EncodeMolsBulk(MHFPEncoder *mhfpEnc, python::list &mols,
 
 ExplicitBitVect EncodeSECFPSmiles(MHFPEncoder *mhfpEnc, std::string smiles,
                                   unsigned char radius = 3, bool rings = true,
-                                  bool isomeric = false, bool kekulize = true,
+                                  bool isomeric = false, bool kekulize = false,
                                   unsigned char min_radius = 1,
                                   size_t length = 2048) {
   return mhfpEnc->EncodeSECFP(smiles, radius, rings, isomeric, kekulize,
@@ -116,7 +116,7 @@ ExplicitBitVect EncodeSECFPSmiles(MHFPEncoder *mhfpEnc, std::string smiles,
 
 ExplicitBitVect EncodeSECFPMol(MHFPEncoder *mhfpEnc, ROMol mol,
                                unsigned char radius = 3, bool rings = true,
-                               bool isomeric = false, bool kekulize = true,
+                               bool isomeric = false, bool kekulize = false,
                                unsigned char min_radius = 1,
                                size_t length = 2048) {
   return mhfpEnc->EncodeSECFP(mol, radius, rings, isomeric, kekulize,
@@ -126,7 +126,7 @@ ExplicitBitVect EncodeSECFPMol(MHFPEncoder *mhfpEnc, ROMol mol,
 python::object EncodeSECFPSmilesBulk(MHFPEncoder *mhfpEnc, python::list &smiles,
                                      unsigned char radius = 3,
                                      bool rings = true, bool isomeric = false,
-                                     bool kekulize = true,
+                                     bool kekulize = false,
                                      unsigned char min_radius = 1,
                                      size_t length = 2048) {
   std::vector<std::string> vec = ListToVector<std::string>(smiles);
@@ -142,7 +142,7 @@ python::object EncodeSECFPSmilesBulk(MHFPEncoder *mhfpEnc, python::list &smiles,
 
 python::object EncodeSECFPMolsBulk(MHFPEncoder *mhfpEnc, python::list &mols,
                                    unsigned char radius = 3, bool rings = true,
-                                   bool isomeric = false, bool kekulize = true,
+                                   bool isomeric = false, bool kekulize = false,
                                    unsigned char min_radius = 1,
                                    size_t length = 2048) {
   std::vector<ROMol> vec = ListToVector<ROMol>(mols);
@@ -238,7 +238,7 @@ BOOST_PYTHON_MODULE(rdMHFPFingerprint) {
       .def(
           "EncodeSECFPMol", EncodeSECFPMol,
           EncodeSECFPMolOverloads(
-              (python::arg("self"), python::arg("smiles"),
+              (python::arg("self"), python::arg("mol"),
                python::arg("radius") = 3, python::arg("rings") = true,
                python::arg("isomeric") = false, python::arg("kekulize") = false,
                python::arg("min_radius") = 1, python::arg("length") = 2048),
@@ -254,7 +254,7 @@ BOOST_PYTHON_MODULE(rdMHFPFingerprint) {
       .def(
           "EncodeSECFPMolsBulk", EncodeSECFPMolsBulk,
           EncodeSECFPMolsBulkOverloads(
-              (python::arg("self"), python::arg("smiles"),
+              (python::arg("self"), python::arg("mols"),
                python::arg("radius") = 3, python::arg("rings") = true,
                python::arg("isomeric") = false, python::arg("kekulize") = false,
                python::arg("min_radius") = 1, python::arg("length") = 2048),
