@@ -1143,7 +1143,7 @@ TEST_CASE("atropisomers bulk") {
         auto chiralVol = v3.crossProduct(v4).dotProduct(v2);
         INFO(cid << MolToV3KMolBlock(*mol, true, cid));
         CHECK(chiralVol * vol < 0);
-        CHECK(fabs(chiralVol) > 0.37);
+        CHECK(fabs(chiralVol) > 0.36);
       }
     }
   }

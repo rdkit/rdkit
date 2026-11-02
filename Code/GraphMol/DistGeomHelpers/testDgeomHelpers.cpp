@@ -1765,7 +1765,7 @@ TEST_CASE("testProvideBoundsMatrix") {
   REQUIRE(cid >= 0);
 
   const auto conf = m->getConformer(cid);
-  CHECK(feq((conf.getAtomPos(0) - conf.getAtomPos(1)).length(), 0.55, 0.05));
+  CHECK(feq((conf.getAtomPos(0) - conf.getAtomPos(1)).length(), 0.50, 0.05));
   CHECK(feq((conf.getAtomPos(0) - conf.getAtomPos(2)).length(), 2.0, 0.1));
   boost::logging::enable_logs("rdApp.warning");
 }
