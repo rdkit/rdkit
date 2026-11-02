@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2004-2026 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2026 RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -54,15 +54,10 @@ bool isParitySwapped(const RDKit::ROMol &mol, const RDKit::ROMol &pattern,
   // specified enough in the pattern to make sense of the parity.
   // This means that we should, at most, have one unmapped atom,
   // which should be ok.
-  if (patternBndIndices.size() != 4) {
+  if (patternBndIndices.size() == 3) {
     patternBndIndices.push_back(-1);
   }
-
-#ifdef DEBUG_NEW_PATTERNS
-  if (patternBndIndices.size() != 4) {
-    throw std::logic_error("unexpected number of neighbors");
-  }
-#endif
+  CHECK_INVARIANT(patternBndIndices.size() == 4, "bad number of neighbors");
 
   // Now build the mol reference
   BondIdxVector molBndIndices;
@@ -82,15 +77,10 @@ bool isParitySwapped(const RDKit::ROMol &mol, const RDKit::ROMol &pattern,
     }
   }
 
-  if (molBndIndices.size() != 4) {
+  if (molBndIndices.size() == 3) {
     molBndIndices.push_back(-1);
   }
-
-#ifdef DEBUG_NEW_PATTERNS
-  if (molBndIndices.size() != 4) {
-    throw std::logic_error("unexpected number of neighbors");
-  }
-#endif
+  CHECK_INVARIANT(molBndIndices.size() == 4, "bad number of neighbors");
 
   int nSwaps =
       RDKit::countSwapsToInterconvert(patternBndIndices, molBndIndices);
