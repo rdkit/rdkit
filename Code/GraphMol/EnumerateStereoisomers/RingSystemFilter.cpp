@@ -269,7 +269,7 @@ void getRingPatternsParityRelations(
   std::vector<int> reverseMapping;
   for (const auto &[pattern, parityRelations] : getRingSystemFilterPatterns()) {
     // The SubstructMatch is limited to 1000 matches, so we might miss
-    // some matches. If this happens, and we miss some parity paris,
+    // some matches. If this happens, and we miss some parity pairs,
     // we might see some stereoisomers that would have been filtered
     // out, but no isomers that shouldn't be discarded will be lost
     auto matches = SubstructMatch(mol, pattern, p);
