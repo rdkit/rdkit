@@ -17,6 +17,7 @@
 
 #include <GraphMol/EnumerateStereoisomers/Flippers.h>
 
+#include <iterator>
 #include <random>
 #include <set>
 #include <unordered_set>
@@ -69,6 +70,30 @@ struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoEnumerationOptions {
 // it can produce.
 class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
  public:
+  class iterator {
+   public:
+    using iterator_category = std::forward_iterator_tag;
+    using value_type = ROMol;
+    using difference_type = std::ptrdiff_t;
+    using reference = const ROMol &;
+    using pointer = const ROMol *;
+
+    iterator() = default;
+    reference operator*() const;
+    pointer operator->() const { return &operator*(); }
+    iterator &operator++();
+    iterator operator++(int);
+    bool operator==(const iterator &other) const;
+    bool operator!=(const iterator &other) const { return !(*this == other); }
+
+   private:
+    friend class StereoisomerEnumerator;
+    iterator(StereoisomerEnumerator *owner, std::uint64_t position)
+        : d_owner(owner), d_position(position) {}
+    StereoisomerEnumerator *d_owner{nullptr};
+    std::uint64_t d_position{0};
+  };
+
   StereoisomerEnumerator() = delete;
   StereoisomerEnumerator(
       const ROMol &mol,
@@ -86,10 +111,13 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
   // Return another stereoisomer, or an empty unique_ptr if we're done.
   std::unique_ptr<ROMol> next();
 
+  iterator begin();
+  iterator end();
+
  private:
   // Whether the generated stereoisomer is considered valid based
   // on the ring systems patterns
-  bool passesRingPatternsCheck() const;
+  bool passesRingPatternsCheck(const ROMol &mol) const;
 
   RWMol d_mol;
   const StereoEnumerationOptions d_options;
@@ -114,6 +142,7 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
 
   // The stereo orientations we've already made
   std::unordered_set<boost::dynamic_bitset<>> d_seen;
+  std::vector<std::unique_ptr<ROMol>> d_isomers;
 
   // For the ring systems patterns. We check if pairs of parities
   // are same/opposite instead of individual CW/CCW because the
@@ -123,6 +152,8 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
 
   void buildFlippers();
   std::unique_ptr<ROMol> generateRandomIsomer();
+  std::unique_ptr<ROMol> buildIsomer(const boost::dynamic_bitset<> &config);
+  bool ensureIsomer(std::uint64_t position);
   bool embeddable(ROMol &isomer);
 };
 }  // namespace EnumerateStereoisomers
