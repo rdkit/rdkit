@@ -112,6 +112,14 @@ struct freesasa_wrapper {
         .def_readwrite("algorithm", &FreeSASA::SASAOpts::algorithm)
         .def_readwrite("classifier", &FreeSASA::SASAOpts::classifier)
         .def_readwrite("probeRadius", &FreeSASA::SASAOpts::probeRadius)
+        .def_readwrite("shrakeRupleyNumPoints",
+                       &FreeSASA::SASAOpts::shrakeRupleyNumPoints,
+                       "number of test points per atom used by ShrakeRupley "
+                       "(default 100)")
+        .def_readwrite("leeRichardsNumSlices",
+                       &FreeSASA::SASAOpts::leeRichardsNumSlices,
+                       "number of slices per atom used by LeeRichards "
+                       "(default 20)")
         .def("__setattr__", &safeSetattr);
 
     docString =
