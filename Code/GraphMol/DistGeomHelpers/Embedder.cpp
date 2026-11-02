@@ -2016,9 +2016,6 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
         InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING) {
       setMoleculeDFS(*piece.get(), *zmat, *etkdgDetails->internalCoords);
       correctChiralCenters(*piece.get(), *zmat);
-      if (params.verbose) {
-        BOOST_LOG(rdInfoLog) << (*zmat);
-      }
     }
 
     // find double bonds
