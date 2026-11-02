@@ -8,16 +8,17 @@
 //  of the RDKit source tree.
 //
 
-#include <RDGeneral/export.h>
+#include "RDGeneral/export.h"
 #include <memory>
+#include <optional>
 #ifndef RD_EMBEDDER_H_GUARD
 #define RD_EMBEDDER_H_GUARD
 
-#include <RDGeneral/RDLog.h>
+#include "RDGeneral/RDLog.h"
 #include <map>
 #include <utility>
 #include <vector>
-#include <GraphMol/ROMol.h>
+#include "GraphMol/ROMol.h"
 #include <boost/shared_ptr.hpp>
 #include "ZMatrixBuilder.h"
 
@@ -66,14 +67,13 @@ enum class EmbedFF : std::uint8_t {
 
 //! Parameter object for controlling embedding
 /*!
-  numConfs       Number of conformations to be generated
+  maxIterations  Max. number of times the embedding will be tried if
+                 coordinates are not obtained successfully. The default
+                 value is 10x the number of atoms.
   numThreads     Sets the number of threads to use (more than one thread
                  will only be used if the RDKit was build with multithread
                  support) If set to zero, the max supported by the system will
                  be used.
-  maxIterations  Max. number of times the embedding will be tried if
-                 coordinates are not obtained successfully. The default
-                 value is 10x the number of atoms.
   randomSeed     provides a seed for the random number generator (so that
                  the same coordinates can be obtained for a
                  molecule on multiple runs) If -1, the
@@ -94,7 +94,7 @@ enum class EmbedFF : std::uint8_t {
   pruneRmsThresh Retain only the conformations out of 'numConfs' after
                  embedding that are at least this far apart from each other.
                  RMSD is computed on the heavy atoms.
-                 Prunining is greedy; i.e. the first embedded conformation is
+                 Pruning is greedy; i.e. the first embedded conformation is
                  retained and from then on only those that are at least
                  \c pruneRmsThresh away from already
                  retained conformations are kept. The pruning is done
@@ -131,7 +131,7 @@ enum class EmbedFF : std::uint8_t {
   useMacrocycle14config  This forces amides and esters to be trans in
   macrocycles. This does not affect chain amides / esters!
   timeout	 time out in seconds
-  CPCI	custom columbic interactions between atom pairs
+  CPCI	custom coulombic interactions between atom pairs
   callback	      void pointer to a function for reporting progress,
                   will be called with the current iteration number.
   forceTransAmides  This forces chain amides and esters to be trans.
@@ -146,7 +146,9 @@ enum class EmbedFF : std::uint8_t {
                    of times each embedding check fails
   enableSequentialRandomSeeds    handle the random number seeds so that
                                  conformer generation can be restarted
-  embedFF Force Field to use to determine ideal 1-2 and 1-3 distances.
+  embedFF   Force Field to use to determine ideal 1-2 and 1-3 distances.
+  optimizeConfWithId  If provided, this conformer in the molecule (if present)
+                      is refined with the ETKDG force field.
 */
 struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   unsigned int maxIterations{0};
@@ -188,6 +190,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool enableSequentialRandomSeeds{false};
   bool symmetrizeConjugatedTerminalGroupsForPruning{true};
   EmbedFF embedForceField{EmbedFF::UFF};
+  std::optional<unsigned int> optimizeConfWithId{std::nullopt};
 };
 
 //! update parameters from a JSON string
@@ -199,9 +202,17 @@ RDKIT_DISTGEOMHELPERS_EXPORT std::string embedParametersToJSON(
     const EmbedParameters &params);
 
 //! Embed multiple conformations for a molecule
+/// Be aware that this function can alter the EmbedParameters object, caution
+/// is advised when reusing EmbedParameters objects for different embedding
+/// runs.
 RDKIT_DISTGEOMHELPERS_EXPORT void EmbedMultipleConfs(ROMol &mol, INT_VECT &res,
                                                      unsigned int numConfs,
                                                      EmbedParameters &params);
+
+//! Embed multiple conformations for a molecule
+/// Be aware that this function can alter the EmbedParameters object, caution
+/// is advised when reusing EmbedParameters objects for different embedding
+/// runs.
 inline INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
                                    EmbedParameters &params) {
   INT_VECT res;
@@ -211,6 +222,9 @@ inline INT_VECT EmbedMultipleConfs(ROMol &mol, unsigned int numConfs,
 
 //! Compute an embedding (in 3D) for the specified molecule using Distance
 /// Geometry
+/// Be aware that this function can alter the EmbedParameters object, caution
+/// is advised when reusing EmbedParameters objects for different embedding
+/// runs.
 inline int EmbedMolecule(ROMol &mol, EmbedParameters &params) {
   INT_VECT confIds;
   EmbedMultipleConfs(mol, confIds, 1, params);

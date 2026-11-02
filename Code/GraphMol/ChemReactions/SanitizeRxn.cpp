@@ -130,7 +130,7 @@ struct AtomInfo {
 
   void setRLabel(unsigned int rlabel) {
     PRECONDITION(atom, "Internal error in SanitizeRxn - null atom");
-    auto &mol = dynamic_cast<RWMol &>(atom->getOwningMol());
+    auto &mol = static_cast<RWMol &>(atom->getOwningMol());
 
     QueryAtom qatom(*atom);
     qatom.setProp(common_properties::_MolFileRLabel, rlabel);
@@ -292,11 +292,11 @@ void fixReactantTemplateAromaticity(ChemicalReaction &rxn) {
   unsigned int ops;
   for (auto it = rxn.beginReactantTemplates(); it != rxn.endReactantTemplates();
        ++it) {
-    auto *rw = dynamic_cast<RWMol *>(it->get());
+    auto *rw = static_cast<RWMol *>(it->get());
     if (rw) {
       sanitizeMol(*rw, ops, MolOps::SANITIZE_SETAROMATICITY);
     } else {
-      PRECONDITION(rw, "Oops, not really a RWMol?");
+      PRECONDITION(rw, "Oops, invalid pointer");
     }
   }
 }
@@ -351,7 +351,7 @@ void fixHs(ChemicalReaction &rxn) {
   const bool mergeUnmappedOnly = true;
   for (auto it = rxn.beginReactantTemplates(); it != rxn.endReactantTemplates();
        ++it) {
-    auto *rw = dynamic_cast<RWMol *>(it->get());
+    auto *rw = static_cast<RWMol *>(it->get());
     if (rw) {
       MolOps::mergeQueryHs(*rw, mergeUnmappedOnly);
     } else {
@@ -410,17 +410,17 @@ void sanitizeRxn(ChemicalReaction &rxn,
 void sanitizeRxnAsMols(ChemicalReaction &rxn, unsigned int sanitizeOps) {
   for (auto &mol : rxn.getReactants()) {
     unsigned int operationThatFailed;
-    MolOps::sanitizeMol(*dynamic_cast<RWMol *>(mol.get()), operationThatFailed,
+    MolOps::sanitizeMol(*static_cast<RWMol *>(mol.get()), operationThatFailed,
                         sanitizeOps);
   }
   for (auto &mol : rxn.getAgents()) {
     unsigned int operationThatFailed;
-    MolOps::sanitizeMol(*dynamic_cast<RWMol *>(mol.get()), operationThatFailed,
+    MolOps::sanitizeMol(*static_cast<RWMol *>(mol.get()), operationThatFailed,
                         sanitizeOps);
   }
   for (auto &mol : rxn.getProducts()) {
     unsigned int operationThatFailed;
-    MolOps::sanitizeMol(*dynamic_cast<RWMol *>(mol.get()), operationThatFailed,
+    MolOps::sanitizeMol(*static_cast<RWMol *>(mol.get()), operationThatFailed,
                         sanitizeOps);
   }
 }

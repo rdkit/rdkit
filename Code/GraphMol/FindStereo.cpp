@@ -127,7 +127,7 @@ bool isAtomPotentialStereoAtom(const Atom *atom) {
 
 StereoInfo getStereoInfo(const Bond *bond) {
   PRECONDITION(bond, "bond is null");
-  StereoInfo sinfo;
+  StereoInfo sinfo{.type = StereoType::Unspecified, .controllingAtoms = {}};
   const auto beginAtom = bond->getBeginAtom();
   const auto endAtom = bond->getEndAtom();
   if (bond->getBondType() == Bond::BondType::DOUBLE) {
@@ -136,8 +136,6 @@ StereoInfo getStereoInfo(const Bond *bond) {
       throw ValueErrorException("invalid atom degree in getStereoInfo(bond)");
     }
 
-    sinfo.type = StereoType::Bond_Double;
-    sinfo.centeredOn = bond->getIdx();
     sinfo.controllingAtoms.reserve(4);
 
     bool seenSquiggleBond = false;
@@ -145,23 +143,41 @@ StereoInfo getStereoInfo(const Bond *bond) {
 
     auto explore_bond_end = [&mol, &bond, &sinfo,
                              &seenSquiggleBond](const Atom *atom) {
+      bool otherDoubleBond = false;
       for (const auto nbr : mol.atomBonds(atom)) {
-        if (nbr->getIdx() != bond->getIdx()) {
-          if (nbr->getBondDir() == Bond::BondDir::UNKNOWN) {
-            seenSquiggleBond = true;
-          }
-          sinfo.controllingAtoms.push_back(
-              nbr->getOtherAtomIdx(atom->getIdx()));
+        if (nbr->getIdx() == bond->getIdx()) {
+          continue;
         }
+        if (nbr->getBondType() == Bond::BondType::DOUBLE) {
+          otherDoubleBond = true;
+        }
+        if (nbr->getBondDir() == Bond::BondDir::UNKNOWN) {
+          seenSquiggleBond = true;
+        }
+        sinfo.controllingAtoms.push_back(nbr->getOtherAtomIdx(atom->getIdx()));
+      }
+      if (otherDoubleBond && atom->getDegree() == 2 &&
+          atom->getTotalValence() == 4) {
+        // This doesn't look like a stereo double bond
+        return false;
       }
 
       for (unsigned i = atom->getDegree(); i < 3; ++i) {
         sinfo.controllingAtoms.push_back(Atom::NOATOM);
       }
+      return true;
     };
 
-    explore_bond_end(beginAtom);
-    explore_bond_end(endAtom);
+    if (!explore_bond_end(beginAtom) || !explore_bond_end(endAtom)) {
+      // This is not really a stereo double bond -- it might be
+      // an allene / cumulene like, but we don't support these yet
+      sinfo.type = StereoType::Unspecified;
+      sinfo.controllingAtoms.clear();
+      return sinfo;
+    }
+
+    sinfo.type = StereoType::Bond_Double;
+    sinfo.centeredOn = bond->getIdx();
 
     if (!seenSquiggleBond) {
       // check to see if either the begin or end atoms has the _UnknownStereo
@@ -270,8 +286,6 @@ StereoInfo getStereoInfo(const Bond *bond) {
       default:
         UNDER_CONSTRUCTION("unrecognized bond stereo type");
     }
-  } else {
-    sinfo.type = StereoType::Unspecified;
   }
 
   return sinfo;
@@ -692,8 +706,8 @@ void flagRingStereo(ROMol &mol,
   auto ringInfo = mol.getRingInfo();
   boost::dynamic_bitset<> possibleAtomsInRing(mol.getNumAtoms());
   for (unsigned int ridx = 0; ridx < ringInfo->atomRings().size(); ++ridx) {
-    const auto &aring = ringInfo->atomRings()[ridx];
-    const auto &bring = ringInfo->bondRings()[ridx];
+    const auto aring = ringInfo->atomRings()[ridx];
+    const auto bring = ringInfo->bondRings()[ridx];
     unsigned int nHere = 0;
     auto sz = aring.size();
     bool ringIsOddSized = sz % 2;
@@ -883,7 +897,7 @@ bool updateAtoms(
             // update all the other atoms/bonds in rings that we're in:
             for (unsigned int ridx = 0;
                  ridx < mol.getRingInfo()->atomRings().size(); ++ridx) {
-              const auto &aring = mol.getRingInfo()->atomRings()[ridx];
+              const auto aring = mol.getRingInfo()->atomRings()[ridx];
               unsigned int nHere = 0;
               for (auto raidx : aring) {
                 // Ring stereo changed, so un-fix atoms in this ring so we can
@@ -906,7 +920,8 @@ bool updateAtoms(
                     }
                   }
                 }
-                for (auto rbidx : mol.getRingInfo()->bondRings()[ridx]) {
+                const auto bring = mol.getRingInfo()->bondRings()[ridx];
+                for (auto rbidx : bring) {
                   if (possibleRingStereoBonds[rbidx]) {
                     --possibleRingStereoBonds[rbidx];
                   }

@@ -279,7 +279,7 @@ def _SubMethodArgs(cExpr, knownMethods):
           elif res[p] == '(':
             parenCount = parenCount + 1
           p = p + 1
-        if p <= len(res):
+        if not parenCount:
           res = res[0:start] + "'%s',compos,atomDict" % (res[start:p - 1]) + res[p - 1:]
   return res
 

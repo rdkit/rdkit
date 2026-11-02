@@ -37,8 +37,16 @@
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/Crippen.h>
 #include <GraphMol/Descriptors/MolSurf.h>
+#include <RDGeneral/RDThreads.h>
+
+#include <algorithm>
+#include <atomic>
+#include <limits>
+#include <new>
+#include <unordered_map>
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
+#include <future>
 #include <mutex>
 #endif
 
@@ -78,12 +86,12 @@ void _registerDescriptors() {
   REGISTER_DESCRIPTOR(CrippenMR, calcMR);
   REGISTER_DESCRIPTOR(chi0v, calcChi0v);
   REGISTER_DESCRIPTOR(chi1v, calcChi1v);
-  REGISTER_DESCRIPTOR(chi2v, calcChi3v);
+  REGISTER_DESCRIPTOR(chi2v, calcChi2v);
   REGISTER_DESCRIPTOR(chi3v, calcChi3v);
   REGISTER_DESCRIPTOR(chi4v, calcChi4v);
   REGISTER_DESCRIPTOR(chi0n, calcChi0n);
   REGISTER_DESCRIPTOR(chi1n, calcChi1n);
-  REGISTER_DESCRIPTOR(chi2n, calcChi3n);
+  REGISTER_DESCRIPTOR(chi2n, calcChi2n);
   REGISTER_DESCRIPTOR(chi3n, calcChi3n);
   REGISTER_DESCRIPTOR(chi4n, calcChi4n);
   REGISTER_DESCRIPTOR(hallKierAlpha, calcHallKierAlpha);
@@ -175,6 +183,98 @@ std::vector<double> Properties::computeProperties(const RDKit::ROMol &mol,
     if (annotate) {
       mol.setProp<double>(prop->getName(), (*prop)(mol));
     }
+  }
+  return res;
+}
+
+namespace {
+void computePropertyRow(
+    const std::vector<boost::shared_ptr<PropertyFunctor>> &props,
+    const ROMol &mol, std::vector<double> &row) {
+  row.resize(props.size());
+  for (size_t j = 0; j < props.size(); ++j) {
+    try {
+      row[j] = (*props[j])(mol);
+    } catch (const std::bad_alloc &) {
+      throw;
+    } catch (const std::exception &) {
+      // what happens next is up to the property
+      switch (props[j]->failureMode()) {
+        case PropertyFailureMode::THROW:
+          throw;
+        case PropertyFailureMode::DEFAULT_ZERO:
+          row[j] = 0.0;
+          break;
+        case PropertyFailureMode::DEFAULT_NAN:
+          row[j] = std::numeric_limits<double>::quiet_NaN();
+          break;
+      }
+    }
+  }
+}
+}  // namespace
+
+std::vector<std::vector<double>> Properties::computePropertiesForMols(
+    const std::vector<const RDKit::ROMol *> &mols, int numThreads) const {
+  const auto nan = std::numeric_limits<double>::quiet_NaN();
+  std::vector<std::vector<double>> res(
+      mols.size(), std::vector<double>(m_properties.size(), nan));
+
+  // Each distinct molecule is computed exactly once: property calculators
+  // may cache results on the molecule (or initialize its ring info), so the
+  // same molecule must never be processed by more than one thread.
+  std::vector<size_t> todo;
+  std::vector<std::pair<size_t, size_t>> repeats;  // (repeat, first)
+  {
+    std::unordered_map<const ROMol *, size_t> firstSeen;
+    firstSeen.reserve(mols.size());
+    for (size_t i = 0; i < mols.size(); ++i) {
+      if (!mols[i]) {
+        continue;
+      }
+      auto [it, inserted] = firstSeen.emplace(mols[i], i);
+      if (inserted) {
+        todo.push_back(i);
+      } else {
+        repeats.emplace_back(i, it->second);
+      }
+    }
+  }
+
+  // Workers pull the next unprocessed entry of `todo` from a shared atomic
+  // index, so uneven molecule costs balance across threads.
+  std::atomic<size_t> nextIdx{0};
+  auto worker = [&]() {
+    for (size_t t = nextIdx.fetch_add(1); t < todo.size();
+         t = nextIdx.fetch_add(1)) {
+      computePropertyRow(m_properties, *mols[todo[t]], res[todo[t]]);
+    }
+  };
+
+  auto nThreads = std::min<size_t>(todo.size(), getNumThreadsToUse(numThreads));
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  if (nThreads <= 1) {
+    worker();
+  } else {
+    // declared after res so that, if an exception unwinds the stack, the
+    // futures are destroyed (waiting for their tasks) before res is
+    std::vector<std::future<void>> tasks;
+    tasks.reserve(nThreads);
+    for (size_t ti = 0; ti < nThreads; ++ti) {
+      tasks.emplace_back(std::async(std::launch::async, worker));
+    }
+    for (auto &task : tasks) {
+      task.get();
+    }
+  }
+#else
+  // threads are compiled out: getNumThreadsToUse() is 1 here anyway
+  RDUNUSED_PARAM(nThreads);
+  worker();
+#endif
+
+  for (const auto &[repeat, first] : repeats) {
+    res[repeat] = res[first];
   }
   return res;
 }

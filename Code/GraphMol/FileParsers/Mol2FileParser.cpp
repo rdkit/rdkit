@@ -74,13 +74,14 @@ void fixNitroSubstructureAndCharge(RWMol *res, unsigned int atIdx) {
   }
 }
 
-void readFormalChargesFromAttr(std::istream *inStream, RWMol *res) {
+bool readFormalChargesFromAttr(std::istream *inStream, RWMol *res) {
   PRECONDITION(inStream, "inStream not valid");
   PRECONDITION(!inStream->eof(), "inStream is at eof");
   PRECONDITION(res, "RWMol not valid");
   typedef boost::tokenizer<boost::char_separator<char>> tokenizer;
   boost::char_separator<char> sep(" \t\n");
   bool readNextAtomAttribs = true;
+  bool foundFormalCharges = false;
   unsigned int atomIdx = 0, noAtomAttr = 0;
 
   // std::streampos stPos = inStream->tellg();
@@ -121,6 +122,7 @@ void readFormalChargesFromAttr(std::istream *inStream, RWMol *res) {
           }
           // assign the charge
           res->getAtomWithIdx(atomIdx - 1)->setFormalCharge(formCharge);
+          foundFormalCharges = true;
         }
       }
     }  // endfor
@@ -134,6 +136,7 @@ void readFormalChargesFromAttr(std::istream *inStream, RWMol *res) {
       }
     }
   }
+  return foundFormalCharges;
 }
 
 void guessFormalCharges(RWMol *res) {
@@ -923,7 +926,15 @@ std::unique_ptr<RWMol> MolFromMol2DataStream(std::istream &inStream,
     ParseMol2BondBlock(&inStream, res.get(), nBonds, idxCorresp);
   }
 
-  if (!chargeStart) {
+  bool readFormalCharges = false;
+  if (chargeStart) {
+    inStream.seekg(chargeStart, std::ios::beg);
+    readFormalCharges = readFormalChargesFromAttr(&inStream, res.get());
+  }
+  if (!readFormalCharges) {
+    // the UNITY_ATOM_ATTR section either does not exist or did not contain
+    // any formal charges (e.g. it only holds MMFF94 partial charges), so
+    // clean up substructures and guess the charges as usual
     bool molFixed;
     if (params.cleanupSubstructures) {
       molFixed = cleanUpMol2Substructures(res.get());
@@ -938,9 +949,6 @@ std::unique_ptr<RWMol> MolFromMol2DataStream(std::istream &inStream,
     // mol2 format does not support formal charge information, hence we need to
     // guess it based on default and explicit valences
     guessFormalCharges(res.get());
-  } else {
-    inStream.seekg(chargeStart, std::ios::beg);
-    readFormalChargesFromAttr(&inStream, res.get());
   }
 
   // set chirality prior to sanitization since it happens from 3D and it's not

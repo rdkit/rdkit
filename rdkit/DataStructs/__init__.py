@@ -9,7 +9,6 @@
 
 import math
 
-from rdkit import rdBase
 from rdkit.DataStructs import cDataStructs
 from rdkit.DataStructs.cDataStructs import *
 
@@ -46,7 +45,7 @@ def FingerprintSimilarity(fp1, fp2, metric=TanimotoSimilarity):
 
 
 def FoldToTargetDensity(fp, density=0.3, minLength=64):
-  while fp.GetNumOnBits() / len(fp) > density and len(fp) // 2 > minLength:
+  while fp.GetNumOnBits() / len(fp) < density and len(fp) // 2 >= minLength:
     fp = FoldFingerprint(fp, 2)
   return fp
 
@@ -63,16 +62,3 @@ def getElementFromFlatMatrix(matrix, i, j):
   if i > j:
     i, j = j, i
   return matrix[j * (j - 1) // 2 + i]
-
-
-if rdBase._wrapperType == 'nanobind':
-  # nanobind free functions don't work when directly set as class methods,
-  # so we need to call them via a python function
-  def bvtotext(bv):
-    return BitVectToText(bv)
-
-  ExplicitBitVect.ToBitString = bvtotext
-  SparseBitVect.ToBitString = bvtotext
-else:
-  ExplicitBitVect.ToBitString = BitVectToText
-  SparseBitVect.ToBitString = BitVectToText

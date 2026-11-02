@@ -5588,6 +5588,7 @@ M  END
 
     sg = m.GetStereoGroups()
     self.assertEqual(len(sg), 2)
+    self.assertEqual(list(sg), [sg[i] for i in range(len(sg))])
     group1 = sg[1]
     self.assertEqual(group1.GetGroupType(), Chem.StereoGroupType.STEREO_OR)
     stereo_atoms = group1.GetAtoms()
@@ -6737,6 +6738,7 @@ M  END
     mol = Chem.MolFromSmiles('C[C@H](F)C=CC')
     si = Chem.FindPotentialStereo(mol)
     self.assertEqual(len(si), 2)
+    self.assertEqual(list(si), [si[i] for i in range(len(si))])
     self.assertEqual(si[0].type, Chem.StereoType.Atom_Tetrahedral)
     self.assertEqual(si[0].specified, Chem.StereoSpecified.Specified)
     self.assertEqual(si[0].centeredOn, 1)

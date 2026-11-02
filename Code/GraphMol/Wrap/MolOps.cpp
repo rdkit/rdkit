@@ -306,9 +306,7 @@ ROMol *addHs2(const ROMol &orig, MolOps::AddHsParameters params,
   if (onlyOnAtoms) {
     onlyOn = pythonObjectToVect(onlyOnAtoms, orig.getNumAtoms());
   }
-  auto res = std::make_unique<RWMol>(orig);
-  MolOps::addHs(*res, params, onlyOn.get());
-  return static_cast<ROMol *>(res.release());
+  return MolOps::addHs(orig, params, onlyOn.get());
 }
 
 ROMol *addHs(const ROMol &orig, bool explicitOnly, bool addCoords,
@@ -589,8 +587,8 @@ python::tuple GetMolFragsWithMapping(
     auto &fragsList = reinterpret_cast<python::list &>(frags);
     auto &fragsMolAtomMappingList =
         reinterpret_cast<python::list &>(fragsMolAtomMapping);
-    bool hasFrags = fragsList != python::object();
-    bool hasFragsMolAtomMapping = fragsMolAtomMappingList != python::object();
+    bool hasFrags = !fragsList.is_none();
+    bool hasFragsMolAtomMapping = !fragsMolAtomMappingList.is_none();
     molFrags =
         hasFrags || hasFragsMolAtomMapping
             ? MolOps::getMolFrags(
@@ -708,10 +706,10 @@ ExplicitBitVect *wrapRDKFingerprintMol(
   std::vector<std::vector<std::uint32_t>> *lAtomBits = nullptr;
   std::map<std::uint32_t, std::vector<std::vector<int>>> *lBitInfo = nullptr;
   // if(!(atomBits.is_none())){
-  if (atomBits != python::object()) {
+  if (!atomBits.is_none()) {
     lAtomBits = new std::vector<std::vector<std::uint32_t>>(mol.getNumAtoms());
   }
-  if (bitInfo != python::object()) {
+  if (!bitInfo.is_none()) {
     lBitInfo = new std::map<std::uint32_t, std::vector<std::vector<int>>>;
   }
   ExplicitBitVect *res;
@@ -765,11 +763,11 @@ SparseIntVect<boost::uint64_t> *wrapUnfoldedRDKFingerprintMol(
   std::map<boost::uint64_t, std::vector<std::vector<int>>> *lBitInfo = nullptr;
 
   // if(!(atomBits.is_none())){
-  if (atomBits != python::object()) {
+  if (!atomBits.is_none()) {
     lAtomBits =
         new std::vector<std::vector<boost::uint64_t>>(mol.getNumAtoms());
   }
-  if (bitInfo != python::object()) {
+  if (!bitInfo.is_none()) {
     lBitInfo = new std::map<boost::uint64_t, std::vector<std::vector<int>>>;
   }
 
@@ -858,7 +856,7 @@ PATH_TYPE findAtomEnvironmentOfRadiusNHelper(const ROMol &mol,
                                              bool useHs, bool enforceSize,
                                              python::object atomMap) {
   PATH_TYPE path;
-  if (atomMap == python::object()) {
+  if (atomMap.is_none()) {
     path = findAtomEnvironmentOfRadiusN(mol, radius, rootedAtAtom, useHs,
                                         enforceSize);
   } else {
@@ -884,7 +882,7 @@ ROMol *pathToSubmolHelper(const ROMol &mol, python::object &path, bool useQuery,
   }
   std::map<int, int> mapping;
   result = Subgraphs::pathToSubmol(mol, pth, useQuery, mapping);
-  if (atomMap != python::object()) {
+  if (!atomMap.is_none()) {
     // make sure the optional argument actually was a dictionary
     python::dict typecheck = python::extract<python::dict>(atomMap);
     atomMap.attr("clear")();
@@ -898,7 +896,7 @@ ROMol *pathToSubmolHelper(const ROMol &mol, python::object &path, bool useQuery,
 
 ROMol *adjustQueryPropertiesHelper(const ROMol &mol, python::object pyparams) {
   MolOps::AdjustQueryParameters params;
-  if (pyparams != python::object()) {
+  if (!pyparams.is_none()) {
     params = python::extract<MolOps::AdjustQueryParameters>(pyparams);
   }
   return MolOps::adjustQueryProperties(mol, &params);
@@ -907,7 +905,7 @@ ROMol *adjustQueryPropertiesHelper(const ROMol &mol, python::object pyparams) {
 ROMol *adjustQueryPropertiesWithGenericGroupsHelper(const ROMol &mol,
                                                     python::object pyparams) {
   MolOps::AdjustQueryParameters params;
-  if (pyparams != python::object()) {
+  if (!pyparams.is_none()) {
     params = python::extract<MolOps::AdjustQueryParameters>(pyparams);
   }
   return GenericGroups::adjustQueryPropertiesWithGenericGroups(mol, &params);

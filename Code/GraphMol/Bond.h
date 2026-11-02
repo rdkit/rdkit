@@ -51,7 +51,7 @@ class RDKIT_GRAPHMOL_EXPORT Bond : public RDProps {
 
  public:
   // FIX: grn...
-  typedef Queries::Query<int, Bond const *, true> QUERYBOND_QUERY;
+  using QUERYBOND_QUERY = Queries::Query<int, Bond const *, true>;
 
   //! the type of Bond
   enum BondType : std::uint8_t {

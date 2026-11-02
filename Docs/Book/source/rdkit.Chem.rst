@@ -87,6 +87,7 @@ Submodules
    rdkit.Chem.rdForceFieldHelpers
    rdkit.Chem.rdfragcatalog
    rdkit.Chem.rdFreeSASA
+   rdkit.Chem.rdGaussianShape
    rdkit.Chem.rdGeneralizedSubstruct
    rdkit.Chem.rdinchi
    rdkit.Chem.rdMHFPFingerprint

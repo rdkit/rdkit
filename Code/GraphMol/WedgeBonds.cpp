@@ -13,6 +13,7 @@
 #include <sstream>
 #include <set>
 #include <algorithm>
+#include <tuple>
 #include <RDGeneral/utils.h>
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/RDLog.h>
@@ -50,6 +51,153 @@ std::tuple<unsigned int, unsigned int, unsigned int> getDoubleBondPresence(
 }  // namespace
 
 namespace detail {
+
+namespace {
+struct RingSystemInfo {
+  RDGeom::Point3D center;
+  bool hasBridgeWithInteriorAtom = false;
+  std::vector<unsigned int> ringIndices;
+};
+
+// RingInfo identifies rings that share at least one bond, but it does not
+// distinguish a single fused bond from a longer shared path. Return true when
+// two rings share adjacent bonds: their common atom is an interior bridge atom.
+bool ringsSharePathWithInteriorAtom(
+    const ROMol &mol, std::span<const int> firstRing,
+    std::span<const int> secondRing) {
+  // Count only bonds that belong to both rings. Two such bonds incident on the
+  // same atom are consecutive and make that atom interior to the shared path.
+  std::vector<unsigned int> numIncidentSharedBonds(mol.getNumAtoms());
+  for (const auto bondIdx : firstRing) {
+    if (std::find(secondRing.begin(), secondRing.end(), bondIdx) ==
+        secondRing.end()) {
+      continue;
+    }
+    const auto bond = mol.getBondWithIdx(bondIdx);
+    if (++numIncidentSharedBonds[bond->getBeginAtomIdx()] > 1 ||
+        ++numIncidentSharedBonds[bond->getEndAtomIdx()] > 1) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Return all rings in the fused component containing bondIdx. A bond can be a
+// member of multiple rings, so start the traversal from every containing ring.
+std::vector<unsigned int> getFusedRingSystem(RingInfo &ringInfo,
+                                             unsigned int bondIdx) {
+  const auto bondRings = ringInfo.bondRings();
+  boost::dynamic_bitset<> visitedRings(bondRings.size());
+  std::vector<unsigned int> ringsToVisit;
+  const auto addRingToVisit = [&](unsigned int ringIdx) {
+    if (!visitedRings[ringIdx]) {
+      visitedRings.set(ringIdx);
+      ringsToVisit.push_back(ringIdx);
+    }
+  };
+  for (const auto ringIdx : ringInfo.bondMembers(bondIdx)) {
+    addRingToVisit(ringIdx);
+  }
+
+  std::vector<unsigned int> result;
+  while (!ringsToVisit.empty()) {
+    const auto ringIdx = ringsToVisit.back();
+    ringsToVisit.pop_back();
+    result.push_back(ringIdx);
+    for (const auto neighborIdx : ringInfo.fusedRingNeighbors(ringIdx)) {
+      addRingToVisit(neighborIdx);
+    }
+  }
+  return result;
+}
+
+bool ringSystemHasBridgeWithInteriorAtom(
+    const ROMol &mol, RingInfo &ringInfo,
+    const std::vector<unsigned int> &ringIndices) {
+  const auto bondRings = ringInfo.bondRings();
+  for (const auto ringIdx : ringIndices) {
+    // fusedRingNeighbors() is lazy and cached by RingInfo. Checking only those
+    // pairs avoids repeating RingInfo's fused-ring discovery here.
+    for (const auto neighborIdx : ringInfo.fusedRingNeighbors(ringIdx)) {
+      if (neighborIdx <= ringIdx) {
+        continue;  // inspect each pair once
+      }
+      if (ringsSharePathWithInteriorAtom(mol, bondRings[ringIdx],
+                                         bondRings[neighborIdx])) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+RDGeom::Point3D getRingSystemCenter(
+    const ROMol &mol, const RingInfo &ringInfo,
+    const std::vector<unsigned int> &ringIndices, const Conformer &conf) {
+  // An atom shared by multiple rings contributes only once to the center.
+  boost::dynamic_bitset<> ringAtoms(mol.getNumAtoms());
+  const auto atomRings = ringInfo.atomRings();
+  for (const auto ringIdx : ringIndices) {
+    for (const auto atomIdx : atomRings[ringIdx]) {
+      ringAtoms.set(atomIdx);
+    }
+  }
+  CHECK_INVARIANT(ringAtoms.any(), "a ring system must contain atoms");
+
+  RDGeom::Point3D center;
+  for (auto atomIdx = ringAtoms.find_first();
+       atomIdx != boost::dynamic_bitset<>::npos;
+       atomIdx = ringAtoms.find_next(atomIdx)) {
+    auto pos = conf.getAtomPos(atomIdx);
+    pos.z = 0.0;
+    center += pos;
+  }
+  return center / static_cast<double>(ringAtoms.count());
+}
+
+// Collect the geometric and topological properties used to rank wedge bonds
+// in the connected ring system containing bondIdx.
+RingSystemInfo getRingSystemInfo(const ROMol &mol, unsigned int bondIdx,
+                                 const Conformer *conf) {
+  PRECONDITION(conf && !conf->is3D(), "a 2D conformer is required");
+  auto ringInfo = mol.getRingInfo();
+  PRECONDITION(ringInfo->numBondRings(bondIdx), "bond is not in a ring");
+
+  auto ringIndices = getFusedRingSystem(*ringInfo, bondIdx);
+  const auto hasBridgeWithInteriorAtom =
+      ringSystemHasBridgeWithInteriorAtom(mol, *ringInfo, ringIndices);
+  if (!hasBridgeWithInteriorAtom) {
+    // The center is only used to rank inner bonds in bridged systems.
+    return {{}, false, std::move(ringIndices)};
+  }
+  return {getRingSystemCenter(mol, *ringInfo, ringIndices, *conf), true,
+          std::move(ringIndices)};
+}
+
+double bondMidpointDistanceToPoint(const ROMol &mol, unsigned int bondIdx,
+                                   const Conformer *conf,
+                                   const RDGeom::Point3D &point) {
+  const auto bond = mol.getBondWithIdx(bondIdx);
+  auto midpoint = (conf->getAtomPos(bond->getBeginAtomIdx()) +
+                   conf->getAtomPos(bond->getEndAtomIdx())) /
+                  2.0;
+  midpoint.z = 0.0;
+  return (midpoint - point).lengthSq();
+}
+
+struct WedgeCandidate {
+  bool isRingBond;
+  bool isInBridgedRingSystem;
+  double distanceToRingCenter;
+  int score;
+  int bondIdx;
+};
+
+int pickBondToWedgeImpl(
+    const Atom *atom, const ROMol &mol, const INT_VECT &nChiralNbrs,
+    const std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> &wedgeBonds,
+    int noNbrs, const Conformer *conf);
+}  // namespace
 
 std::pair<bool, INT_VECT> countChiralNbrs(const ROMol &mol, int noNbrs) {
   INT_VECT nChiralNbrs(mol.getNumAtoms(), noNbrs);
@@ -276,6 +424,15 @@ int pickBondToWedge(
     const Atom *atom, const ROMol &mol, const INT_VECT &nChiralNbrs,
     const std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> &wedgeBonds,
     int noNbrs) {
+  return pickBondToWedgeImpl(atom, mol, nChiralNbrs, wedgeBonds, noNbrs,
+                             nullptr);
+}
+
+namespace {
+int pickBondToWedgeImpl(
+    const Atom *atom, const ROMol &mol, const INT_VECT &nChiralNbrs,
+    const std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> &wedgeBonds,
+    int noNbrs, const Conformer *conf) {
   // here is what we are going to do
   // - at each chiral center look for a bond that is begins at the atom and
   //   is not yet picked to be wedged for a different chiral center, preferring
@@ -291,7 +448,7 @@ int pickBondToWedge(
     MolOps::findSSSR(mol);
   }
 
-  std::vector<std::pair<int, int>> nbrScores;
+  std::vector<WedgeCandidate> nbrScores;
   for (const auto bond : mol.atomBonds(atom)) {
     // can only wedge single bonds:
     if (bond->getBondType() != Bond::SINGLE) {
@@ -303,8 +460,8 @@ int pickBondToWedge(
       // very strong preference for Hs:
       auto *oatom = bond->getOtherAtom(atom);
       if (oatom->getAtomicNum() == 1) {
-        nbrScores.emplace_back(-1000000,
-                               bid);  // lower than anything else can be
+        // This score is lower than any value produced by the normal ranking.
+        nbrScores.push_back({false, false, 0.0, -1000000, bid});
         continue;
       }
       // prefer lower atomic numbers with lower degrees and no specified
@@ -337,7 +494,8 @@ int pickBondToWedge(
       // std::cerr << "    nrbScore: " << idx << " - " << oIdx << " : "
       //           << nbrScore << " nChiralNbrs: " << nChiralNbrs[oIdx]
       //           << std::endl;
-      nbrScores.emplace_back(nbrScore, bid);
+      const auto isRingBond = mol.getRingInfo()->numBondRings(bid) != 0;
+      nbrScores.push_back({isRingBond, false, 0.0, nbrScore, bid});
     }
   }
   // There's still one situation where this whole thing can fail: an unlucky
@@ -351,9 +509,57 @@ int pickBondToWedge(
   if (nbrScores.empty()) {
     return -1;
   }
-  auto minPr = std::min_element(nbrScores.begin(), nbrScores.end());
-  return minPr->second;
+  const auto allCandidatesAreRingBonds =
+      std::all_of(nbrScores.begin(), nbrScores.end(),
+                  [](const auto &score) { return score.isRingBond; });
+  if (allCandidatesAreRingBonds && conf && !conf->is3D()) {
+    const auto ringInfo = mol.getRingInfo();
+    const auto ringSystem =
+        getRingSystemInfo(mol, nbrScores.front().bondIdx, conf);
+    const auto allCandidatesAreInRingSystem = std::all_of(
+        nbrScores.begin(), nbrScores.end(), [&](const auto &candidate) {
+          const auto &candidateRings =
+              ringInfo->bondMembers(candidate.bondIdx);
+          CHECK_INVARIANT(!candidateRings.empty(),
+                          "ring bond has no ring membership");
+          return std::any_of(
+              candidateRings.begin(), candidateRings.end(),
+              [&](const auto ringIdx) {
+                return std::find(ringSystem.ringIndices.begin(),
+                                 ringSystem.ringIndices.end(),
+                                 ringIdx) != ringSystem.ringIndices.end();
+              });
+        });
+
+    // Spiro atoms have candidates in more than one fused ring system. There is
+    // no common center for those systems, so retain the established scoring.
+    if (allCandidatesAreInRingSystem &&
+        ringSystem.hasBridgeWithInteriorAtom) {
+      for (auto &candidate : nbrScores) {
+        candidate.isInBridgedRingSystem = true;
+        candidate.distanceToRingCenter = bondMidpointDistanceToPoint(
+            mol, candidate.bondIdx, conf, ringSystem.center);
+      }
+    }
+  }
+  const auto minPr = std::min_element(
+      nbrScores.begin(), nbrScores.end(),
+      [](const auto &lhs, const auto &rhs) {
+        // Preserve the established scoring unless all candidates belong to a
+        // single bridged ring system, where inner bonds are preferred.
+        if (lhs.isInBridgedRingSystem != rhs.isInBridgedRingSystem) {
+          return lhs.isInBridgedRingSystem;
+        }
+        if (lhs.isInBridgedRingSystem) {
+          return std::tie(lhs.distanceToRingCenter, lhs.score, lhs.bondIdx) <
+                 std::tie(rhs.distanceToRingCenter, rhs.score, rhs.bondIdx);
+        }
+        return std::tie(lhs.score, lhs.bondIdx) <
+               std::tie(rhs.score, rhs.bondIdx);
+      });
+  return minPr->bondIdx;
 }
+}  // namespace
 
 }  // namespace detail
 
@@ -399,8 +605,8 @@ std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> pickBondsToWedge(
     if (type != Atom::CHI_TETRAHEDRAL_CW && type != Atom::CHI_TETRAHEDRAL_CCW) {
       break;
     }
-    auto bnd1 =
-        detail::pickBondToWedge(atom, mol, nChiralNbrs, wedgeInfo, noNbrs);
+    auto bnd1 = detail::pickBondToWedgeImpl(atom, mol, nChiralNbrs, wedgeInfo,
+                                            noNbrs, conf);
     if (bnd1 >= 0) {
       auto wi = std::unique_ptr<RDKit::Chirality::WedgeInfoChiral>(
           new RDKit::Chirality::WedgeInfoChiral(idx));

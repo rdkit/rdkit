@@ -9,6 +9,7 @@ target_compile_definitions(DistGeometry PRIVATE RDKIT_DISTGEOMETRY_BUILD)
 
 rdkit_headers(BoundsMatrix.h
               ZMatrix.h
+              ZMatrixUtils.h
               ChiralSet.h
               ChiralViolationContribs.h
               DistGeomUtils.h

@@ -91,7 +91,7 @@ struct Path14Configuration {
       case TorsionType::CISTRANS:
         return DistGeom::TorsionValues{0.0, M_PI};
       case TorsionType::CUSTOM:
-        return DistGeom::TorsionValues{*value.value};
+        return DistGeom::TorsionValues{*value.value, -*value.value};
       default:
         break;
     }
