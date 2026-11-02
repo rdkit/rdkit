@@ -103,17 +103,16 @@ void StereoisomerEnumerator::buildFlippers() {
       continue;
     }
     if (si.type == Chirality::StereoType::Atom_Tetrahedral) {
-      d_flippers.push_back(std::unique_ptr<details::Flipper>(
-          new details::AtomFlipper(d_mol, si)));
+      d_flippers.emplace_back(new details::AtomFlipper(si));
     } else if (si.type == Chirality::StereoType::Bond_Double) {
       std::unique_ptr<details::BondFlipper> newFlipper(
           new details::BondFlipper(d_mol, si));
-      if (newFlipper->dp_bond) {
+      if (newFlipper->isValid()) {
         d_flippers.push_back(std::move(newFlipper));
       }
     } else if (si.type == Chirality::StereoType::Bond_Atropisomer) {
       std::unique_ptr<details::AtropisomerFlipper> newFlipper(
-          new details::AtropisomerFlipper(d_mol, si));
+          new details::AtropisomerFlipper(si));
       d_flippers.push_back(std::move(newFlipper));
     }
   }
@@ -163,7 +162,7 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::generateRandomIsomer() {
     if (d_seen.find(nextConfig) == d_seen.end()) {
       d_seen.insert(nextConfig);
       for (size_t i = 0; i < d_flippers.size(); i++) {
-        d_flippers[i]->flip(nextConfig[i]);
+        d_flippers[i]->flip(d_mol, nextConfig[i]);
       }
 
       // Check whether this isomer is valid, according to the patterns
