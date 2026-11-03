@@ -450,9 +450,6 @@ bool _checkKTerms(RDGeom::Point3DPtrVect &positions,
       std::ranges::count_if(eargs.etkdgDetails->angles,
                             [](const auto &angle) { return angle[3]; }) +
       eargs.etkdgDetails->improperAtoms.size();
-  if (totalEnergy > (nCenters * planarityTolerance)) {
-    return false;
-  }
   for (const auto &contrib : field->contribs()) {
     if (auto c = dynamic_cast<const ForceFields::AngleConstraintContribs *>(
             contrib.get())) {
@@ -467,7 +464,7 @@ bool _checkKTerms(RDGeom::Point3DPtrVect &positions,
       }
     }
   }
-  return true;
+  return totalEnergy <= nCenters * planarityTolerance;
 }
 
 namespace EmbeddingOps {
