@@ -3872,6 +3872,9 @@ void removeStereochemistry(ROMol &mol) {
     } else if (bond->getBondType() == Bond::SINGLE) {
       bond->setBondDir(Bond::BondDir::NONE);
     }
+    // wiggly bonds are also recorded as a property, which the writers and
+    // wedgeMolBonds() would otherwise restore them from
+    bond->clearProp(common_properties::_UnknownStereo);
   }
   std::vector<StereoGroup> sgs;
   static_cast<RWMol &>(mol).setStereoGroups(std::move(sgs));
