@@ -24,9 +24,10 @@ CREATE TEMP TABLE binary_io_qmol_dst (id int, q qmol);
 \copy binary_io_qmol_src TO 'results/binary_io_qmol.bin' WITH (FORMAT binary)
 \copy binary_io_qmol_dst FROM 'results/binary_io_qmol.bin' WITH (FORMAT binary)
 SELECT d.id, mol_to_smarts(d.q) AS smarts,
+       (mol_to_smarts(s.q)::text = mol_to_smarts(d.q)::text) AS same_smarts,
        ('c1cccnc1'::mol @> d.q) AS matches_pyr,
        ('c1ccccc1'::mol @> d.q) AS matches_bz
-FROM binary_io_qmol_dst d
+FROM binary_io_qmol_src s JOIN binary_io_qmol_dst d USING (id)
 ORDER BY d.id;
 DROP TABLE binary_io_qmol_src, binary_io_qmol_dst;
 
@@ -60,3 +61,21 @@ SELECT d.id, d.r, (s.r @= d.r) AS same_rxn
 FROM binary_io_rxn_src s JOIN binary_io_rxn_dst d USING (id)
 ORDER BY d.id;
 DROP TABLE binary_io_rxn_src, binary_io_rxn_dst;
+
+-- malformed binary payloads raise ERRCODE_DATA_EXCEPTION cleanly
+\copy (SELECT '\xdeadbeef'::bytea) TO 'results/binary_io_bad.bin' WITH (FORMAT binary)
+CREATE TEMP TABLE binary_io_bad_mol (m mol);
+\copy binary_io_bad_mol FROM 'results/binary_io_bad.bin' WITH (FORMAT binary)
+DROP TABLE binary_io_bad_mol;
+
+CREATE TEMP TABLE binary_io_bad_qmol (q qmol);
+\copy binary_io_bad_qmol FROM 'results/binary_io_bad.bin' WITH (FORMAT binary)
+DROP TABLE binary_io_bad_qmol;
+
+CREATE TEMP TABLE binary_io_bad_xqmol (x xqmol);
+\copy binary_io_bad_xqmol FROM 'results/binary_io_bad.bin' WITH (FORMAT binary)
+DROP TABLE binary_io_bad_xqmol;
+
+CREATE TEMP TABLE binary_io_bad_rxn (r reaction);
+\copy binary_io_bad_rxn FROM 'results/binary_io_bad.bin' WITH (FORMAT binary)
+DROP TABLE binary_io_bad_rxn;

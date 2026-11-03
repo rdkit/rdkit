@@ -64,9 +64,10 @@ PG_FUNCTION_INFO_V1(mol_recv);
 Datum mol_recv(PG_FUNCTION_ARGS) {
   StringInfo buf = (StringInfo)PG_GETARG_POINTER(0);
   int len = buf->len - buf->cursor;
+  const char *data = pq_getmsgbytes(buf, len);
   CROMol mol;
   Mol *res;
-  mol = parseMolBlob((char *)pq_getmsgbytes(buf, len), len);
+  mol = parseMolBlob((char *)data, len);
   res = deconstructROMolWithQueryProperties(mol);
   freeCROMol(mol);
 
@@ -435,9 +436,10 @@ PG_FUNCTION_INFO_V1(xqmol_recv);
 Datum xqmol_recv(PG_FUNCTION_ARGS) {
   StringInfo buf = (StringInfo)PG_GETARG_POINTER(0);
   int len = buf->len - buf->cursor;
+  const char *data = pq_getmsgbytes(buf, len);
   CXQMol mol;
   XQMol *res;
-  mol = parseXQMolBlob((char *)pq_getmsgbytes(buf, len), len);
+  mol = parseXQMolBlob((char *)data, len);
   res = deconstructXQMol(mol);
   freeCXQMol(mol);
 
@@ -585,10 +587,11 @@ PG_FUNCTION_INFO_V1(reaction_recv);
 Datum reaction_recv(PG_FUNCTION_ARGS) {
   StringInfo buf = (StringInfo)PG_GETARG_POINTER(0);
   int len = buf->len - buf->cursor;
+  const char *data = pq_getmsgbytes(buf, len);
   CChemicalReaction crxn;
   Reaction *rxn;
 
-  crxn = parseChemReactBlob((char *)pq_getmsgbytes(buf, len), len);
+  crxn = parseChemReactBlob((char *)data, len);
 
   rxn = deconstructChemReact(crxn);
   freeChemReaction(crxn);
