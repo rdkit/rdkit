@@ -677,8 +677,6 @@ bool WedgeBondFromAtropisomerOneBondNoConf(
 
   for (auto atomAndBondVec : atomAndBondVecs) {
     for (auto endBond : atomAndBondVec.second) {
-      // clearSingleBondDirFlags() replaces the UNKNOWN direction with the
-      // _UnknownStereo property, so both spellings have to be checked
       if (Chirality::detail::hasUnknownStereoAnnotation(endBond)) {
         return false;  // not an atropisomer)
       }
@@ -842,8 +840,6 @@ bool WedgeBondFromAtropisomerOneBond2d(
 
   for (auto atomAndBondVec : atomAndBondVecs) {
     for (auto endBond : atomAndBondVec.second) {
-      // clearSingleBondDirFlags() replaces the UNKNOWN direction with the
-      // _UnknownStereo property, so both spellings have to be checked
       if (Chirality::detail::hasUnknownStereoAnnotation(endBond)) {
         return false;  // not an atropisomer)
       }
@@ -1065,8 +1061,6 @@ bool WedgeBondFromAtropisomerOneBond3d(
 
   for (auto atomAndBondVecs : atomAndBondVecs) {
     for (auto endBond : atomAndBondVecs.second) {
-      // clearSingleBondDirFlags() replaces the UNKNOWN direction with the
-      // _UnknownStereo property, so both spellings have to be checked
       if (Chirality::detail::hasUnknownStereoAnnotation(endBond)) {
         return false;  // not an atropisomer)
       }

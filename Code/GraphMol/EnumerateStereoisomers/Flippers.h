@@ -46,7 +46,7 @@ struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT Flipper {
 class RDKIT_ENUMERATESTEREOISOMERS_EXPORT AtomFlipper : public Flipper {
  public:
   AtomFlipper() = delete;
-  explicit AtomFlipper(const Chirality::StereoInfo &si);
+  AtomFlipper(ROMol &mol, const Chirality::StereoInfo &si);
   AtomFlipper(const AtomFlipper &other) = delete;
   AtomFlipper(AtomFlipper &&other) = delete;
   AtomFlipper &operator=(const AtomFlipper &other) = delete;

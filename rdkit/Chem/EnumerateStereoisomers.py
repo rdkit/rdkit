@@ -37,10 +37,22 @@ class StereoEnumerationOptions(object):
     self.unique = unique
 
 
+def _clearUnknownStereo(bond):
+  # Clear both spellings only when assigning the configuration they describe.
+  bond.ClearProp('_UnknownStereo')
+  if bond.GetBondDir() in (Chem.BondDir.UNKNOWN, Chem.BondDir.EITHERDOUBLE):
+    bond.SetBondDir(Chem.BondDir.NONE)
+
+
 class _BondFlipper(object):
 
   def __init__(self, bond):
     self.bond = bond
+    _clearUnknownStereo(bond)
+    for atom in (bond.GetBeginAtom(), bond.GetEndAtom()):
+      for neighbor in atom.GetBonds():
+        if neighbor.GetBondType() == Chem.BondType.SINGLE:
+          _clearUnknownStereo(neighbor)
 
   def flip(self, flag):
     if flag:
@@ -53,6 +65,9 @@ class _AtomFlipper(object):
 
   def __init__(self, atom):
     self.atom = atom
+    for bond in atom.GetBonds():
+      if bond.GetBeginAtomIdx() == atom.GetIdx():
+        _clearUnknownStereo(bond)
 
   def flip(self, flag):
     if flag:
@@ -87,7 +102,11 @@ def _getFlippers(mol, options):
                                                          Chem.StereoSpecified.Unknown):
         continue
       if si.type == Chem.StereoType.Atom_Tetrahedral:
-        flippers.append(_AtomFlipper(mol.GetAtomWithIdx(si.centeredOn)))
+        atom = mol.GetAtomWithIdx(si.centeredOn)
+        # An incoming wiggly bond can make StereoInfo Unknown at a defined neighbor.
+        if options.onlyUnassigned and atom.GetChiralTag() != Chem.ChiralType.CHI_UNSPECIFIED:
+          continue
+        flippers.append(_AtomFlipper(atom))
       elif si.type == Chem.StereoType.Bond_Double:
         bnd = mol.GetBondWithIdx(si.centeredOn)
         if not bnd.GetStereoAtoms():
@@ -300,9 +319,6 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
   tm = Chem.Mol(m)
   for atom in tm.GetAtoms():
     atom.ClearProp("_CIPCode")
-  for bond in tm.GetBonds():
-    if bond.GetBondDir() == Chem.BondDir.EITHERDOUBLE or bond.GetBondDir() == Chem.BondDir.UNKNOWN:
-      bond.SetBondDir(Chem.BondDir.NONE)
   flippers = _getFlippers(tm, options)
   nCenters = len(flippers)
   if not nCenters:
