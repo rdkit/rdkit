@@ -7051,6 +7051,20 @@ TEST_CASE("wiggly bonds are re-applied after clearSingleBondDirFlags") {
   CHECK(wigglyBond->getBondDir() == Bond::BondDir::UNKNOWN);
 }
 
+TEST_CASE("removeStereochemistry removes wiggly bonds") {
+  // after parsing, the wiggly bond is recorded only in _UnknownStereo, so
+  // removing the stereochemistry has to clear that too or the writers and
+  // wedgeMolBonds() will bring the wiggly bond back
+  std::unique_ptr<RWMol> m{MolBlockToMol(wigglyStealMolBlock)};
+  REQUIRE(m);
+
+  MolOps::removeStereochemistry(*m);
+  CHECK(getMolBlockBondStereo(MolToMolBlock(*m), 1, 3) == 0);
+
+  Chirality::wedgeMolBonds(*m, &m->getConformer());
+  CHECK(m->getBondBetweenAtoms(1, 3)->getBondDir() == Bond::BondDir::NONE);
+}
+
 TEST_CASE("wiggly bonds flagging unknown double bond stereo are preserved") {
   // A wiggly bond can also mean "the stereo of the adjacent double bond is
   // unknown". It is claimed like any other wiggly bond, and the double bond is
