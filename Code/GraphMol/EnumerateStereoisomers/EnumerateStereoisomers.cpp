@@ -35,12 +35,6 @@ StereoisomerEnumerator::StereoisomerEnumerator(
   for (auto atom : d_mol.atoms()) {
     atom->clearProp("_CIPCode");
   }
-  for (auto bond : d_mol.bonds()) {
-    if (bond->getBondDir() == Bond::BondDir::EITHERDOUBLE ||
-        bond->getBondDir() == Bond::BondDir::UNKNOWN) {
-      bond->setBondDir(Bond::BondDir::NONE);
-    }
-  }
   if (d_flippers.empty()) {
     d_totalPoss = 1;
   } else {
@@ -152,7 +146,14 @@ void StereoisomerEnumerator::buildFlippers() {
         continue;
       }
       if (si.type == Chirality::StereoType::Atom_Tetrahedral) {
-        d_flippers.emplace_back(new details::AtomFlipper(si));
+        // An incoming wiggly bond can make StereoInfo Unknown at a defined
+        // neighbor.
+        if (d_options.onlyUnassigned &&
+            d_mol.getAtomWithIdx(si.centeredOn)->getChiralTag() !=
+                Atom::CHI_UNSPECIFIED) {
+          continue;
+        }
+        d_flippers.emplace_back(new details::AtomFlipper(d_mol, si));
       } else if (si.type == Chirality::StereoType::Bond_Double) {
         std::unique_ptr<details::BondFlipper> newFlipper(
             new details::BondFlipper(d_mol, si));
