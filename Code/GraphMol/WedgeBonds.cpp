@@ -199,10 +199,11 @@ std::pair<bool, INT_VECT> countChiralNbrs(const ROMol &mol, int noNbrs) {
       if (bond->getBeginAtom()->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
           bond->getBeginAtom()->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
         nChiralNbrs[bond->getBeginAtomIdx()] = noNbrs + 1;
-      } else if (bond->getEndAtom()->getChiralTag() ==
-                     Atom::CHI_TETRAHEDRAL_CW ||
-                 bond->getEndAtom()->getChiralTag() ==
-                     Atom::CHI_TETRAHEDRAL_CCW) {
+      } else if (bond->getBondDir() != Bond::UNKNOWN &&
+                 (bond->getEndAtom()->getChiralTag() ==
+                      Atom::CHI_TETRAHEDRAL_CW ||
+                  bond->getEndAtom()->getChiralTag() ==
+                      Atom::CHI_TETRAHEDRAL_CCW)) {
         nChiralNbrs[bond->getEndAtomIdx()] = noNbrs + 1;
       }
     }

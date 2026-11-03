@@ -18,6 +18,7 @@
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/StereoGroup.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/Atropisomers.h>
 #include <GraphMol/MolOps.h>
 #include <GraphMol/new_canon.h>
 #include <GraphMol/test_fixtures.h>
@@ -7038,16 +7039,21 @@ TEST_CASE("wedgeMolBonds does not steal a wiggly bond") {
 }
 
 TEST_CASE("wiggly bonds are re-applied after clearSingleBondDirFlags") {
-  // the re-wedging cycle used by depiction code: clear the wedging, then let
-  // wedgeMolBonds() derive it again from the stereo annotations.
   std::unique_ptr<RWMol> m{MolBlockToMol(wigglyStealMolBlock)};
   REQUIRE(m);
 
-  MolOps::clearSingleBondDirFlags(*m);
-  Chirality::wedgeMolBonds(*m, &m->getConformer());
-
   const auto wigglyBond = m->getBondBetweenAtoms(1, 3);
   REQUIRE(wigglyBond);
+  Chirality::wedgeMolBonds(*m, &m->getConformer());
+  REQUIRE(wigglyBond->getBondDir() == Bond::BondDir::UNKNOWN);
+  // Force clearSingleBondDirFlags() to recreate the annotation from the
+  // direction.
+  wigglyBond->clearProp(common_properties::_UnknownStereo);
+  MolOps::clearSingleBondDirFlags(*m);
+  REQUIRE(wigglyBond->getBondDir() == Bond::BondDir::NONE);
+  REQUIRE(wigglyBond->getProp<int>(common_properties::_UnknownStereo) == 1);
+  Chirality::wedgeMolBonds(*m, &m->getConformer());
+
   CHECK(wigglyBond->getBondDir() == Bond::BondDir::UNKNOWN);
 }
 
@@ -7121,10 +7127,6 @@ M  END
 }
 
 TEST_CASE("atropisomer wedging does not steal a wiggly bond") {
-  // the bond marking the stereochemistry at the quaternary carbon as unknown
-  // is also the only candidate the atropisomer wedging has for expressing the
-  // axial stereochemistry. The atropisomer has to give way: a wedge here would
-  // assert a configuration the input explicitly declined to specify.
   const std::string molBlock = R"CTAB(
      RDKit          3D
 
@@ -7179,29 +7181,83 @@ M  END
   MolOps::clearSingleBondDirFlags(*m);
   Chirality::clearMolBlockWedgingInfo(*m);
 
-  SECTION("wiggly bond at a potential stereocenter") {
-    // this one is claimed by pickBondsToWedge() before the atropisomer code
-    // ever gets a chance at it, and comes back out as a wiggly bond
-    const auto wigglyBond = m->getBondBetweenAtoms(9, 7);
-    REQUIRE(wigglyBond);
-    wigglyBond->setProp(common_properties::_UnknownStereo, 1);
-
-    Chirality::wedgeMolBonds(*m, &m->getConformer());
-    CHECK(wigglyBond->getBondDir() == Bond::BondDir::UNKNOWN);
+  const auto dimensions = GENERATE(0, 2, 3);
+  const auto propertyOnly = GENERATE(false, true);
+  CAPTURE(dimensions, propertyOnly);
+  if (dimensions == 0) {
+    m->clearConformers();
+  } else if (dimensions == 2) {
+    RDDepict::compute2DCoords(*m);
   }
-  SECTION("wiggly bond which pickBondsToWedge() does not claim") {
-    // this one is in the aromatic ring, so it is not a wiggly bond as far as
-    // the wedging code is concerned and nothing claims it on any atom's
-    // behalf. It is still the atropisomer code's first choice for expressing
-    // the axial stereochemistry, which is why that code needs the check in
-    // its own right: wedging it would overwrite an annotation the input
-    // deliberately made
-    const auto wigglyBond = m->getBondBetweenAtoms(6, 5);
-    REQUIRE(wigglyBond);
-    REQUIRE(wigglyBond->getBondType() == Bond::BondType::AROMATIC);
-    wigglyBond->setProp(common_properties::_UnknownStereo, 1);
+  // Without an unknown annotation the allocator must have a viable candidate.
+  RWMol control(*m);
+  std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> controlWedges;
+  Atropisomers::wedgeBondsFromAtropisomers(
+      control, dimensions ? &control.getConformer() : nullptr, controlWedges);
+  REQUIRE(!controlWedges.empty());
 
-    Chirality::wedgeMolBonds(*m, &m->getConformer());
-    CHECK(wigglyBond->getBondDir() == Bond::BondDir::NONE);
+  Bond *wigglyBond = nullptr;
+  SECTION("single bond claimed by the wedge map") {
+    wigglyBond = m->getBondBetweenAtoms(9, 7);
   }
+  SECTION("aromatic bond not claimed by the wedge map") {
+    wigglyBond = m->getBondBetweenAtoms(6, 5);
+  }
+  REQUIRE(wigglyBond);
+  if (propertyOnly) {
+    wigglyBond->setProp(common_properties::_UnknownStereo, 1);
+  } else {
+    wigglyBond->setBondDir(Bond::UNKNOWN);
+  }
+  const auto wedges = Chirality::pickBondsToWedge(
+      *m, nullptr, dimensions ? &m->getConformer() : nullptr);
+  for (const auto &[idx, info] : wedges) {
+    CHECK(info->getType() !=
+          Chirality::WedgeInfoType::WedgeInfoTypeAtropisomer);
+  }
+  if (wigglyBond->getBondType() == Bond::SINGLE) {
+    REQUIRE(wedges.count(wigglyBond->getIdx()));
+    CHECK(wedges.at(wigglyBond->getIdx())->getDir() == Bond::UNKNOWN);
+  }
+}
+
+TEST_CASE(
+    "3D atropisomer wedging preserves bonds reserved for tetrahedral centers") {
+  auto mol = "C=C([C@](F)(Cl)Br)C(=C)[C@](F)(Cl)I"_smiles;
+  REQUIRE(mol);
+  RDDepict::compute2DCoords(*mol);
+  auto &conf = mol->getConformer();
+  conf.set3D(true);
+  conf.getAtomPos(2).z = 1.0;
+  conf.getAtomPos(8).z = -1.0;
+  mol->getBondBetweenAtoms(1, 6)->setStereo(Bond::STEREOATROPCW);
+
+  RWMol control(*mol);
+  std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> controlWedges;
+  Atropisomers::wedgeBondsFromAtropisomers(control, &control.getConformer(),
+                                           controlWedges);
+  REQUIRE(controlWedges.size() == 1);
+
+  // The axis has two single-bond candidates, each belonging to a defined
+  // tetrahedral center. Neither reservation may be overwritten or reversed.
+  std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> wedges;
+  for (const auto atomIdx : {2u, 8u}) {
+    auto bond = mol->getBondBetweenAtoms(atomIdx, atomIdx == 2 ? 1 : 6);
+    REQUIRE(bond);
+    wedges[bond->getIdx()] =
+        std::make_unique<Chirality::WedgeInfoChiral>(atomIdx);
+  }
+  const auto before = MolToSmiles(*mol);
+  Atropisomers::wedgeBondsFromAtropisomers(*mol, &conf, wedges);
+  REQUIRE(wedges.size() == 2);
+  for (const auto atomIdx : {2u, 8u}) {
+    const auto bond = mol->getBondBetweenAtoms(atomIdx, atomIdx == 2 ? 1 : 6);
+    REQUIRE(wedges.count(bond->getIdx()));
+    CHECK(wedges.at(bond->getIdx())->getType() ==
+          Chirality::WedgeInfoType::WedgeInfoTypeChiral);
+    CHECK(wedges.at(bond->getIdx())->getIdx() == atomIdx);
+    CHECK(bond->getBeginAtomIdx() == (atomIdx == 2 ? 1 : 6));
+    CHECK(bond->getBondDir() == Bond::NONE);
+  }
+  CHECK(MolToSmiles(*mol) == before);
 }
