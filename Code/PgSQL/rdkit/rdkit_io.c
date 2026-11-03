@@ -32,6 +32,7 @@
 //
 #include <postgres.h>
 #include <fmgr.h>
+#include <libpq/pqformat.h>
 #include <utils/bytea.h>
 #include <utils/builtins.h>
 
@@ -61,15 +62,13 @@ Datum mol_in(PG_FUNCTION_ARGS) {
 PGDLLEXPORT Datum mol_recv(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(mol_recv);
 Datum mol_recv(PG_FUNCTION_ARGS) {
-  bytea *data = PG_GETARG_BYTEA_P(0);
-  int len = VARSIZE(data) - VARHDRSZ;
+  StringInfo buf = (StringInfo)PG_GETARG_POINTER(0);
+  int len = buf->len - buf->cursor;
   CROMol mol;
   Mol *res;
-  mol = parseMolBlob(VARDATA(data), len);
+  mol = parseMolBlob((char *)pq_getmsgbytes(buf, len), len);
   res = deconstructROMolWithQueryProperties(mol);
   freeCROMol(mol);
-
-  PG_FREE_IF_COPY(data, 0);
 
   PG_RETURN_MOL_P(res);
 }
@@ -434,15 +433,13 @@ Datum xqmol_in(PG_FUNCTION_ARGS) {
 PGDLLEXPORT Datum xqmol_recv(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(xqmol_recv);
 Datum xqmol_recv(PG_FUNCTION_ARGS) {
-  bytea *data = PG_GETARG_BYTEA_P(0);
-  int len = VARSIZE(data) - VARHDRSZ;
+  StringInfo buf = (StringInfo)PG_GETARG_POINTER(0);
+  int len = buf->len - buf->cursor;
   CXQMol mol;
   XQMol *res;
-  mol = parseXQMolBlob(VARDATA(data), len);
+  mol = parseXQMolBlob((char *)pq_getmsgbytes(buf, len), len);
   res = deconstructXQMol(mol);
   freeCXQMol(mol);
-
-  PG_FREE_IF_COPY(data, 0);
 
   PG_RETURN_XQMOL_P(res);
 }
@@ -586,17 +583,15 @@ Datum reaction_in(PG_FUNCTION_ARGS) {
 PGDLLEXPORT Datum reaction_recv(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(reaction_recv);
 Datum reaction_recv(PG_FUNCTION_ARGS) {
-  bytea *data = PG_GETARG_BYTEA_P(0);
-  int len = VARSIZE(data) - VARHDRSZ;
+  StringInfo buf = (StringInfo)PG_GETARG_POINTER(0);
+  int len = buf->len - buf->cursor;
   CChemicalReaction crxn;
   Reaction *rxn;
 
-  crxn = parseChemReactBlob(VARDATA(data), len);
+  crxn = parseChemReactBlob((char *)pq_getmsgbytes(buf, len), len);
 
   rxn = deconstructChemReact(crxn);
   freeChemReaction(crxn);
-
-  PG_FREE_IF_COPY(data, 0);
 
   PG_RETURN_REACTION_P(rxn);
 }
