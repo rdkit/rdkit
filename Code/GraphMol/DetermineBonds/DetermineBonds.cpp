@@ -175,8 +175,7 @@ void connectivityHueckel(RWMol &mol, int charge) {
   auto numAtoms = mol.getNumAtoms();
   mol.getAtomWithIdx(0)->setFormalCharge(charge);
   EHTTools::EHTResults res;
-  bool success = runMol(mol, res);
-  RDUNUSED_PARAM(success);
+  [[maybe_unused]] bool success = runMol(mol, res);
   // as of this writing runMol() always returns true, so we ignore the return
   // value.
   double *mat = res.reducedOverlapPopulationMatrix.get();

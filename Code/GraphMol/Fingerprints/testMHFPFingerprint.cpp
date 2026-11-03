@@ -165,10 +165,7 @@ void testOrderDependence() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
-int main(int argc, char *argv[]) {
-  (void)argc;
-  (void)argv;
-
+int main() {
   RDLog::InitLogs();
   testMHFPInit();
   testMHFPShingling();
