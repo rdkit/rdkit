@@ -1004,3 +1004,68 @@ TEST_CASE("MurckoDecompose on a large molecule", "[MurckoDecompose]") {
   CHECK(res->getNumBonds() == 6 + 10 * nUnits);
   CHECK(!mol->hasProp(common_properties::DistanceMatrix_Paths));
 }
+
+TEST_CASE("MurckoDecompose keeps molecule data", "[MurckoDecompose]") {
+  auto mol = "CCc1ccccc1"_smiles;
+  REQUIRE(mol);
+  SECTION("properties") {
+    mol->setProp(common_properties::_Name, "mymol");
+    mol->setProp("assay", 42);
+    mol->setProp("computed", 1, true);
+    std::unique_ptr<ROMol> res(MurckoDecompose(*mol));
+    REQUIRE(res);
+    CHECK(res->getProp<std::string>(common_properties::_Name) == "mymol");
+    CHECK(res->getProp<int>("assay") == 42);
+    CHECK(!res->hasProp("computed"));
+  }
+  SECTION("bookmarks") {
+    // atom 0 and bond 0 are removed, atom 2 and bond 6 (now 0 and 4) are kept
+    mol->setAtomBookmark(mol->getAtomWithIdx(0), 1);
+    mol->setAtomBookmark(mol->getAtomWithIdx(2), 1);
+    mol->setAtomBookmark(mol->getAtomWithIdx(0), 2);
+    mol->setBondBookmark(mol->getBondWithIdx(0), 3);
+    mol->setBondBookmark(mol->getBondWithIdx(6), 3);
+    std::unique_ptr<ROMol> res(MurckoDecompose(*mol));
+    REQUIRE(res);
+    REQUIRE(res->hasAtomBookmark(1));
+    auto atoms = res->getAllAtomsWithBookmark(1);
+    REQUIRE(atoms.size() == 1);
+    CHECK(atoms.front()->getIdx() == 0);
+    CHECK(!res->hasAtomBookmark(2));
+    REQUIRE(res->hasBondBookmark(3));
+    auto bonds = res->getAllBondsWithBookmark(3);
+    REQUIRE(bonds.size() == 1);
+    CHECK(bonds.front()->getIdx() == 4);
+  }
+  SECTION("multi-center bond end points") {
+    // 1-based atom indices; atom 1 is removed, atoms 3 and 4 become 1 and 2
+    mol->getBondWithIdx(2)->setProp(common_properties::_MolFileBondEndPts,
+                                    std::string("(3 1 3 4)"));
+    mol->getBondWithIdx(3)->setProp(common_properties::_MolFileBondEndPts,
+                                    std::string("(1 1)"));
+    mol->getBondWithIdx(3)->setProp(common_properties::_MolFileBondAttach,
+                                    std::string("ANY"));
+    std::unique_ptr<ROMol> res(MurckoDecompose(*mol));
+    REQUIRE(res);
+    CHECK(res->getBondWithIdx(0)->getProp<std::string>(
+              common_properties::_MolFileBondEndPts) == "(2 1 2)");
+    CHECK(!res->getBondWithIdx(1)->hasProp(
+        common_properties::_MolFileBondEndPts));
+    CHECK(!res->getBondWithIdx(1)->hasProp(
+        common_properties::_MolFileBondAttach));
+  }
+}
+
+TEST_CASE("MurckoDecompose keeps E/Z labels", "[MurckoDecompose]") {
+  auto mol = "c1ccccc1/C=C/c1ccccc1"_smiles;
+  REQUIRE(mol);
+  auto bond = mol->getBondBetweenAtoms(6, 7);
+  REQUIRE(bond);
+  REQUIRE(bond->getStereo() == Bond::STEREOE);
+  std::unique_ptr<ROMol> res(MurckoDecompose(*mol));
+  REQUIRE(res);
+  auto resBond = res->getBondBetweenAtoms(6, 7);
+  REQUIRE(resBond);
+  CHECK(resBond->getStereo() == Bond::STEREOE);
+  CHECK(resBond->getStereoAtoms() == bond->getStereoAtoms());
+}
