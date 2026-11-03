@@ -786,37 +786,31 @@ ROMol *MurckoDecompose(const ROMol &mol) {
     return res;
   }
 
-  // start by getting the shortest paths matrix:
-  MolOps::getDistanceMat(mol, false, false, true);
-  boost::shared_array<int> pathMat;
-  mol.getProp(common_properties::DistanceMatrix_Paths, pathMat);
-
   boost::dynamic_bitset<> keepAtoms(nAtoms);
-  const RingInfo *ringInfo = res->getRingInfo();
-  for (unsigned int i = 0; i < nAtoms; ++i) {
-    if (ringInfo->numAtomRings(i)) {
-      keepAtoms[i] = 1;
+  // Iterate over atoms to determine their degree and identify leaves
+  keepAtoms.set();
+  std::vector<unsigned int> degree(nAtoms);
+  std::vector<unsigned int> leaves;
+  for (const auto atom : res->atoms()) {
+    degree[atom->getIdx()] = atom->getDegree();
+    if (atom->getDegree() <= 1) {
+      leaves.push_back(atom->getIdx());
     }
   }
-  const auto rings = ringInfo->atomRings();
-  // std::cerr<<"  rings: "<<rings.size()<<std::endl;
-  // now find the shortest paths between each ring system and mark the atoms
-  // along each as being keepers:
-  for (size_t ringIdxI = 0; ringIdxI < rings.size(); ++ringIdxI) {
-    for (size_t ringIdxJ = ringIdxI + 1; ringIdxJ < rings.size(); ++ringIdxJ) {
-      int atomI = rings[ringIdxI][0];
-      int atomJ = rings[ringIdxJ][0];
-      // std::cerr<<atomI<<" -> "<<atomJ<<": ";
-      while (atomI != atomJ) {
-        keepAtoms[atomI] = 1;
-        atomI = pathMat[atomJ * nAtoms + atomI];
-        // test for the disconnected case:
-        if (atomI < 0) {
-          break;
-        }
-        // std::cerr<<atomI<<" ";
+  // while there still are leaves, remove them and update the degrees of their
+  // neighbors until no more leaves remain
+  while (!leaves.empty()) {
+    auto idx = leaves.back();
+    leaves.pop_back();
+    if (!keepAtoms[idx]) {
+      continue;
+    }
+    keepAtoms.reset(idx);
+    for (const auto nbr : res->atomNeighbors(res->getAtomWithIdx(idx))) {
+      auto nbrIdx = nbr->getIdx();
+      if (keepAtoms[nbrIdx] && --degree[nbrIdx] <= 1) {
+        leaves.push_back(nbrIdx);
       }
-      // std::cerr<<std::endl;
     }
   }
 
