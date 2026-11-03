@@ -38,6 +38,8 @@ namespace RDDepict {
 
 bool preferCoordGen = false;
 
+DepictException::~DepictException() noexcept = default;
+
 namespace DepictorLocal {
 
 constexpr auto ISQRT2 = 0.707107;

@@ -72,4 +72,6 @@ std::string Invariant::toUserString() const {
   return stringRep;
 }
 
+Invariant::~Invariant() noexcept = default;
+
 };  // namespace Invar

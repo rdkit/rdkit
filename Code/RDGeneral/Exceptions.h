@@ -28,7 +28,7 @@ class RDKIT_RDGENERAL_EXPORT IndexErrorException : public std::runtime_error {
 
   const char *what() const noexcept override { return _msg.c_str(); }
 
-  ~IndexErrorException() noexcept override = default;
+  ~IndexErrorException() noexcept override;
 
  private:
   int _idx;
@@ -45,7 +45,7 @@ class RDKIT_RDGENERAL_EXPORT ValueErrorException : public std::runtime_error {
   ValueErrorException(const char *msg)
       : std::runtime_error("ValueErrorException"), _value(msg) {}
   const char *what() const noexcept override { return _value.c_str(); }
-  ~ValueErrorException() noexcept override = default;
+  ~ValueErrorException() noexcept override;
 
  private:
   std::string _value;
@@ -68,7 +68,7 @@ class RDKIT_RDGENERAL_EXPORT KeyErrorException : public std::runtime_error {
 
   const char *what() const noexcept override { return _msg.c_str(); }
 
-  ~KeyErrorException() noexcept override = default;
+  ~KeyErrorException() noexcept override;
 
  private:
   std::string _key;

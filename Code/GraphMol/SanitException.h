@@ -32,7 +32,7 @@ class RDKIT_GRAPHMOL_EXPORT MolSanitizeException : public std::exception {
   MolSanitizeException(const MolSanitizeException &other)
       : d_msg(other.d_msg) {}
   const char *what() const noexcept override { return d_msg.c_str(); }
-  ~MolSanitizeException() noexcept override {}
+  ~MolSanitizeException() noexcept override;
   virtual MolSanitizeException *copy() const {
     return new MolSanitizeException(*this);
   }
@@ -52,7 +52,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomSanitizeException
   AtomSanitizeException(const AtomSanitizeException &other)
       : MolSanitizeException(other), d_atomIdx(other.d_atomIdx) {}
   unsigned int getAtomIdx() const { return d_atomIdx; }
-  ~AtomSanitizeException() noexcept override {}
+  ~AtomSanitizeException() noexcept override;
   MolSanitizeException *copy() const override {
     return new AtomSanitizeException(*this);
   }
@@ -71,7 +71,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomValenceException
       : AtomSanitizeException(msg, atomIdx) {}
   AtomValenceException(const AtomValenceException &other)
       : AtomSanitizeException(other) {}
-  ~AtomValenceException() noexcept override {}
+  ~AtomValenceException() noexcept override;
   MolSanitizeException *copy() const override {
     return new AtomValenceException(*this);
   }
@@ -87,7 +87,7 @@ class RDKIT_GRAPHMOL_EXPORT AtomKekulizeException
       : AtomSanitizeException(msg, atomIdx) {}
   AtomKekulizeException(const AtomKekulizeException &other)
       : AtomSanitizeException(other) {}
-  ~AtomKekulizeException() noexcept override {}
+  ~AtomKekulizeException() noexcept override;
   MolSanitizeException *copy() const override {
     return new AtomKekulizeException(*this);
   }
@@ -105,7 +105,7 @@ class RDKIT_GRAPHMOL_EXPORT KekulizeException : public MolSanitizeException {
   const std::vector<unsigned int> &getAtomIndices() const {
     return d_atomIndices;
   }
-  ~KekulizeException() noexcept override {}
+  ~KekulizeException() noexcept override;
   MolSanitizeException *copy() const override {
     return new KekulizeException(*this);
   }
