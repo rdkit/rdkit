@@ -33,6 +33,7 @@
 #ifndef RDKIT_ENUMERATE_H
 #define RDKIT_ENUMERATE_H
 #include "EnumerateBase.h"
+#include <GraphMol/ChemReactions/ReactionRunner.h>
 
 /*! \file Enumerate.h
 
@@ -45,12 +46,38 @@ future releases.
 
 namespace RDKit {
 
+//! Controls what caching is applied during reaction enumeration.
+/*!
+  - None:      no caching (original baseline behavior, default)
+  - MatchOnly: cache reactant-template substructure matches; each
+               reagent/template pair is matched once and replayed
+               across all Cartesian-product combinations
+  - Full:      cache matches and per-reagent product grafts; the
+               atom/bond subgraph each reagent contributes is extracted
+               once and replayed across all Cartesian-product
+               combinations (implies MatchOnly)
+*/
+enum class ReactantCacheMode {
+  None = 0,
+  MatchOnly = 1,
+  Full = 2
+};
+
 //! This is a class for providing enumeration options that control
 ///  how enumerations are performed.
 /*!
  Option
    reagentMaxMatchCount [default INT_MAX]
     This specifies how many times the reactant template can match a reagent.
+
+  dedupeSymmetricMatches [default false]
+  Collapse substructure matches that land on symmetry-equivalent reagent
+  atoms, avoiding duplicate products for symmetric reagents.
+  Requires cacheMode >= MatchOnly.
+
+  cacheMode [default None]
+  Controls whether reactant-template matches and/or product grafts are
+  cached across enumeration steps. See ReactantCacheMode.
 
    sanePartialProducts [default false]
     If true, forces all products of the reagent plus the product templates\n\
@@ -60,11 +87,9 @@ namespace RDKit {
 struct RDKIT_CHEMREACTIONS_EXPORT EnumerationParams {
   int reagentMaxMatchCount{INT_MAX};
   bool sanePartialProducts{false};
+  bool dedupeSymmetricMatches{false};
+  ReactantCacheMode cacheMode{ReactantCacheMode::None};
   EnumerationParams() {}
-
-  EnumerationParams(const EnumerationParams &rhs)
-      : reagentMaxMatchCount(rhs.reagentMaxMatchCount),
-        sanePartialProducts(rhs.sanePartialProducts) {}
 };
 
 //!  Helper function, remove reagents that are incompatible
@@ -74,6 +99,10 @@ struct RDKIT_CHEMREACTIONS_EXPORT EnumerationParams {
 RDKIT_CHEMREACTIONS_EXPORT EnumerationTypes::BBS removeNonmatchingReagents(
     const ChemicalReaction &rxn, EnumerationTypes::BBS bbs,
     const EnumerationParams &params = EnumerationParams());
+
+RDKIT_CHEMREACTIONS_EXPORT EnumerationTypes::BBS removeNonmatchingReagents(
+  const ChemicalReaction &rxn, EnumerationTypes::BBS bbs,
+  const EnumerationParams &params, ReactantMatchCache *cache);
 
 //! This is a class for running reactions on sets of reagents.
 /*!
@@ -110,11 +139,17 @@ RDKIT_CHEMREACTIONS_EXPORT EnumerationTypes::BBS removeNonmatchingReagents(
 
 class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
     : public EnumerateLibraryBase {
+  EnumerationParams m_params;
+  ReactantMatchCache m_matchCache;
+  ReactionRunnerUtils::ReactantGraftCache m_graftCache;
   EnumerationTypes::BBS m_bbs;
 
+  bool usesMatchCache() const;
+
  public:
-  EnumerateLibrary() : EnumerateLibraryBase(), m_bbs() {}
-  EnumerateLibrary(const std::string &s) : EnumerateLibraryBase(), m_bbs() {
+  EnumerateLibrary() : EnumerateLibraryBase(), m_params(), m_bbs() {}
+  EnumerateLibrary(const std::string &s)
+      : EnumerateLibraryBase(), m_params(), m_bbs() {
     initFromString(s);
   }
 
@@ -130,6 +165,16 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
   //! Return the reagents used in the library.  This may be fewer reagents than
   // the input as it is only those compatible with the reaction.
   const EnumerationTypes::BBS &getReagents() const { return m_bbs; }
+
+  bool getDedupeSymmetricMatches() const {
+    return m_params.dedupeSymmetricMatches;
+  }
+
+  ReactantCacheMode getCacheMode() const { return m_params.cacheMode; }
+
+  size_t getMatchCacheSize() const { return m_matchCache.size(); }
+
+  size_t getGraftCacheSize() const { return m_graftCache.size(); }
 
   //! Get the next product set
   std::vector<MOL_SPTR_VECT> next() override;
@@ -155,9 +200,13 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
         ar & pickle;
       }
     }
+
+    ar & m_params.dedupeSymmetricMatches;
+    int cacheModeInt = static_cast<int>(m_params.cacheMode);
+    ar & cacheModeInt;
   }
   template <class Archive>
-  void load(Archive &ar, const unsigned int /*version*/) {
+  void load(Archive &ar, const unsigned int version) {
     ar &boost::serialization::base_object<EnumerateLibraryBase>(*this);
 
     size_t sz;
@@ -176,6 +225,18 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
         m_bbs[i][j].reset(mol);
       }
     }
+
+    // reagentMaxMatchCount and sanePartialProducts were already applied to
+    // m_bbs at construction, so only the enumeration-time options are stored
+    m_params = EnumerationParams();
+    if (version >= 1) {
+      ar & m_params.dedupeSymmetricMatches;
+      int cacheModeInt;
+      ar & cacheModeInt;
+      m_params.cacheMode = static_cast<ReactantCacheMode>(cacheModeInt);
+    }
+    m_matchCache.clear();
+    m_graftCache.clear();
   }
 
   BOOST_SERIALIZATION_SPLIT_MEMBER();
@@ -185,4 +246,7 @@ class RDKIT_CHEMREACTIONS_EXPORT EnumerateLibrary
 RDKIT_CHEMREACTIONS_EXPORT bool EnumerateLibraryCanSerialize();
 
 }  // namespace RDKit
+#ifdef RDK_USE_BOOST_SERIALIZATION
+BOOST_CLASS_VERSION(RDKit::EnumerateLibrary, 1)
+#endif
 #endif
