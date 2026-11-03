@@ -450,9 +450,6 @@ bool _checkKTerms(RDGeom::Point3DPtrVect &positions,
       std::ranges::count_if(eargs.etkdgDetails->angles,
                             [](const auto &angle) { return angle[3]; }) +
       eargs.etkdgDetails->improperAtoms.size();
-  if (totalEnergy > (nCenters * planarityTolerance)) {
-    return false;
-  }
   for (const auto &contrib : field->contribs()) {
     if (auto c = dynamic_cast<const ForceFields::AngleConstraintContribs *>(
             contrib.get())) {
@@ -467,7 +464,7 @@ bool _checkKTerms(RDGeom::Point3DPtrVect &positions,
       }
     }
   }
-  return true;
+  return totalEnergy <= nCenters * planarityTolerance;
 }
 
 namespace EmbeddingOps {
@@ -1012,6 +1009,7 @@ bool embedPoints(RDGeom::PointPtrVect *positions,
       recordFailure(embedParams, EmbedFailureCauses::INITIAL_COORDS);
       continue;
     }
+
     if (ControlCHandler::getGotSignal()) {
       return false;
     }
@@ -1052,12 +1050,12 @@ bool embedPoints(RDGeom::PointPtrVect *positions,
       gotCoords = EmbeddingOps::minimizeFourthDimension(positions, eargs,
                                                         embedParams, end_time);
       if (!gotCoords) {
-        // NOTE: a timeout here is counted as both causes
         if (pastDeadline(end_time)) {
           recordFailure(embedParams, EmbedFailureCauses::EXCEEDED_TIMEOUT);
+        } else {
+          recordFailure(embedParams,
+                        EmbedFailureCauses::MINIMIZE_FOURTH_DIMENSION);
         }
-        recordFailure(embedParams,
-                      EmbedFailureCauses::MINIMIZE_FOURTH_DIMENSION);
         continue;
       }
     }
@@ -1089,20 +1087,17 @@ bool embedPoints(RDGeom::PointPtrVect *positions,
         // will be tracked there if necessary.
         gotCoords =
             EmbeddingOps::finalChiralChecks(positions, eargs, embedParams);
-        if (!gotCoords) {
-          continue;
-        }
       }
       if (gotCoords && !eargs.stereoDoubleBonds->empty()) {
         gotCoords = EmbeddingOps::doubleBondStereoChecks(*positions, eargs,
                                                          embedParams);
-        if (!gotCoords) {
-          continue;
-        }
+      }
+      if (!gotCoords) {
+        continue;
       }
     }
-    return true;
 
+    return true;
   }  // while
   return false;
 }
