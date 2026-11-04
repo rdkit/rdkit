@@ -10,7 +10,7 @@ CREATE TEMP TABLE binary_io_mol_dst (id int, m mol);
 \copy binary_io_mol_src TO 'results/binary_io_mol.bin' WITH (FORMAT binary)
 \copy binary_io_mol_dst FROM 'results/binary_io_mol.bin' WITH (FORMAT binary)
 SELECT d.id, d.m, (s.m @= d.m) AS same_mol
-FROM binary_io_mol_src s JOIN binary_io_mol_dst d USING (id)
+FROM binary_io_mol_src s INNER JOIN binary_io_mol_dst d USING (id)
 ORDER BY d.id;
 DROP TABLE binary_io_mol_src, binary_io_mol_dst;
 
@@ -27,7 +27,7 @@ SELECT d.id, mol_to_smarts(d.q) AS smarts,
        (mol_to_smarts(s.q)::text = mol_to_smarts(d.q)::text) AS same_smarts,
        ('c1cccnc1'::mol @> d.q) AS matches_pyr,
        ('c1ccccc1'::mol @> d.q) AS matches_bz
-FROM binary_io_qmol_src s JOIN binary_io_qmol_dst d USING (id)
+FROM binary_io_qmol_src s INNER JOIN binary_io_qmol_dst d USING (id)
 ORDER BY d.id;
 DROP TABLE binary_io_qmol_src, binary_io_qmol_dst;
 
@@ -44,7 +44,7 @@ SELECT d.id,
        (s.x::text = d.x::text) AS exact_match,
        ('Cc1[nH]nc(F)c1'::mol @> d.x) AS match_tautomer,
        ('COOC'::mol @> d.x) AS match_linknode
-FROM binary_io_xqmol_src s JOIN binary_io_xqmol_dst d USING (id)
+FROM binary_io_xqmol_src s INNER JOIN binary_io_xqmol_dst d USING (id)
 ORDER BY d.id;
 DROP TABLE binary_io_xqmol_src, binary_io_xqmol_dst;
 
@@ -58,7 +58,7 @@ CREATE TEMP TABLE binary_io_rxn_dst (id int, r reaction);
 \copy binary_io_rxn_src TO 'results/binary_io_rxn.bin' WITH (FORMAT binary)
 \copy binary_io_rxn_dst FROM 'results/binary_io_rxn.bin' WITH (FORMAT binary)
 SELECT d.id, d.r, (s.r @= d.r) AS same_rxn
-FROM binary_io_rxn_src s JOIN binary_io_rxn_dst d USING (id)
+FROM binary_io_rxn_src s INNER JOIN binary_io_rxn_dst d USING (id)
 ORDER BY d.id;
 DROP TABLE binary_io_rxn_src, binary_io_rxn_dst;
 

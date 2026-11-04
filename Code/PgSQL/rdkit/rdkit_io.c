@@ -32,6 +32,7 @@
 //
 #include <postgres.h>
 #include <fmgr.h>
+#include <lib/stringinfo.h>
 #include <libpq/pqformat.h>
 #include <utils/bytea.h>
 #include <utils/builtins.h>
