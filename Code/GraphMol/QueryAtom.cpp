@@ -73,13 +73,26 @@ struct AtomQueryTraits {
   static constexpr std::string_view OrDesc = "AtomOr";
   static constexpr std::string_view AndDesc = "AtomAnd";
   static bool isEqualityQuery(std::string_view s) {
-    static const std::string queries[] = {
-        "AtomType", "AtomRingBondCount", "AtomRingSize", "AtomMinRingSize",
-        "AtomImplicitValence", "AtomExplicitValence", "AtomTotalValence",
-        "AtomAtomicNum", "AtomExplicitDegree", "AtomTotalDegree", "AtomHCount",
-        "AtomIsAromatic", "AtomIsAliphatic", "AtomUnsaturated", "AtomMass",
-        "AtomFormalCharge", "AtomNegativeFormalCharge", "AtomHybridization",
-        "AtomInRing", "AtomInNRings"};
+    static const std::string queries[] = {"AtomType",
+                                          "AtomRingBondCount",
+                                          "AtomRingSize",
+                                          "AtomMinRingSize",
+                                          "AtomImplicitValence",
+                                          "AtomExplicitValence",
+                                          "AtomTotalValence",
+                                          "AtomAtomicNum",
+                                          "AtomExplicitDegree",
+                                          "AtomTotalDegree",
+                                          "AtomHCount",
+                                          "AtomIsAromatic",
+                                          "AtomIsAliphatic",
+                                          "AtomUnsaturated",
+                                          "AtomMass",
+                                          "AtomFormalCharge",
+                                          "AtomNegativeFormalCharge",
+                                          "AtomHybridization",
+                                          "AtomInRing",
+                                          "AtomInNRings"};
     return std::find(std::begin(queries), std::end(queries), s) !=
            std::end(queries);
   }

@@ -1233,9 +1233,8 @@ template <typename EqQuery>
 bool localMatch(EqQuery const *q1, EqQuery const *q2) {
   if (q1->getNegation() == q2->getNegation()) {
     return q1->getVal() == q2->getVal();
-  } else {
-    return q1->getVal() != q2->getVal();
   }
+  return false;
 }
 
 namespace detail {
