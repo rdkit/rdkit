@@ -56,7 +56,10 @@ TEST_CASE("Simple test") {
   }
 }
 
-TEST_CASE("Enumerated wiggly stereo survives mol block round trips") {
+TEST_CASE("Enumerated stereo survives mol block round trips of wiggly input") {
+  // Each isomer resolves the stereo the wiggly bond marked as unknown, so the
+  // wiggly bond has to go, or writing the isomer would mark it unknown again.
+  // The input itself must be left alone.
   const auto alkene = GENERATE(false, true);
   const auto parsed = GENERATE(false, true);
   CAPTURE(alkene, parsed);
@@ -113,6 +116,9 @@ TEST_CASE("Enumeration preserves wiggly bonds without an enumerable center") {
 }
 
 TEST_CASE("Enumeration preserves the defined neighbor of a wiggly bond") {
+  // The wiggly bond marks atom 1 as unknown, but stereo perception also reports
+  // the defined center at its other end, atom 3, as unknown. With
+  // onlyUnassigned, atom 3 must keep its configuration.
   auto mol = "CC(F)[C@H](Cl)Br"_smiles;
   REQUIRE(mol);
   mol->getBondBetweenAtoms(1, 3)->setBondDir(Bond::UNKNOWN);
@@ -135,6 +141,7 @@ TEST_CASE("Enumeration preserves the defined neighbor of a wiggly bond") {
       CHECK(isomer->getAtomWithIdx(3)->getChiralTag() == tag);
     }
   }
+  // atom 1 is always enumerated; atom 3 only when assigned stereo is too
   CHECK(count == (onlyUnassigned ? 2 : 4));
 }
 
