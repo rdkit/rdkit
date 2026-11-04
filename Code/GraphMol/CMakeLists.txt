@@ -4,6 +4,7 @@ rdkit_library(GraphMol
         MacroAtomInfo.cpp
         MacroMol.cpp
         MacroMolTemplate.cpp
+        MolFromMacroMol.cpp
         PeriodicTable.cpp
         atomic_data.cpp QueryOps.cpp MolPickler.cpp Canon.cpp
         AtomIterators.cpp BondIterators.cpp Aromaticity.cpp Kekulize.cpp
@@ -50,6 +51,8 @@ rdkit_headers(Atom.h
         MacroBondInfo.h
         MacroMol.h
         MacroMolTemplate.h
+        MacroMolTemplateLibrary.h
+        MolFromMacroMol.h
         SanitException.h
         SubstanceGroup.h
         StereoGroup.h
@@ -60,6 +63,21 @@ rdkit_headers(Atom.h
         DEST GraphMol)
 
 add_subdirectory(SmilesParse)
+set(defaultMonomersJson "${CMAKE_SOURCE_DIR}/Data/DefaultMonomers.json")
+set(defaultMonomersCpp "${CMAKE_CURRENT_BINARY_DIR}/DefaultMonomers.cpp")
+add_custom_command(OUTPUT "${defaultMonomersCpp}"
+        COMMAND ${CMAKE_COMMAND} -DINPUT=${defaultMonomersJson}
+                -DOUTPUT=${defaultMonomersCpp}
+                -P ${CMAKE_CURRENT_SOURCE_DIR}/EmbedDefaultMonomers.cmake
+        DEPENDS "${defaultMonomersJson}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/EmbedDefaultMonomers.cmake"
+        COMMENT "Embedding default MacroMol monomer definitions")
+rdkit_library(MacroMolTemplateLibrary MacroMolTemplateLibrary.cpp
+        "${defaultMonomersCpp}"
+        SHARED LINK_LIBRARIES GraphMol SmilesParse)
+target_compile_definitions(MacroMolTemplateLibrary PRIVATE
+        RDKIT_MACROMOLTEMPLATELIBRARY_BUILD)
+
 add_subdirectory(Depictor)
 add_subdirectory(MarvinParse)
 add_subdirectory(FileParsers)
@@ -227,3 +245,12 @@ rdkit_catch_test(ringSystemsTest ring_systems_test.cpp LINK_LIBRARIES SmilesPars
 
 rdkit_catch_test(testMacroMolTemplate testMacroMolTemplate.cpp
         LINK_LIBRARIES SmilesParse GraphMol)
+
+rdkit_catch_test(testMacroMolTemplateLibrary testMacroMolTemplateLibrary.cpp
+        LINK_LIBRARIES MacroMolTemplateLibrary SmilesParse GraphMol)
+
+rdkit_catch_test(testMolFromMacroMol testMolFromMacroMol.cpp
+        LINK_LIBRARIES MacroMolTemplateLibrary SmilesParse GraphMol)
+
+rdkit_catch_test(testMacroMolTemplateLibraryEnv testMacroMolTemplateLibraryEnv.cpp
+        LINK_LIBRARIES MacroMolTemplateLibrary SmilesParse GraphMol)
