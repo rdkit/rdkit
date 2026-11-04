@@ -1206,6 +1206,12 @@ TEST_CASE("Github #3226: Lines in wedge bonds being drawn too closely together",
   auto m1 =
       "C[C@H](C1=C(C=CC(=C1Cl)F)Cl)OC2=C(N=CC(=C2)C3=CN(N=C3)C4CCNCC4)N"_smiles;
   REQUIRE(m1);
+  // This checks wedge rendering at the original coordinates, so keep the
+  // depiction independent of the branch-ordering default.
+  RDDepict::Compute2DCoordParameters params;
+  params.canonOrient = true;
+  params.useBranchDepthPrioritization = false;
+  RDDepict::compute2DCoords(*m1, params);
   SECTION("larger SVG") {
     {
       MolDraw2DSVG drawer(450, 400);
@@ -4350,6 +4356,11 @@ TEST_CASE("changing baseFontSize") {
   MolDraw2DUtils::prepareMolForDrawing(*mol1);
   auto mol2 = "C[C@H](N)C(=O)N[C@@H](CCCCN)C(=O)N[C@@H](C)C(=O)NCC(=O)O"_smiles;
   REQUIRE(mol2);
+  // Keep this test focused on font scaling at the historical layout.
+  RDDepict::Compute2DCoordParameters params;
+  params.canonOrient = true;
+  params.useBranchDepthPrioritization = false;
+  RDDepict::compute2DCoords(*mol2, params);
   MolDraw2DUtils::prepareMolForDrawing(*mol2);
   SECTION("basics-large") {
     MolDraw2DSVG drawer(350, 300, -1, -1, 1);
