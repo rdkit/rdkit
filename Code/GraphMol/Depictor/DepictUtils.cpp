@@ -208,15 +208,25 @@ RDKit::INT_VECT setNbrOrderImpl(unsigned int aid, const RDKit::INT_VECT &nbrs,
 
   if (useBranchSize) {
     std::map<int, unsigned int> branchSizes;
-    for (auto nbr : thold) {
+    for (auto nbr : nbrs) {
       branchSizes[nbr] = countBranchSize(aid, nbr, mol);
     }
-    // Keep the existing atom ranks as the stable tie-break, but primarily
-    // arrange extended-branch degree-4 substituents by visual footprint.
-    std::stable_sort(thold.begin(), thold.end(),
-                     [&branchSizes](auto nbr1, auto nbr2) {
-                       return branchSizes.at(nbr1) < branchSizes.at(nbr2);
-                     });
+    // The already-placed branch may be large even when every new substituent
+    // is terminal. In that case, keep the rank-based placement of the new
+    // atoms instead of moving the placed neighbor to a different slot.
+    const auto hasExtendedBranch = std::any_of(
+        nbrs.begin(), nbrs.end(),
+        [&branchSizes](auto nbr) { return branchSizes.at(nbr) > 1; });
+    if (hasExtendedBranch) {
+      if (ref >= 0) {
+        branchSizes[ref] = countBranchSize(aid, ref, mol);
+      }
+      // Keep atom ranks as the stable tie-break for extended branches.
+      std::stable_sort(thold.begin(), thold.end(),
+                       [&branchSizes](auto nbr1, auto nbr2) {
+                         return branchSizes.at(nbr1) < branchSizes.at(nbr2);
+                       });
+    }
   }
 
   return arrangeNbrsAroundPlacedNbr(ref, thold, nbrs.size());

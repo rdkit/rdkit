@@ -76,6 +76,26 @@ TEST_CASE("balanced branch points require a degree-three junction") {
   }
 }
 
+TEST_CASE("terminal sulfonamide substituents keep their rank-based placement") {
+  auto mol = "CN1N=C(SC1=NC(C)=O)S(N)(=O)=O"_smiles;
+  REQUIRE(mol);
+
+  // Atom 10 is sulfur; its three unplaced neighbors are N, O, and O.
+  const RDKit::INT_VECT neighbors{11, 12, 13};
+  CHECK(RDDepict::setNbrOrderByBranchSize(10, neighbors, *mol) ==
+        RDDepict::setNbrOrder(10, neighbors, *mol));
+
+  RDDepict::Compute2DCoordParameters params;
+  params.useBranchDepthPrioritization = true;
+  RDDepict::compute2DCoords(*mol, params);
+  const auto &conf = mol->getConformer();
+  auto oxygen1 = conf.getAtomPos(12) - conf.getAtomPos(10);
+  auto oxygen2 = conf.getAtomPos(13) - conf.getAtomPos(10);
+  oxygen1.normalize();
+  oxygen2.normalize();
+  CHECK(oxygen1.dotProduct(oxygen2) < -0.9);
+}
+
 TEST_CASE(
     "github #4504: overlapping coordinates with 1,1-disubstituted "
     "cyclobutanes") {
