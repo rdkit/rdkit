@@ -14,7 +14,6 @@
 #include <RDGeneral/Exceptions.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Chirality.h>
-#include <GraphMol/Subset.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/dynamic_bitset.hpp>
@@ -781,43 +780,55 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
 }
 
 namespace {
-// V3000 multi-center bonds keep their 1-based end point atom indices in a
-// property; drop the end points that were not copied and renumber the others
-void updateBondEndPts(Bond &bond,
-                      const std::map<unsigned int, unsigned int> &atomMapping) {
-  std::string endPts;
-  if (!bond.getPropIfPresent(common_properties::_MolFileBondEndPts, endPts) ||
-      endPts.size() < 2 || endPts.front() != '(' || endPts.back() != ')') {
-    return;
+// bonds that ring perception ignores by default
+bool isIgnoredByRingFinding(const Bond &bond) {
+  auto bt = bond.getBondType();
+  return bt == Bond::ZERO || bt == Bond::HYDROGEN || isDative(bt);
+}
+
+// Ring atoms plus the atoms on the shortest paths between rings. Used when
+// a cycle may contain bonds that ring perception ignores, so leaf pruning
+// would keep cycles that are not rings.
+void ringsAndShortestPaths(const ROMol &mol,
+                           boost::dynamic_bitset<> &keepAtoms) {
+  const unsigned int nAtoms = mol.getNumAtoms();
+  const RingInfo *ringInfo = mol.getRingInfo();
+  if (!ringInfo->isInitialized()) {
+    MolOps::findSSSR(mol);
   }
-  std::istringstream iss(endPts.substr(1, endPts.size() - 2));
-  unsigned int numPts;
-  iss >> numPts;
-  std::vector<unsigned int> newPts;
-  unsigned int idx;
-  while (iss >> idx) {
-    auto mapped = atomMapping.find(idx - 1);
-    if (mapped != atomMapping.end()) {
-      newPts.push_back(mapped->second + 1);
+  MolOps::getDistanceMat(mol, false, false, true);
+  boost::shared_array<int> pathMat;
+  mol.getProp(common_properties::DistanceMatrix_Paths, pathMat);
+
+  keepAtoms.reset();
+  for (unsigned int i = 0; i < nAtoms; ++i) {
+    if (ringInfo->numAtomRings(i)) {
+      keepAtoms.set(i);
     }
   }
-  if (newPts.empty()) {
-    bond.clearProp(common_properties::_MolFileBondEndPts);
-    bond.clearProp(common_properties::_MolFileBondAttach);
-    return;
+  const auto &rings = ringInfo->atomRings();
+  for (size_t ringIdxI = 0; ringIdxI < rings.size(); ++ringIdxI) {
+    for (size_t ringIdxJ = ringIdxI + 1; ringIdxJ < rings.size(); ++ringIdxJ) {
+      int atomI = rings[ringIdxI][0];
+      int atomJ = rings[ringIdxJ][0];
+      while (atomI != atomJ) {
+        keepAtoms.set(atomI);
+        atomI = pathMat[atomJ * nAtoms + atomI];
+        // disconnected
+        if (atomI < 0) {
+          break;
+        }
+      }
+    }
   }
-  endPts = "(" + std::to_string(newPts.size());
-  for (auto pt : newPts) {
-    endPts += " " + std::to_string(pt);
-  }
-  bond.setProp(common_properties::_MolFileBondEndPts, endPts + ")");
 }
 }  // namespace
 
 ROMol *MurckoDecompose(const ROMol &mol) {
-  unsigned int nAtoms = mol.getNumAtoms();
+  auto *res = new RWMol(mol);
+  unsigned int nAtoms = res->getNumAtoms();
   if (!nAtoms) {
-    return new RWMol(mol);
+    return res;
   }
 
   boost::dynamic_bitset<> keepAtoms(nAtoms);
@@ -849,108 +860,59 @@ ROMol *MurckoDecompose(const ROMol &mol) {
       }
     }
   }
-
-  // Add atoms connected to the scaffold by a double bond.
-  auto copyAtoms = keepAtoms;
-  boost::dynamic_bitset<> fixAtoms(nAtoms);
-  for (const auto atom : mol.atoms()) {
-    if (keepAtoms[atom->getIdx()]) {
-      continue;
-    }
-    for (const auto bond : mol.atomBonds(atom)) {
-      auto nbrIdx = bond->getOtherAtomIdx(atom->getIdx());
-      if (keepAtoms[nbrIdx]) {
-        if (bond->getBondType() == Bond::DOUBLE) {
-          copyAtoms.set(atom->getIdx());
-          break;
-        }
-        fixAtoms.set(nbrIdx);
-      }
-    }
-  }
-
-  // Preserve atom order
-  std::vector<unsigned int> atomIndices;
-  for (auto idx = copyAtoms.find_first(); idx != boost::dynamic_bitset<>::npos;
-       idx = copyAtoms.find_next(idx)) {
-    atomIndices.push_back(idx);
-  }
-  SubsetInfo subsetInfo;
-  auto res = copyMolSubset(mol, atomIndices, subsetInfo);
-  const auto &atomMapping = subsetInfo.atomMapping;
-
-  for (auto idx = fixAtoms.find_first(); idx != boost::dynamic_bitset<>::npos;
-       idx = fixAtoms.find_next(idx)) {
-    auto atom = res->getAtomWithIdx(atomMapping.at(idx));
-    if (atom->getIsAromatic() && atom->getAtomicNum() != 6) {
-      // fix aromatic heteroatoms:
-      atom->setNumExplicitHs(1);
-    } else if (atom->getIsAromatic() && atom->getAtomicNum() == 6 &&
-               atom->getFormalCharge() == 1) {
-      // fix aromatic carbocations
-      atom->setNumExplicitHs(1);
-    } else if (atom->getNoImplicit() ||
-               atom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
-      atom->setNoImplicit(false);
-      atom->setNumExplicitHs(0);
-      atom->setChiralTag(Atom::CHI_UNSPECIFIED);
-    }
-  }
-
-  // getBondWithIdx() is linear in the number of bonds, so look bonds up here
-  std::vector<const Bond *> origBonds(mol.getNumBonds());
+  // What remains are ring atoms and linkers, provided that every cycle is a
+  // ring. A cycle closed by a bond that ring perception ignores (e.g. a
+  // chelating dative bond) is not, so fall back to rings plus shortest paths.
   for (const auto bond : mol.bonds()) {
-    origBonds[bond->getIdx()] = bond;
-  }
-  std::vector<Bond *> newBonds(res->getNumBonds());
-  for (const auto bond : res->bonds()) {
-    newBonds[bond->getIdx()] = bond;
+    if (keepAtoms[bond->getBeginAtomIdx()] &&
+        keepAtoms[bond->getEndAtomIdx()] && isIgnoredByRingFinding(*bond)) {
+      ringsAndShortestPaths(mol, keepAtoms);
+      break;
+    }
   }
 
-  // copyMolSubset relabels E/Z as CIS/TRANS and moves stereo atoms to other
-  // neighbors. Keep the input's labels instead, and when a stereo atom was
-  // not copied clear the stereo atoms (and CIS/TRANS) like removing it does.
-  for (const auto &[origIdx, newIdx] : subsetInfo.bondMapping) {
-    const auto origBond = origBonds[origIdx];
-    auto bond = newBonds[newIdx];
-    const auto &origStereoAtoms = origBond->getStereoAtoms();
-    auto stereo = origBond->getStereo();
-    auto &stereoAtoms = bond->getStereoAtoms();
-    stereoAtoms.clear();
-    if (std::all_of(origStereoAtoms.begin(), origStereoAtoms.end(),
-                    [&copyAtoms](int aidx) { return copyAtoms[aidx]; })) {
-      for (auto aidx : origStereoAtoms) {
-        stereoAtoms.push_back(atomMapping.at(aidx));
-      }
-    } else if (stereo == Bond::STEREOCIS || stereo == Bond::STEREOTRANS) {
-      stereo = Bond::STEREONONE;
-    }
-    bond->setStereo(stereo);
-    updateBondEndPts(*bond, atomMapping);
-  }
+  boost::dynamic_bitset<> removedAtoms(nAtoms);
+  res->beginBatchEdit();
+  for (unsigned int i = 0; i < nAtoms; ++i) {
+    if (!keepAtoms[i]) {
+      Atom *atom = res->getAtomWithIdx(i);
+      bool removeIt = true;
 
-  // copyMolSubset does not copy bookmarks or non-computed properties
-  auto &nonConstMol = const_cast<ROMol &>(mol);
-  for (const auto &[mark, atoms] : *nonConstMol.getAtomBookmarks()) {
-    for (const auto atom : atoms) {
-      auto mapped = atomMapping.find(atom->getIdx());
-      if (mapped != atomMapping.end()) {
-        res->setAtomBookmark(res->getAtomWithIdx(mapped->second), mark);
+      // check if the atom has a neighboring keeper:
+      for (auto nbr : res->atomNeighbors(atom)) {
+        if (keepAtoms[nbr->getIdx()]) {
+          if (res->getBondBetweenAtoms(atom->getIdx(), nbr->getIdx())
+                  ->getBondType() == Bond::DOUBLE) {
+            removeIt = false;
+            break;
+          } else if (nbr->getIsAromatic() && nbr->getAtomicNum() != 6) {
+            // fix aromatic heteroatoms:
+            nbr->setNumExplicitHs(1);
+          } else if (nbr->getIsAromatic() && nbr->getAtomicNum() == 6 &&
+                     nbr->getFormalCharge() == 1) {
+            // fix aromatic carbocations
+            nbr->setNumExplicitHs(1);
+          } else if (nbr->getNoImplicit() ||
+                     nbr->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+            nbr->setNoImplicit(false);
+            nbr->setNumExplicitHs(0);
+            nbr->setChiralTag(Atom::CHI_UNSPECIFIED);
+          }
+        }
+      }
+
+      if (removeIt) {
+        res->removeAtom(atom);
+        removedAtoms.set(atom->getIdx());
       }
     }
   }
-  for (const auto &[mark, bonds] : *nonConstMol.getBondBookmarks()) {
-    for (const auto bond : bonds) {
-      auto mapped = subsetInfo.bondMapping.find(bond->getIdx());
-      if (mapped != subsetInfo.bondMapping.end()) {
-        res->setBondBookmark(newBonds[mapped->second], mark);
-      }
-    }
-  }
-  res->updateProps(mol);
+  res->commitBatchEdit();
+
+  details::updateSubMolConfs(mol, *res, removedAtoms);
   res->clearComputedProps();
 
-  return res.release();
+  return (ROMol *)res;
 }
 
 ROMol *combineMols(const ROMol &mol1, const ROMol &mol2,
