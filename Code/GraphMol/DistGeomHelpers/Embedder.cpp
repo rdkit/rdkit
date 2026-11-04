@@ -450,9 +450,6 @@ bool _checkKTerms(RDGeom::Point3DPtrVect &positions,
       std::ranges::count_if(eargs.etkdgDetails->angles,
                             [](const auto &angle) { return angle[3]; }) +
       eargs.etkdgDetails->improperAtoms.size();
-  if (totalEnergy > (nCenters * planarityTolerance)) {
-    return false;
-  }
   for (const auto &contrib : field->contribs()) {
     if (auto c = dynamic_cast<const ForceFields::AngleConstraintContribs *>(
             contrib.get())) {
@@ -467,7 +464,7 @@ bool _checkKTerms(RDGeom::Point3DPtrVect &positions,
       }
     }
   }
-  return true;
+  return totalEnergy <= nCenters * planarityTolerance;
 }
 
 namespace EmbeddingOps {
@@ -1478,8 +1475,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }    // if block - heavy atom check
-  }      // for loop over atoms
+    }  // if block - heavy atom check
+  }  // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {
