@@ -1020,7 +1020,7 @@ void EmbeddedFrag::addNonRingAtom(unsigned int aid, unsigned int toAid) {
   // Detect a balanced branch point before adding aid; afterwards aid is no
   // longer present in the unembedded-neighbor list.
   if (dp_branchDepths &&
-      getDepictDegree(dp_mol->getAtomWithIdx(toAid)) < 4 &&
+      getDepictDegree(dp_mol->getAtomWithIdx(toAid)) == 3 &&
       d_eatoms[toAid].neighs.size() == 2 &&
       !d_eatoms[toAid].d_isBalancedBranchPoint) {
 

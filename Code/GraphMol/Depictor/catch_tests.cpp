@@ -25,6 +25,57 @@
 
 using namespace RDKit;
 
+TEST_CASE("legacy coordinate API defaults to branch-depth ordering") {
+  auto defaultMol = "CC(C)CCCC"_smiles;
+  REQUIRE(defaultMol);
+  auto enabledMol = std::make_unique<RWMol>(*defaultMol);
+  auto disabledMol = std::make_unique<RWMol>(*defaultMol);
+
+  RDDepict::compute2DCoords(*defaultMol);
+  RDDepict::compute2DCoords(*enabledMol, nullptr, false, true, 0, 0, 0, false,
+                            false, false, true);
+  RDDepict::compute2DCoords(*disabledMol, nullptr, false, true, 0, 0, 0, false,
+                            false, false, false);
+
+  const auto &defaultConf = defaultMol->getConformer();
+  const auto &enabledConf = enabledMol->getConformer();
+  for (auto aid = 0u; aid < defaultMol->getNumAtoms(); ++aid) {
+    CHECK((defaultConf.getAtomPos(aid) - enabledConf.getAtomPos(aid)).length() <
+          1e-4);
+  }
+  CHECK(disabledMol->getNumConformers() == 1);
+}
+
+TEST_CASE("balanced branch points require a degree-three junction") {
+  SECTION("a degree-two chain seed is not a branch point") {
+    auto mol = "CCCCCCC"_smiles;
+    REQUIRE(mol);
+    auto branchDepths = RDDepict::computeBranchDepths(*mol);
+    constexpr auto center = 3u;
+    RDDepict::EmbeddedFrag fragment(center, mol.get());
+    fragment.setBranchDepths(&branchDepths);
+    const auto &neighbors = fragment.GetEmbeddedAtoms().at(center).neighs;
+    REQUIRE(neighbors.size() == 2);
+    fragment.addNonRingAtom(neighbors.front(), center);
+    CHECK_FALSE(
+        fragment.GetEmbeddedAtoms().at(center).d_isBalancedBranchPoint);
+  }
+
+  SECTION("a degree-three junction retains balanced continuations") {
+    auto mol = "CCC(CC)CC"_smiles;
+    REQUIRE(mol);
+    auto branchDepths = RDDepict::computeBranchDepths(*mol);
+    constexpr auto center = 2u;
+    RDDepict::EmbeddedFrag fragment(center, mol.get());
+    fragment.setBranchDepths(&branchDepths);
+    fragment.addNonRingAtom(1, center);
+    const auto &neighbors = fragment.GetEmbeddedAtoms().at(center).neighs;
+    REQUIRE(neighbors.size() == 2);
+    fragment.addNonRingAtom(neighbors.front(), center);
+    CHECK(fragment.GetEmbeddedAtoms().at(center).d_isBalancedBranchPoint);
+  }
+}
+
 TEST_CASE(
     "github #4504: overlapping coordinates with 1,1-disubstituted "
     "cyclobutanes") {

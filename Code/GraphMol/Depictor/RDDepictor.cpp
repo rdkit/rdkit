@@ -568,7 +568,8 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
                              unsigned int nFlipsPerSample,
                              unsigned int nSamples, int sampleSeed,
                              bool permuteDeg4Nodes, bool forceRDKit,
-                             bool useRingTemplates) {
+                             bool useRingTemplates,
+                             bool useBranchDepthPrioritization) {
   Compute2DCoordParameters params;
   params.coordMap = coordMap;
   params.canonOrient = canonOrient;
@@ -579,10 +580,7 @@ unsigned int compute2DCoords(RDKit::ROMol &mol,
   params.permuteDeg4Nodes = permuteDeg4Nodes;
   params.forceRDKit = forceRDKit;
   params.useRingTemplates = useRingTemplates;
-  // This overload predates branch-depth prioritization. Preserve its layout
-  // and sampling behavior; callers that want the new mode use the parameter
-  // object overload.
-  params.useBranchDepthPrioritization = false;
+  params.useBranchDepthPrioritization = useBranchDepthPrioritization;
   return compute2DCoords(mol, params);
 }
 
