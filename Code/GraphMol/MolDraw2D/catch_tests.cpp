@@ -8656,6 +8656,9 @@ M  END
 
 TEST_CASE("Lasso highlights") {
   std::string baseName = "lasso_highlights_";
+  // The SVG position checks below use the historical atom-rank layout.
+  RDDepict::Compute2DCoordParameters depictionParams;
+  depictionParams.useBranchDepthPrioritization = false;
   auto get_all_hit_atoms = [](ROMol &mol,
                               const std::string &smt) -> std::vector<int> {
     std::vector<int> hit_atoms;
@@ -8690,7 +8693,7 @@ TEST_CASE("Lasso highlights") {
   {
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     std::unique_ptr<ROMol> m(SmilesToMol(smiles));
-    RDDepict::compute2DCoords(*m);
+    RDDepict::compute2DCoords(*m, depictionParams);
 
     std::vector<std::string> smarts = {"CONN", "N#CC~CO", "C=CON", "CONNCN"};
     std::vector<DrawColour> colours = {
@@ -8741,7 +8744,7 @@ TEST_CASE("Lasso highlights") {
     // The non-overlapping atom sets should have radii the same size.
     std::string smiles = "CO[C@@H](O)C1=C(O[C@H](F)Cl)C(C#N)=C1ONNC[NH3+]";
     std::unique_ptr<ROMol> m(SmilesToMol(smiles));
-    RDDepict::compute2DCoords(*m);
+    RDDepict::compute2DCoords(*m, depictionParams);
 
     std::vector<std::string> smarts = {"CONN", "COC[OH]", "N#CC~CO"};
     std::vector<DrawColour> colours = {DrawColour(1.0, 0.0, 0.0),
@@ -8788,7 +8791,7 @@ TEST_CASE("Lasso highlights") {
     // Another example.
     std::string smiles = "c1ccncc1c1ccc(C2CCC2)cc1";
     std::unique_ptr<ROMol> m(SmilesToMol(smiles));
-    RDDepict::compute2DCoords(*m);
+    RDDepict::compute2DCoords(*m, depictionParams);
 
     std::vector<std::string> smarts = {"a1aaaaa1a1aaaaa1", "c1ccccn1",
                                        "c1ccccc1", "C1CCC1"};
@@ -8844,7 +8847,7 @@ TEST_CASE("Lasso highlights") {
     // Bond highlight colours are ignored.
     std::string smiles = "c1ccccc1c1ccccc1";
     std::unique_ptr<ROMol> m(SmilesToMol(smiles));
-    RDDepict::compute2DCoords(*m);
+    RDDepict::compute2DCoords(*m, depictionParams);
     std::map<int, std::vector<DrawColour>> ha_map;
     for (int i = 0; i < 12; ++i) {
       ha_map.insert(
