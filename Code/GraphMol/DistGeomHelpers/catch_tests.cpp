@@ -3346,3 +3346,16 @@ TEST_CASE("Inconsistent stereo bonds (see PR #9734)") {
   CHECK(mmat->getLowerBound(21, 4) > 3.5);  // TRANS
   CHECK(mmat->getLowerBound(21, 6) < 3.0);  // CIS
 }
+
+TEST_CASE("Non-conjugated ring tortions") {
+  auto mol = "c3ccc2Oc1ccccc1CCCc2c3"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  DistGeom::BoundsMatPtr mmat;
+  mmat.reset(new DistGeom::BoundsMatrix(mol->getNumAtoms()));
+  DGeomHelpers::initBoundsMat(mmat);
+  DGeomHelpers::setTopolBounds(*mol, mmat);
+
+  // should not be cis-constrained
+  CHECK(mmat->getUpperBound(3, 10) - mmat->getLowerBound(3, 10) > 0.2);
+}
