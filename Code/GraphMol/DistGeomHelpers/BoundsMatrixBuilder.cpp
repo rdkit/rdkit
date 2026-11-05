@@ -861,10 +861,14 @@ TorsionValue _getInRing14Type(const Bond *bnd2, const Atom *atm1,
 
   Bond::BondStereo stype = _getAtomStereo(bnd2, atm1->getIdx(), atm4->getIdx());
 
+  const bool isFlat =
+      (bnd2->getIsAromatic() || bnd2->getBondType() >= Bond::DOUBLE) &&
+      (ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2);
+
   // we add a check for the ring size here because there's no reason to
   // assume cis bonds in bigger rings. This was part of github #1240:
   // failure to embed larger aromatic rings
-  if ((ringSize <= 8 && (ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2) &&
+  if ((ringSize <= 8 && isFlat &&
        (stype != Bond::STEREOE && stype != Bond::STEREOTRANS)) ||
       stype == Bond::STEREOZ || stype == Bond::STEREOCIS) {
     return {TorsionType::CIS};
@@ -872,7 +876,7 @@ TorsionValue _getInRing14Type(const Bond *bnd2, const Atom *atm1,
     return {TorsionType::TRANS};
   }
 
-  if ((ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2)) {
+  if (isFlat) {
     return {TorsionType::CISTRANS};
   }
 
