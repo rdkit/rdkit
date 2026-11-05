@@ -16,9 +16,25 @@
 namespace RDKit {
 namespace EnumerateStereoisomers {
 namespace details {
+namespace {
+void clearUnknownStereo(Bond *bond) {
+  // Clear both spellings only when assigning the configuration they describe.
+  bond->clearProp(common_properties::_UnknownStereo);
+  if (bond->getBondDir() == Bond::UNKNOWN ||
+      bond->getBondDir() == Bond::EITHERDOUBLE) {
+    bond->setBondDir(Bond::NONE);
+  }
+}
+}  // namespace
+
 AtomFlipper::AtomFlipper(RWMol &mol, const Chirality::StereoInfo &si)
     : Flipper() {
   dp_atom = mol.getAtomWithIdx(si.centeredOn);
+  for (auto bond : mol.atomBonds(dp_atom)) {
+    if (bond->getBeginAtom() == dp_atom) {
+      clearUnknownStereo(bond);
+    }
+  }
 }
 
 void AtomFlipper::flip(bool flag) {
@@ -39,6 +55,16 @@ BondFlipper::BondFlipper(RWMol &mol, const Chirality::StereoInfo &si)
       dp_bond->setStereoAtoms(si.controllingAtoms[0], si.controllingAtoms[2]);
     } else {
       dp_bond = nullptr;
+    }
+  }
+  if (dp_bond) {
+    clearUnknownStereo(dp_bond);
+    for (auto atom : {dp_bond->getBeginAtom(), dp_bond->getEndAtom()}) {
+      for (auto neighbor : mol.atomBonds(atom)) {
+        if (neighbor->getBondType() == Bond::SINGLE) {
+          clearUnknownStereo(neighbor);
+        }
+      }
     }
   }
 }
