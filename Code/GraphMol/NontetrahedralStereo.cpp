@@ -469,6 +469,119 @@ Atom *getTrigonalBipyramidalAxialAtom(const Atom *cen, int axial) {
   auto bnd = getTrigonalBipyramidalAxialBond(cen, axial);
   return bnd ? bnd->getOtherAtom(cen) : nullptr;
 }
+std::vector<const Atom *> getAlleneTerminalAtoms(const Atom *center) {
+  PRECONDITION(center && center->hasOwningMol(), "bad center pointer");
+  if (center->getDegree() != 2) {
+    return {};
+  }
+  const auto &mol = center->getOwningMol();
+  std::vector<const Atom *> terminals;
+  unsigned int armLength = 0;
+  for (const auto bond : mol.atomBonds(center)) {
+    if (bond->getBondType() != Bond::DOUBLE) {
+      return {};
+    }
+    const Bond *axis = bond;
+    const Atom *terminal = bond->getOtherAtom(center);
+    unsigned int length = 1;
+    while (terminal->getDegree() == 2) {
+      const Bond *next = nullptr;
+      for (const auto terminalBond : mol.atomBonds(terminal)) {
+        if (terminalBond != axis &&
+            terminalBond->getBondType() == Bond::DOUBLE) {
+          next = terminalBond;
+        }
+      }
+      if (!next) {
+        break;
+      }
+      terminal = next->getOtherAtom(terminal);
+      axis = next;
+      ++length;
+      if (terminal == center) {
+        return {};
+      }
+    }
+    if (armLength && length != armLength) {
+      return {};
+    }
+    armLength = length;
+    if (terminal->getDegree() < 2 || terminal->getDegree() > 3) {
+      return {};
+    }
+    for (const auto ligandBond : mol.atomBonds(terminal)) {
+      if (ligandBond != axis && ligandBond->getBondType() != Bond::SINGLE) {
+        return {};
+      }
+    }
+    terminals.push_back(terminal);
+  }
+  return terminals;
+}
+
+unsigned int getAllenePermutation(const Atom *center,
+                                  const std::vector<INT_LIST> &bondOrders,
+                                  unsigned int firstAtom) {
+  unsigned int permutation = 0;
+  center->getPropIfPresent(common_properties::_chiralPermutation, permutation);
+  const auto terminals = getAlleneTerminalAtoms(center);
+  if (!permutation || permutation > 2 || terminals.size() != 2 ||
+      bondOrders.size() != 2) {
+    return 0;
+  }
+  const auto &mol = center->getOwningMol();
+  for (unsigned int i = 0; i < terminals.size(); ++i) {
+    const auto terminal = terminals[i];
+    const Bond *axis = nullptr;
+    for (const auto bond : mol.atomBonds(terminal)) {
+      if (bond->getBondType() == Bond::DOUBLE) {
+        axis = bond;
+      }
+    }
+    auto ligandIndex = [&](int bondIndex) {
+      if (bondIndex < 0) {
+        return -1;
+      }
+      const auto ligand = mol.getBondWithIdx(bondIndex)->getOtherAtom(terminal);
+      return ligand->getAtomicNum() == 1 && !ligand->getIsotope() ? -1
+                                                                  : bondIndex;
+    };
+    INT_LIST storage;
+    for (const auto bond : mol.atomBonds(terminal)) {
+      if (bond != axis) {
+        storage.push_back(ligandIndex(bond->getIdx()));
+      }
+    }
+    if (storage.size() == 1) {
+      storage.push_back(-1);
+    } else if (storage.front() == -1) {
+      storage.reverse();
+    }
+    auto probe = bondOrders[i];
+    if (probe.size() != terminal->getDegree()) {
+      return 0;
+    }
+    if (terminal->getDegree() == 2) {
+      probe.insert(terminal->getIdx() == firstAtom ? probe.begin()
+                                                   : std::next(probe.begin()),
+                   -1);
+    }
+    probe.remove(axis->getIdx());
+    for (auto &bondIndex : probe) {
+      bondIndex = ligandIndex(bondIndex);
+    }
+    if (probe.size() != 2 ||
+        std::find(probe.begin(), probe.end(), storage.front()) == probe.end() ||
+        std::find(probe.begin(), probe.end(), storage.back()) == probe.end()) {
+      return 0;
+    }
+    if (probe.front() != storage.front()) {
+      permutation = 3 - permutation;
+    }
+  }
+  return permutation;
+}
+
 bool hasNonTetrahedralStereo(const Atom *cen) {
   PRECONDITION(cen, "bad center pointer");
   if (!cen->hasOwningMol()) {
