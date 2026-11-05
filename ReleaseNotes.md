@@ -1,3 +1,166 @@
+# Release_2026.09.2
+(Changes relative to Release_2026.09.1)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+Angus Barlow, Brian Bolt, Kevin Boyd, Katharina Buchthal, Nessa Carson, David
+Cosgrove, Aryan Dutt, Lukas Geiger, Guillaume Godin, Alister Goodfellow, Tad
+Hurst, Yahya Kayaal, Steven Kearnes, Brian Kelley, Malte Korn, Niels Maeder, Dan
+Nealschneider, Yakov Pechersky, Julianus Pfeuffer, Davis Rens, Ricardo
+Rodriguez, Anton Siomchen, Stefano Taverni, Yuri Victorovich, Nic Zonta,
+mtrojanowski-beit, Xavier M 
+
+## New Features and Enhancements:
+  - Aligning molecules from Java/C#
+ (github issue #8400 from nezix)
+  - SHARED-12489 wedges on bridge
+ (github pull #9484 from ZontaNicola)
+  - Avoid division in canonical bond comparisons
+ (github pull #9493 from scal444)
+  - Hoist StrippedMol namedtuple out of SaltRemover.StripMolWithDeleted
+ (github pull #9605 from Stefano-t)
+  - feat: minimize existing conformers with ETKDG force field
+ (github pull #9620 from nmaeder)
+  - Avoid PNG probing when SVG rendering is enabled
+ (github pull #9649 from d-b-w)
+  - Speed up iteration over Boost.Python stereo vectors
+ (github pull #9652 from lgeiger)
+  - Speed up Boost atom and bond iteration
+ (github pull #9653 from lgeiger)
+  - Add @{n} bond ring count SMARTS extension
+ (github pull #9655 from Maleteko)
+  - Add ToBitString to the C++ Python wrappers to remove nanobind workaround
+ (github pull #9706 from lgeiger)
+  - Simplify nanobind NumPy conversions
+ (github pull #9707 from lgeiger)
+  - Add multithreaded batch calculation to rdMolDescriptors.Properties
+ (github pull #9712 from Ardx19)
+  - Set up GitHub Actions CI
+ (github pull #9717 from ricrogz)
+  - Avoid deep-copying the source molecule in copyMolSubset's copyCoords
+ (github pull #9718 from brianbolt)
+  - allow calling `getTotalNumHs()` on query atoms
+ (github pull #9723 from greglandrum)
+  - add overload for ROMol addHs in combination with addHsParameters
+ (github pull #9749 from nmaeder)
+  - Synthon space shape search: use new optimizer option
+ (github pull #9750 from DavidACosgrove)
+
+## Documentation:
+  - Disambiguate ROMol quickcopy docstring
+ (github pull #9702 from DavidACosgrove)
+  - Various documentation fixes
+ (github pull #9704 from greglandrum)
+  - Correct docstring for EmbedParameters.  The key change being that num…
+ (github pull #9751 from DavidACosgrove)
+
+## Bug Fixes:
+  - Potentially incorrect gradient for ETKDG torsion term.
+ (github issue #8715 from scal444)
+  - TautomerEnumerator.Enumerate does not match tautomer's stereo that Canonicalize gives
+ (github issue #9129 from pechersky)
+  - eased tolerances for DistGeomHelpers catch_tests
+ (github pull #9425 from tadhurst-cdd)
+  - Fix ChemDraw reaction parsing and CDX detection, let the readers take a format, and run the ChemDraw tests
+ (github pull #9597 from skearnes)
+  - MOL2: UNITY_ATOM_ATTR section prevents correct formal charge assignment
+ (github issue #9634 from mtrojanowski-beit)
+  - nanobind: Atom.GetNeighbors()[i] and Atom.GetBonds()[i] index the whole molecule
+ (github issue #9645 from aligfellow)
+  - Fix numerical instability in CharacteristicPolynomial (silently wrong Ipc/AvgIpc above ~80 atoms)
+ (github pull #9657 from guillaume-osmo)
+  - CMAKE_COMPILER_IS_CLANG is determined using the compiler executable name which is incorrect
+ (github issue #9662 from yurivict)
+  - This line in CMakeLists.txt is wrong: if (CMAKE_COMPILER_IS_CLANG OR CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_COMPILER_IS_EMCC)
+ (github issue #9663 from yurivict)
+  - add a missing EXPORT for RecursiveLocker
+ (github pull #9669 from greglandrum)
+  - Make Catch2 optional when `RDK_BUILD_CPP_TESTS=OFF`
+ (github issue #9672 from pechersky)
+  - 8-membered-ring atrop stereo lost in 2026.09.1
+ (github issue #9681 from pechersky)
+  - DCLV Segfaults or gives incorrect results on mols with dummy atoms.
+ (github issue #9684 from scal444)
+  - DCLV recurses infinitely on the [H][H] edge case.
+ (github issue #9686 from scal444)
+  - CalcEEMcharges incorrect for charged molecules
+ (github issue #9688 from scal444)
+  - nanobind EnumerateLibrary doesn't keep reagent molecules alive (use-after-free / segfault)
+ (github issue #9692 from jpfeuffer)
+  - IC embedding: only +90 degree *S-S* are sampled
+ (github issue #9694 from kabu00002)
+  - Multithreaded MolStandardize *InPlace functions hang with numThreads=0 and race with negative numThreads
+ (github issue #9695 from Ardx19)
+  - Fix missing and misplaced headers
+ (github pull #9700 from scal444)
+  - Nanobind: move Python interaction out of nogil scopes
+ (github pull #9708 from lgeiger)
+  - postgres cartridge update from 4.7.0 to 4.8.0 fails
+ (github issue #9709 from pechersky)
+  - Require expat when building ChemDraw support
+ (github pull #9713 from pechersky)
+  - Logic error in DataStructs.FoldToTargetDensity()
+ (github issue #9715 from greglandrum)
+  - BoundMatrixBuilder - inverted stereo bonds
+ (github issue #9719 from kabu00002)
+  - Add ML.Data.Quantize wrapper for nanobind
+ (github pull #9722 from greglandrum)
+  - Modifying trans amide definition
+ (github pull #9730 from kabu00002)
+  - Consistent 1-4 bounds on cis/trans configurations
+ (github pull #9734 from kabu00002)
+  - Valence checks for aromatic atoms allows them to be hypervalent
+ (github issue #9735 from ricrogz)
+  - get PandasTools working with pandas 3.1.0
+ (github pull #9742 from greglandrum)
+  - Fix partial ring-stereo groups in modern stereo perception
+ (github pull #9743 from lgeiger)
+  - Synthon Space shape search doesn't test hits in similarity order
+ (github pull #9744 from DavidACosgrove)
+  - Fix Python extension linkage using Python::Module
+ (github pull #9745 from lgeiger)
+  - sping PDF: fix two error messages that raised KeyError
+ (github pull #9746 from kayaal34)
+  - Fix Postgres GiST KNN returning wrong nearest neighbours for bfp
+ (github pull #9752 from asiomchen)
+  - Fix ring type after legacy SSSR symmetrization
+ (github pull #9753 from lgeiger)
+  - StereoisomerEnumerator enumerates cumulene as 3 consecutive double bonds
+ (github issue #9757 from ricrogz)
+  - ETKDG KTERM_VIOLATION never rejects molecules with All-In-One Minimization
+ (github issue #9767 from scal444)
+  - Fix double counting 4th dim conformer gen failures
+ (github pull #9776 from scal444)
+  - Fix a couple of MHFP bugs
+ (github pull #9778 from greglandrum)
+  - MolDraw2D silently omits some particular stereobonds to P or S
+ (github issue #9779 from supersciencegrl)
+  - Fixes full backend crash in `mol_adjust_query_properties()` on malformed JSON
+ (github pull #9781 from asiomchen)
+  - Temporary fix for #9777
+ (github pull #9791 from ricrogz)
+
+## Cleanup work:
+  - Fixes for AI-found medium impact issues (Python code)
+ (github pull #9467 from ricrogz)
+  - Ask is_none() rather than comparing with an empty object
+ (github pull #9619 from skearnes)
+  - run clang-tidy modernize-use-using on Code/DistGeom
+ (github pull #9660 from nmaeder)
+  - Fix rwmol implicit copies
+ (github pull #9731 from bp-kelley)
+  - Factor out failure recording in conformer generator
+ (github pull #9773 from scal444)
+  - Deduplicate RNG setup in conformer generator
+ (github pull #9774 from scal444)
+  - Consolidate duplicated Deadline handling in conformer generator
+ (github pull #9775 from scal444)
+
+
+
 # Release_2026.09.1
 (Changes relative to Release_2026.03.1)
 
