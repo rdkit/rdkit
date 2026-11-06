@@ -22,6 +22,7 @@
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/Descriptors/AtomFeat.h>
 #include <GraphMol/Descriptors/OxidationNumbers.h>
+#include <GraphMol/Descriptors/SAScore.h>
 #include <GraphMol/Fingerprints/AtomPairs.h>
 #include <GraphMol/Fingerprints/MorganFingerprints.h>
 #include <GraphMol/Fingerprints/MACCS.h>
@@ -1657,6 +1658,17 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("CalcNumBridgeheadAtoms", numBridgeheadAtoms,
               (python::arg("mol"), python::arg("atoms") = python::object()),
               docString.c_str());
+
+  docString =
+      "Returns the synthetic accessibility score of Ertl and Schuffenhauer, "
+      "from 1 (easy to make) to 10 (hard to make).\n\n"
+      "Stereocenters are counted with the new stereo perception, so results "
+      "differ from Contrib/SA_Score/sascorer.py where the two perceptions "
+      "disagree.";
+  python::def("CalcSAScore",
+              static_cast<double (*)(const RDKit::ROMol &)>(
+                  RDKit::Descriptors::calcSAScore),
+              (python::arg("mol")), docString.c_str());
 
   python::scope().attr("_CalcNumAtomStereoCenters_version") =
       RDKit::Descriptors::NumAtomStereoCentersVersion;
