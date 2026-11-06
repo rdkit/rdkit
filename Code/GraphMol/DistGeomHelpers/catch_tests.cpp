@@ -863,7 +863,7 @@ TEST_CASE("tracking failure causes") {
     ps.useLegacyImplementation = false;
     auto cid = DGeomHelpers::EmbedMolecule(*mol, ps);
     CHECK(cid < 0);
-    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] == 17);
+    CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::INITIAL_COORDS] == 23);
     CHECK(ps.failures[DGeomHelpers::EmbedFailureCauses::KTERM_VIOLATION] == 0);
     auto fail_cp = ps.failures;
     // make sure we reset the counts each time
@@ -3358,4 +3358,33 @@ TEST_CASE("Non-conjugated ring tortions") {
 
   // should not be cis-constrained
   CHECK(mmat->getUpperBound(3, 10) - mmat->getLowerBound(3, 10) > 0.2);
+}
+
+TEST_CASE("Aryl ether ring torsion is not hard cis-constrained") {
+  auto mol = "c3ccc2OCCc2c3"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  DistGeom::BoundsMatPtr mmat;
+  mmat.reset(new DistGeom::BoundsMatrix(mol->getNumAtoms()));
+  DGeomHelpers::initBoundsMat(mmat);
+  DGeomHelpers::setTopolBounds(*mol, mmat, DGeomHelpers::DG, false, true, true,
+                               true);
+
+  // 2-3-4-5 should be flexible 
+  CHECK(mmat->getUpperBound(2, 5) - mmat->getLowerBound(2, 5) > 0.2);
+}
+
+TEST_CASE("Planar cyclic ester") {
+  auto mol = "O=C1OCCC1"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  DistGeom::BoundsMatPtr mmat;
+  mmat.reset(new DistGeom::BoundsMatrix(mol->getNumAtoms()));
+  DGeomHelpers::initBoundsMat(mmat);
+  DGeomHelpers::PATH14_VECT paths14;
+  DGeomHelpers::setTopolBounds(*mol, mmat, DGeomHelpers::DG, false, true, true,
+                               true, &paths14);
+
+  // 5-1-2-3 should be planar
+  CHECK(mmat->getUpperBound(3, 5) - mmat->getLowerBound(3, 5) < 0.2);
 }

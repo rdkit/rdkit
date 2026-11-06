@@ -853,17 +853,36 @@ Bond::BondStereo _getAtomStereo(const Bond *bnd, unsigned int aid1,
   return stype;
 }
 
-TorsionValue _getInRing14Type(const Bond *bnd2, const Atom *atm1,
-                              const Atom *atm2, const Atom *atm3,
-                              const Atom *atm4, int ringSize) {
-  Atom::HybridizationType ahyb2 = atm2->getHybridization();
-  Atom::HybridizationType ahyb3 = atm3->getHybridization();
+TorsionValue _getChain14Type(const ROMol &mol, const Bond *bnd1,
+                             const Bond *bnd2, const Bond *bnd3,
+                             const Atom *atm1, const Atom *atm2,
+                             const Atom *atm3, const Atom *atm4,
+                             bool forceTransAmides);
 
+bool _isFlatRingBond(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
+                     const Bond *bnd3, const Atom *atm1, const Atom *atm2,
+                     const Atom *atm3, const Atom *atm4) {
+                      const auto chainType =
+    _getChain14Type(mol, bnd1, bnd2, bnd3,
+                    atm1, atm2, atm3, atm4, false)
+        .type;
+
+    return atm2->getHybridization() == Atom::SP2 &&
+       atm3->getHybridization() == Atom::SP2 &&
+       (bnd2->getIsAromatic() ||
+        bnd2->getBondType() >= Bond::DOUBLE ||
+        chainType == TorsionType::CISTRANS);
+}
+
+TorsionValue _getInRing14Type(const ROMol &mol, const Bond *bnd1,
+                              const Bond *bnd2, const Bond *bnd3,
+                              const Atom *atm1, const Atom *atm2,
+                              const Atom *atm3, const Atom *atm4,
+                              int ringSize) {
   Bond::BondStereo stype = _getAtomStereo(bnd2, atm1->getIdx(), atm4->getIdx());
 
   const bool isFlat =
-      (bnd2->getIsAromatic() || bnd2->getBondType() >= Bond::DOUBLE) &&
-      (ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2);
+      _isFlatRingBond(mol, bnd1, bnd2, bnd3, atm1, atm2, atm3, atm4);
 
   // we add a check for the ring size here because there's no reason to
   // assume cis bonds in bigger rings. This was part of github #1240:
@@ -1145,20 +1164,20 @@ Path14Configuration _record14Path(const ROMol &mol, unsigned int bid1,
   const unsigned int aid3 = accumData.bondAdj->getVal(bid2, bid3);
 
   const Atom *atm2 = mol.getAtomWithIdx(aid2);
-  Atom::HybridizationType ahyb2 = atm2->getHybridization();
   const Atom *atm3 = mol.getAtomWithIdx(aid3);
-  Atom::HybridizationType ahyb3 = atm3->getHybridization();
 
   const unsigned int aid1 = mol.getBondWithIdx(bid1)->getOtherAtomIdx(aid2);
   const unsigned int aid4 = mol.getBondWithIdx(bid3)->getOtherAtomIdx(aid3);
 
-  unsigned int nb = mol.getNumBonds();
   Path14Configuration path14 = {bid1, bid2, bid3, aid1, aid2,
                                 aid3, aid4, {},   rSize};
-
-  if ((ahyb2 == Atom::SP2) && (ahyb3 == Atom::SP2)) {  // FIX: check for trans
+  if (_isFlatRingBond(mol, mol.getBondWithIdx(bid1),
+                      mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
+                      mol.getAtomWithIdx(aid1), atm2, atm3,
+                      mol.getAtomWithIdx(aid4))) {
     path14.value = {.type = TorsionType::CIS};
-    accumData.cisPaths.insert(getUnifiedId(bid1, bid2, bid3, nb));
+    accumData.cisPaths.insert(
+        getUnifiedId(bid1, bid2, bid3, mol.getNumBonds()));
   } else {
     path14.value = {.type = TorsionType::FLEXIBLE};
   }
@@ -1387,8 +1406,8 @@ Path14Configuration _get14Config(const ROMol &mol, const Bond *bnd1,
                                      atm4, info.forceTransAmides);
       break;
     case Type14::IN_RING:
-      torsionValue =
-          _getInRing14Type(bnd2, atm1, atm2, atm3, atm4, info.ringSize);
+      torsionValue = _getInRing14Type(mol, bnd1, bnd2, bnd3, atm1, atm2, atm3,
+                                      atm4, info.ringSize);
       break;
     case Type14::MACROCYCLE_ALL_IN_SAME_RING:
       torsionValue = _getMacrocycleAllInSameRing14Type(
