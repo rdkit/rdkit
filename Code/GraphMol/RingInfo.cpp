@@ -507,12 +507,14 @@ std::vector<std::vector<int>> RingInfo::atomRelevantCycles() const {
   PRECONDITION(dp_urfData, "Ring families not initialized");
   std::vector<std::vector<int>> res;
   if (dp_urfData) {
+    size_t nURF = RDL_getNofURF(dp_urfData.get());
     auto nRC = RDL_getNofRC(dp_urfData.get());
-    if (nRC > MAX_SYMMETRIZED_RINGS) {
+    auto maxAllowed = MAX_SYMMETRIZED_RINGS + nURF;
+    if (nRC > maxAllowed) {
       BOOST_LOG(rdWarningLog)
-          << "Number of relevant cycles truncated to " << MAX_SYMMETRIZED_RINGS
-          << ". Ring counts will not be correct." << std::endl;
-      nRC = MAX_SYMMETRIZED_RINGS;
+          << "Number of relevant cycles truncated to " << maxAllowed
+          << ". Symmetric rings will not be correct." << std::endl;
+      nRC = maxAllowed;
     }
     res.reserve(nRC);
 
