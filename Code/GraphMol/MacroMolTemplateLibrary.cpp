@@ -10,6 +10,9 @@
 #include <GraphMol/MolOps.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 
+#include <RDGeneral/BadFileException.h>
+#include <RDGeneral/Exceptions.h>
+
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -20,7 +23,6 @@
 #include <iterator>
 #include <memory>
 #include <sstream>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -51,9 +53,8 @@ MonomerDefinitions readMonomerDefinitions() {
   }
   std::ifstream input(fileName);
   if (!input) {
-    throw std::runtime_error(std::string("Could not open monomer library '") +
-                             fileName + "' specified by " +
-                             monomerLibraryEnvVar);
+    throw BadFileException(std::string("Could not open monomer library '") +
+                           fileName + "' specified by " + monomerLibraryEnvVar);
   }
   return {std::string(std::istreambuf_iterator<char>(input),
                       std::istreambuf_iterator<char>()),
@@ -68,8 +69,8 @@ std::string getString(const boost::property_tree::ptree &object,
   // distinguished from an empty string, so empty values are rejected too.
   const auto value = object.get_child_optional(key);
   if (!value || !value->empty() || value->data().empty()) {
-    throw std::runtime_error("Missing or invalid '" + key +
-                             "' in monomer definition");
+    throw ValueErrorException("Missing or invalid '" + key +
+                              "' in monomer definition");
   }
   return value->data();
 }
@@ -84,20 +85,19 @@ MonomerClass monomerClassFromPolymerType(const std::string &polymerType) {
   if (polymerType == "CHEM") {
     return MonomerClass::Chemical;
   }
-  throw std::runtime_error("Unsupported polymer type in monomer definition: " +
-                           polymerType);
+  throw ValueErrorException("Unsupported polymer type in monomer definition: " +
+                            polymerType);
 }
 
 std::unique_ptr<RWMol> parseCXSmiles(const std::string &smiles,
                                      const std::string &what,
                                      const std::string &name) {
-  v2::SmilesParse::SmilesParserParams params;
-  params.removeHs = false;
-  params.parseName = false;
+  const v2::SmilesParse::SmilesParserParams params{.parseName = false,
+                                                   .removeHs = false};
   auto mol = v2::SmilesParse::MolFromSmiles(smiles, params);
   if (!mol) {
-    throw std::runtime_error("Could not parse " + what + " for monomer " +
-                             name);
+    throw ValueErrorException("Could not parse " + what + " for monomer " +
+                              name);
   }
   // E/Z labels depend on CIP ranks, which change when dummy atoms are
   // replaced, so express double bond stereo relative to the stereo atoms
@@ -137,7 +137,7 @@ MacroMolLeavingGroup attachRGroup(RWMol &mol, unsigned int coreDummyIdx,
   for (const auto atom : rGroup.atoms()) {
     if (atom->getAtomicNum() == 0) {
       if (rGroupDummy || getRGroupNumber(atom) != rGroupNumber) {
-        throw std::runtime_error(
+        throw ValueErrorException(
             "R-group " + rGroupLabel + " for monomer " + name +
             " must contain exactly one dummy atom, labelled _" + rGroupLabel);
       }
@@ -145,17 +145,17 @@ MacroMolLeavingGroup attachRGroup(RWMol &mol, unsigned int coreDummyIdx,
     }
   }
   if (!rGroupDummy || rGroupDummy->getDegree() != 1) {
-    throw std::runtime_error("The dummy atom in R-group " + rGroupLabel +
-                             " for monomer " + name +
-                             " must have exactly one neighbor");
+    throw ValueErrorException("The dummy atom in R-group " + rGroupLabel +
+                              " for monomer " + name +
+                              " must have exactly one neighbor");
   }
   const auto rGroupLeavingAtom = *rGroup.atomNeighbors(rGroupDummy).begin();
 
   const auto coreDummy = mol.getAtomWithIdx(coreDummyIdx);
   if (coreDummy->getDegree() != 1) {
-    throw std::runtime_error("Attachment point _" + rGroupLabel +
-                             " in monomer " + name +
-                             " must have exactly one neighbor");
+    throw ValueErrorException("Attachment point _" + rGroupLabel +
+                              " in monomer " + name +
+                              " must have exactly one neighbor");
   }
   const auto attachAtomIdx = (*mol.atomNeighbors(coreDummy).begin())->getIdx();
 
@@ -196,7 +196,7 @@ MacroMolLeavingGroup attachRGroup(RWMol &mol, unsigned int coreDummyIdx,
   if (chiralTag != Atom::CHI_UNSPECIFIED) {
     if (chiralTag != Atom::CHI_TETRAHEDRAL_CW &&
         chiralTag != Atom::CHI_TETRAHEDRAL_CCW) {
-      throw std::runtime_error(
+      throw ValueErrorException(
           "Unsupported chirality on the atom bonded to "
           "the attachment point of R-group " +
           rGroupLabel + " for monomer " + name);
@@ -230,8 +230,8 @@ std::unique_ptr<MacroMolTemplate> makeTemplate(
   const auto subclass = getString(definition, "MONOMER_TYPE");
   const auto rGroupDefinitions = definition.get_child_optional("RGROUPS");
   if (!rGroupDefinitions) {
-    throw std::runtime_error("Missing 'RGROUPS' in definition of monomer " +
-                             name);
+    throw ValueErrorException("Missing 'RGROUPS' in definition of monomer " +
+                              name);
   }
 
   auto mol = parseCXSmiles(coreSmiles, "CORE_SMILES", name);
@@ -242,7 +242,7 @@ std::unique_ptr<MacroMolTemplate> makeTemplate(
     }
   }
   if (coreDummies.size() != rGroupDefinitions->size()) {
-    throw std::runtime_error(
+    throw ValueErrorException(
         "The attachment points in CORE_SMILES of monomer " + name +
         " do not match its RGROUPS");
   }
@@ -253,8 +253,8 @@ std::unique_ptr<MacroMolTemplate> makeTemplate(
     const auto rGroupSmiles =
         rGroupDefinitions->get_child_optional(rGroupLabel);
     if (!rGroupSmiles || !rGroupSmiles->empty()) {
-      throw std::runtime_error("Missing or invalid R-group " + rGroupLabel +
-                               " in RGROUPS of monomer " + name);
+      throw ValueErrorException("Missing or invalid R-group " + rGroupLabel +
+                                " in RGROUPS of monomer " + name);
     }
     const auto rGroup =
         parseCXSmiles(rGroupSmiles->data(), "R-group " + rGroupLabel, name);
@@ -323,8 +323,8 @@ MacroMolTemplateLibrary loadMacroMolTemplates() {
     }
     return result;
   } catch (const std::exception &e) {
-    throw std::runtime_error("Error loading " + definitions.source + ": " +
-                             e.what());
+    throw ValueErrorException("Error loading " + definitions.source + ": " +
+                              e.what());
   }
 }
 

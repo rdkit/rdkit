@@ -12,6 +12,8 @@
 
 #include <GraphMol/MacroMolTemplateLibrary.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <RDGeneral/BadFileException.h>
+#include <RDGeneral/Exceptions.h>
 #include <RDGeneral/utils.h>
 #include <catch2/catch_all.hpp>
 
@@ -36,6 +38,7 @@ TEST_CASE("RDKIT_MONOMER_LIBRARY replaces the built-in MacroMol templates") {
       std::filesystem::temp_directory_path() / "rdkit_no_such_monomers.json";
   std::filesystem::remove(missingFile);
   setenv("RDKIT_MONOMER_LIBRARY", missingFile.string().c_str(), 1);
+  CHECK_THROWS_AS(getGlobalMacroMolTemplateLibrary(), BadFileException);
   CHECK_THROWS_WITH(getGlobalMacroMolTemplateLibrary(),
                     ContainsSubstring("Could not open monomer library") &&
                         ContainsSubstring(missingFile.string()));
@@ -50,6 +53,7 @@ TEST_CASE("RDKIT_MONOMER_LIBRARY replaces the built-in MacroMol templates") {
       out << json;
     }
     setenv("RDKIT_MONOMER_LIBRARY", file.string().c_str(), 1);
+    CHECK_THROWS_AS(getGlobalMacroMolTemplateLibrary(), ValueErrorException);
     CHECK_THROWS_WITH(getGlobalMacroMolTemplateLibrary(),
                       ContainsSubstring("Error loading monomer library") &&
                           ContainsSubstring(file.string()) &&

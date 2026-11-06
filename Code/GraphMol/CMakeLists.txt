@@ -63,9 +63,15 @@ rdkit_headers(Atom.h
 add_subdirectory(SmilesParse)
 set(defaultMonomersJson "${CMAKE_SOURCE_DIR}/Data/DefaultMonomers.json")
 set(defaultMonomersCpp "${CMAKE_CURRENT_BINARY_DIR}/DefaultMonomers.cpp")
+set(defaultMonomersTrackedCopy
+    "${CMAKE_CURRENT_SOURCE_DIR}/DefaultMonomers.cpp.cmake")
+# The generated file is also copied to DefaultMonomers.cpp.cmake in the source
+# tree whenever it changes; that copy is checked in so it can be inspected.
 add_custom_command(OUTPUT "${defaultMonomersCpp}"
         COMMAND ${CMAKE_COMMAND} -DINPUT=${defaultMonomersJson}
                 -DOUTPUT=${defaultMonomersCpp}
+                -DSOURCE_ROOT=${CMAKE_SOURCE_DIR}
+                -DTRACKED_COPY=${defaultMonomersTrackedCopy}
                 -P ${CMAKE_CURRENT_SOURCE_DIR}/EmbedDefaultMonomers.cmake
         DEPENDS "${defaultMonomersJson}"
                 "${CMAKE_CURRENT_SOURCE_DIR}/EmbedDefaultMonomers.cmake"
