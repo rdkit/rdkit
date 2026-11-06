@@ -995,7 +995,7 @@ bool embedPoints(RDGeom::PointPtrVect *positions,
 
   bool gotCoords = false;
   unsigned int iter = 0;
-  while (!gotCoords && iter < embedParams.maxIterations) {
+  while (iter < embedParams.maxIterations) {
     ++iter;
     if (!beginAttempt(iter, embedParams, end_time)) {
       return false;
@@ -1007,90 +1007,99 @@ bool embedPoints(RDGeom::PointPtrVect *positions,
 
     if (!gotCoords) {
       recordFailure(embedParams, EmbedFailureCauses::INITIAL_COORDS);
-    } else {
-      if (ControlCHandler::getGotSignal()) {
-        return false;
-      }
-      // we only return initial embedding if successful
-      if (embedParams.onlyInitialEmbedding) {
-        return gotCoords;
-      }
+      continue;
+    }
+
+    if (ControlCHandler::getGotSignal()) {
+      return false;
+    }
+
+    // we only return initial embedding if successful
+    if (embedParams.onlyInitialEmbedding) {
+      return gotCoords;
+    }
+
+    gotCoords = EmbeddingOps::firstMinimization(positions, eargs, embedParams);
+    if (!gotCoords) {
+      recordFailure(embedParams, EmbedFailureCauses::FIRST_MINIMIZATION);
+      continue;
+    }
+
+    gotCoords = EmbeddingOps::checkTetrahedralCenters(positions, eargs);
+    if (!gotCoords) {
+      recordFailure(embedParams, EmbedFailureCauses::CHECK_TETRAHEDRAL_CENTERS);
+      continue;
+    }
+
+    // Check if any of our chiral centers are badly out of whack.
+    if (embedParams.enforceChirality && eargs.chiralCenters->size() > 0) {
       gotCoords =
-          EmbeddingOps::firstMinimization(positions, eargs, embedParams);
+          EmbeddingOps::checkChiralCenters(positions, eargs, embedParams);
       if (!gotCoords) {
-        recordFailure(embedParams, EmbedFailureCauses::FIRST_MINIMIZATION);
-      } else {
-        gotCoords = EmbeddingOps::checkTetrahedralCenters(positions, eargs);
-        if (!gotCoords) {
-          recordFailure(embedParams,
-                        EmbedFailureCauses::CHECK_TETRAHEDRAL_CENTERS);
-        }
-      }
-
-      // Check if any of our chiral centers are badly out of whack.
-      if (gotCoords && embedParams.enforceChirality &&
-          eargs.chiralCenters->size() > 0) {
-        gotCoords =
-            EmbeddingOps::checkChiralCenters(positions, eargs, embedParams);
-        if (!gotCoords) {
-          recordFailure(embedParams, EmbedFailureCauses::CHECK_CHIRAL_CENTERS);
-        }
-      }
-      // redo the minimization if we have a chiral center
-      // or have started from random coords.
-      if (gotCoords &&
-          (eargs.chiralCenters->size() > 0 || embedParams.useRandomCoords)) {
-        if (ControlCHandler::getGotSignal()) {
-          return false;
-        }
-        gotCoords = EmbeddingOps::minimizeFourthDimension(
-            positions, eargs, embedParams, end_time);
-        if (!gotCoords) {
-          if (pastDeadline(end_time)) {
-            recordFailure(embedParams, EmbedFailureCauses::EXCEEDED_TIMEOUT);
-          } else {
-            recordFailure(embedParams,
-                          EmbedFailureCauses::MINIMIZE_FOURTH_DIMENSION);
-          }
-        }
-      }
-
-      // (ET)(K)DG
-      if (gotCoords && (embedParams.useExpTorsionAnglePrefs ||
-                        embedParams.useBasicKnowledge)) {
-        if (ControlCHandler::getGotSignal()) {
-          return false;
-        }
-        gotCoords = EmbeddingOps::minimizeWithExpTorsions(*positions, eargs,
-                                                          embedParams);
-        if (!gotCoords) {
-          recordFailure(embedParams, EmbedFailureCauses::ETK_MINIMIZATION);
-        }
-      }
-      if (gotCoords) {
-        gotCoords = EmbeddingOps::doubleBondGeometryChecks(*positions, eargs);
-        if (!gotCoords) {
-          recordFailure(embedParams, EmbedFailureCauses::LINEAR_DOUBLE_BOND);
-        }
-      }
-      // test if stereo is correct
-      if (embedParams.enforceChirality && gotCoords) {
-        if (!eargs.chiralCenters->empty()) {
-          // test if chirality is correct. Any additional test failures
-          // will be tracked there if necessary.
-          gotCoords =
-              EmbeddingOps::finalChiralChecks(positions, eargs, embedParams);
-        }
-        if (gotCoords && !eargs.stereoDoubleBonds->empty()) {
-          gotCoords = EmbeddingOps::doubleBondStereoChecks(*positions, eargs,
-                                                           embedParams);
-        }
+        recordFailure(embedParams, EmbedFailureCauses::CHECK_CHIRAL_CENTERS);
+        continue;
       }
     }
 
-  }  // while
+    // redo the minimization if we have a chiral center
+    // or have started from random coords.
+    if ((eargs.chiralCenters->size() > 0 || embedParams.useRandomCoords)) {
+      if (ControlCHandler::getGotSignal()) {
+        return false;
+      }
+      gotCoords = EmbeddingOps::minimizeFourthDimension(positions, eargs,
+                                                        embedParams, end_time);
+      if (!gotCoords) {
+        if (pastDeadline(end_time)) {
+          recordFailure(embedParams, EmbedFailureCauses::EXCEEDED_TIMEOUT);
+        } else {
+          recordFailure(embedParams,
+                        EmbedFailureCauses::MINIMIZE_FOURTH_DIMENSION);
+        }
+        continue;
+      }
+    }
 
-  return gotCoords;
+    // (ET)(K)DG
+    if ((embedParams.useExpTorsionAnglePrefs ||
+         embedParams.useBasicKnowledge)) {
+      if (ControlCHandler::getGotSignal()) {
+        return false;
+      }
+      gotCoords =
+          EmbeddingOps::minimizeWithExpTorsions(*positions, eargs, embedParams);
+      if (!gotCoords) {
+        recordFailure(embedParams, EmbedFailureCauses::ETK_MINIMIZATION);
+        continue;
+      }
+    }
+
+    gotCoords = EmbeddingOps::doubleBondGeometryChecks(*positions, eargs);
+    if (!gotCoords) {
+      recordFailure(embedParams, EmbedFailureCauses::LINEAR_DOUBLE_BOND);
+      continue;
+    }
+
+    // test if stereo is correct
+    if (embedParams.enforceChirality) {
+      if (!eargs.chiralCenters->empty()) {
+        // test if chirality is correct. Any additional test failures
+        // will be tracked there if necessary.
+        gotCoords =
+            EmbeddingOps::finalChiralChecks(positions, eargs, embedParams);
+      }
+      if (gotCoords && !eargs.stereoDoubleBonds->empty()) {
+        gotCoords = EmbeddingOps::doubleBondStereoChecks(*positions, eargs,
+                                                         embedParams);
+      }
+      if (!gotCoords) {
+        continue;
+      }
+    }
+
+    return true;
+  }  // while
+  return false;
 }
 
 bool embedPointsAIO(RDGeom::PointPtrVect *positions,
@@ -1475,8 +1484,8 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
           }
         }
       }  // if block -chirality check
-    }  // if block - heavy atom check
-  }  // for loop over atoms
+    }    // if block - heavy atom check
+  }      // for loop over atoms
 
   // now do atropisomers
   for (const auto &bond : mol.bonds()) {
