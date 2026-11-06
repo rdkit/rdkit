@@ -555,7 +555,7 @@ Available parameters and their default values are:
 -   rdkit.hashed\_atompair\_fp\_size : the size (in bits) of atom pair bit vector fingerprints
 -   rdkit.avalon\_fp\_size : the size (in bits) of avalon fingerprints
 
-Parameter names starting with `rdkit.` are reserved by the cartridge (*from the 2026\_09\_2 release*). The check starts once the cartridge library is loaded in a session, which normally happens at the first call to an RDKit function, or at startup if `rdkit` is listed in `shared_preload_libraries` or `session_preload_libraries`. On PostgreSQL 15 and later:
+Parameter names starting with `rdkit.` are reserved by the cartridge (*from the 2027\_03\_1 release*). The check starts once the cartridge library is loaded in a session, which normally happens at the first call to an RDKit function, or at startup if `rdkit` is listed in `shared_preload_libraries` or `session_preload_libraries`. On PostgreSQL 15 and later:
 
 -   setting an unknown `rdkit.*` parameter, such as a misspelled name, raises an error instead of being silently accepted and ignored;
 -   unknown `rdkit.*` settings made before the library was loaded are removed with a warning when it loads.
