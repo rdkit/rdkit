@@ -14,6 +14,8 @@
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/Chirality.h>
 #include <algorithm>
+#include <functional>
+#include <utility>
 #include <boost/dynamic_bitset.hpp>
 
 namespace {
@@ -34,6 +36,27 @@ unsigned int NUM_BONDS_FLIPS = 3;
 double ANGLE_EXPANSION_INCREMENT = 0.0873;  // 5 degrees per step
 double MAX_ANGLE_EXPANSION = 3. * ANGLE_EXPANSION_INCREMENT;
 unsigned int MAX_ANGLE_EXPANSION_ITERS = 20;
+  
+std::uint64_t getAtomDepictRank(const RDKit::Atom *at) {
+  const int maxAtNum = 1000;
+  const int maxDeg = 100;
+  int anum = at->getAtomicNum();
+  anum = anum == 1 ? maxAtNum : anum;  // favor non-hydrogen atoms
+  int deg = at->getDegree();
+  std::vector<std::pair<unsigned int, unsigned int>> neighbors;
+  neighbors.reserve(deg);
+  for (const auto nbr : at->getOwningMol().atomNeighbors(at)) {
+    neighbors.emplace_back(nbr->getAtomicNum(), nbr->getDegree());
+  }
+  std::sort(neighbors.begin(), neighbors.end());
+  // Hash the sorted local environment so atom order does not affect this
+  // tie breaker. Keep element and degree as the primary ordering criteria.
+  const auto neighborHash =
+      gboost::hash_range(neighbors.begin(), neighbors.end());
+  constexpr std::uint64_t hashBits = 16;
+  return ((static_cast<std::uint64_t>(maxDeg * anum + deg) << hashBits) |
+          (neighborHash & ((1u << hashBits) - 1)));
+}
 
 RDGeom::INT_POINT2D_MAP embedRing(const RDKit::INT_VECT &ring) {
   // The process here is very straight forward
@@ -170,28 +193,34 @@ RDKit::INT_VECT setNbrOrder(unsigned int aid, const RDKit::INT_VECT &nbrs,
 
 int pickFirstRingToEmbed(const RDKit::ROMol &mol,
                          const RDKit::VECT_INT_VECT &fusedRings) {
-  // ok this is what we will do here
-  // we will pick the ring with the smallest number of substituents
+  // Start with the ring with the fewest substituents, then the largest ring.
+  // For ties, prefer the ring with higher-ranked atom environments. Equal
+  // rank signatures still retain ring discovery order.
   int res = -1;
   unsigned int maxSize = 0;
+  std::vector<std::uint64_t> bestRanks;
   int subs, minsubs = static_cast<int>(1e8);
   int cnt = 0;
   for (const auto &fusedRing : fusedRings) {
     subs = 0;
+    std::vector<std::uint64_t> ranks;
+    ranks.reserve(fusedRing.size());
     for (auto rii : fusedRing) {
-      if (mol.getAtomWithIdx(rii)->getDegree() > 2) {
+      const auto atom = mol.getAtomWithIdx(rii);
+      if (atom->getDegree() > 2) {
         ++subs;
       }
+      ranks.push_back(getAtomDepictRank(atom));
     }
-    if (subs < minsubs) {
+    std::sort(ranks.begin(), ranks.end(), std::greater<>{});
+    if (subs < minsubs ||
+        (subs == minsubs &&
+         (fusedRing.size() > maxSize ||
+          (fusedRing.size() == maxSize && ranks > bestRanks)))) {
       res = cnt;
       minsubs = subs;
       maxSize = fusedRing.size();
-    } else if (subs == minsubs) {
-      if (fusedRing.size() > maxSize) {
-        res = cnt;
-        maxSize = fusedRing.size();
-      }
+      bestRanks = std::move(ranks);
     }
     cnt++;
   }
@@ -573,7 +602,7 @@ INT_PAIR_VECT findBondsPairsToPermuteDeg4(const RDGeom::Point2D &center,
 template <class T>
 T rankAtomsByRank(const RDKit::ROMol &mol, const T &commAtms, bool ascending) {
   const auto natms = commAtms.size();
-  INT_PAIR_VECT rankAid;
+  std::vector<std::pair<std::uint64_t, unsigned int>> rankAid;
   rankAid.reserve(natms);
   for (const auto aid : commAtms) {
     unsigned int rank = aid;
@@ -590,10 +619,14 @@ T rankAtomsByRank(const RDKit::ROMol &mol, const T &commAtms, bool ascending) {
         // _CIPRank-driven behavior
         rank = mol.getNumAtoms() - rank;
       }
-      rank += mol.getNumAtoms() * getAtomDepictRank(at);
+      rankAid.emplace_back(
+          static_cast<std::uint64_t>(rank) +
+              static_cast<std::uint64_t>(mol.getNumAtoms()) *
+                  getAtomDepictRank(at),
+          aid);
+    } else {
+      rankAid.emplace_back(rank, aid);
     }
-
-    rankAid.emplace_back(rank, aid);
   }
   if (ascending) {
     std::stable_sort(rankAid.begin(), rankAid.end(),
