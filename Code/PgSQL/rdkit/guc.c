@@ -33,6 +33,8 @@
 #include <postgres.h>
 #include <fmgr.h>
 #include <utils/guc.h>
+#include <access/parallel.h>
+#include <limits.h>
 
 #include "guc.h"
 
@@ -70,12 +72,67 @@ static int rdkit_rdkit_fp_size = RDKIT_FP_SIZE;
 static int rdkit_hashed_torsion_fp_size = HASHED_TORSION_FP_SIZE;
 static int rdkit_hashed_atompair_fp_size = HASHED_PAIR_FP_SIZE;
 static int rdkit_avalon_fp_size = AVALON_FP_SIZE;
+static int rdkit_unused_torsion_fp_size = HASHED_TORSION_FP_SIZE;
+static int rdkit_unused_atompair_fp_size = HASHED_PAIR_FP_SIZE;
 static int rdkit_reaction_sss_fp_size = REACTION_SSS_FP_SIZE;
 static int rdkit_reaction_difference_fp_size = REACTION_DIFFERENCE_FP_SIZE;
 static int rdkit_reaction_sss_fp_type = REACTION_SSS_FP_TYPE;
 static int rdkit_reaction_difference_fp_type = REACTION_DIFFERENCE_FP_TYPE;
 static int rdkit_difference_FP_weight_agents = REACTION_DFP_WEIGHT_AGENTS;
 static int rdkit_difference_FP_weight_nonagents = REACTION_DFP_WEIGHT_NONAGENTS;
+
+// ----------------------------------------------------------------------
+// Deprecated parameter names.
+//
+// "rdkit.torsion_fp_size" and "rdkit.atompair_fp_size" never had any effect.
+// They are still accepted so that existing scripts keep working, but they
+// remain without effect
+//
+// All deprecated names emit a WARNING when they are set explicitly.
+// ----------------------------------------------------------------------
+static bool shouldWarnDeprecated(GucSource source) {
+  // no warning for the built-in default, and none from parallel workers
+  // (they re-apply the leader's settings, which already warned)
+  return source != PGC_S_DEFAULT && !IsParallelWorker();
+}
+
+static bool checkUnusedTorsionFPSize(int *newval, void **extra,
+                                     GucSource source) {
+  (void)newval;
+  (void)extra;
+  if (shouldWarnDeprecated(source)) {
+    ereport(WARNING,
+            (errmsg("parameter \"rdkit.torsion_fp_size\" has no effect"),
+             errhint("Use \"rdkit.hashed_torsion_fp_size\" instead.")));
+  }
+  return true;
+}
+
+static bool checkUnusedAtompairFPSize(int *newval, void **extra,
+                                      GucSource source) {
+  (void)newval;
+  (void)extra;
+  if (shouldWarnDeprecated(source)) {
+    ereport(WARNING,
+            (errmsg("parameter \"rdkit.atompair_fp_size\" has no effect"),
+             errhint("Use \"rdkit.hashed_atompair_fp_size\" instead.")));
+  }
+  return true;
+}
+
+static void defineDeprecatedAliases(void) {
+  const int flags = GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE;
+  DefineCustomIntVariable(
+      "rdkit.torsion_fp_size",
+      "Has no effect; use rdkit.hashed_torsion_fp_size", NULL,
+      &rdkit_unused_torsion_fp_size, HASHED_TORSION_FP_SIZE, 0, INT_MAX,
+      PGC_USERSET, flags, checkUnusedTorsionFPSize, NULL, NULL);
+  DefineCustomIntVariable(
+      "rdkit.atompair_fp_size",
+      "Has no effect; use rdkit.hashed_atompair_fp_size",
+      NULL, &rdkit_unused_atompair_fp_size, HASHED_PAIR_FP_SIZE, 0, INT_MAX,
+      PGC_USERSET, flags, checkUnusedAtompairFPSize, NULL, NULL);
+}
 
 static void initRDKitGUC() {
   if (rdkit_guc_inited) {
@@ -204,6 +261,17 @@ static void initRDKitGUC() {
       "rdkit.avalon_fp_size", "Size (in bits) of avalon fingerprints",
       "Size (in bits) of avalon fingerprints", &rdkit_avalon_fp_size,
       AVALON_FP_SIZE, 64, 9192, PGC_USERSET, 0, NULL, NULL, NULL);
+
+  defineDeprecatedAliases();
+
+  // Reject unknown rdkit.* parameters (e.g. misspelled names) instead of
+  // silently accepting them as placeholders. Older servers can only warn
+  // about placeholders that already exist when the library is loaded.
+#if PG_VERSION_NUM >= 150000
+  MarkGUCPrefixReserved("rdkit");
+#else
+  EmitWarningsOnPlaceholders("rdkit");
+#endif
   rdkit_guc_inited = true;
 }
 
