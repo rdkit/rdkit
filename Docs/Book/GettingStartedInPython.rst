@@ -2938,6 +2938,10 @@ generated via the usual RDKit feature-typing mechanism:
   >>> fdefName = 'data/MinimalFeatures.fdef'
   >>> featFactory = ChemicalFeatures.BuildFeatureFactory(fdefName)
 
+The minimal donor definition requires a nitrogen or chalcogen donor and applies
+the carbonyl-adjacent exclusion to both alternatives. Carbon atoms and ether
+oxygens therefore do not generate donor features.
+
 The fingerprints themselves are calculated using a signature
 (fingerprint) factory, which keeps track of all the parameters
 required to generate the pharmacophore:
@@ -2965,7 +2969,7 @@ fingerprints, a task which is done using the
   >>> len(fp)
   885
   >>> fp.GetNumOnBits()
-  57
+  13
 
 Details about the bits themselves, including the features that are
 involved and the binned distance matrix between the features, can be
@@ -2974,7 +2978,7 @@ obtained from the signature factory:
 .. doctest::
 
   >>> list(fp.GetOnBits())[:5]
-  [1, 2, 6, 7, 8]
+  [1, 2, 7, 8, 14]
   >>> sigFactory.GetBitDescription(1)
   'Acceptor Acceptor |0 1|1 0|'
   >>> sigFactory.GetBitDescription(2)
@@ -2982,11 +2986,11 @@ obtained from the signature factory:
   >>> sigFactory.GetBitDescription(8)
   'Acceptor Donor |0 2|2 0|'
   >>> list(fp.GetOnBits())[-5:]
-  [704, 706, 707, 708, 714]
-  >>> sigFactory.GetBitDescription(707)
-  'Donor Donor PosIonizable |0 1 2|1 0 1|2 1 0|'
-  >>> sigFactory.GetBitDescription(714)
-  'Donor Donor PosIonizable |0 2 2|2 0 0|2 0 0|'
+  [108, 115, 156, 281, 324]
+  >>> sigFactory.GetBitDescription(281)
+  'Acceptor Donor Donor |0 2 1|2 0 2|1 2 0|'
+  >>> sigFactory.GetBitDescription(324)
+  'Acceptor Donor PosIonizable |0 1 2|1 0 2|2 2 0|'
 
 For the sake of convenience (to save you from having to edit the fdef
 file every time) it is possible to disable particular feature types
@@ -3000,7 +3004,7 @@ within the SigFactory:
   510
   >>> fp2 = Generate.Gen2DFingerprint(mol,sigFactory)
   >>> fp2.GetNumOnBits()
-  36
+  9
 
 Another possible set of feature definitions for 2D pharmacophore
 fingerprints in the RDKit are those published by Gobbi and
