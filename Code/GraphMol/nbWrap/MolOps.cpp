@@ -1305,6 +1305,7 @@ struct molops_wrapper {
           "includeHydrogenBonds"_a = false,
           "algorithm"_a = MolOps::SymmetrizeSSSRAlgorithm::DEFAULT,
           "recalcSSSR"_a = true, docString.c_str());
+    m.attr("MAX_SYMMETRIZED_RINGS") = MAX_SYMMETRIZED_RINGS;
 
     // ------------------------------------------------------------------------
     docString =
