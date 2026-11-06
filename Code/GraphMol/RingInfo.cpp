@@ -440,9 +440,9 @@ unsigned int RingInfo::numRelevantCycles() const {
   PRECONDITION(dp_urfData, "Ring families not initialized");
   auto nURF = RDL_getNofURF(dp_urfData.get());
   auto nRC = rdcast<unsigned int>(RDL_getNofRC(dp_urfData.get()));
-  if (nRC < nURF) {
+  if (nRC < nURF || nRC == std::numeric_limits<unsigned int>::max()) {
     throw ValueErrorException(
-        "Problems in RDL: Number of relevant cycles is less than the number of unique ring families");
+        "Problems in RDL: Number of relevant cycles is invalid");
   }
   return nRC;
 };
