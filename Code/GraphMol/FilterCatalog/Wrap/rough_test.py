@@ -257,6 +257,8 @@ class TestCase(unittest.TestCase):
     entry = FilterCatalog.FilterCatalogEntry("Bar", sm)
     fc = FilterCatalog.FilterCatalog()
     fc.AddEntry(entry)
+    fc.AddEntry(entry=entry)
+    self.assertEqual(fc.GetNumEntries(), 2)
     del entry
     del fc
 

@@ -27,26 +27,22 @@ struct chirality_wrapper {
         .value("Atom_Octahedral", Chirality::StereoType::Atom_Octahedral)
         .value("Bond_Double", Chirality::StereoType::Bond_Double)
         .value("Bond_Cumulene_Even", Chirality::StereoType::Bond_Cumulene_Even)
-        .value("Bond_Atropisomer", Chirality::StereoType::Bond_Atropisomer)
-        .export_values();
+        .value("Bond_Atropisomer", Chirality::StereoType::Bond_Atropisomer);
     nb::enum_<Chirality::StereoSpecified>(m, "StereoSpecified",
                                           nb::is_arithmetic())
         .value("Unspecified", Chirality::StereoSpecified::Unspecified)
         .value("Specified", Chirality::StereoSpecified::Specified)
-        .value("Unknown", Chirality::StereoSpecified::Unknown)
-        .export_values();
+        .value("Unknown", Chirality::StereoSpecified::Unknown);
     nb::enum_<Chirality::StereoDescriptor>(m, "StereoDescriptor")
         .value("NoValue",
                Chirality::StereoDescriptor::None)  // can't use "None" in Python
         .value("Tet_CW", Chirality::StereoDescriptor::Tet_CW)
         .value("Tet_CCW", Chirality::StereoDescriptor::Tet_CCW)
         .value("Bond_Cis", Chirality::StereoDescriptor::Bond_Cis)
-        .value("Bond_Trans", Chirality::StereoDescriptor::Bond_Trans)
-        .export_values();
+        .value("Bond_Trans", Chirality::StereoDescriptor::Bond_Trans);
     nb::class_<Chirality::StereoInfo>(
         m, "StereoInfo", R"DOC(Class describing stereochemistry)DOC")
-        .def_ro_static("NOATOM", &Atom::NOATOM,
-                       R"DOC(marker for unspecified int values)DOC")
+        .def(nb::init<>())
         .def_rw("type", &Chirality::StereoInfo::type,
                 R"DOC(the type of stereo)DOC")
         .def_rw("specified", &Chirality::StereoInfo::specified,

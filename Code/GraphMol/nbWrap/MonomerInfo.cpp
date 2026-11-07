@@ -48,8 +48,7 @@ struct monomerinfo_wrapper {
     nb::enum_<AtomMonomerInfo::AtomMonomerType>(m, "AtomMonomerType")
         .value("UNKNOWN", AtomMonomerInfo::UNKNOWN)
         .value("PDBRESIDUE", AtomMonomerInfo::PDBRESIDUE)
-        .value("OTHER", AtomMonomerInfo::OTHER)
-        .export_values();
+        .value("OTHER", AtomMonomerInfo::OTHER);
 
     classDoc =
         R"DOC(The class to store PDB residue information attached to Atoms

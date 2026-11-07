@@ -2607,6 +2607,7 @@ ARGUMENTS:\n\
     nb::class_<Chirality::BondWedgingParameters>(
         m, "BondWedgingParameters",
         "Parameters controlling how bond wedging is done.")
+        .def(nb::init<>())
         .def_rw("wedgeTwoBondsIfPossible",
                 &Chirality::BondWedgingParameters::wedgeTwoBondsIfPossible,
                 R"DOC(If this is enabled then two bonds will be wedged at chiral

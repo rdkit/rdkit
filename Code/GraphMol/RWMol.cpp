@@ -269,8 +269,10 @@ void RWMol::replaceAtom(unsigned int idx, Atom *atom_pin, bool,
       ++aiter;
       aiter = std::find(aiter, atoms.end(), orig_p);
     }
+    const auto writeId = group.getWriteId();
     group = StereoGroup(group.getGroupType(), std::move(atoms),
                         std::move(bonds), groupId);
+    group.setWriteId(writeId);
   }
 };
 
@@ -321,6 +323,19 @@ void RWMol::replaceBond(unsigned int idx, Bond *bond_pin, bool preserveProps,
         elem = bond_p;
       }
     }
+  }
+
+  // handle stereo groups
+  for (auto &group : d_stereo_groups) {
+    auto bonds = group.getBonds();
+    if (std::find(bonds.begin(), bonds.end(), orig_p) == bonds.end()) {
+      continue;
+    }
+    std::replace(bonds.begin(), bonds.end(), orig_p, bond_p);
+    const auto writeId = group.getWriteId();
+    group = StereoGroup(group.getGroupType(), group.getAtoms(), bonds,
+                        group.getReadId());
+    group.setWriteId(writeId);
   }
 };
 
