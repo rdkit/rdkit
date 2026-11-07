@@ -1322,6 +1322,14 @@ class TestCase(unittest.TestCase):
         Chem.MolToSmiles(Chem.MolFromSmarts(tuple(mcs2.degenerateSmartsQueryMolDict.keys())[0])),
         para)
 
+  def testMoleculesFromSupplier(self):
+    smiles = 'c1ccccc1CCO\nc1ccccc1CCN\nc1ccccc1CCC\n'
+    expected = rdFMCS.FindMCS([Chem.MolFromSmiles(smi) for smi in smiles.split()]).smartsString
+    # The supplier builds a new molecule each time it is indexed.
+    suppl = Chem.SmilesMolSupplierFromText(smiles, nameColumn=-1, titleLine=False)
+    self.assertEqual(rdFMCS.FindMCS(suppl).smartsString, expected)
+    self.assertEqual(rdFMCS.FindMCS(suppl, rdFMCS.MCSParameters()).smartsString, expected)
+
 
 if __name__ == "__main__":
   unittest.main()

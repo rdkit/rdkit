@@ -91,7 +91,7 @@ RDKIT_FREESASALIB_EXPORT bool classifyAtoms(
 
   \param mol:    Molecule to analyze
   \param radii   vector of radii where radii[idx] is the radius for atom with
-  index idx
+  index idx, with exactly one entry per atom
                  These can be passed in or calculated with classifyAtoms for
   some proteins.
   \param confIdx specify the conformation [default -1]

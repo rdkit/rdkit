@@ -206,10 +206,14 @@ ExplicitBitVect *getFingerprint(const FingerprintGenerator<OutputType> *fpGen,
 template <typename ReturnType, typename FuncType>
 python::tuple mtgetFingerprints(FuncType func, python::object mols,
                                 int numThreads) {
-  unsigned int nmols = python::len(mols);
+  // A list accepts any iterable and keeps each molecule alive while the
+  // fingerprints are computed; a supplier builds a new molecule each time it
+  // is indexed.
+  python::list items(mols);
+  unsigned int nmols = python::len(items);
   std::vector<const ROMol *> tmols;
   for (auto i = 0u; i < nmols; ++i) {
-    tmols.push_back(python::extract<const ROMol *>(mols[i])());
+    tmols.push_back(python::extract<const ROMol *>(items[i])());
   }
 
   typename decltype(std::function{
@@ -329,71 +333,57 @@ FingerprintArguments *getOptions(FingerprintGenerator<OutputType> *fpGen) {
   return fpGen->getOptions();
 }
 
-const std::vector<const ROMol *> convertPyArgumentsForBulk(
-    const python::list &py_molVect) {
-  std::vector<const ROMol *> molVect;
-  if (!py_molVect.is_none()) {
-    unsigned int len = python::len(py_molVect);
-    if (len) {
-      for (unsigned int i = 0; i < len; ++i) {
-        molVect.push_back(python::extract<const ROMol *>(py_molVect[i]));
-      }
-    }
-  }
-  return molVect;
-}
-
-python::list getSparseCountFPBulkPy(python::list &py_molVect, FPType fPType) {
-  const auto molVect = convertPyArgumentsForBulk(py_molVect);
-  auto tempResult = getSparseCountFPBulk(molVect, fPType);
+//! Fingerprints each molecule of \c py_molVect as it is read, holding one
+//! molecule at a time. None gives an empty list.
+template <typename ResultType, typename Compute>
+python::list fingerprintEach(const python::object &py_molVect,
+                             Compute compute) {
   python::list result;
-
-  for (auto &it : *tempResult) {
-    result.append(boost::shared_ptr<SparseIntVect<std::uint64_t>>(it));
+  if (py_molVect.is_none()) {
+    return result;
   }
-  delete tempResult;
+  for (python::stl_input_iterator<python::object>
+           it(pythonIterator(py_molVect)),
+       end;
+       it != end; ++it) {
+    // A generator or supplier may hold no other reference to the molecule.
+    python::object item = *it;
+    const ROMol *mol = &python::extract<const ROMol &>(item)();
+    result.append(boost::shared_ptr<ResultType>(compute(*mol)));
+  }
   return result;
 }
 
-python::list getSparseFPBulkPy(python::list &py_molVect, FPType fpType) {
-  const std::vector<const ROMol *> molVect =
-      convertPyArgumentsForBulk(py_molVect);
-  auto tempResult = getSparseFPBulk(molVect, fpType);
-  python::list result;
-
-  for (auto &it : *tempResult) {
-    // todo every other bulk method casts results to boost::shared_ptr, except
-    // this one. It should also be boost::shared_ptr
-    result.append(boost::shared_ptr<SparseBitVect>(it));
-  }
-  delete tempResult;
-  return result;
+python::list getSparseCountFPBulkPy(python::object py_molVect, FPType fPType) {
+  auto generator = makeFPGenerator(fPType);
+  return fingerprintEach<SparseIntVect<std::uint64_t>>(
+      py_molVect, [&generator](const ROMol &mol) {
+        return generator->getSparseCountFingerprint(mol);
+      });
 }
 
-python::list getCountFPBulkPy(python::list &py_molVect, FPType fPType) {
-  const std::vector<const ROMol *> molVect =
-      convertPyArgumentsForBulk(py_molVect);
-  auto tempResult = getCountFPBulk(molVect, fPType);
-  python::list result;
-
-  for (auto &it : *tempResult) {
-    result.append(boost::shared_ptr<SparseIntVect<std::uint32_t>>(it));
-  }
-  delete tempResult;
-  return result;
+python::list getSparseFPBulkPy(python::object py_molVect, FPType fpType) {
+  auto generator = makeFPGenerator(fpType);
+  return fingerprintEach<SparseBitVect>(
+      py_molVect, [&generator](const ROMol &mol) {
+        return generator->getSparseFingerprint(mol);
+      });
 }
 
-python::list getFPBulkPy(python::list &py_molVect, FPType fPType) {
-  const std::vector<const ROMol *> molVect =
-      convertPyArgumentsForBulk(py_molVect);
-  auto tempResult = getFPBulk(molVect, fPType);
-  python::list result;
+python::list getCountFPBulkPy(python::object py_molVect, FPType fPType) {
+  auto generator = makeFPGenerator(fPType);
+  return fingerprintEach<SparseIntVect<std::uint32_t>>(
+      py_molVect, [&generator](const ROMol &mol) {
+        return generator->getCountFingerprint(mol);
+      });
+}
 
-  for (auto &it : *tempResult) {
-    result.append(boost::shared_ptr<ExplicitBitVect>(it));
-  }
-  delete tempResult;
-  return result;
+python::list getFPBulkPy(python::object py_molVect, FPType fPType) {
+  auto generator = makeFPGenerator(fPType);
+  return fingerprintEach<ExplicitBitVect>(
+      py_molVect, [&generator](const ROMol &mol) {
+        return generator->getFingerprint(mol);
+      });
 }
 
 python::object getAtomCountsHelper(const AdditionalOutput &ao) {
