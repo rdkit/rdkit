@@ -66,6 +66,8 @@ ENV LANG C
 
 WORKDIR /opt
 RUN git clone https://github.com/emscripten-core/emsdk.git
+WORKDIR /opt/emsdk
+RUN git checkout 6.0.13
 
 WORKDIR /src
 ARG BOOST_DOT_VERSION="${BOOST_MAJOR_VERSION}.${BOOST_MINOR_VERSION}.${BOOST_PATCH_VERSION}"
