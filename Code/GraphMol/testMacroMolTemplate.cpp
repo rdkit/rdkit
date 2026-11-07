@@ -140,6 +140,63 @@ TEST_CASE("MacroMolTemplate mirrors typed main and leaving groups") {
   CHECK(sgroups[2].getAtoms() == leavingGroups[1].atomIdxs);
 }
 
+TEST_CASE("MacroMolTemplate supports attachment points without leaving atoms") {
+  // e.g. hydrogen-bonding sites, which have no leaving atom (leavingAtomIdx -1)
+  SmilesParserParams params;
+  params.removeHs = false;
+  std::unique_ptr<RWMol> mol(SmilesToMol("[H]OC(=O)CN", params));
+  REQUIRE(mol);
+
+  SECTION("valid definitions") {
+    MacroMolTemplateBuilder builder(*mol, MonomerClass::Other, "X", "X",
+                                    "[H]OC(=O)CN");
+    builder.setMainGroup({1, 2, 3, 4, 5})
+        .addLeavingGroup({{0}, 1, 0, 1})
+        .addLeavingGroup({{}, 5, -1, 2})
+        .addLeavingGroup({{}, 3, -1, 3});
+    const auto templ = builder.build();
+
+    const auto &leavingGroups = templ->getLeavingGroups();
+    REQUIRE(leavingGroups.size() == 3);
+    CHECK(leavingGroups[1].atomIdxs.empty());
+    CHECK(leavingGroups[1].attachAtomIdx == 5);
+    CHECK(leavingGroups[1].leavingAtomIdx == -1);
+
+    const auto &attachPoints = templ->getMainSgroup().getAttachPoints();
+    REQUIRE(attachPoints.size() == 3);
+    CHECK(attachPoints[0] == SubstanceGroup::AttachPoint{1, 0, "1"});
+    CHECK(attachPoints[1] == SubstanceGroup::AttachPoint{5, -1, "2"});
+    CHECK(attachPoints[2] == SubstanceGroup::AttachPoint{3, -1, "3"});
+
+    // only the attachment point with a leaving atom gets an LGRP SGroup
+    const auto &sgroups = getSubstanceGroups(templ->getMol());
+    REQUIRE(sgroups.size() == 2);
+    CHECK(sgroups[1].getProp<std::string>("CLASS") == "LGRP");
+    CHECK(sgroups[1].getAtoms() == std::vector<unsigned int>{0});
+  }
+  SECTION("invalid definitions") {
+    const auto buildWith = [&](MacroMolLeavingGroup &&leavingGroup) {
+      MacroMolTemplateBuilder builder(*mol, MonomerClass::Other, "X", "X",
+                                      "[H]OC(=O)CN");
+      builder.setMainGroup({1, 2, 3, 4, 5})
+          .addLeavingGroup({{0}, 1, 0, 1})
+          .addLeavingGroup(std::move(leavingGroup));
+      return builder.build();
+    };
+    // negative indices other than -1
+    CHECK_THROWS_AS(buildWith({{}, 5, -2, 2}), ValueErrorException);
+    // leaving group atoms without a leaving atom
+    auto withAtoms = std::unique_ptr<RWMol>(SmilesToMol("CCC"));
+    MacroMolTemplateBuilder builder(*withAtoms, MonomerClass::Other, "X", "X",
+                                    "CCC");
+    builder.setMainGroup({1}).addLeavingGroup({{0}, 1, -1, 1}).addLeavingGroup(
+        {{2}, 1, 2, 2});
+    CHECK_THROWS_AS(builder.build(), ValueErrorException);
+    // the attachment atom must still be in the main group
+    CHECK_THROWS_AS(buildWith({{}, 0, -1, 2}), ValueErrorException);
+  }
+}
+
 TEST_CASE("MacroMolTemplateBuilder validates completed definitions") {
   SECTION("main group can only be set once") {
     auto mol = std::unique_ptr<RWMol>(SmilesToMol("C"));
