@@ -779,6 +779,51 @@ ROMol *replaceCore(const ROMol &mol, const ROMol &core,
   return static_cast<ROMol *>(newMol);
 }
 
+namespace {
+// bonds that ring perception ignores by default
+bool isIgnoredByRingFinding(const Bond &bond) {
+  auto bt = bond.getBondType();
+  return bt == Bond::ZERO || bt == Bond::HYDROGEN || isDative(bt);
+}
+
+// Ring atoms plus the atoms on the shortest paths between rings. Used when
+// a cycle may contain bonds that ring perception ignores, so leaf pruning
+// would keep cycles that are not rings.
+void ringsAndShortestPaths(const ROMol &mol,
+                           boost::dynamic_bitset<> &keepAtoms) {
+  const unsigned int nAtoms = mol.getNumAtoms();
+  const RingInfo *ringInfo = mol.getRingInfo();
+  if (!ringInfo->isInitialized()) {
+    MolOps::findSSSR(mol);
+  }
+  MolOps::getDistanceMat(mol, false, false, true);
+  boost::shared_array<int> pathMat;
+  mol.getProp(common_properties::DistanceMatrix_Paths, pathMat);
+
+  keepAtoms.reset();
+  for (unsigned int i = 0; i < nAtoms; ++i) {
+    if (ringInfo->numAtomRings(i)) {
+      keepAtoms.set(i);
+    }
+  }
+  const auto &rings = ringInfo->atomRings();
+  for (size_t ringIdxI = 0; ringIdxI < rings.size(); ++ringIdxI) {
+    for (size_t ringIdxJ = ringIdxI + 1; ringIdxJ < rings.size(); ++ringIdxJ) {
+      int atomI = rings[ringIdxI][0];
+      int atomJ = rings[ringIdxJ][0];
+      while (atomI != atomJ) {
+        keepAtoms.set(atomI);
+        atomI = pathMat[atomJ * nAtoms + atomI];
+        // disconnected
+        if (atomI < 0) {
+          break;
+        }
+      }
+    }
+  }
+}
+}  // namespace
+
 ROMol *MurckoDecompose(const ROMol &mol) {
   auto *res = new RWMol(mol);
   unsigned int nAtoms = res->getNumAtoms();
@@ -786,37 +831,43 @@ ROMol *MurckoDecompose(const ROMol &mol) {
     return res;
   }
 
-  // start by getting the shortest paths matrix:
-  MolOps::getDistanceMat(mol, false, false, true);
-  boost::shared_array<int> pathMat;
-  mol.getProp(common_properties::DistanceMatrix_Paths, pathMat);
-
   boost::dynamic_bitset<> keepAtoms(nAtoms);
-  const RingInfo *ringInfo = res->getRingInfo();
-  for (unsigned int i = 0; i < nAtoms; ++i) {
-    if (ringInfo->numAtomRings(i)) {
-      keepAtoms[i] = 1;
+  // Iterate over atoms to determine their degree and identify leaves
+  keepAtoms.set();
+  std::vector<unsigned int> degree(nAtoms);
+  std::vector<unsigned int> leaves;
+  for (const auto atom : mol.atoms()) {
+    degree[atom->getIdx()] = atom->getDegree();
+    if (atom->getDegree() <= 1) {
+      leaves.push_back(atom->getIdx());
     }
   }
-  const auto rings = ringInfo->atomRings();
-  // std::cerr<<"  rings: "<<rings.size()<<std::endl;
-  // now find the shortest paths between each ring system and mark the atoms
-  // along each as being keepers:
-  for (size_t ringIdxI = 0; ringIdxI < rings.size(); ++ringIdxI) {
-    for (size_t ringIdxJ = ringIdxI + 1; ringIdxJ < rings.size(); ++ringIdxJ) {
-      int atomI = rings[ringIdxI][0];
-      int atomJ = rings[ringIdxJ][0];
-      // std::cerr<<atomI<<" -> "<<atomJ<<": ";
-      while (atomI != atomJ) {
-        keepAtoms[atomI] = 1;
-        atomI = pathMat[atomJ * nAtoms + atomI];
-        // test for the disconnected case:
-        if (atomI < 0) {
-          break;
-        }
-        // std::cerr<<atomI<<" ";
+  // While there still are leaves, remove them from keepAtoms and update the
+  // degrees of their neighbors until no more leaves remain. Removing leaves
+  // iteratively results in the scaffold formed by rings and the linkers between
+  // rings
+  while (!leaves.empty()) {
+    auto idx = leaves.back();
+    leaves.pop_back();
+    if (!keepAtoms[idx]) {
+      continue;
+    }
+    keepAtoms.reset(idx);
+    for (const auto nbr : mol.atomNeighbors(mol.getAtomWithIdx(idx))) {
+      auto nbrIdx = nbr->getIdx();
+      if (keepAtoms[nbrIdx] && --degree[nbrIdx] <= 1) {
+        leaves.push_back(nbrIdx);
       }
-      // std::cerr<<std::endl;
+    }
+  }
+  // What remains are ring atoms and linkers, provided that every cycle is a
+  // ring. A cycle closed by a bond that ring perception ignores (e.g. a
+  // chelating dative bond) is not, so fall back to rings plus shortest paths.
+  for (const auto bond : mol.bonds()) {
+    if (keepAtoms[bond->getBeginAtomIdx()] &&
+        keepAtoms[bond->getEndAtomIdx()] && isIgnoredByRingFinding(*bond)) {
+      ringsAndShortestPaths(mol, keepAtoms);
+      break;
     }
   }
 

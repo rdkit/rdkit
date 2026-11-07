@@ -10,6 +10,7 @@
 #include <catch2/catch_all.hpp>
 
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/SubstanceGroup.h>
 #include <GraphMol/test_fixtures.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -869,4 +870,339 @@ TEST_CASE("github #9468") {
       CHECK(atom->getNoImplicit() == true);
     }
   }
+}
+
+TEST_CASE("MurckoDecompose", "[MurckoDecompose]") {
+  const std::vector<std::pair<std::string, std::string>> data = {
+      {"C1CC1CCC1CC(C)C1", "C1CC1CCC1CCC1"},
+      {"CC1CCC1", "C1CCC1"},
+      {"NCNCC2CC2C1CC1O", "C1CC1C1CC1"},
+      {"OC2C(C)C21C(N)C1C", "C2CC12CC1"},  // Spiro
+      {"C1CC1C(=O)OC", "C1CC1"},           // Carbonyl outside scaffold
+      {"C1CC1C=C", "C1CC1"},               // Double bond outside scaffold
+      {"C1CC1C=CC1CC1C=CNNCO", "C1CC1C=CC1CC1"},  // Double bond in scaffold
+      {"CC1CC1C(N)C1C(N)C1", "C1CC1CC1CC1"},
+      {"C1CC1S(=O)C1CC1C=CNNCO", "C1CC1S(=O)C1CC1"},  // S=O group in scaffold
+      {"O=SCNC1CC1S(=O)C1CC1C=CNNCO",
+       "C1CC1S(=O)C1CC1"},  // S=O group outside scaffold
+      {"C1CC1S(=O)(=O)C1CC1C=CNNCO",
+       "C1CC1S(=O)(=O)C1CC1"},  // SO2 group in scaffold
+      {"O=S(CNCNC)(=O)CNC1CC1S(=O)(=O)C1CC1C=CNNCO",
+       "C1CC1S(=O)(=O)C1CC1"},                    // SO2 group outside scaffold
+      {"C1CC1C=NO", "C1CC1"},                     // Hydroxamide
+      {"C1CC1C(C(C)C)=NC1CC1", "C1CC1C=NC1CC1"},  // Hydroxamide
+      {"C1CC1C#N", "C1CC1"},                      // Cyano group
+      {"C1CC1C#CNC", "C1CC1"},                    // Acetylene group
+      {"O=C1N(C)C(=O)N1C#CNC", "O=C1NC(=O)N1"},   // Acetylene group
+      {"[O-][N+](=O)c1cc(ccc1Cl)NS(=O)(=O)Cc2ccccc2",
+       "c1ccccc1NS(=O)(=O)Cc2ccccc2"},
+      {"Cn1cccc1", "c1ccc[nH]1"},
+      {"C1CC1[CH](C)C1CC1", "C1CC1CC1CC1"},
+      {"CC(C)c1c(Cl)cc(F)c(Nc2ccc(C)cc2CC(=O)O)c1F", "c1ccc(Nc2ccccc2)cc1"},
+      {"C1CC1C[C@](Cl)(F)C1CCC1", "C1CC1CCC1CCC1"},
+      {"C1CC1.C1CC1", "C1CC1.C1CC1"},  // this was a crash at one point
+      {"CCC", ""},
+  };
+  for (const auto &[smi, tgt] : data) {
+    INFO(smi);
+    std::unique_ptr<ROMol> mol(SmilesToMol(smi));
+    REQUIRE(mol);
+    std::unique_ptr<ROMol> nMol(MurckoDecompose(*mol));
+    REQUIRE(nMol);
+    if (tgt.empty()) {
+      CHECK(nMol->getNumAtoms() == 0);
+    } else {
+      REQUIRE(nMol->getNumAtoms());
+      MolOps::sanitizeMol(static_cast<RWMol &>(*nMol));
+      std::unique_ptr<ROMol> tgtMol(SmilesToMol(tgt));
+      REQUIRE(tgtMol);
+      CHECK(MolToSmiles(*nMol) == MolToSmiles(*tgtMol));
+    }
+  }
+}
+
+TEST_CASE("Issue 3537675: MurckoDecompose with substituted non-carbon "
+          "aromatic atoms",
+          "[MurckoDecompose]") {
+  for (const auto smi : {"c1cccp1C", "c1cccn1C"}) {
+    INFO(smi);
+    std::unique_ptr<ROMol> mol(SmilesToMol(smi));
+    REQUIRE(mol);
+    std::unique_ptr<ROMol> nMol(MurckoDecompose(*mol));
+    REQUIRE(nMol);
+    CHECK(nMol->getAtomWithIdx(4)->getNumExplicitHs());
+  }
+}
+
+TEST_CASE("sf.net issue 275: MurckoDecompose with chiral atoms",
+          "[MurckoDecompose]") {
+  auto mol = "CCCCC[C@H]1CC[C@H](C(=O)O)CC1"_smiles;
+  REQUIRE(mol);
+  std::unique_ptr<ROMol> nMol(MurckoDecompose(*mol));
+  REQUIRE(nMol);
+  CHECK(MolToSmiles(*nMol, true) == "C1CCCCC1");
+  CHECK(MolToSmiles(*nMol, false) == "C1CCCCC1");
+}
+
+TEST_CASE("MurckoDecompose keeps atom order and handles edge cases",
+          "[MurckoDecompose]") {
+  // atom map numbers record the input index of each atom, so the expected
+  // non-canonical SMILES checks the atoms, their order, and their H counts
+  const std::vector<std::pair<std::string, std::string>> data = {
+      {"CCCCC", ""},
+      {"[Na+].[Cl-]", ""},
+      {"O=C1CCCC1", "[O:1]=[C:2]1[CH2:3][CH2:4][CH2:5][CH2:6]1"},
+      {"CC(=O)C1CC1", "[CH2:4]1[CH2:5][CH2:6]1"},
+      {"C1CC1CC(=O)CC1CC1",
+       "[CH2:1]1[CH2:2][CH:3]1[CH2:4][C:5](=[O:6])[CH2:7][CH:8]1[CH2:9][CH2:"
+       "10]1"},
+      {"C1CCC2(CC1)CCCC2",
+       "[CH2:1]1[CH2:2][CH2:3][C:4]2([CH2:5][CH2:6]1)[CH2:7][CH2:8][CH2:9]["
+       "CH2:10]2"},
+      {"C1CC11CC1", "[CH2:1]1[CH2:2][C:3]12[CH2:4][CH2:5]2"},
+      {"c1cc[nH]c1CC", "[cH:1]1[cH:2][cH:3][nH:4][cH:5]1"},
+      {"c1cc[n+](C)cc1", "[cH:1]1[cH:2][cH:3][nH+:4][cH:6][cH:7]1"},
+      {"CC[C@H](N)c1ccccc1", "[cH:5]1[cH:6][cH:7][cH:8][cH:9][cH:10]1"},
+      {"c1ccccc1C.CCCC.C1CC1CC",
+       "[cH:1]1[cH:2][cH:3][cH:4][cH:5][cH:6]1.[CH2:12]1[CH2:13][CH2:14]1"},
+  };
+  SmilesWriteParams ps;
+  ps.canonical = false;
+  ps.allHsExplicit = true;
+  for (const auto &[smi, expected] : data) {
+    for (bool explicitHs : {false, true}) {
+      INFO(smi << " explicitHs: " << explicitHs);
+      std::unique_ptr<RWMol> mol(SmilesToMol(smi));
+      REQUIRE(mol);
+      for (auto atom : mol->atoms()) {
+        atom->setAtomMapNum(atom->getIdx() + 1);
+      }
+      if (explicitHs) {
+        MolOps::addHs(*mol);
+      }
+      std::unique_ptr<ROMol> res(MurckoDecompose(*mol));
+      REQUIRE(res);
+      CHECK(MolToSmiles(*res, ps) == expected);
+    }
+  }
+}
+
+TEST_CASE("MurckoDecompose on a large molecule", "[MurckoDecompose]") {
+  // this used to scale as O(N^3) in the number of atoms
+  const unsigned int nUnits = 200;
+  std::string smi = "c1ccccc1";
+  for (unsigned int i = 0; i < nUnits; ++i) {
+    smi += "CC(CCO)Cc1ccc(cc1)";
+  }
+  smi += "C";
+  std::unique_ptr<ROMol> mol(SmilesToMol(smi));
+  REQUIRE(mol);
+  std::unique_ptr<ROMol> res(MurckoDecompose(*mol));
+  REQUIRE(res);
+  // each unit keeps its three-atom linker and its ring, the CCO side chain
+  // and the terminal methyl go
+  CHECK(res->getNumAtoms() == 6 + 9 * nUnits);
+  CHECK(res->getNumBonds() == 6 + 10 * nUnits);
+  CHECK(!mol->hasProp(common_properties::DistanceMatrix_Paths));
+}
+
+TEST_CASE("MurckoDecompose keeps molecule data", "[MurckoDecompose]") {
+  auto mol = "CCc1ccccc1"_smiles;
+  REQUIRE(mol);
+  SECTION("properties") {
+    mol->setProp(common_properties::_Name, "mymol");
+    mol->setProp("assay", 42);
+    mol->setProp("computed", 1, true);
+    std::unique_ptr<ROMol> res(MurckoDecompose(*mol));
+    REQUIRE(res);
+    CHECK(res->getProp<std::string>(common_properties::_Name) == "mymol");
+    CHECK(res->getProp<int>("assay") == 42);
+    CHECK(!res->hasProp("computed"));
+  }
+  SECTION("bookmarks") {
+    // atom 0 and bond 0 are removed, atom 2 and bond 6 (now 0 and 4) are kept
+    mol->setAtomBookmark(mol->getAtomWithIdx(0), 1);
+    mol->setAtomBookmark(mol->getAtomWithIdx(2), 1);
+    mol->setAtomBookmark(mol->getAtomWithIdx(0), 2);
+    mol->setBondBookmark(mol->getBondWithIdx(0), 3);
+    mol->setBondBookmark(mol->getBondWithIdx(6), 3);
+    std::unique_ptr<ROMol> res(MurckoDecompose(*mol));
+    REQUIRE(res);
+    REQUIRE(res->hasAtomBookmark(1));
+    auto atoms = res->getAllAtomsWithBookmark(1);
+    REQUIRE(atoms.size() == 1);
+    CHECK(atoms.front()->getIdx() == 0);
+    CHECK(!res->hasAtomBookmark(2));
+    REQUIRE(res->hasBondBookmark(3));
+    auto bonds = res->getAllBondsWithBookmark(3);
+    REQUIRE(bonds.size() == 1);
+    CHECK(bonds.front()->getIdx() == 4);
+  }
+  SECTION("multi-center bond end points") {
+    // 1-based atom indices; atom 1 is removed, atoms 3 and 4 become 1 and 2
+    mol->getBondWithIdx(2)->setProp(common_properties::_MolFileBondEndPts,
+                                    std::string("(3 1 3 4)"));
+    mol->getBondWithIdx(3)->setProp(common_properties::_MolFileBondEndPts,
+                                    std::string("(1 1)"));
+    mol->getBondWithIdx(3)->setProp(common_properties::_MolFileBondAttach,
+                                    std::string("ANY"));
+    std::unique_ptr<ROMol> res(MurckoDecompose(*mol));
+    REQUIRE(res);
+    CHECK(res->getBondWithIdx(0)->getProp<std::string>(
+              common_properties::_MolFileBondEndPts) == "(2 1 2)");
+    CHECK(!res->getBondWithIdx(1)->hasProp(
+        common_properties::_MolFileBondEndPts));
+    CHECK(!res->getBondWithIdx(1)->hasProp(
+        common_properties::_MolFileBondAttach));
+  }
+}
+
+TEST_CASE("MurckoDecompose keeps E/Z labels", "[MurckoDecompose]") {
+  auto mol = "c1ccccc1/C=C/c1ccccc1"_smiles;
+  REQUIRE(mol);
+  auto bond = mol->getBondBetweenAtoms(6, 7);
+  REQUIRE(bond);
+  REQUIRE(bond->getStereo() == Bond::STEREOE);
+  std::unique_ptr<ROMol> res(MurckoDecompose(*mol));
+  REQUIRE(res);
+  auto resBond = res->getBondBetweenAtoms(6, 7);
+  REQUIRE(resBond);
+  CHECK(resBond->getStereo() == Bond::STEREOE);
+  CHECK(resBond->getStereoAtoms() == bond->getStereoAtoms());
+}
+
+TEST_CASE("MurckoDecompose with bonds ignored by ring perception",
+          "[MurckoDecompose]") {
+  // close a cycle with a dative bond; ring perception does not see it
+  auto closeChelate = [](RWMol &mol, unsigned int donor, unsigned int metal) {
+    mol.addBond(donor, metal, Bond::DATIVE);
+    mol.getRingInfo()->reset();
+    MolOps::findSSSR(mol);
+  };
+  SECTION("chelate without rings") {
+    auto mol = "NCCN->[Cu]"_smiles;
+    REQUIRE(mol);
+    closeChelate(*mol, 0, 4);
+    REQUIRE(mol->getRingInfo()->numRings() == 0);
+    std::unique_ptr<ROMol> res(MurckoDecompose(*mol));
+    REQUIRE(res);
+    CHECK(res->getNumAtoms() == 0);
+  }
+  SECTION("chelate with a ring") {
+    auto mol = "NC(c1ccccc1)CN->[Cu]"_smiles;
+    REQUIRE(mol);
+    closeChelate(*mol, 0, 10);
+    REQUIRE(mol->getRingInfo()->numRings() == 1);
+    std::unique_ptr<ROMol> res(MurckoDecompose(*mol));
+    REQUIRE(res);
+    CHECK(MolToSmiles(*res) == "c1ccccc1");
+  }
+  SECTION("zero-order bond") {
+    auto mol = "NCCN[Cu]"_smiles;
+    REQUIRE(mol);
+    mol->addBond(0u, 4u, Bond::ZERO);
+    mol->getRingInfo()->reset();
+    MolOps::findSSSR(*mol);
+    std::unique_ptr<ROMol> res(MurckoDecompose(*mol));
+    REQUIRE(res);
+    CHECK(res->getNumAtoms() == 0);
+  }
+  SECTION("metal linking two rings") {
+    auto mol = "c1ccccc1N->[Cu]<-Nc1ccccc1"_smiles;
+    REQUIRE(mol);
+    std::unique_ptr<ROMol> res(MurckoDecompose(*mol));
+    REQUIRE(res);
+    CHECK(res->getNumAtoms() == mol->getNumAtoms());
+  }
+}
+
+TEST_CASE("MurckoDecompose updates substance groups", "[MurckoDecompose]") {
+  // atoms 0 and 1 (and bonds 0 and 1) are removed, all others shift by 2
+  auto mol = "CCc1ccccc1-c1ccccc1"_smiles;
+  REQUIRE(mol);
+  const auto xBond = mol->getBondBetweenAtoms(7, 8)->getIdx();
+  const auto chainBond = mol->getBondBetweenAtoms(1, 2)->getIdx();
+  REQUIRE(chainBond == 1);
+  auto addGroup = [&mol](unsigned int index) {
+    SubstanceGroup sg(mol.get(), "SUP");
+    for (unsigned int i = 2; i < 8; ++i) {
+      sg.addAtomWithIdx(i);
+    }
+    sg.setProp("index", index);
+    return sg;
+  };
+  // kept: crossing bond, crossing bond state and attachment point survive
+  auto kept = addGroup(1);
+  kept.addBondWithIdx(xBond);
+  kept.addCState(xBond, RDGeom::Point3D(1, 0, 0));
+  kept.addAttachPoint(7, 8, "1");
+  addSubstanceGroup(*mol, kept);
+  // dropped: the leaving atom of the attachment point is removed
+  auto removedLeaving = addGroup(2);
+  removedLeaving.addAttachPoint(2, 1, "1");
+  addSubstanceGroup(*mol, removedLeaving);
+  // dropped: its parent is dropped
+  SubstanceGroup child(mol.get(), "DAT");
+  child.addAtomWithIdx(3);
+  child.setProp("index", 3u);
+  child.setProp("PARENT", 2u);
+  addSubstanceGroup(*mol, child);
+  // dropped: the crossing bond is removed
+  auto removedBond = addGroup(4);
+  removedBond.addBondWithIdx(chainBond);
+  removedBond.addCState(chainBond, RDGeom::Point3D(1, 0, 0));
+  addSubstanceGroup(*mol, removedBond);
+
+  std::unique_ptr<ROMol> res(MurckoDecompose(*mol));
+  REQUIRE(res);
+  REQUIRE(res->getNumAtoms() == 12);
+  const auto &groups = getSubstanceGroups(*res);
+  REQUIRE(groups.size() == 1);
+  const auto &sg = groups.front();
+  CHECK(sg.getProp<unsigned int>("index") == 1);
+  CHECK(sg.getAtoms() == std::vector<unsigned int>{0, 1, 2, 3, 4, 5});
+  CHECK(sg.getBonds() == std::vector<unsigned int>{xBond - 2});
+  REQUIRE(sg.getCStates().size() == 1);
+  CHECK(sg.getCStates().front().bondIdx == xBond - 2);
+  REQUIRE(sg.getAttachPoints().size() == 1);
+  CHECK(sg.getAttachPoints().front().aIdx == 5);
+  CHECK(sg.getAttachPoints().front().lvIdx == 6);
+}
+
+TEST_CASE("MurckoDecompose keeps partially removed stereo groups",
+          "[MurckoDecompose]") {
+  // atoms 0 and 1 (and bonds 0 and 1) are removed, all others shift by 2
+  auto mol = "CC[C@H]1CCCCO1"_smiles;
+  REQUIRE(mol);
+  auto ringBond = mol->getBondBetweenAtoms(2, 3);
+  std::vector<StereoGroup> groups;
+  // kept ring atom, removed side-chain bond
+  groups.emplace_back(StereoGroupType::STEREO_OR,
+                      std::vector<Atom *>{mol->getAtomWithIdx(2)},
+                      std::vector<Bond *>{mol->getBondWithIdx(0)}, 1);
+  // removed side-chain atom, kept ring bond
+  groups.emplace_back(StereoGroupType::STEREO_AND,
+                      std::vector<Atom *>{mol->getAtomWithIdx(1)},
+                      std::vector<Bond *>{ringBond}, 2);
+  // removed atom and bond
+  groups.emplace_back(StereoGroupType::STEREO_OR,
+                      std::vector<Atom *>{mol->getAtomWithIdx(0)},
+                      std::vector<Bond *>{mol->getBondWithIdx(0)}, 3);
+  mol->setStereoGroups(std::move(groups));
+
+  std::unique_ptr<ROMol> res(MurckoDecompose(*mol));
+  REQUIRE(res);
+  const auto &resGroups = res->getStereoGroups();
+  REQUIRE(resGroups.size() == 2);
+  CHECK(resGroups[0].getGroupType() == StereoGroupType::STEREO_OR);
+  CHECK(resGroups[0].getReadId() == 1);
+  REQUIRE(resGroups[0].getAtoms().size() == 1);
+  CHECK(resGroups[0].getAtoms().front()->getIdx() == 0);
+  CHECK(resGroups[0].getBonds().empty());
+  CHECK(resGroups[1].getGroupType() == StereoGroupType::STEREO_AND);
+  CHECK(resGroups[1].getReadId() == 2);
+  CHECK(resGroups[1].getAtoms().empty());
+  REQUIRE(resGroups[1].getBonds().size() == 1);
+  CHECK(resGroups[1].getBonds().front()->getIdx() ==
+        res->getBondBetweenAtoms(0, 1)->getIdx());
 }
