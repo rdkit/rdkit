@@ -3346,3 +3346,36 @@ TEST_CASE("Inconsistent stereo bonds (see PR #9734)") {
   CHECK(mmat->getLowerBound(21, 4) > 3.5);  // TRANS
   CHECK(mmat->getLowerBound(21, 6) < 3.0);  // CIS
 }
+
+TEST_CASE("highly strained chiral centers") {
+  // structures from the COD or derived from COD structures
+  std::vector<std::pair<std::string, int>> smileses = {
+      {"COC(=O)[C@@]1(c2ccccc2C(F)(F)F)[C@@H]2OC3(C=CC(=O)C=C3)[C@@]21c1ccc(F)cc1",
+       0},
+      {"COC(=O)[C@@]1(c2ccccc2C(F)(F)F)[C@H]2OC3(C=CC(=O)C=C3)[C@@]21c1ccc(F)cc1",
+       -1},
+      {"c1ccccc1[C@]12C[C@]1(C2)S(=O)(=O)c1ccccc1", 0},
+      {"c1ccccc1[C@]12C[C@@]1(C2)S(=O)(=O)c1ccccc1", -1},
+      // example from the EnumerateStereoisomers tests
+      {"F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2", 0},
+      {"F[C@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2", -1},
+      // example from ricrogz
+      {"C1C[N]2[C@H]3C[C@]32C1", 0},
+      {"C1C[N]2[C@@H]3C[C@]32C1", -1},
+
+      //
+  };
+
+  auto ps = DGeomHelpers::ETKDGv3;
+  ps.randomSeed = 0xf00d;
+  ps.initialEmbeddingMode =
+      DGeomHelpers::InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING;
+  ps.maxIterations = 10;
+  for (const auto &[smiles, result] : smileses) {
+    INFO("Processing SMILES: " << smiles);
+    auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    CHECK(DGeomHelpers::EmbedMolecule(*mol, ps) == result);
+  }
+}

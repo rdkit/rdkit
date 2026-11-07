@@ -322,14 +322,26 @@ bool _sameSide(const RDGeom::Point3D &v1, const RDGeom::Point3D &v2,
                const RDGeom::Point3D &v3, const RDGeom::Point3D &v4,
                const RDGeom::Point3D &p0, double tol = 0.1) {
   RDGeom::Point3D normal = (v2 - v1).crossProduct(v3 - v1);
-  double d1 = normal.dotProduct(v4 - v1);
-  double d2 = normal.dotProduct(p0 - v1);
-  // std::cerr << "     " << d1 << " - " << d2 << std::endl;
-  if (fabs(d1) < tol || fabs(d2) < tol) {
+  normal.normalize();
+  auto v41 = v4 - v1;
+  v41.normalize();
+  auto p01 = p0 - v1;
+  p01.normalize();
+  double d1 = normal.dotProduct(v41);
+  // make sure that there's actually a volume to be inside:
+  if (fabs(d1) < tol) {
     return false;
   }
-  return !((d1 < 0.) ^ (d2 < 0.));
+  // now make sure that the point is inside the volume
+  // if the point is too close to the plane, consider it inside the volume
+  // Changing the tolerance here by a factor of 2 is an empirical adjustment
+  double d2 = normal.dotProduct(p01);
+  if (fabs(d2) < tol / 2) {
+    return true;
+  }
+  return d1 * d2 > 0;
 }
+
 bool _centerInVolume(unsigned int idx0, unsigned int idx1, unsigned int idx2,
                      unsigned int idx3, unsigned int idx4,
                      const RDGeom::PointPtrVect &positions, double tol,
@@ -344,6 +356,7 @@ bool _centerInVolume(unsigned int idx0, unsigned int idx1, unsigned int idx2,
                      (*positions[idx3])[2]);
   RDGeom::Point3D p4((*positions[idx4])[0], (*positions[idx4])[1],
                      (*positions[idx4])[2]);
+
   // RDGeom::Point3D centroid = (p1+p2+p3+p4)/4.;
   if (verbose) {
     std::cerr << _sameSide(p1, p2, p3, p4, p0, tol) << " "
@@ -355,11 +368,12 @@ bool _centerInVolume(unsigned int idx0, unsigned int idx1, unsigned int idx2,
              _sameSide(p2, p3, p4, p1, p0, tol) &&
              _sameSide(p3, p4, p1, p2, p0, tol) &&
              _sameSide(p4, p1, p2, p3, p0, tol);
+  // return true;
   return res;
 }
 
 bool _centerInVolume(const DistGeom::ChiralSetPtr &chiralSet,
-                     const RDGeom::PointPtrVect &positions, double tol = 0.1,
+                     const RDGeom::PointPtrVect &positions, double tol = 0.10,
                      bool verbose = false) {
   if (chiralSet->d_idx0 ==
       chiralSet->d_idx4) {  // this happens for three-coordinate centers
