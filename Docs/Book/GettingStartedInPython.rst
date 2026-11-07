@@ -1233,6 +1233,42 @@ matching atoms like this:
   [1, 7, 8, 10]
 
 
+Finite Markush spaces
+=====================
+
+``Chem.Markush`` provides a convenience API around generic query matching.
+Checking membership enables the generic matchers by default:
+
+.. doctest::
+
+  >>> from rdkit.Chem import Markush
+  >>> q = Chem.MolFromSmarts('OC* |$;;ARY$|')
+  >>> Chem.SetGenericQueriesFromProperties(q)
+  >>> Markush.IsInMarkushScope(q, Chem.MolFromSmiles('c1ccccc1CO'))
+  True
+
+Generic groups can describe an unbounded chemical space, so enumeration takes
+an explicit candidate library. Results are unique by canonical isomeric SMILES:
+
+.. doctest::
+
+  >>> candidates = [Chem.MolFromSmiles('c1ccccc1CO'),
+  ...               Chem.MolFromSmiles('OCC1=CC=CC=C1')]
+  >>> len(Markush.EnumerateMarkush(q, candidates))
+  1
+
+To build a conservative formula covering a set of molecules, use
+``MakeMarkushFormula``. It creates one SMARTS alternative per distinct input
+molecule and exactly matches those molecular identities; it does not infer
+unsupported R-group generalizations.
+
+.. doctest::
+
+  >>> formula = Markush.MakeMarkushFormula([Chem.MolFromSmiles('CCO'),
+  ...                                       Chem.MolFromSmiles('c1ccccc1')])
+  >>> Markush.IsInMarkushScope(formula, Chem.MolFromSmiles('CCO'))
+  True
+
 Advanced substructure matching
 ==============================
 
