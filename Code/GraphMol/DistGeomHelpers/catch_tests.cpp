@@ -3359,9 +3359,14 @@ TEST_CASE("highly strained chiral centers") {
       // example from the EnumerateStereoisomers tests
       {"F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2", 0},
       {"F[C@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2", -1},
+      // example from ricrogz
+      {"C1C[N]2[C@H]3C[C@]32C1", 0},
+      {"C1C[N]2[C@@H]3C[C@]32C1", -1},
+
+      //
   };
 
-  auto ps = DGeomHelpers::ETKDGv4;
+  auto ps = DGeomHelpers::ETKDGv3;
   ps.randomSeed = 0xf00d;
   ps.initialEmbeddingMode =
       DGeomHelpers::InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING;
