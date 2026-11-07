@@ -8,53 +8,17 @@
 #
 """ Calculation of topological/topochemical descriptors.
 
-
+The calculations are done in C++ (rdkit.Chem.rdMolDescriptors); the
+functions here provide the historical python API.
 
 """
-
-import math
 
 import numpy
 
 from rdkit import Chem
-from rdkit.Chem import Graphs, rdchem, rdMolDescriptors
-from rdkit.ML.InfoTheory import entropy
+from rdkit.Chem import rdMolDescriptors
 
 ptable = Chem.GetPeriodicTable()
-
-_log2val = math.log(2)
-
-
-def _VertexDegrees(mat, onlyOnes=0):
-  """  *Internal Use Only*
-
-  this is just a row sum of the matrix... simple, neh?
-
-  """
-  if not onlyOnes:
-    res = sum(mat)
-  else:
-    res = sum(numpy.equal(mat, 1))
-  return res
-
-
-def _NumAdjacencies(mol, dMat):
-  """  *Internal Use Only*
-
-  """
-  res = mol.GetNumBonds()
-  return res
-
-
-def _GetCountDict(arr):
-  """  *Internal Use Only*
-
-  """
-  res = {}
-  for v in arr:
-    res[v] = res.get(v, 0) + 1
-  return res
-
 
 # WARNING: this data should probably go somewhere else...
 hallKierAlphas = {
@@ -71,37 +35,13 @@ hallKierAlphas = {
 }
 
 
-def _pyHallKierAlpha(m):
-  """ calculate the Hall-Kier alpha value for a molecule
+def _asDistMat(dMat):
+  """ *Internal Use Only*
 
-   From equations (58) of Rev. Comp. Chem. vol 2, 367-422, (1991)
+  a C-contiguous float64 copy (if needed) of a user-supplied distance matrix
 
   """
-  alphaSum = 0.0
-  rC = ptable.GetRb0(6)
-  for atom in m.GetAtoms():
-    atNum = atom.GetAtomicNum()
-    if not atNum:
-      continue
-    symb = atom.GetSymbol()
-    alphaV = hallKierAlphas.get(symb, None)
-    if alphaV is not None:
-      hyb = atom.GetHybridization() - 2
-      if (hyb < len(alphaV)):
-        alpha = alphaV[hyb]
-        if alpha is None:
-          alpha = alphaV[-1]
-      else:
-        alpha = alphaV[-1]
-    else:
-      rA = ptable.GetRb0(atNum)
-      alpha = rA / rC - 1
-    # print(atom.GetIdx(), atom.GetSymbol(), alpha)
-    alphaSum += alpha
-  return alphaSum
-
-
-# HallKierAlpha.version="1.0.2"
+  return numpy.ascontiguousarray(dMat, dtype=numpy.float64)
 
 
 def Ipc(mol, avg=False, dMat=None, forceDMat=False):
@@ -114,25 +54,11 @@ def Ipc(mol, avg=False, dMat=None, forceDMat=False):
 
   """
   if forceDMat or dMat is None:
-    if forceDMat:
-      dMat = Chem.GetDistanceMatrix(mol, False)
-      mol._adjMat = dMat
-    else:
-      try:
-        dMat = mol._adjMat
-      except AttributeError:
-        dMat = Chem.GetDistanceMatrix(mol, False)
-        mol._adjMat = dMat
-
-  adjMat = numpy.equal(dMat, 1)
-  cPoly = abs(Graphs.CharacteristicPolynomial(mol, adjMat))
-  if avg:
-    return entropy.InfoEntropy(cPoly)
-  else:
-    return sum(cPoly) * entropy.InfoEntropy(cPoly)
+    return rdMolDescriptors.CalcIpc(mol, avg=bool(avg))
+  return rdMolDescriptors.CalcIpc(mol, avg=bool(avg), dMat=_asDistMat(dMat))
 
 
-Ipc.version = "1.0.0"
+Ipc.version = rdMolDescriptors._CalcIpc_version
 
 
 def AvgIpc(mol, dMat=None, forceDMat=False):
@@ -145,70 +71,7 @@ def AvgIpc(mol, dMat=None, forceDMat=False):
   return Ipc(mol, avg=True, dMat=dMat, forceDMat=forceDMat)
 
 
-AvgIpc.version = "1.0.0"
-
-
-def _pyKappa1(mol):
-  """ Hall-Kier Kappa1 value
-
-   From equations (58) and (59) of Rev. Comp. Chem. vol 2, 367-422, (1991)
-
-  """
-  P1 = mol.GetNumBonds(1)
-  A = mol.GetNumHeavyAtoms()
-  alpha = HallKierAlpha(mol)
-  denom = P1 + alpha
-  if denom:
-    kappa = (A + alpha) * (A + alpha - 1)**2 / denom**2
-  else:
-    kappa = 0.0
-  return kappa
-
-
-# Kappa1.version="1.0.0"
-
-
-def _pyKappa2(mol):
-  """  Hall-Kier Kappa2 value
-
-   From equations (58) and (60) of Rev. Comp. Chem. vol 2, 367-422, (1991)
-
-  """
-  P2 = len(Chem.FindAllPathsOfLengthN(mol, 2))
-  A = mol.GetNumHeavyAtoms()
-  alpha = HallKierAlpha(mol)
-  denom = (P2 + alpha)**2
-  if denom:
-    kappa = (A + alpha - 1) * (A + alpha - 2)**2 / denom
-  else:
-    kappa = 0
-  return kappa
-
-
-# Kappa2.version="1.0.0"
-
-
-def _pyKappa3(mol):
-  """  Hall-Kier Kappa3 value
-
-   From equations (58), (61) and (62) of Rev. Comp. Chem. vol 2, 367-422, (1991)
-
-  """
-  P3 = len(Chem.FindAllPathsOfLengthN(mol, 3))
-  A = mol.GetNumHeavyAtoms()
-  alpha = HallKierAlpha(mol)
-  denom = (P3 + alpha)**2
-  if denom:
-    if A % 2 == 1:
-      kappa = (A + alpha - 1) * (A + alpha - 3)**2 / denom
-    else:
-      kappa = (A + alpha - 2) * (A + alpha - 3)**2 / denom
-  else:
-    kappa = 0
-  return kappa
-
-
-# Kappa3.version="1.0.0"
+AvgIpc.version = rdMolDescriptors._CalcAvgIpc_version
 
 HallKierAlpha = lambda x: rdMolDescriptors.CalcHallKierAlpha(x)
 HallKierAlpha.version = rdMolDescriptors._CalcHallKierAlpha_version
@@ -224,204 +87,20 @@ def Chi0(mol):
   """ From equations (1),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)
 
   """
-  deltas = [x.GetDegree() for x in mol.GetAtoms()]
-  while 0 in deltas:
-    deltas.remove(0)
-  deltas = numpy.array(deltas, float)
-  res = sum(numpy.sqrt(1. / deltas))
-  return res
+  return rdMolDescriptors.CalcChi0(mol)
 
 
-Chi0.version = "1.0.0"
+Chi0.version = rdMolDescriptors._CalcChi0_version
 
 
 def Chi1(mol):
   """ From equations (1),(11) and (12) of Rev. Comp. Chem. vol 2, 367-422, (1991)
 
   """
-  c1s = [x.GetBeginAtom().GetDegree() * x.GetEndAtom().GetDegree() for x in mol.GetBonds()]
-  while 0 in c1s:
-    c1s.remove(0)
-  c1s = numpy.array(c1s, float)
-  res = sum(numpy.sqrt(1. / c1s))
-  return res
+  return rdMolDescriptors.CalcChi1(mol)
 
 
-Chi1.version = "1.0.0"
-
-
-def _nVal(atom):
-  return ptable.GetNOuterElecs(atom.GetAtomicNum()) - atom.GetTotalNumHs()
-
-
-def _hkDeltas(mol, skipHs=1):
-  global ptable
-  res = []
-  if hasattr(mol, '_hkDeltas') and mol._hkDeltas is not None:
-    return mol._hkDeltas
-  for atom in mol.GetAtoms():
-    n = atom.GetAtomicNum()
-    if n > 1:
-      nV = ptable.GetNOuterElecs(n)
-      nHs = atom.GetTotalNumHs()
-      if n <= 10:
-        # first row
-        res.append(float(nV - nHs))
-      else:
-        # second row and up
-        res.append(float(nV - nHs) / float(n - nV - 1))
-    elif n == 1:
-      if not skipHs:
-        res.append(0.0)
-    else:
-      res.append(0.0)
-  mol._hkDeltas = res
-  return res
-
-
-def _pyChi0v(mol):
-  """  From equations (5),(9) and (10) of Rev. Comp. Chem. vol 2, 367-422, (1991)
-
-  """
-  deltas = _hkDeltas(mol)
-  while 0 in deltas:
-    deltas.remove(0)
-  mol._hkDeltas = None
-  res = sum(numpy.sqrt(1. / numpy.array(deltas)))
-  return res
-
-
-def _pyChi1v(mol):
-  """  From equations (5),(11) and (12) of Rev. Comp. Chem. vol 2, 367-422, (1991)
-
-  """
-  deltas = numpy.array(_hkDeltas(mol, skipHs=0))
-  res = 0.0
-  for bond in mol.GetBonds():
-    v = deltas[bond.GetBeginAtomIdx()] * deltas[bond.GetEndAtomIdx()]
-    if v != 0.0:
-      res += numpy.sqrt(1. / v)
-  return res
-
-
-def _pyChiNv_(mol, order=2):
-  """  From equations (5),(15) and (16) of Rev. Comp. Chem. vol 2, 367-422, (1991)
-
-  **NOTE**: because the current path finding code does, by design,
-  detect rings as paths (e.g. in C1CC1 there is *1* atom path of
-  length 3), values of ChiNv with N >= 3 may give results that differ
-  from those provided by the old code in molecules that have rings of
-  size 3.
-
-  """
-  deltas = numpy.array([(1. / numpy.sqrt(hkd) if hkd != 0.0 else 0.0)
-                        for hkd in _hkDeltas(mol, skipHs=0)])
-  accum = 0.0
-  for path in Chem.FindAllPathsOfLengthN(mol, order + 1, useBonds=0):
-    accum += numpy.prod(deltas[numpy.array(path)], dtype=float)
-  return accum
-
-
-def _pyChi2v(mol):
-  """ From equations (5),(15) and (16) of Rev. Comp. Chem. vol 2, 367-422, (1991)
-
-  """
-  return _pyChiNv_(mol, 2)
-
-
-def _pyChi3v(mol):
-  """ From equations (5),(15) and (16) of Rev. Comp. Chem. vol 2, 367-422, (1991)
-
-  """
-  return _pyChiNv_(mol, 3)
-
-
-def _pyChi4v(mol):
-  """ From equations (5),(15) and (16) of Rev. Comp. Chem. vol 2, 367-422, (1991)
-
-  **NOTE**: because the current path finding code does, by design,
-  detect rings as paths (e.g. in C1CC1 there is *1* atom path of
-  length 3), values of Chi4v may give results that differ from those
-  provided by the old code in molecules that have 3 rings.
-
-  """
-  return _pyChiNv_(mol, 4)
-
-
-def _pyChi0n(mol):
-  """  Similar to Hall Kier Chi0v, but uses nVal instead of valence
-  This makes a big difference after we get out of the first row.
-
-  """
-  deltas = [_nVal(x) for x in mol.GetAtoms()]
-  while deltas.count(0):
-    deltas.remove(0)
-  deltas = numpy.array(deltas, float)
-  res = sum(numpy.sqrt(1. / deltas))
-  return res
-
-
-def _pyChi1n(mol):
-  """  Similar to Hall Kier Chi1v, but uses nVal instead of valence
-
-  """
-  delts = numpy.array([_nVal(x) for x in mol.GetAtoms()], float)
-  res = 0.0
-  for bond in mol.GetBonds():
-    v = delts[bond.GetBeginAtomIdx()] * delts[bond.GetEndAtomIdx()]
-    if v != 0.0:
-      res += numpy.sqrt(1. / v)
-  return res
-
-
-def _pyChiNn_(mol, order=2):
-  """  Similar to Hall Kier ChiNv, but uses nVal instead of valence
-  This makes a big difference after we get out of the first row.
-
-  **NOTE**: because the current path finding code does, by design,
-  detect rings as paths (e.g. in C1CC1 there is *1* atom path of
-  length 3), values of ChiNn with N >= 3 may give results that differ
-  from those provided by the old code in molecules that have rings of
-  size 3.
-
-  """
-  nval = [_nVal(x) for x in mol.GetAtoms()]
-  deltas = numpy.array([(1. / numpy.sqrt(x) if x else 0.0) for x in nval])
-  accum = 0.0
-  for path in Chem.FindAllPathsOfLengthN(mol, order + 1, useBonds=0):
-    accum += numpy.prod(deltas[numpy.array(path)], dtype=float)
-  return accum
-
-
-def _pyChi2n(mol):
-  """  Similar to Hall Kier Chi2v, but uses nVal instead of valence
-  This makes a big difference after we get out of the first row.
-
-  """
-  return _pyChiNn_(mol, 2)
-
-
-def _pyChi3n(mol):
-  """  Similar to Hall Kier Chi3v, but uses nVal instead of valence
-  This makes a big difference after we get out of the first row.
-
-  """
-  return _pyChiNn_(mol, 3)
-
-
-def _pyChi4n(mol):
-  """  Similar to Hall Kier Chi4v, but uses nVal instead of valence
-  This makes a big difference after we get out of the first row.
-
-
-  **NOTE**: because the current path finding code does, by design,
-  detect rings as paths (e.g. in C1CC1 there is *1* atom path of
-  length 3), values of Chi4n may give results that differ from those
-  provided by the old code in molecules that have 3 rings.
-
-  """
-  return _pyChiNn_(mol, 4)
-
+Chi1.version = rdMolDescriptors._CalcChi1_version
 
 Chi0v = lambda x: rdMolDescriptors.CalcChi0v(x)
 Chi0v.version = rdMolDescriptors._CalcChi0v_version
@@ -472,141 +151,12 @@ def BalabanJ(mol, dMat=None, forceDMat=False):
     Chem. Phys. Lett. vol 89, 399-404, (1982)
 
   """
-  # if no dMat is passed in, calculate one ourselves
   if forceDMat or dMat is None:
-    if forceDMat:
-      # FIX: should we be using atom weights here or not?
-      dMat = Chem.GetDistanceMatrix(mol, useBO=True, useAtomWts=False, force=True)
-      mol._balabanMat = dMat
-      adjMat = Chem.GetAdjacencyMatrix(mol, useBO=False, emptyVal=0, force=False, prefix="NoBO")
-      mol._adjMat = adjMat
-    else:
-      try:
-        # first check if the molecule already has one
-        dMat = mol._balabanMat
-      except AttributeError:
-        # nope, gotta calculate one
-        dMat = Chem.GetDistanceMatrix(mol, useBO=True, useAtomWts=False, force=False,
-                                      prefix="Balaban")
-        # now store it
-        mol._balabanMat = dMat
-      try:
-        adjMat = mol._adjMat
-      except AttributeError:
-        adjMat = Chem.GetAdjacencyMatrix(mol, useBO=False, emptyVal=0, force=False, prefix="NoBO")
-        mol._adjMat = adjMat
-  else:
-    adjMat = Chem.GetAdjacencyMatrix(mol, useBO=False, emptyVal=0, force=False, prefix="NoBO")
-
-  s = _VertexDegrees(dMat)
-  q = _NumAdjacencies(mol, dMat)
-  n = mol.GetNumAtoms()
-  mu = q - n + 1
-
-  sum_ = 0.
-  nS = len(s)
-  for i in range(nS):
-    si = s[i]
-    for j in range(i, nS):
-      if adjMat[i, j] == 1:
-        sum_ += 1. / numpy.sqrt(si * s[j])
-
-  if mu + 1 != 0:
-    J = float(q) / float(mu + 1) * sum_
-  else:
-    J = 0
-
-  return J
+    return rdMolDescriptors.CalcBalabanJ(mol)
+  return rdMolDescriptors.CalcBalabanJ(mol, dMat=_asDistMat(dMat))
 
 
-BalabanJ.version = "1.0.0"
-
-# ------------------------------------------------------------------------
-#
-# Start block of BertzCT stuff.
-#
-
-
-def _AssignSymmetryClasses(mol, vdList, bdMat, forceBDMat, numAtoms, cutoff):
-  """
-     Used by BertzCT
-
-     vdList: the number of neighbors each atom has
-     bdMat: "balaban" distance matrix
-
-  """
-  if forceBDMat:
-    bdMat = Chem.GetDistanceMatrix(mol, useBO=True, useAtomWts=False, force=True, prefix="Balaban")
-    mol._balabanMat = bdMat
-
-  sortedRows = numpy.sort(bdMat, axis=1)[:numAtoms, :cutoff]
-  rowFmt = '%.4f,' * sortedRows.shape[1]
-  keysSeen = {}
-  symList = [0] * numAtoms
-  for i, row in enumerate(sortedRows.tolist()):
-    symList[i] = keysSeen.setdefault(rowFmt % tuple(row), len(keysSeen)) + 1
-  return tuple(symList)
-
-
-def _LookUpBondOrder(atom1Id, atom2Id, bondDic):
-  """
-     Used by BertzCT
-  """
-  if atom1Id < atom2Id:
-    theKey = (atom1Id, atom2Id)
-  else:
-    theKey = (atom2Id, atom1Id)
-  tmp = bondDic[theKey]
-  return tmp
-
-
-def _CalculateEntropies(connectionDict, atomTypeDict, numAtoms):
-  """
-     Used by BertzCT
-  """
-  connectionList = list(connectionDict.values())
-  totConnections = sum(connectionList)
-  connectionIE = totConnections * (entropy.InfoEntropy(numpy.array(connectionList, float)) +
-                                   math.log(totConnections) / _log2val)
-  atomTypeList = list(atomTypeDict.values())
-  atomTypeIE = numAtoms * entropy.InfoEntropy(numpy.array(atomTypeList, float))
-  return atomTypeIE + connectionIE
-
-
-def _CreateBondDictEtc(mol, numAtoms):
-  """ _Internal Use Only_
-     Used by BertzCT
-
-  """
-  bondDict = {}
-  nList = [None] * numAtoms
-  vdList = [0] * numAtoms
-  for aBond in mol.GetBonds():
-    atom1 = aBond.GetBeginAtomIdx()
-    atom2 = aBond.GetEndAtomIdx()
-    if atom1 > atom2:
-      atom2, atom1 = atom1, atom2
-    if not aBond.GetIsAromatic():
-      bondDict[(atom1, atom2)] = aBond.GetBondTypeAsDouble()
-    else:
-      # mark Kekulized systems as aromatic
-      bondDict[(atom1, atom2)] = 1.5
-    if nList[atom1] is None:
-      nList[atom1] = [atom2]
-    elif atom2 not in nList[atom1]:
-      nList[atom1].append(atom2)
-    if nList[atom2] is None:
-      nList[atom2] = [atom1]
-    elif atom1 not in nList[atom2]:
-      nList[atom2].append(atom1)
-
-  for i, element in enumerate(nList):
-    try:
-      element.sort()
-      vdList[i] = len(element)
-    except Exception:
-      vdList[i] = 0
-  return bondDict, nList, vdList
+BalabanJ.version = rdMolDescriptors._CalcBalabanJ_version
 
 
 def BertzCT(mol, cutoff=100, dMat=None, forceDMat=1):
@@ -645,65 +195,22 @@ def BertzCT(mol, cutoff=100, dMat=None, forceDMat=1):
        values with this implementation.  The new behavior is the correct
        one, so we're going to live with the breakage.
 
-     **NOTE** this barfs if the molecule contains a second (or
-       nth) fragment that is one atom.
+     "dMat" is an optional distance matrix used to assign the symmetry
+     classes. It is only used if "forceDMat" is not set; by default the
+     bond-order weighted (Balaban) distance matrix is used.
 
   """
-  atomTypeDict = {}
-  connectionDict = {}
-  numAtoms = mol.GetNumAtoms()
-  # dMat is only used when forceDMat is unset; otherwise _AssignSymmetryClasses()
-  # calculates its own Balaban matrix
-  if not forceDMat and dMat is None:
-    try:
-      dMat = mol._adjMat
-    except AttributeError:
-      dMat = Chem.GetDistanceMatrix(mol, useBO=False, useAtomWts=False, force=True)
-      mol._adjMat = dMat
-
-  if numAtoms < 2:
-    return 0
-
-  bondDict, neighborList, vdList = _CreateBondDictEtc(mol, numAtoms)
-  symmetryClasses = _AssignSymmetryClasses(mol, vdList, dMat, forceDMat, numAtoms, cutoff)
-  # print('Symmm Classes:',symmetryClasses)
-  for atomIdx in range(numAtoms):
-    hingeAtomNumber = mol.GetAtomWithIdx(atomIdx).GetAtomicNum()
-    atomTypeDict[hingeAtomNumber] = atomTypeDict.get(hingeAtomNumber, 0) + 1
-
-    hingeAtomClass = symmetryClasses[atomIdx]
-    numNeighbors = vdList[atomIdx]
-    for i in range(numNeighbors):
-      neighbor_iIdx = neighborList[atomIdx][i]
-      NiClass = symmetryClasses[neighbor_iIdx]
-      bond_i_order = _LookUpBondOrder(atomIdx, neighbor_iIdx, bondDict)
-      # print('\t',atomIdx,i,hingeAtomClass,NiClass,bond_i_order)
-      if (bond_i_order > 1) and (neighbor_iIdx > atomIdx):
-        numConnections = bond_i_order * (bond_i_order - 1) / 2
-        connectionKey = (min(hingeAtomClass, NiClass), max(hingeAtomClass, NiClass))
-        connectionDict[connectionKey] = connectionDict.get(connectionKey, 0) + numConnections
-
-      for j in range(i + 1, numNeighbors):
-        neighbor_jIdx = neighborList[atomIdx][j]
-        NjClass = symmetryClasses[neighbor_jIdx]
-        bond_j_order = _LookUpBondOrder(atomIdx, neighbor_jIdx, bondDict)
-        numConnections = bond_i_order * bond_j_order
-        connectionKey = (min(NiClass, NjClass), hingeAtomClass, max(NiClass, NjClass))
-        connectionDict[connectionKey] = connectionDict.get(connectionKey, 0) + numConnections
-
-  if not connectionDict:
-    connectionDict = {'a': 1}
-
-  return _CalculateEntropies(connectionDict, atomTypeDict, numAtoms)
+  if forceDMat:
+    return rdMolDescriptors.CalcBertzCT(mol, int(cutoff))
+  if dMat is None:
+    # without forceDMat the symmetry classes have always come from the
+    # topological distance matrix
+    dMat = Chem.GetDistanceMatrix(mol, useBO=False, useAtomWts=False, force=True)
+  return rdMolDescriptors.CalcBertzCT(mol, int(cutoff), dMat=_asDistMat(dMat))
 
 
-BertzCT.version = "2.0.0"
+BertzCT.version = rdMolDescriptors._CalcBertzCT_version
 # Recent Revisions:
 #  1.0.0 -> 2.0.0:
 #    - force distance matrix updates properly (Fixed as part of Issue 125)
 #    - handle single-atom fragments (Issue 136)
-
-#
-# End block of BertzCT stuff.
-#
-# ------------------------------------------------------------------------

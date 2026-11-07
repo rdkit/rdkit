@@ -39,6 +39,7 @@
 #endif
 
 #include <algorithm>
+#include <memory>
 #include <vector>
 
 namespace python = boost::python;
@@ -1032,6 +1033,164 @@ python::dict getSurfacePointsHelper(
   return surfacePoints;
 }
 
+python::list doubleVectToList(const std::vector<double> &vals) {
+  python::list res;
+  for (auto v : vals) {
+    res.append(v);
+  }
+  return res;
+}
+
+std::unique_ptr<std::vector<double>> pyObjectToBins(python::object bins) {
+  if (bins.is_none()) {
+    return nullptr;
+  }
+  auto res = std::make_unique<std::vector<double>>();
+  pythonObjectToVect<double>(bins, *res);
+  return res;
+}
+
+python::list CalcEStateIndicesHelper(const RDKit::ROMol &mol) {
+  return doubleVectToList(RDKit::Descriptors::calcEStateIndices(mol));
+}
+
+python::list CalcEState_VSAHelper(const RDKit::ROMol &mol,
+                                  python::object bins) {
+  auto lbins = pyObjectToBins(bins);
+  return doubleVectToList(RDKit::Descriptors::calcEState_VSA(mol, lbins.get()));
+}
+
+python::list CalcVSA_EStateHelper(const RDKit::ROMol &mol,
+                                  python::object bins) {
+  auto lbins = pyObjectToBins(bins);
+  return doubleVectToList(RDKit::Descriptors::calcVSA_EState(mol, lbins.get()));
+}
+
+python::tuple GetFragmentDescriptorNamesHelper() {
+  python::list res;
+  for (const auto &name : RDKit::Descriptors::getFragmentDescriptorNames()) {
+    res.append(name);
+  }
+  return python::tuple(res);
+}
+
+python::tuple GetFragmentDescriptorSmartsHelper() {
+  python::list res;
+  for (const auto &sma : RDKit::Descriptors::getFragmentDescriptorSmarts()) {
+    res.append(sma);
+  }
+  return python::tuple(res);
+}
+
+python::tuple GetFragmentDescriptorDescriptionsHelper() {
+  python::list res;
+  for (const auto &descr :
+       RDKit::Descriptors::getFragmentDescriptorDescriptions()) {
+    res.append(descr);
+  }
+  return python::tuple(res);
+}
+
+unsigned int CalcFragmentDescriptorHelper(const RDKit::ROMol &mol,
+                                          const std::string &name,
+                                          bool countUnique) {
+  return RDKit::Descriptors::calcFragmentDescriptor(mol, name, countUnique);
+}
+
+python::list CalcFragmentDescriptorsHelper(const RDKit::ROMol &mol,
+                                            bool countUnique) {
+  python::list res;
+  for (auto v : RDKit::Descriptors::calcFragmentDescriptors(mol, countUnique)) {
+    res.append(v);
+  }
+  return res;
+}
+
+// converts an optional python distance matrix (anything numpy can turn into
+// a 2D array of doubles) to a row-major vector. Returns false for None.
+bool pyObjectToDistMat(const RDKit::ROMol &mol, python::object dMat,
+                       std::vector<double> &res) {
+  if (dMat.is_none()) {
+    return false;
+  }
+  PyObject *arr = PyArray_FROMANY(dMat.ptr(), NPY_DOUBLE, 2, 2,
+                                  NPY_ARRAY_IN_ARRAY | NPY_ARRAY_FORCECAST);
+  if (!arr) {
+    python::throw_error_already_set();
+  }
+  python::handle<> holder(arr);
+  auto *pa = reinterpret_cast<PyArrayObject *>(arr);
+  const auto nAts = static_cast<npy_intp>(mol.getNumAtoms());
+  if (PyArray_DIM(pa, 0) != nAts || PyArray_DIM(pa, 1) != nAts) {
+    throw ValueErrorException(
+        "the distance matrix must have shape (nAtoms, nAtoms)");
+  }
+  const auto *data = static_cast<const double *>(PyArray_DATA(pa));
+  res.assign(data, data + nAts * nAts);
+  return true;
+}
+
+double CalcBalabanJHelper(const RDKit::ROMol &mol, python::object dMat) {
+  std::vector<double> dm;
+  return RDKit::Descriptors::calcBalabanJ(
+      mol, pyObjectToDistMat(mol, dMat, dm) ? dm.data() : nullptr);
+}
+
+double CalcBertzCTHelper(const RDKit::ROMol &mol, unsigned int cutoff,
+                         python::object dMat) {
+  std::vector<double> dm;
+  return RDKit::Descriptors::calcBertzCT(
+      mol, cutoff, pyObjectToDistMat(mol, dMat, dm) ? dm.data() : nullptr);
+}
+
+double CalcIpcHelper(const RDKit::ROMol &mol, bool avg, python::object dMat) {
+  std::vector<double> dm;
+  return RDKit::Descriptors::calcIpc(
+      mol, avg, pyObjectToDistMat(mol, dMat, dm) ? dm.data() : nullptr);
+}
+
+double CalcAvgIpcHelper(const RDKit::ROMol &mol, python::object dMat) {
+  return CalcIpcHelper(mol, true, dMat);
+}
+
+python::tuple QEDPropertiesToTuple(
+    const RDKit::Descriptors::QEDProperties &props) {
+  return python::make_tuple(props.MW, props.ALOGP, props.HBA, props.HBD,
+                            props.PSA, props.ROTB, props.AROM, props.ALERTS);
+}
+
+RDKit::Descriptors::QEDProperties pyObjectToQEDProperties(python::object vals) {
+  std::vector<double> v;
+  pythonObjectToVect<double>(vals, v);
+  if (v.size() != 8) {
+    throw ValueErrorException("QED properties and weights have 8 values");
+  }
+  RDKit::Descriptors::QEDProperties res;
+  res.MW = v[0];
+  res.ALOGP = v[1];
+  res.HBA = v[2];
+  res.HBD = v[3];
+  res.PSA = v[4];
+  res.ROTB = v[5];
+  res.AROM = v[6];
+  res.ALERTS = v[7];
+  return res;
+}
+
+python::tuple CalcQEDPropertiesHelper(const RDKit::ROMol &mol) {
+  return QEDPropertiesToTuple(RDKit::Descriptors::calcQEDProperties(mol));
+}
+
+double CalcQEDHelper(const RDKit::ROMol &mol, python::object weights,
+                     python::object qedProperties) {
+  auto w = weights.is_none() ? RDKit::Descriptors::QEDWeightsMean
+                             : pyObjectToQEDProperties(weights);
+  if (qedProperties.is_none()) {
+    return RDKit::Descriptors::calcQED(mol, w);
+  }
+  return RDKit::Descriptors::calcQED(pyObjectToQEDProperties(qedProperties), w);
+}
+
 }  // namespace
 
 BOOST_PYTHON_MODULE(rdMolDescriptors) {
@@ -2018,6 +2177,210 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               docString.c_str());
 
 #endif
+
+  python::class_<RDKit::Descriptors::EStates>("EStates",
+			 "Holds the maximum and minimum EState and absolute EState indices [Hall, Mohney and Kier]",
+			 python::no_init)
+    .def_readonly("maxEState", &RDKit::Descriptors::EStates::maxEState,
+		  "Maximum EState index")
+    .def_readonly("minEState", &RDKit::Descriptors::EStates::minEState,
+		  "Minimum EState index")
+    .def_readonly("maxAbsEState", &RDKit::Descriptors::EStates::maxAbsEState,
+		  "Maximum Absolute EState index")
+    .def_readonly("minAbsEState", &RDKit::Descriptors::EStates::minAbsEState,
+		  "Minimum Absolute EState index")
+    ;
+
+  python::def("CalcEStates", RDKit::Descriptors::calcEStates,
+	      python::arg("mol"),
+              "Returns the maximum and minimum EState and absolute EState indices for the molecule (Hall, Mohney and Kier, "
+              "JCICS 31, 76-81 (1991))");
+
+  python::def("CalcEStateIndices", CalcEStateIndicesHelper, python::arg("mol"),
+              "Returns the EState indices of the atoms (Hall, Mohney and Kier, "
+              "JCICS 31, 76-81 (1991))");
+  python::scope().attr("_CalcEStateIndices_version") =
+      RDKit::Descriptors::EStateIndicesVersion;
+  python::def("CalcMaxEStateIndex", RDKit::Descriptors::calcMaxEStateIndex,
+              python::arg("mol"), "Returns the largest EState index");
+  python::scope().attr("_CalcMaxEStateIndex_version") =
+      RDKit::Descriptors::MaxEStateIndexVersion;
+  python::def("CalcMinEStateIndex", RDKit::Descriptors::calcMinEStateIndex,
+              python::arg("mol"), "Returns the smallest EState index");
+  python::scope().attr("_CalcMinEStateIndex_version") =
+      RDKit::Descriptors::MinEStateIndexVersion;
+  python::def("CalcMaxAbsEStateIndex",
+              RDKit::Descriptors::calcMaxAbsEStateIndex, python::arg("mol"),
+              "Returns the largest absolute EState index");
+  python::scope().attr("_CalcMaxAbsEStateIndex_version") =
+      RDKit::Descriptors::MaxAbsEStateIndexVersion;
+  python::def("CalcMinAbsEStateIndex",
+              RDKit::Descriptors::calcMinAbsEStateIndex, python::arg("mol"),
+              "Returns the smallest absolute EState index");
+  python::scope().attr("_CalcMinAbsEStateIndex_version") =
+      RDKit::Descriptors::MinAbsEStateIndexVersion;
+  python::def("CalcEState_VSA", CalcEState_VSAHelper,
+              (python::arg("mol"), python::arg("bins") = python::object()),
+              "Returns the EState_VSA descriptors: the VSA contributions of "
+              "the atoms binned by EState index (bins defaults to the "
+              "EState_VSA bins)");
+  python::scope().attr("_CalcEState_VSA_version") =
+      RDKit::Descriptors::EState_VSAVersion;
+  python::def("CalcVSA_EState", CalcVSA_EStateHelper,
+              (python::arg("mol"), python::arg("bins") = python::object()),
+              "Returns the VSA_EState descriptors: the EState indices of the "
+              "atoms binned by VSA contribution (bins defaults to the "
+              "VSA_EState bins)");
+  python::scope().attr("_CalcVSA_EState_version") =
+      RDKit::Descriptors::VSA_EStateVersion;
+
+  python::def("CalcChi0", RDKit::Descriptors::calcChi0, python::arg("mol"),
+              "From equations (1),(9) and (10) of Rev. Comp. Chem. vol 2, "
+              "367-422, (1991)");
+  python::scope().attr("_CalcChi0_version") = RDKit::Descriptors::chi0Version;
+  python::def("CalcChi1", RDKit::Descriptors::calcChi1, python::arg("mol"),
+              "From equations (1),(11) and (12) of Rev. Comp. Chem. vol 2, "
+              "367-422, (1991)");
+  python::scope().attr("_CalcChi1_version") = RDKit::Descriptors::chi1Version;
+  python::def("CalcBalabanJ", CalcBalabanJHelper,
+              (python::arg("mol"), python::arg("dMat") = python::object()),
+              "Returns Balaban's J value (Chem. Phys. Lett. vol 89, 399-404, "
+              "(1982)). dMat is an optional (nAtoms, nAtoms) distance matrix "
+              "to use instead of the bond-order weighted one");
+  python::scope().attr("_CalcBalabanJ_version") =
+      RDKit::Descriptors::balabanJVersion;
+  python::def("CalcBertzCT", CalcBertzCTHelper,
+              (python::arg("mol"), python::arg("cutoff") = 100,
+               python::arg("dMat") = python::object()),
+              "Returns Bertz's complexity index (J. Am. Chem. Soc., vol 103, "
+              "3599-3601 (1981)). dMat is an optional (nAtoms, nAtoms) "
+              "distance matrix used to assign the symmetry classes instead "
+              "of the bond-order weighted one");
+  python::scope().attr("_CalcBertzCT_version") =
+      RDKit::Descriptors::bertzCTVersion;
+  python::def("CalcIpc", CalcIpcHelper,
+              (python::arg("mol"), python::arg("avg") = false,
+               python::arg("dMat") = python::object()),
+              "Returns the information content of the coefficients of the "
+              "characteristic polynomial of the adjacency matrix (Eq 6 of "
+              "Bonchev & Trinajstic, J. Chem. Phys. vol 67, 4517-4533 "
+              "(1977)); with avg, divided by the total population. dMat is "
+              "an optional (nAtoms, nAtoms) distance matrix; the adjacency "
+              "matrix is taken from its entries equal to 1");
+  python::scope().attr("_CalcIpc_version") = RDKit::Descriptors::ipcVersion;
+  python::def("CalcAvgIpc", CalcAvgIpcHelper,
+              (python::arg("mol"), python::arg("dMat") = python::object()),
+              "Returns the average information content (Eq 7 of Bonchev & "
+              "Trinajstic). dMat is as for CalcIpc");
+  python::scope().attr("_CalcAvgIpc_version") =
+      RDKit::Descriptors::avgIpcVersion;
+
+  python::def("CalcHeavyAtomMolWt", RDKit::Descriptors::calcHeavyAtomMolWt,
+              python::arg("mol"),
+              "Returns the average molecular weight ignoring hydrogens");
+  python::scope().attr("_CalcHeavyAtomMolWt_version") =
+      RDKit::Descriptors::HeavyAtomMolWtVersion;
+  python::def("CalcNumValenceElectrons",
+              RDKit::Descriptors::calcNumValenceElectrons, python::arg("mol"),
+              "Returns the number of valence electrons");
+  python::scope().attr("_CalcNumValenceElectrons_version") =
+      RDKit::Descriptors::NumValenceElectronsVersion;
+  python::def("CalcNumRadicalElectrons",
+              RDKit::Descriptors::calcNumRadicalElectrons, python::arg("mol"),
+              "Returns the number of radical electrons");
+  python::scope().attr("_CalcNumRadicalElectrons_version") =
+      RDKit::Descriptors::NumRadicalElectronsVersion;
+
+
+  python::class_<RDKit::Descriptors::PartialCharges>("PartialCharges",
+			 "Computes max and min of Gasteiger partial charges and absolute partial charges",
+			 python::no_init)
+    .def_readonly("maxPartialCharge", &RDKit::Descriptors::PartialCharges::maxPartialCharge,
+		  "Maximum partial charge")
+    .def_readonly("minPartialCharge", &RDKit::Descriptors::PartialCharges::minPartialCharge,
+		  "Minimum partial charge")
+    .def_readonly("maxAbsPartialCharge", &RDKit::Descriptors::PartialCharges::maxAbsPartialCharge,
+		  "Maximum Absolute partial charge")
+    .def_readonly("minAbsPartialCharge", &RDKit::Descriptors::PartialCharges::minAbsPartialCharge,
+		  "Minimum Absolute partial charge")
+    ;
+
+  python::def("CalcPartialCharges", RDKit::Descriptors::calcPartialCharges,
+              python::arg("mol"),
+              "Returns Computes max and min of Gasteiger partial charges and absolute partial charges"
+              "molecule with no atoms return -500 for max and 500 for minimum charges");
+  
+  python::def("CalcMaxPartialCharge", RDKit::Descriptors::calcMaxPartialCharge,
+              python::arg("mol"),
+              "Returns the largest Gasteiger partial charge (-500 for a "
+              "molecule with no atoms)");
+  python::scope().attr("_CalcMaxPartialCharge_version") =
+      RDKit::Descriptors::MaxPartialChargeVersion;
+  python::def("CalcMinPartialCharge", RDKit::Descriptors::calcMinPartialCharge,
+              python::arg("mol"),
+              "Returns the smallest Gasteiger partial charge (500 for a "
+              "molecule with no atoms)");
+  python::scope().attr("_CalcMinPartialCharge_version") =
+      RDKit::Descriptors::MinPartialChargeVersion;
+  python::def("CalcMaxAbsPartialCharge",
+              RDKit::Descriptors::calcMaxAbsPartialCharge, python::arg("mol"),
+              "Returns the largest absolute Gasteiger partial charge");
+  python::scope().attr("_CalcMaxAbsPartialCharge_version") =
+      RDKit::Descriptors::MaxAbsPartialChargeVersion;
+  python::def("CalcMinAbsPartialCharge",
+              RDKit::Descriptors::calcMinAbsPartialCharge, python::arg("mol"),
+              "Returns the smallest absolute Gasteiger partial charge");
+  python::scope().attr("_CalcMinAbsPartialCharge_version") =
+      RDKit::Descriptors::MinAbsPartialChargeVersion;
+  python::def("CalcFpDensityMorgan", RDKit::Descriptors::calcFpDensityMorgan,
+              (python::arg("mol"), python::arg("radius")),
+              "Returns the number of distinct Morgan count fingerprint "
+              "elements of the given radius per heavy atom");
+  python::scope().attr("_CalcFpDensityMorgan_version") =
+      RDKit::Descriptors::FpDensityMorganVersion;
+
+  python::def("GetFragmentDescriptorNames", GetFragmentDescriptorNamesHelper,
+              "Returns the names of the fragment descriptors (fr_*), in the "
+              "order used by CalcFragmentDescriptors");
+  python::def("GetFragmentDescriptorSmarts", GetFragmentDescriptorSmartsHelper,
+              "Returns the SMARTS of the fragment descriptors, in the order "
+              "of GetFragmentDescriptorNames");
+  python::def("GetFragmentDescriptorDescriptions",
+              GetFragmentDescriptorDescriptionsHelper,
+              "Returns the descriptions of the fragment descriptors, in the "
+              "order of GetFragmentDescriptorNames");
+  python::def("CalcFragmentDescriptors", CalcFragmentDescriptorsHelper,
+              (python::arg("mol"), python::arg("countUnique") = true),
+              "Returns the number of matches of each fragment pattern, in "
+              "the order of GetFragmentDescriptorNames. Only unique matches "
+              "are counted unless countUnique is false");
+  python::def("CalcFragmentDescriptor", CalcFragmentDescriptorHelper,
+              (python::arg("mol"), python::arg("name"),
+               python::arg("countUnique") = true),
+              "Returns the number of matches of one fragment pattern, e.g. "
+              "'fr_benzene'. Only unique matches are counted unless "
+              "countUnique is false");
+  python::scope().attr("_CalcFragmentDescriptors_version") =
+      RDKit::Descriptors::FragmentDescriptorsVersion;
+
+  python::def("CalcQEDProperties", CalcQEDPropertiesHelper, python::arg("mol"),
+              "Returns the properties used by QED: (MW, ALOGP, HBA, HBD, PSA, "
+              "ROTB, AROM, ALERTS)");
+  python::def("CalcQED", CalcQEDHelper,
+              (python::arg("mol"), python::arg("weights") = python::object(),
+               python::arg("qedProperties") = python::object()),
+              "Returns the QED (quantitative estimate of drug-likeness) of a "
+              "molecule. weights (8 values, in the order of "
+              "CalcQEDProperties) defaults to the mean weights; if "
+              "qedProperties is given it is used instead of calculating the "
+              "properties of mol");
+  python::scope().attr("_CalcQED_version") = RDKit::Descriptors::QEDVersion;
+
+  python::def("CalcSPS", RDKit::Descriptors::calcSPS,
+              (python::arg("mol"), python::arg("normalize") = true),
+              "Returns the spacial score (SPS) of a molecule, normalized by "
+              "the number of heavy atoms unless normalize is false");
+  python::scope().attr("_CalcSPS_version") = RDKit::Descriptors::SPSVersion;
 
 #ifdef RDK_HAS_EIGEN3
   python::scope().attr("_BCUT2D_version") = RDKit::Descriptors::BCUT2DVersion;

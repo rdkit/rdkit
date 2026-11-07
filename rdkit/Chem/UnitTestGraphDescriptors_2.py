@@ -484,53 +484,59 @@ class TestCase(unittest.TestCase):
                                Chem.FindAllPathsOfLengthN(m, i + 1, useBonds=False))
 
 
-class TestCase_python(unittest.TestCase):
-  """ Test the Python implementation of the various descriptors """
+class TestCase_regression(unittest.TestCase):
+  """ Test the descriptors against the values in the regression data files """
 
-  def test_equivalence(self):
+  def test_regression(self):
     if not doLong:
       raise unittest.SkipTest('long test')
-    self._compareImplementations('PP_descrs_regress.csv', 3, GraphDescriptors.HallKierAlpha,
-                                 GraphDescriptors._pyHallKierAlpha)
-    self._compareImplementations('PP_descrs_regress.2.csv', 3, GraphDescriptors.HallKierAlpha,
-                                 GraphDescriptors._pyHallKierAlpha)
-    self._compareImplementations('PP_descrs_regress.rest.2.csv', 31, GraphDescriptors.Kappa1,
-                                 GraphDescriptors._pyKappa1)
-    self._compareImplementations('PP_descrs_regress.rest.2.csv', 32, GraphDescriptors.Kappa2,
-                                 GraphDescriptors._pyKappa2)
-    self._compareImplementations('PP_descrs_regress.csv', 5, GraphDescriptors.Kappa3,
-                                 GraphDescriptors._pyKappa3)
-    self._compareImplementations('PP_descrs_regress.2.csv', 5, GraphDescriptors.Kappa3,
-                                 GraphDescriptors._pyKappa3)
-    self._compareImplementations('PP_descrs_regress.rest.2.csv', 7, GraphDescriptors.Chi0v,
-                                 GraphDescriptors._pyChi0v)
-    self._compareImplementations('PP_descrs_regress.rest.2.csv', 10, GraphDescriptors.Chi1v,
-                                 GraphDescriptors._pyChi1v)
-    self._compareImplementations('PP_descrs_regress.rest.2.csv', 12, GraphDescriptors.Chi2v,
-                                 GraphDescriptors._pyChi2v)
-    self._compareImplementations('PP_descrs_regress.rest.2.csv', 14, GraphDescriptors.Chi3v,
-                                 GraphDescriptors._pyChi3v, molFilter=_skip3rings)
-    self._compareImplementations('PP_descrs_regress.rest.2.csv', 6, GraphDescriptors.Chi0n,
-                                 GraphDescriptors._pyChi0n)
-    self._compareImplementations('PP_descrs_regress.rest.2.csv', 9, GraphDescriptors.Chi1n,
-                                 GraphDescriptors._pyChi1n)
-    self._compareImplementations('PP_descrs_regress.rest.2.csv', 11, GraphDescriptors.Chi2n,
-                                 GraphDescriptors._pyChi2n)
-    self._compareImplementations('PP_descrs_regress.rest.2.csv', 13, GraphDescriptors.Chi3n,
-                                 GraphDescriptors._pyChi3n, molFilter=_skip3rings)
+    self._compareToRegression('PP_descrs_regress.csv', 3, GraphDescriptors.HallKierAlpha)
+    self._compareToRegression('PP_descrs_regress.2.csv', 3, GraphDescriptors.HallKierAlpha)
+    self._compareToRegression('PP_descrs_regress.rest.2.csv', 31, GraphDescriptors.Kappa1)
+    self._compareToRegression('PP_descrs_regress.rest.2.csv', 32, GraphDescriptors.Kappa2)
+    self._compareToRegression('PP_descrs_regress.csv', 5, GraphDescriptors.Kappa3)
+    self._compareToRegression('PP_descrs_regress.2.csv', 5, GraphDescriptors.Kappa3)
+    self._compareToRegression('PP_descrs_regress.rest.2.csv', 7, GraphDescriptors.Chi0v)
+    self._compareToRegression('PP_descrs_regress.rest.2.csv', 10, GraphDescriptors.Chi1v)
+    self._compareToRegression('PP_descrs_regress.rest.2.csv', 12, GraphDescriptors.Chi2v)
+    self._compareToRegression('PP_descrs_regress.rest.2.csv', 14, GraphDescriptors.Chi3v,
+                              molFilter=_skip3rings)
+    self._compareToRegression('PP_descrs_regress.rest.2.csv', 6, GraphDescriptors.Chi0n)
+    self._compareToRegression('PP_descrs_regress.rest.2.csv', 9, GraphDescriptors.Chi1n)
+    self._compareToRegression('PP_descrs_regress.rest.2.csv', 11, GraphDescriptors.Chi2n)
+    self._compareToRegression('PP_descrs_regress.rest.2.csv', 13, GraphDescriptors.Chi3n,
+                              molFilter=_skip3rings)
 
-  def _compareImplementations(self, filename, col, cFunc, pyFunc, molFilter=None):
-    """ Comparison of two implementations.
-    The optional argument molFilter can be used to skip examples. """
+  def _compareToRegression(self, filename, col, func, molFilter=None):
+    """ The optional argument molFilter can be used to skip examples. """
     for lineNum, smi, mol, expected in _regressionData(filename, col):
       if molFilter and molFilter(mol):
         continue
       if feq(expected, 666.0):  # Unavailable data point
         continue
-      cVal = cFunc(mol)
-      pyVal = pyFunc(mol)
-      assert feq(cVal, pyVal,
-                 1e-4), 'line %d, mol %s (c = %f, py = %f)' % (lineNum, smi, cVal, pyVal)
+      val = func(mol)
+      assert feq(val, expected,
+                 1e-4), 'line %d, mol %s (calc = %f, expected = %f)' % (lineNum, smi, val, expected)
+
+  def testDistanceMatrixArguments(self):
+    # passing the matrices the C++ code uses by default gives the same values
+    for smi in ('CCCCC(=O)O', 'c1ccccc1CC(N)C(=O)O', 'C1CC2CCC1C2', 'CC.O', 'C'):
+      m = Chem.MolFromSmiles(smi)
+      topoMat = Chem.GetDistanceMatrix(m, useBO=False, useAtomWts=False, force=True)
+      balabanMat = Chem.GetDistanceMatrix(m, useBO=True, useAtomWts=False, force=True)
+      self.assertAlmostEqual(GraphDescriptors.Ipc(m, dMat=topoMat), GraphDescriptors.Ipc(m))
+      self.assertAlmostEqual(GraphDescriptors.AvgIpc(m, dMat=topoMat.tolist()),
+                             GraphDescriptors.AvgIpc(m))
+      self.assertAlmostEqual(GraphDescriptors.BalabanJ(m, dMat=balabanMat),
+                             GraphDescriptors.BalabanJ(m))
+      self.assertAlmostEqual(GraphDescriptors.BertzCT(m, dMat=balabanMat, forceDMat=0),
+                             GraphDescriptors.BertzCT(m))
+      # forceDMat ignores the matrix that was passed in
+      self.assertAlmostEqual(GraphDescriptors.BalabanJ(m, dMat=topoMat * 2, forceDMat=1),
+                             GraphDescriptors.BalabanJ(m))
+    m = Chem.MolFromSmiles('CCO')
+    with self.assertRaises(ValueError):
+      GraphDescriptors.BalabanJ(m, dMat=numpy.zeros((2, 2)))
 
 
   def testCharacteristicPolynomialLargeGraphs(self):

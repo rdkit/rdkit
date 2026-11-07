@@ -18,6 +18,12 @@
 #include <GraphMol/Descriptors/ConnectivityDescriptors.h>
 #include <GraphMol/Descriptors/MQN.h>
 #include <GraphMol/Descriptors/AUTOCORR2D.h>
+#include <GraphMol/Descriptors/GraphDescriptors.h>
+#include <GraphMol/Descriptors/EState.h>
+#include <GraphMol/Descriptors/MiscDescriptors.h>
+#include <GraphMol/Descriptors/FragmentDescriptors.h>
+#include <GraphMol/Descriptors/QED.h>
+#include <GraphMol/Descriptors/SpacialScore.h>
 
 namespace RDKit {
 class ROMol;
