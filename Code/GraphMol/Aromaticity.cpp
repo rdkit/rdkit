@@ -136,6 +136,62 @@ void makeRingNeighborMap(const VECT_INT_VECT &brings,
   }
 }
 
+VECT_INT_VECT findFusedRingSystems(const VECT_INT_VECT &rings) {
+  const auto nRings = rdcast<int>(rings.size());
+  // For each atom/bond, the rings containing it, in ascending order.
+  std::vector<INT_VECT> ringsWith;
+  for (int ringIdx = 0; ringIdx < nRings; ++ringIdx) {
+    for (auto idx : rings[ringIdx]) {
+      if (idx >= rdcast<int>(ringsWith.size())) {
+        ringsWith.resize(idx + 1);
+      }
+      ringsWith[idx].push_back(ringIdx);
+    }
+  }
+
+  // Returns the lowest-numbered unvisited ring that shares an atom/bond with
+  // ringIdx, or -1. pickFusedRings() visits neighbors in sorted order, so this
+  // is the ring it would visit next.
+  std::vector<size_t> cursors(ringsWith.size(), 0);
+  boost::dynamic_bitset<> done(nRings);
+  auto nextNeighbor = [&](int ringIdx) {
+    int res = -1;
+    for (auto idx : rings[ringIdx]) {
+      const auto &candidates = ringsWith[idx];
+      auto &cursor = cursors[idx];
+      while (cursor < candidates.size() && done[candidates[cursor]]) {
+        ++cursor;
+      }
+      if (cursor < candidates.size() && (res < 0 || candidates[cursor] < res)) {
+        res = candidates[cursor];
+      }
+    }
+    return res;
+  };
+
+  VECT_INT_VECT res;
+  std::vector<int> stack;
+  for (int start = 0; start < nRings; ++start) {
+    if (done[start]) {
+      continue;
+    }
+    INT_VECT fused{start};
+    done[start] = 1;
+    stack.push_back(start);
+    while (!stack.empty()) {
+      if (const auto neighbor = nextNeighbor(stack.back()); neighbor >= 0) {
+        done[neighbor] = 1;
+        fused.push_back(neighbor);
+        stack.push_back(neighbor);
+      } else {
+        stack.pop_back();
+      }
+    }
+    res.push_back(std::move(fused));
+  }
+  return res;
+}
+
 }  // end of namespace RingUtils
 
 // local utility namespace

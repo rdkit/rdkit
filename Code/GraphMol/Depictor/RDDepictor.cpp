@@ -248,17 +248,8 @@ void embedFusedSystems(const RDKit::ROMol &mol,
                        std::list<EmbeddedFrag> &efrags,
                        const RDGeom::INT_POINT2D_MAP *coordMap,
                        bool useRingTemplates) {
-  RDKit::INT_INT_VECT_MAP neighMap;
-  RingUtils::makeRingNeighborMap(arings, neighMap);
-
-  auto cnrs = arings.size();
-  boost::dynamic_bitset<> fusDone(cnrs);
-
-  auto curr = 0u;
-  while (curr < cnrs) {
-    // embed all ring and fused ring systems
-    RDKit::INT_VECT fused;
-    RingUtils::pickFusedRings(curr, neighMap, fused, fusDone);
+  // embed all ring and fused ring systems
+  for (const auto &fused : RingUtils::findFusedRingSystems(arings)) {
     RDKit::VECT_INT_VECT frings;
     frings.reserve(fused.size());
     for (auto rid : fused) {
@@ -282,16 +273,6 @@ void embedFusedSystems(const RDKit::ROMol &mol,
     EmbeddedFrag efrag(&mol, frings, allowRingTemplates);
     efrag.setupNewNeighs();
     efrags.push_back(efrag);
-    size_t rix;
-    for (rix = 0; rix < cnrs; ++rix) {
-      if (!fusDone[rix]) {
-        curr = rix;
-        break;
-      }
-    }
-    if (rix == cnrs) {
-      break;
-    }
   }
 }
 

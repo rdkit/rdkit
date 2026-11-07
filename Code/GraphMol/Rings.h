@@ -71,6 +71,19 @@ RDKIT_GRAPHMOL_EXPORT void makeRingNeighborMap(const VECT_INT_VECT &brings,
                                                unsigned int maxSize = 0,
                                                unsigned int maxOverlapSize = 0);
 
+//! \brief Groups rings that share atoms or bonds into fused ring systems.
+/*!
+  Gives the same result, in the same order, as makeRingNeighborMap() followed
+  by repeated pickFusedRings() calls, but avoids building the quadratic
+  all-pairs ring neighbor map.
+
+  \param rings each ring as a list of atom or bond indices
+
+  \return the fused ring systems, each as a list of ring indices
+*/
+RDKIT_GRAPHMOL_EXPORT VECT_INT_VECT
+findFusedRingSystems(const VECT_INT_VECT &rings);
+
 //! converts a list of atom indices into a list of bond indices
 /*!
 

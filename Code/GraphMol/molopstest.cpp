@@ -595,6 +595,45 @@ TEST_CASE("pickFusedRings handles deeply fused systems without recursion") {
   REQUIRE(fused.back() == numRings - 1);
 }
 
+TEST_CASE("findFusedRingSystems matches makeRingNeighborMap + pickFusedRings") {
+  auto check = [](const VECT_INT_VECT &rings) {
+    INT_INT_VECT_MAP neighMap;
+    RingUtils::makeRingNeighborMap(rings, neighMap);
+    boost::dynamic_bitset<> done(rings.size());
+    VECT_INT_VECT expected;
+    for (int i = 0; i < static_cast<int>(rings.size()); ++i) {
+      if (!done[i]) {
+        RingUtils::pickFusedRings(i, neighMap, expected.emplace_back(), done);
+      }
+    }
+    CHECK(RingUtils::findFusedRingSystems(rings) == expected);
+  };
+
+  SECTION("toy ring lists") {
+    check({});
+    check({{0, 1, 2}});
+    check({{0, 1}, {2, 3}});
+    check({{0, 1}, {1, 2}, {0, 3}, {2, 4}, {5, 6}});
+    check({{0, 1}, {2, 3}, {1, 2}});
+  }
+
+  SECTION("molecules") {
+    for (const auto smiles :
+         {"C1CC12CC2.c1ccccc1", "C12C3C4C1C5C2C3C45",
+          "S1C2=C(C3=CC=CC4=C3C2=CC=C4)C5=C1C6=C7C(=CC=C6)C=CC=C57",
+          "c1(cc2)ccc2-c(cc2)ccc2-c(cc2)ccc2-c(cc2)ccc2-c(cc2)ccc2-1"}) {
+      INFO(smiles);
+      auto m = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(m);
+      VECT_INT_VECT atomRings, bondRings;
+      MolOps::symmetrizeSSSR(*m, atomRings);
+      RingUtils::convertToBonds(atomRings, bondRings, *m);
+      check(atomRings);
+      check(bondRings);
+    }
+  }
+}
+
 TEST_CASE("test4") {
   auto m = "C=C"_smiles;
   REQUIRE(m);
