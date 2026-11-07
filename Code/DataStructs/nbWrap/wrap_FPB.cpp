@@ -12,11 +12,22 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/vector.h>
+#include <RDBoost/Wrap_nb.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
 using namespace RDKit;
+
+using SimilarityNeighbor = nb::typed<nb::tuple, double, unsigned int>;
+using TupleOfSimilarityNeighbors = PyTupleOf<SimilarityNeighbor>;
+using MultiSimilarityNeighbor =
+    nb::typed<nb::tuple, double, unsigned int, unsigned int>;
+using TupleOfMultiSimilarityNeighbors = PyTupleOf<MultiSimilarityNeighbor>;
+using NeighborIndexPair = nb::typed<nb::tuple, unsigned int, unsigned int>;
+using TupleOfNeighborIndexPairs = PyTupleOf<NeighborIndexPair>;
+using FingerprintAndId = nb::typed<nb::tuple, ExplicitBitVect, std::string>;
 
 namespace {
 const std::uint8_t *bytesToFP(const nb::bytes &bytes) {
@@ -27,8 +38,9 @@ nb::tuple toTuple(const nb::list &l) {
   return nb::steal<nb::tuple>(PySequence_Tuple(l.ptr()));
 }
 
-nb::tuple taniNbrHelper(const FPBReader *self, const nb::bytes &bytes,
-                        double threshold) {
+TupleOfSimilarityNeighbors taniNbrHelper(const FPBReader *self,
+                                         const nb::bytes &bytes,
+                                         double threshold) {
   const auto *bv = bytesToFP(bytes);
   std::vector<std::pair<double, unsigned int>> nbrs =
       self->getTanimotoNeighbors(bv, threshold);
@@ -36,11 +48,12 @@ nb::tuple taniNbrHelper(const FPBReader *self, const nb::bytes &bytes,
   for (auto &nbr : nbrs) {
     result.append(nb::make_tuple(nbr.first, nbr.second));
   }
-  return toTuple(result);
+  return TupleOfSimilarityNeighbors(toTuple(result));
 }
 
-nb::tuple tverskyNbrHelper(const FPBReader *self, const nb::bytes &bytes,
-                           double ca, double cb, double threshold) {
+TupleOfSimilarityNeighbors tverskyNbrHelper(const FPBReader *self,
+                                            const nb::bytes &bytes, double ca,
+                                            double cb, double threshold) {
   const auto *bv = bytesToFP(bytes);
   std::vector<std::pair<double, unsigned int>> nbrs =
       self->getTverskyNeighbors(bv, ca, cb, threshold);
@@ -48,21 +61,24 @@ nb::tuple tverskyNbrHelper(const FPBReader *self, const nb::bytes &bytes,
   for (auto &nbr : nbrs) {
     result.append(nb::make_tuple(nbr.first, nbr.second));
   }
-  return toTuple(result);
+  return TupleOfSimilarityNeighbors(toTuple(result));
 }
 
-nb::tuple containingNbrHelper(const FPBReader *self, const nb::bytes &bytes) {
+PyTupleOf<unsigned int> containingNbrHelper(const FPBReader *self,
+                                            const nb::bytes &bytes) {
   const auto *bv = bytesToFP(bytes);
   std::vector<unsigned int> nbrs = self->getContainingNeighbors(bv);
   nb::list result;
   for (auto &nbr : nbrs) {
     result.append(nbr);
   }
-  return toTuple(result);
+  return PyTupleOf<unsigned int>(toTuple(result));
 }
 
-nb::tuple multiTaniNbrHelper(const MultiFPBReader *self, const nb::bytes &bytes,
-                             double threshold, unsigned int numThreads) {
+TupleOfMultiSimilarityNeighbors multiTaniNbrHelper(const MultiFPBReader *self,
+                                                   const nb::bytes &bytes,
+                                                   double threshold,
+                                                   unsigned int numThreads) {
   const auto *bv = bytesToFP(bytes);
   std::vector<MultiFPBReader::ResultTuple> nbrs =
       self->getTanimotoNeighbors(bv, threshold, numThreads);
@@ -71,12 +87,12 @@ nb::tuple multiTaniNbrHelper(const MultiFPBReader *self, const nb::bytes &bytes,
     result.append(
         nb::make_tuple(std::get<0>(nbr), std::get<1>(nbr), std::get<2>(nbr)));
   }
-  return toTuple(result);
+  return TupleOfMultiSimilarityNeighbors(toTuple(result));
 }
 
-nb::tuple multiTverskyNbrHelper(const MultiFPBReader *self,
-                                const nb::bytes &bytes, double ca, double cb,
-                                double threshold, unsigned int numThreads) {
+TupleOfMultiSimilarityNeighbors multiTverskyNbrHelper(
+    const MultiFPBReader *self, const nb::bytes &bytes, double ca, double cb,
+    double threshold, unsigned int numThreads) {
   const auto *bv = bytesToFP(bytes);
   std::vector<MultiFPBReader::ResultTuple> nbrs =
       self->getTverskyNeighbors(bv, ca, cb, threshold, numThreads);
@@ -85,12 +101,12 @@ nb::tuple multiTverskyNbrHelper(const MultiFPBReader *self,
     result.append(
         nb::make_tuple(std::get<0>(nbr), std::get<1>(nbr), std::get<2>(nbr)));
   }
-  return toTuple(result);
+  return TupleOfMultiSimilarityNeighbors(toTuple(result));
 }
 
-nb::tuple multiContainingNbrHelper(const MultiFPBReader *self,
-                                   const nb::bytes &bytes,
-                                   unsigned int numThreads) {
+TupleOfNeighborIndexPairs multiContainingNbrHelper(const MultiFPBReader *self,
+                                                   const nb::bytes &bytes,
+                                                   unsigned int numThreads) {
   const auto *bv = bytesToFP(bytes);
   std::vector<std::pair<unsigned int, unsigned int>> nbrs =
       self->getContainingNeighbors(bv, numThreads);
@@ -98,7 +114,7 @@ nb::tuple multiContainingNbrHelper(const MultiFPBReader *self,
   for (auto &nbr : nbrs) {
     result.append(nb::make_tuple(nbr.first, nbr.second));
   }
-  return toTuple(result);
+  return TupleOfNeighborIndexPairs(toTuple(result));
 }
 
 nb::bytes getBytesHelper(const FPBReader *self, unsigned int which) {
@@ -120,12 +136,12 @@ ExplicitBitVect getFPHelper(const FPBReader *self, unsigned int which) {
   return *fp;
 }
 
-nb::tuple getItemHelper(const FPBReader *self, unsigned int which) {
+FingerprintAndId getItemHelper(const FPBReader *self, unsigned int which) {
   std::pair<boost::shared_ptr<ExplicitBitVect>, std::string> v = (*self)[which];
   if (!v.first) {
     throw nb::value_error("null fingerprint pointer");
   }
-  return nb::make_tuple(*v.first, v.second);
+  return FingerprintAndId(nb::make_tuple(*v.first, v.second));
 }
 
 double getTverskyHelper(const FPBReader *self, unsigned int which,
@@ -143,8 +159,11 @@ struct FPB_wrapper {
     change in future releases.
 )DOC";
     nb::class_<FPBReader>(m, "FPBReader", FPBReaderClassDoc.c_str())
-        .def(nb::init<const std::string &, bool>(), "filename"_a,
-             "lazy"_a = false, R"DOC(docstring)DOC")
+        .def(
+            "__init__",
+            [](FPBReader *self, const std::filesystem::path &filename,
+               bool lazy) { new (self) FPBReader(filename.string(), lazy); },
+            "filename"_a, "lazy"_a = false, R"DOC(docstring)DOC")
         .def("Init", &FPBReader::init,
              R"DOC(Read the fingerprints from the file. This can take a while.
 )DOC")

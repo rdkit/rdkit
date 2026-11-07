@@ -12,10 +12,13 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
+#include <nanobind/stl/map.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/pair.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/optional.h>
+#include <nanobind/stl/variant.h>
+#include <nanobind/stl/filesystem.h>
 
 #include <RDGeneral/types.h>
 #include <GraphMol/RDKitBase.h>
@@ -36,7 +39,6 @@
 
 #include <RDBoost/Wrap_nb.h>
 #include <RDGeneral/Exceptions.h>
-#include <RDGeneral/BadFileException.h>
 #include <GraphMol/SanitException.h>
 #include <string.h>
 
@@ -45,26 +47,16 @@ using namespace nb::literals;
 using namespace RDKit;
 
 namespace RDKit {
-std::string pyObjectToString(nb::object input) {
-  if (nb::isinstance<nb::str>(input)) {
-    return nb::cast<std::string>(input);
-  } else if (nb::isinstance<nb::bytes>(input)) {
-    nb::bytes b = nb::cast<nb::bytes>(input);
-    return std::string(static_cast<const char *>(b.data()),
-                       static_cast<size_t>(b.size()));
-  }
-  std::wstring ws = nb::cast<std::wstring>(input);
-  return std::string(ws.begin(), ws.end());
-}
+// Return annotation for sequences of molecules; renders as "tuple[Mol, ...]".
+using TupleOfMol = PyTupleOf<ROMol *>;
 
-ROMol *MolFromSmiles(nb::object ismiles, bool sanitize, nb::dict replDict) {
-  std::map<std::string, std::string> replacements;
-  const auto items = replDict.items();
-  for (unsigned int i = 0; i < nb::len(items); ++i) {
-    const auto item = items[i];
-    replacements[nb::cast<std::string>(item[0])] =
-        nb::cast<std::string>(item[1]);
-  }
+// Return annotation for the PNG helpers, which hand back binary data in an
+// object holding bytes; renders as "bytes".
+using BytesObject = nb::typed<nb::object, nb::bytes>;
+
+Nullable<ROMol *> MolFromSmiles(
+    const StringOrBytes &ismiles, bool sanitize,
+    std::map<std::string, std::string> replacements) {
   RWMol *newM;
   std::string smiles = pyObjectToString(ismiles);
   try {
@@ -75,14 +67,9 @@ ROMol *MolFromSmiles(nb::object ismiles, bool sanitize, nb::dict replDict) {
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromSmarts(nb::object ismarts, bool mergeHs, nb::dict replDict) {
-  std::map<std::string, std::string> replacements;
-  const auto items = replDict.items();
-  for (unsigned int i = 0; i < nb::len(items); ++i) {
-    const auto item = items[i];
-    replacements[nb::cast<std::string>(item[0])] =
-        nb::cast<std::string>(item[1]);
-  }
+Nullable<ROMol *> MolFromSmarts(
+    const StringOrBytes &ismarts, bool mergeHs,
+    std::map<std::string, std::string> replacements) {
   std::string smarts = pyObjectToString(ismarts);
 
   RWMol *newM;
@@ -93,11 +80,12 @@ ROMol *MolFromSmarts(nb::object ismarts, bool mergeHs, nb::dict replDict) {
   }
   return static_cast<ROMol *>(newM);
 }
-ROMol *MolFromTPLFile(const std::string &filename, bool sanitize = true,
-                      bool skipFirstConf = false) {
+Nullable<ROMol *> MolFromTPLFile(const std::filesystem::path &filename,
+                                 bool sanitize = true,
+                                 bool skipFirstConf = false) {
   RWMol *newM;
   try {
-    newM = TPLFileToMol(filename, sanitize, skipFirstConf);
+    newM = TPLFileToMol(filename.string(), sanitize, skipFirstConf);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -107,8 +95,9 @@ ROMol *MolFromTPLFile(const std::string &filename, bool sanitize = true,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromTPLBlock(nb::object itplBlock, bool sanitize = true,
-                       bool skipFirstConf = false) {
+Nullable<ROMol *> MolFromTPLBlock(const StringOrBytes &itplBlock,
+                                  bool sanitize = true,
+                                  bool skipFirstConf = false) {
   std::istringstream inStream(pyObjectToString(itplBlock));
   unsigned int line = 0;
   RWMol *newM;
@@ -120,23 +109,8 @@ ROMol *MolFromTPLBlock(nb::object itplBlock, bool sanitize = true,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMolFileHelper(const std::string &molFilename, bool sanitize,
-                            bool removeHs, bool strictParsing) {
-  RWMol *newM = nullptr;
-  try {
-    newM = MolFileToMol(molFilename, sanitize, removeHs, strictParsing);
-  } catch (RDKit::BadFileException &e) {
-    PyErr_SetString(PyExc_IOError, e.what());
-    throw nb::python_error();
-  } catch (RDKit::FileParseException &e) {
-    BOOST_LOG(rdWarningLog) << e.what() << std::endl;
-  } catch (...) {
-  }
-  return static_cast<ROMol *>(newM);
-}
-
-ROMol *MolFromMolBlock(nb::object imolBlock, bool sanitize, bool removeHs,
-                       bool strictParsing) {
+Nullable<ROMol *> MolFromMolBlock(const StringOrBytes &imolBlock, bool sanitize,
+                                  bool removeHs, bool strictParsing) {
   std::istringstream inStream(pyObjectToString(imolBlock));
   unsigned int line = 0;
   RWMol *newM = nullptr;
@@ -150,11 +124,13 @@ ROMol *MolFromMolBlock(nb::object imolBlock, bool sanitize, bool removeHs,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMolFile(const std::string &molFilename, bool sanitize,
-                      bool removeHs, bool strictParsing) {
+Nullable<ROMol *> MolFromMolFile(const std::filesystem::path &molFilename,
+                                 bool sanitize, bool removeHs,
+                                 bool strictParsing) {
   RWMol *newM = nullptr;
   try {
-    newM = MolFileToMol(molFilename, sanitize, removeHs, strictParsing);
+    newM =
+        MolFileToMol(molFilename.string(), sanitize, removeHs, strictParsing);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -165,13 +141,13 @@ ROMol *MolFromMolFile(const std::string &molFilename, bool sanitize,
   return static_cast<ROMol *>(newM);
 }
 
-RDKit::ROMol *MolFromSCSRBlock(
-    const std::string &molBlock, bool sanitize, bool removeHs,
+Nullable<ROMol *> MolFromSCSRBlock(
+    const StringOrBytes &molBlock, bool sanitize, bool removeHs,
     std::optional<RDKit::v2::FileParsers::MolFromSCSRParams> pyparams) {
   auto scsrParams = pyparams.has_value()
                         ? *pyparams
                         : RDKit::v2::FileParsers::MolFromSCSRParams();
-  std::istringstream inStream(molBlock);
+  std::istringstream inStream(pyObjectToString(molBlock));
   unsigned int line = 0;
   try {
     RDKit::v2::FileParsers::MolFileParserParams params;
@@ -190,8 +166,8 @@ RDKit::ROMol *MolFromSCSRBlock(
   return static_cast<ROMol *>(nullptr);
 }
 
-RDKit::ROMol *MolFromSCSRFile(
-    const std::string &molFilename, bool sanitize, bool removeHs,
+Nullable<ROMol *> MolFromSCSRFile(
+    const std::filesystem::path &molFilename, bool sanitize, bool removeHs,
     std::optional<RDKit::v2::FileParsers::MolFromSCSRParams> pyparams) {
   auto scsrParams = pyparams.has_value()
                         ? *pyparams
@@ -201,8 +177,8 @@ RDKit::ROMol *MolFromSCSRFile(
     params.sanitize = sanitize;
     params.removeHs = removeHs;
     params.strictParsing = false;
-    auto mol = RDKit::v2::FileParsers::MolFromSCSRFile(molFilename, params,
-                                                       scsrParams);
+    auto mol = RDKit::v2::FileParsers::MolFromSCSRFile(molFilename.string(),
+                                                       params, scsrParams);
 
     return static_cast<ROMol *>(mol.release());
 
@@ -216,11 +192,11 @@ RDKit::ROMol *MolFromSCSRFile(
   return static_cast<ROMol *>(nullptr);
 }
 
-ROMol *MolFromMrvFile(const std::string &molFilename, bool sanitize,
-                      bool removeHs) {
+Nullable<ROMol *> MolFromMrvFile(const std::filesystem::path &molFilename,
+                                 bool sanitize, bool removeHs) {
   RWMol *newM = nullptr;
   try {
-    newM = MrvFileToMol(molFilename, sanitize, removeHs);
+    newM = MrvFileToMol(molFilename.string(), sanitize, removeHs);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -231,7 +207,8 @@ ROMol *MolFromMrvFile(const std::string &molFilename, bool sanitize,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMrvBlock(nb::object imolBlock, bool sanitize, bool removeHs) {
+Nullable<ROMol *> MolFromMrvBlock(const StringOrBytes &imolBlock, bool sanitize,
+                                  bool removeHs) {
   std::istringstream inStream(pyObjectToString(imolBlock));
   RWMol *newM = nullptr;
   try {
@@ -243,7 +220,7 @@ ROMol *MolFromMrvBlock(nb::object imolBlock, bool sanitize, bool removeHs) {
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromXYZFile(const char *xyzFilename) {
+Nullable<ROMol *> MolFromXYZFile(const char *xyzFilename) {
   RWMol *newM = nullptr;
   try {
     newM = XYZFileToMol(xyzFilename);
@@ -254,7 +231,7 @@ ROMol *MolFromXYZFile(const char *xyzFilename) {
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromXYZBlock(nb::object ixyzBlock) {
+Nullable<ROMol *> MolFromXYZBlock(const StringOrBytes &ixyzBlock) {
   std::istringstream inStream(pyObjectToString(ixyzBlock));
   RWMol *newM = nullptr;
   try {
@@ -266,18 +243,20 @@ ROMol *MolFromXYZBlock(nb::object ixyzBlock) {
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromSVG(nb::object imolBlock, bool sanitize, bool removeHs) {
+Nullable<ROMol *> MolFromSVG(const StringOrBytes &imolBlock, bool sanitize,
+                             bool removeHs) {
   RWMol *res = nullptr;
   res = RDKitSVGToMol(pyObjectToString(imolBlock), sanitize, removeHs);
   return static_cast<ROMol *>(res);
 }
 
-ROMol *MolFromMol2File(const std::string &molFilename, bool sanitize = true,
-                       bool removeHs = true, bool cleanupSubstructures = true) {
+Nullable<ROMol *> MolFromMol2File(const std::filesystem::path &molFilename,
+                                  bool sanitize = true, bool removeHs = true,
+                                  bool cleanupSubstructures = true) {
   RWMol *newM;
   try {
-    newM = Mol2FileToMol(molFilename, sanitize, removeHs, Mol2Type::CORINA,
-                         cleanupSubstructures);
+    newM = Mol2FileToMol(molFilename.string(), sanitize, removeHs,
+                         Mol2Type::CORINA, cleanupSubstructures);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -287,10 +266,10 @@ ROMol *MolFromMol2File(const std::string &molFilename, bool sanitize = true,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromMol2Block(std::string mol2Block, bool sanitize = true,
-                        bool removeHs = true,
-                        bool cleanupSubstructures = true) {
-  std::istringstream inStream(mol2Block);
+Nullable<ROMol *> MolFromMol2Block(const StringOrBytes &mol2Block,
+                                   bool sanitize = true, bool removeHs = true,
+                                   bool cleanupSubstructures = true) {
+  std::istringstream inStream(pyObjectToString(mol2Block));
   RWMol *newM;
   try {
     newM = Mol2DataStreamToMol(inStream, sanitize, removeHs, Mol2Type::CORINA,
@@ -301,11 +280,13 @@ ROMol *MolFromMol2Block(std::string mol2Block, bool sanitize = true,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromPDBFile(const std::string &filename, bool sanitize, bool removeHs,
-                      unsigned int flavor, bool proximityBonding) {
+Nullable<ROMol *> MolFromPDBFile(const std::filesystem::path &filename,
+                                 bool sanitize, bool removeHs,
+                                 unsigned int flavor, bool proximityBonding) {
   RWMol *newM = nullptr;
   try {
-    newM = PDBFileToMol(filename, sanitize, removeHs, flavor, proximityBonding);
+    newM = PDBFileToMol(filename.string(), sanitize, removeHs, flavor,
+                        proximityBonding);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -316,8 +297,9 @@ ROMol *MolFromPDBFile(const std::string &filename, bool sanitize, bool removeHs,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromPDBBlock(nb::object molBlock, bool sanitize, bool removeHs,
-                       unsigned int flavor, bool proximityBonding) {
+Nullable<ROMol *> MolFromPDBBlock(const StringOrBytes &molBlock, bool sanitize,
+                                  bool removeHs, unsigned int flavor,
+                                  bool proximityBonding) {
   std::istringstream inStream(pyObjectToString(molBlock));
   RWMol *newM = nullptr;
   try {
@@ -330,7 +312,8 @@ ROMol *MolFromPDBBlock(nb::object molBlock, bool sanitize, bool removeHs,
   return static_cast<ROMol *>(newM);
 }
 
-ROMol *MolFromSequence(nb::object seq, bool sanitize, int flavor) {
+Nullable<ROMol *> MolFromSequence(const StringOrBytes &seq, bool sanitize,
+                                  int flavor) {
   RWMol *newM = nullptr;
   try {
     newM = SequenceToMol(pyObjectToString(seq), sanitize, flavor);
@@ -340,7 +323,8 @@ ROMol *MolFromSequence(nb::object seq, bool sanitize, int flavor) {
   }
   return static_cast<ROMol *>(newM);
 }
-ROMol *MolFromFASTA(nb::object seq, bool sanitize, int flavor) {
+Nullable<ROMol *> MolFromFASTA(const StringOrBytes &seq, bool sanitize,
+                               int flavor) {
   RWMol *newM = nullptr;
   try {
     newM = FASTAToMol(pyObjectToString(seq), sanitize, flavor);
@@ -350,7 +334,7 @@ ROMol *MolFromFASTA(nb::object seq, bool sanitize, int flavor) {
   }
   return static_cast<ROMol *>(newM);
 }
-ROMol *MolFromHELM(nb::object seq, bool sanitize) {
+Nullable<ROMol *> MolFromHELM(const StringOrBytes &seq, bool sanitize) {
   RWMol *newM = nullptr;
   try {
     newM = HELMToMol(pyObjectToString(seq), sanitize);
@@ -361,9 +345,10 @@ ROMol *MolFromHELM(nb::object seq, bool sanitize) {
   return static_cast<ROMol *>(newM);
 }
 
-std::string molFragmentToSmarts(const ROMol &mol, nb::object atomsToUse,
-                                nb::object bondsToUse,
-                                bool doIsomericSmarts = true) {
+std::string molFragmentToSmarts(
+    const ROMol &mol, const PyIterableOf<int> &atomsToUse,
+    const std::optional<PyIterableOf<int>> &bondsToUse,
+    bool doIsomericSmarts = true) {
   auto atomIndices =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!atomIndices) {
@@ -375,9 +360,10 @@ std::string molFragmentToSmarts(const ROMol &mol, nb::object atomsToUse,
                                     doIsomericSmarts);
 }
 
-std::string molFragmentToCXSmarts(const ROMol &mol, nb::object atomsToUse,
-                                  nb::object bondsToUse,
-                                  bool doIsomericSmarts = true) {
+std::string molFragmentToCXSmarts(
+    const ROMol &mol, const PyIterableOf<int> &atomsToUse,
+    const std::optional<PyIterableOf<int>> &bondsToUse,
+    bool doIsomericSmarts = true) {
   auto atomIndices =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!atomIndices) {
@@ -412,8 +398,11 @@ struct cxsmilesfrag_gen {
 
 template <typename F>
 std::string MolFragmentToSmilesHelper1(
-    const ROMol &mol, const SmilesWriteParams &params, nb::object atomsToUse,
-    nb::object bondsToUse, nb::object atomSymbols, nb::object bondSymbols) {
+    const ROMol &mol, const SmilesWriteParams &params,
+    const PyIterableOf<int> &atomsToUse,
+    const std::optional<PyIterableOf<int>> &bondsToUse,
+    const std::optional<PyIterableOf<std::string>> &atomSymbols,
+    const std::optional<PyIterableOf<std::string>> &bondSymbols) {
   auto avect =
       pythonObjectToVect(atomsToUse, static_cast<int>(mol.getNumAtoms()));
   if (!avect.get() || !(avect->size())) {
@@ -439,10 +428,12 @@ std::string MolFragmentToSmilesHelper1(
 
 template <typename F>
 std::string MolFragmentToSmilesHelper2(
-    const ROMol &mol, nb::object atomsToUse, nb::object bondsToUse,
-    nb::object atomSymbols, nb::object bondSymbols, bool doIsomericSmiles,
-    bool doKekule, int rootedAtAtom, bool canonical, bool allBondsExplicit,
-    bool allHsExplicit) {
+    const ROMol &mol, const PyIterableOf<int> &atomsToUse,
+    const std::optional<PyIterableOf<int>> &bondsToUse,
+    const std::optional<PyIterableOf<std::string>> &atomSymbols,
+    const std::optional<PyIterableOf<std::string>> &bondSymbols,
+    bool doIsomericSmiles, bool doKekule, int rootedAtAtom, bool canonical,
+    bool allBondsExplicit, bool allHsExplicit) {
   SmilesWriteParams ps;
   ps.doIsomericSmiles = doIsomericSmiles;
   ps.doKekule = doKekule;
@@ -468,8 +459,10 @@ std::vector<unsigned int> CanonicalRankAtoms(
 }
 
 std::vector<int> CanonicalRankAtomsInFragment(
-    const ROMol &mol, nb::object atomsToUse, nb::object bondsToUse,
-    nb::object atomSymbols, bool breakTies = true, bool includeChirality = true,
+    const ROMol &mol, const PyIterableOf<int> &atomsToUse,
+    const std::optional<PyIterableOf<int>> &bondsToUse,
+    const std::optional<PyIterableOf<std::string>> &atomSymbols,
+    bool breakTies = true, bool includeChirality = true,
     bool includeIsotopes = true, bool includeAtomMaps = true,
     bool includeChiralPresence = false) {
   std::unique_ptr<std::vector<int>> avect =
@@ -513,8 +506,8 @@ std::vector<int> CanonicalRankAtomsInFragment(
   return resRanks;
 }
 
-ROMol *MolFromSmilesHelper(nb::object ismiles,
-                           const SmilesParserParams &params) {
+Nullable<ROMol *> MolFromSmilesHelper(const StringOrBytes &ismiles,
+                                      const SmilesParserParams &params) {
   std::string smiles = pyObjectToString(ismiles);
 
   try {
@@ -524,8 +517,8 @@ ROMol *MolFromSmilesHelper(nb::object ismiles,
   }
 }
 
-ROMol *MolFromSmartsHelper(nb::object ismiles,
-                           const SmartsParserParams &params) {
+Nullable<ROMol *> MolFromSmartsHelper(const StringOrBytes &ismiles,
+                                      const SmartsParserParams &params) {
   std::string smiles = pyObjectToString(ismiles);
 
   try {
@@ -535,28 +528,28 @@ ROMol *MolFromSmartsHelper(nb::object ismiles,
   }
 }
 
-nb::list MolToRandomSmilesHelper(const ROMol &mol, unsigned int numSmiles,
-                                 unsigned int randomSeed, bool doIsomericSmiles,
-                                 bool doKekule, bool allBondsExplicit,
-                                 bool allHsExplicit) {
+nb::typed<nb::list, std::string> MolToRandomSmilesHelper(
+    const ROMol &mol, unsigned int numSmiles, unsigned int randomSeed,
+    bool doIsomericSmiles, bool doKekule, bool allBondsExplicit,
+    bool allHsExplicit) {
   auto res = MolToRandomSmilesVect(mol, numSmiles, randomSeed, doIsomericSmiles,
                                    doKekule, allBondsExplicit, allHsExplicit);
   nb::list pyres;
   for (auto smi : res) {
     pyres.append(smi);
   }
-  return pyres;
+  return nb::typed<nb::list, std::string>(pyres);
 }
 
-ROMol *MolFromPNGFile(const std::string &filename,
-                      SmilesParserParams *pyParams) {
+Nullable<ROMol *> MolFromPNGFile(const std::filesystem::path &filename,
+                                 SmilesParserParams *pyParams) {
   SmilesParserParams params;
   if (pyParams) {
     params = *pyParams;
   }
   ROMol *newM = nullptr;
   try {
-    newM = PNGFileToMol(filename, params);
+    newM = PNGFileToMol(filename.string(), params);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -567,7 +560,7 @@ ROMol *MolFromPNGFile(const std::string &filename,
   return newM;
 }
 
-ROMol *MolFromPNGString(nb::bytes png, SmilesParserParams *params) {
+Nullable<ROMol *> MolFromPNGString(nb::bytes png, SmilesParserParams *params) {
   ROMol *newM = nullptr;
   try {
     std::string pngStr(static_cast<const char *>(png.data()), png.size());
@@ -579,19 +572,20 @@ ROMol *MolFromPNGString(nb::bytes png, SmilesParserParams *params) {
   return newM;
 }
 
-nb::object addMolToPNGFileHelperParams(const ROMol &mol,
-                                       const std::string &fname,
-                                       const PNGMetadataParams &params) {
-  auto res = addMolToPNGFile(mol, fname, params);
+BytesObject addMolToPNGFileHelperParams(const ROMol &mol,
+                                        const std::filesystem::path &fname,
+                                        const PNGMetadataParams &params) {
+  auto res = addMolToPNGFile(mol, fname.string(), params);
 
   nb::object retval = nb::object(nb::steal<nb::object>(
       PyBytes_FromStringAndSize(res.c_str(), res.length())));
-  return retval;
+  return BytesObject(retval);
 }
 
-nb::object addMolToPNGFileHelper(const ROMol &mol, const std::string &fname,
-                                 bool includePkl, bool includeSmiles,
-                                 bool includeMol) {
+BytesObject addMolToPNGFileHelper(const ROMol &mol,
+                                  const std::filesystem::path &fname,
+                                  bool includePkl, bool includeSmiles,
+                                  bool includeMol) {
   PNGMetadataParams params;
   params.includePkl = includePkl;
   params.includeSmiles = includeSmiles;
@@ -599,19 +593,19 @@ nb::object addMolToPNGFileHelper(const ROMol &mol, const std::string &fname,
   return addMolToPNGFileHelperParams(mol, fname, params);
 }
 
-nb::object addMolToPNGStringHelperParams(const ROMol &mol, nb::bytes png,
-                                         const PNGMetadataParams &params) {
+BytesObject addMolToPNGStringHelperParams(const ROMol &mol, nb::bytes png,
+                                          const PNGMetadataParams &params) {
   std::string pngStr(static_cast<const char *>(png.data()), png.size());
   auto res = addMolToPNGString(mol, pngStr, params);
 
   nb::object retval = nb::object(nb::steal<nb::object>(
       PyBytes_FromStringAndSize(res.c_str(), res.length())));
-  return retval;
+  return BytesObject(retval);
 }
 
-nb::object addMolToPNGStringHelper(const ROMol &mol, nb::bytes png,
-                                   bool includePkl, bool includeSmiles,
-                                   bool includeMol) {
+BytesObject addMolToPNGStringHelper(const ROMol &mol, nb::bytes png,
+                                    bool includePkl, bool includeSmiles,
+                                    bool includeMol) {
   PNGMetadataParams params;
   params.includePkl = includePkl;
   params.includeSmiles = includeSmiles;
@@ -620,7 +614,7 @@ nb::object addMolToPNGStringHelper(const ROMol &mol, nb::bytes png,
 }
 
 std::vector<std::pair<std::string, std::string>> dictToMetadata(
-    nb::dict pymetadata) {
+    const PyDictOf<std::string, std::string> &pymetadata) {
   std::vector<std::pair<std::string, std::string>> metadata;
 
   for (const auto &[k, v] : pymetadata) {
@@ -637,16 +631,18 @@ std::vector<std::pair<std::string, std::string>> dictToMetadata(
   return metadata;
 }
 
-nb::object addMetadataToPNGFileHelper(nb::dict pymetadata,
-                                      const std::string &fname) {
+BytesObject addMetadataToPNGFileHelper(
+    const PyDictOf<std::string, std::string> &pymetadata,
+    const std::filesystem::path &fname) {
   auto metadata = dictToMetadata(pymetadata);
 
-  auto res = addMetadataToPNGFile(fname, metadata);
+  auto res = addMetadataToPNGFile(fname.string(), metadata);
 
   nb::bytes retval(res.c_str(), res.length());
-  return retval;
+  return BytesObject(retval);
 }
-nb::bytes addMetadataToPNGStringHelper(nb::dict pymetadata, nb::bytes png) {
+nb::bytes addMetadataToPNGStringHelper(
+    const PyDictOf<std::string, std::string> &pymetadata, nb::bytes png) {
   auto metadata = dictToMetadata(pymetadata);
   std::string pngStr(static_cast<const char *>(png.data()), png.size());
   auto res = addMetadataToPNGString(pngStr, metadata);
@@ -655,12 +651,12 @@ nb::bytes addMetadataToPNGStringHelper(nb::dict pymetadata, nb::bytes png) {
   return retval;
 }
 
-nb::object MolsFromPNGFile(const std::string &filename, const std::string &tag,
-                           SmilesParserParams *params) {
+TupleOfMol MolsFromPNGFile(const std::filesystem::path &filename,
+                           const std::string &tag, SmilesParserParams *params) {
   std::vector<std::unique_ptr<ROMol>> mols;
   try {
-    mols =
-        PNGFileToMols(filename, tag, params ? *params : SmilesParserParams());
+    mols = PNGFileToMols(filename.string(), tag,
+                         params ? *params : SmilesParserParams());
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -674,11 +670,11 @@ nb::object MolsFromPNGFile(const std::string &filename, const std::string &tag,
     std::shared_ptr<ROMol> sptr(mol.release());
     res.append(sptr);
   }
-  return nb::tuple(res);
+  return TupleOfMol(nb::tuple(res));
 }
 
-nb::tuple MolsFromPNGString(nb::bytes png, const std::string &tag,
-                            SmilesParserParams *params) {
+TupleOfMol MolsFromPNGString(nb::bytes png, const std::string &tag,
+                             SmilesParserParams *params) {
   std::string pngStr(static_cast<const char *>(png.data()), png.size());
   auto mols =
       PNGStringToMols(pngStr, tag, params ? *params : SmilesParserParams());
@@ -688,14 +684,14 @@ nb::tuple MolsFromPNGString(nb::bytes png, const std::string &tag,
     std::shared_ptr<ROMol> sptr(mol.release());
     res.append(sptr);
   }
-  return nb::tuple(res);
+  return TupleOfMol(nb::tuple(res));
 }
 
-nb::object MolsFromCDXMLFile(const std::string &filename, bool sanitize,
-                             bool removeHs) {
+TupleOfMol MolsFromCDXMLFile(const std::filesystem::path &filename,
+                             bool sanitize, bool removeHs) {
   std::vector<std::unique_ptr<RWMol>> mols;
   try {
-    mols = CDXMLFileToMols(filename, sanitize, removeHs);
+    mols = CDXMLFileToMols(filename.string(), sanitize, removeHs);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -709,11 +705,12 @@ nb::object MolsFromCDXMLFile(const std::string &filename, bool sanitize,
     std::shared_ptr<ROMol> sptr(static_cast<ROMol *>(mol.release()));
     res.append(sptr);
   }
-  return nb::tuple(res);
+  return TupleOfMol(nb::tuple(res));
 }
 
-nb::tuple MolsFromCDXMLHelper(
-    nb::object cdxml, RDKit::v2::CDXMLParser::CDXMLParserParams *pyParams) {
+TupleOfMol MolsFromCDXMLHelper(
+    const StringOrBytes &cdxml,
+    RDKit::v2::CDXMLParser::CDXMLParserParams *pyParams) {
   RDKit::v2::CDXMLParser::CDXMLParserParams params;
   if (pyParams) {
     params = *pyParams;
@@ -726,11 +723,11 @@ nb::tuple MolsFromCDXMLHelper(
     std::shared_ptr<ROMol> sptr(static_cast<ROMol *>(mol.release()));
     res.append(sptr);
   }
-  return nb::tuple(res);
+  return TupleOfMol(nb::tuple(res));
 }
 
-nb::object MolsFromCDXMLFileHelper(
-    const std::string &filename,
+TupleOfMol MolsFromCDXMLFileHelper(
+    const std::filesystem::path &filename,
     RDKit::v2::CDXMLParser::CDXMLParserParams *pyParams) {
   RDKit::v2::CDXMLParser::CDXMLParserParams params(
       true, true, RDKit::v2::CDXMLParser::CDXMLFormat::Auto);
@@ -739,7 +736,7 @@ nb::object MolsFromCDXMLFileHelper(
   }
   std::vector<std::unique_ptr<RWMol>> mols;
   try {
-    mols = RDKit::v2::CDXMLParser::MolsFromCDXMLFile(filename, params);
+    mols = RDKit::v2::CDXMLParser::MolsFromCDXMLFile(filename.string(), params);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -753,10 +750,11 @@ nb::object MolsFromCDXMLFileHelper(
     std::shared_ptr<ROMol> sptr(static_cast<ROMol *>(mol.release()));
     res.append(sptr);
   }
-  return nb::tuple(res);
+  return TupleOfMol(nb::tuple(res));
 }
 
-nb::tuple MolsFromCDXML(nb::object cdxml, bool sanitize, bool removeHs) {
+TupleOfMol MolsFromCDXML(const StringOrBytes &cdxml, bool sanitize,
+                         bool removeHs) {
   auto mols = CDXMLToMols(pyObjectToString(cdxml), sanitize, removeHs);
   nb::list res;
   for (auto &mol : mols) {
@@ -764,7 +762,7 @@ nb::tuple MolsFromCDXML(nb::object cdxml, bool sanitize, bool removeHs) {
     std::shared_ptr<ROMol> sptr(static_cast<ROMol *>(mol.release()));
     res.append(sptr);
   }
-  return nb::tuple(res);
+  return TupleOfMol(nb::tuple(res));
 }
 
 nb::object MolToCDXMLBlockHelper(const RDKit::ROMol &mol,
@@ -806,9 +804,9 @@ nb::object translateMetadataToDict(
 }
 
 }  // namespace
-nb::object MetadataFromPNGFile(nb::object fname, bool asList) {
-  std::string cstr = nb::cast<std::string>(fname);
-  auto metadata = PNGFileToMetadata(cstr);
+nb::object MetadataFromPNGFile(const std::filesystem::path &fname,
+                               bool asList) {
+  auto metadata = PNGFileToMetadata(fname.string());
   if (asList) {
     return translateMetadataToList(metadata);
   }
@@ -917,61 +915,6 @@ NB_MODULE(rdmolfiles, m) {
   m.def("MolFromTPLBlock", RDKit::MolFromTPLBlock, "tplBlock"_a,
         "sanitize"_a = true, "skipFirstConf"_a = false, docString.c_str(),
         nb::rv_policy::take_ownership);
-
-  docString =
-      R"DOC(Construct a molecule from a Mol file.
-
-    ARGUMENTS:
-
-      - fileName: name of the file to read
-
-      - sanitize: (optional) toggles sanitization of the molecule.
-        Defaults to true.
-
-      - removeHs: (optional) toggles removing hydrogens from the molecule.
-        This only make sense when sanitization is done.
-        Defaults to true.
-
-      - strictParsing: (optional) if this is false, the parser is more lax about.
- correctness of the content.
- Defaults to true.
-
- RETURNS :
-
- a Mol object, None on failure.
-
- )DOC";
-  m.def("MolFromMolFile", RDKit::MolFromMolFileHelper, "molFileName"_a,
-        "sanitize"_a = true, "removeHs"_a = true, "strictParsing"_a = true,
-        docString.c_str(), nb::rv_policy::take_ownership);
-
-  docString =
-      R"DOC(Construct a molecule from a Mol block.
-
-    ARGUMENTS:
-
-      - molBlock: string containing the Mol block
-
-      - sanitize: (optional) toggles sanitization of the molecule.
-        Defaults to True.
-
-      - removeHs: (optional) toggles removing hydrogens from the molecule.
-        This only make sense when sanitization is done.
-        Defaults to true.
-
-      - strictParsing: (optional) if this is false, the parser is more lax about.
- correctness of the content.
- Defaults to true.
-
- RETURNS :
-
- a Mol object, None on failure
-          .
-
- )DOC";
-  m.def("MolFromMolBlock", RDKit::MolFromMolBlock, "molBlock"_a,
-        "sanitize"_a = true, "removeHs"_a = true, "strictParsing"_a = true,
-        docString.c_str(), nb::rv_policy::take_ownership);
 
   docString =
       R"DOC(Construct a molecule from a Marvin (Mrv) file.
@@ -1195,7 +1138,8 @@ NB_MODULE(rdmolfiles, m) {
       .def_rw(
           "precision", &RDKit::MolWriterParams::precision,
           "precision of coordinates (only available in V3000)(default=false)")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   nb::class_<RDKit::v2::FileParsers::MolFromSCSRParams>(
       m, "MolFromSCSRParams",
@@ -1211,7 +1155,8 @@ NB_MODULE(rdmolfiles, m) {
       .def_rw("scsrBaseHbondOptions",
               &RDKit::v2::FileParsers::MolFromSCSRParams::scsrBaseHbondOptions,
               "One of Ignore, UseSapAll(default) , UseSapOne, Auto")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   docString =
       R"DOC(Construct a molecule from an SCSR Mol block.
@@ -1372,10 +1317,13 @@ NB_MODULE(rdmolfiles, m) {
       - confId: (optional) selects which conformation to output (-1 =
       default)
   )DOC";
-  m.def("MolToMolFile",
-        (void (*)(const ROMol &, const std::string &, const MolWriterParams &,
-                  int))RDKit::MolToMolFile,
-        "mol"_a, "filename"_a, "params"_a, "confId"_a = -1, docString.c_str());
+  m.def(
+      "MolToMolFile",
+      [](const ROMol &mol, const std::filesystem::path &filename,
+         const MolWriterParams &params, int confId) {
+        RDKit::MolToMolFile(mol, filename.string(), params, confId);
+      },
+      "mol"_a, "filename"_a, "params"_a, "confId"_a = -1, docString.c_str());
 
   docString =
       R"DOC(Writes a Mol file for a molecule
@@ -1394,11 +1342,15 @@ NB_MODULE(rdmolfiles, m) {
       automatically with
         more than 999 atoms or bonds)
   )DOC";
-  m.def("MolToMolFile",
-        (void (*)(const ROMol &, const std::string &, bool, int, bool,
-                  bool))RDKit::MolToMolFile,
-        "mol"_a, "filename"_a, "includeStereo"_a = true, "confId"_a = -1,
-        "kekulize"_a = true, "forceV3000"_a = false, docString.c_str());
+  m.def(
+      "MolToMolFile",
+      [](const ROMol &mol, const std::filesystem::path &filename,
+         bool includeStereo, int confId, bool kekulize, bool forceV3000) {
+        RDKit::MolToMolFile(mol, filename.string(), includeStereo, confId,
+                            kekulize, forceV3000);
+      },
+      "mol"_a, "filename"_a, "includeStereo"_a = true, "confId"_a = -1,
+      "kekulize"_a = true, "forceV3000"_a = false, docString.c_str());
 
   docString =
       R"DOC(Writes a V3000 Mol file for a molecule
@@ -1410,11 +1362,13 @@ NB_MODULE(rdmolfiles, m) {
       - confId: (optional) selects which conformation to output (-1 =
       default)
   )DOC";
-  m.def("MolToV3KMolFile",
-        (void (*)(const ROMol &, const std::string &, const MolWriterParams &,
-                  int))RDKit::MolToV3KMolFile,
-        "mol"_a, "filename"_a, "params"_a = true, "confId"_a = -1,
-        docString.c_str());
+  m.def(
+      "MolToV3KMolFile",
+      [](const ROMol &mol, const std::filesystem::path &filename,
+         const MolWriterParams &params, int confId) {
+        RDKit::MolToV3KMolFile(mol, filename.string(), params, confId);
+      },
+      "mol"_a, "filename"_a, "params"_a, "confId"_a = -1, docString.c_str());
 
   docString =
       R"DOC(Writes a V3000 Mol file for a molecule
@@ -1430,11 +1384,15 @@ NB_MODULE(rdmolfiles, m) {
       it's written,
         as suggested by the MDL spec.
   )DOC";
-  m.def("MolToV3KMolFile",
-        (void (*)(const ROMol &, const std::string &, bool, int,
-                  bool))RDKit::MolToV3KMolFile,
-        "mol"_a, "filename"_a, "includeStereo"_a = true, "confId"_a = -1,
-        "kekulize"_a = true, docString.c_str());
+  m.def(
+      "MolToV3KMolFile",
+      [](const ROMol &mol, const std::filesystem::path &filename,
+         bool includeStereo, int confId, bool kekulize) {
+        RDKit::MolToV3KMolFile(mol, filename.string(), includeStereo, confId,
+                               kekulize);
+      },
+      "mol"_a, "filename"_a, "includeStereo"_a = true, "confId"_a = -1,
+      "kekulize"_a = true, docString.c_str());
   //
 
   docString =
@@ -1459,6 +1417,18 @@ NB_MODULE(rdmolfiles, m) {
                          bool))RDKit::MolToMrvBlock,
         "mol"_a, "includeStereo"_a = true, "confId"_a = -1, "kekulize"_a = true,
         "prettyPrint"_a = false, docString.c_str());
+
+  nb::class_<MrvWriterParams>(m, "MrvWriterParams",
+                              "Parameters controlling Marvin (Mrv) writing")
+      .def(nb::init<>())
+      .def_rw("includeStereo", &MrvWriterParams::includeStereo,
+              "include stereochemical information")
+      .def_rw("kekulize", &MrvWriterParams::kekulize,
+              "kekulize the molecule before it is written")
+      .def_rw("prettyPrint", &MrvWriterParams::prettyPrint,
+              "make the output more human readable")
+      .def_rw("precision", &MrvWriterParams::precision,
+              "number of significant digits in the coordinates");
 
   docString =
       R"DOC(Returns a Marvin (Mrv) Mol block for a molecule
@@ -1492,11 +1462,15 @@ NB_MODULE(rdmolfiles, m) {
        it's written.
        - prettyPrint: (optional) makes the output more human readable.
   )DOC";
-  m.def("MolToMrvFile",
-        (void (*)(const ROMol &, const std::string &, bool, int, bool,
-                  bool))RDKit::MolToMrvFile,
-        "mol"_a, "filename"_a, "includeStereo"_a = true, "confId"_a = -1,
-        "kekulize"_a = true, "prettyPrint"_a = false, docString.c_str());
+  m.def(
+      "MolToMrvFile",
+      [](const ROMol &mol, const std::filesystem::path &filename,
+         bool includeStereo, int confId, bool kekulize, bool prettyPrint) {
+        RDKit::MolToMrvFile(mol, filename.string(), includeStereo, confId,
+                            kekulize, prettyPrint);
+      },
+      "mol"_a, "filename"_a, "includeStereo"_a = true, "confId"_a = -1,
+      "kekulize"_a = true, "prettyPrint"_a = false, docString.c_str());
 
   docString =
       R"DOC(Writes a Marvin (MRV) file for a molecule
@@ -1508,10 +1482,13 @@ NB_MODULE(rdmolfiles, m) {
       - confId: (optional) selects which conformation to output (-1 =
       default)
   )DOC";
-  m.def("MolToMrvFile",
-        (void (*)(const ROMol &, const std::string &, const MrvWriterParams &,
-                  int))RDKit::MolToMrvFile,
-        "mol"_a, "filename"_a, "params"_a, "confId"_a = -1, docString.c_str());
+  m.def(
+      "MolToMrvFile",
+      [](const ROMol &mol, const std::filesystem::path &filename,
+         const MrvWriterParams &params, int confId) {
+        RDKit::MolToMrvFile(mol, filename.string(), params, confId);
+      },
+      "mol"_a, "filename"_a, "params"_a, "confId"_a = -1, docString.c_str());
 
   docString =
       R"DOC(Writes a CML block for a molecule
@@ -1535,8 +1512,14 @@ NB_MODULE(rdmolfiles, m) {
       - kekulize: (optional) triggers kekulization of the molecule before
       it's written
   )DOC";
-  m.def("MolToCMLFile", RDKit::MolToCMLFile, "mol"_a, "filename"_a,
-        "confId"_a = -1, "kekulize"_a = true, docString.c_str());
+  m.def(
+      "MolToCMLFile",
+      [](const ROMol &mol, const std::filesystem::path &filename, int confId,
+         bool kekulize) {
+        RDKit::MolToCMLFile(mol, filename.string(), confId, kekulize);
+      },
+      "mol"_a, "filename"_a, "confId"_a = -1, "kekulize"_a = true,
+      docString.c_str());
 
   docString =
       R"DOC(Returns a XYZ block for a molecule
@@ -1564,8 +1547,14 @@ NB_MODULE(rdmolfiles, m) {
       default)
       - precision: precision of the coordinates
   )DOC";
-  m.def("MolToXYZFile", RDKit::MolToXYZFile, "mol"_a, "filename"_a,
-        "confId"_a = -1, "precision"_a = 6, docString.c_str());
+  m.def(
+      "MolToXYZFile",
+      [](const ROMol &mol, const std::filesystem::path &filename, int confId,
+         unsigned int precision) {
+        RDKit::MolToXYZFile(mol, filename.string(), confId, precision);
+      },
+      "mol"_a, "filename"_a, "confId"_a = -1, "precision"_a = 6,
+      docString.c_str());
 
   nb::class_<RDKit::SmilesParserParams>(m, "SmilesParserParams",
                                         "Parameters controlling SMILES parsing")
@@ -1585,7 +1574,8 @@ NB_MODULE(rdmolfiles, m) {
       .def_rw("removeHs", &RDKit::SmilesParserParams::removeHs,
               "controls whether or not Hs are removed before the "
               "molecule is returned")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
   nb::class_<RDKit::SmartsParserParams>(m, "SmartsParserParams",
                                         "Parameters controlling SMARTS parsing")
       .def(nb::init<>())
@@ -1600,7 +1590,8 @@ NB_MODULE(rdmolfiles, m) {
               "causes molecule parsing to fail")
       .def_rw("mergeHs", &RDKit::SmartsParserParams::mergeHs,
               "toggles merging H atoms in the SMARTS into neighboring atoms")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   docString =
       R"DOC(Construct a molecule from a SMILES string.
@@ -1653,12 +1644,20 @@ NB_MODULE(rdmolfiles, m) {
         nb::rv_policy::take_ownership);
 
   docString = R"DOC(Construct an atom from a SMILES string)DOC";
-  m.def("AtomFromSmiles", SmilesToAtom, "SMILES"_a, docString.c_str(),
-        nb::rv_policy::take_ownership);
+  m.def(
+      "AtomFromSmiles",
+      [](const StringOrBytes &text) -> Nullable<Atom *> {
+        return SmilesToAtom(pyObjectToString(text));
+      },
+      "SMILES"_a, docString.c_str(), nb::rv_policy::take_ownership);
 
   docString = R"DOC(Construct a bond from a SMILES string)DOC";
-  m.def("BondFromSmiles", SmilesToBond, "SMILES"_a, docString.c_str(),
-        nb::rv_policy::take_ownership);
+  m.def(
+      "BondFromSmiles",
+      [](const StringOrBytes &text) -> Nullable<Bond *> {
+        return SmilesToBond(pyObjectToString(text));
+      },
+      "SMILES"_a, docString.c_str(), nb::rv_policy::take_ownership);
 
   docString =
       R"DOC(Construct a molecule from a SMARTS string.
@@ -1685,12 +1684,20 @@ NB_MODULE(rdmolfiles, m) {
         nb::rv_policy::take_ownership);
 
   docString = R"DOC(Construct an atom from a SMARTS string)DOC";
-  m.def("AtomFromSmarts", SmartsToAtom, "SMARTS"_a, docString.c_str(),
-        nb::rv_policy::take_ownership);
+  m.def(
+      "AtomFromSmarts",
+      [](const StringOrBytes &text) -> Nullable<Atom *> {
+        return SmartsToAtom(pyObjectToString(text));
+      },
+      "SMARTS"_a, docString.c_str(), nb::rv_policy::take_ownership);
 
   docString = R"DOC(Construct a bond from a SMARTS string)DOC";
-  m.def("BondFromSmarts", SmartsToBond, "SMARTS"_a, docString.c_str(),
-        nb::rv_policy::take_ownership);
+  m.def(
+      "BondFromSmarts",
+      [](const StringOrBytes &text) -> Nullable<Bond *> {
+        return SmartsToBond(pyObjectToString(text));
+      },
+      "SMARTS"_a, docString.c_str(), nb::rv_policy::take_ownership);
 
   docString =
       R"DOC(Construct a molecule from a SMARTS string.
@@ -1741,7 +1748,8 @@ NB_MODULE(rdmolfiles, m) {
       .def_rw("ignoreAtomMapNumbers",
               &RDKit::SmilesWriteParams::ignoreAtomMapNumbers,
               "ignore atom map numbers when canonicalizing the molecule")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   m.def("MolToSmiles",
         (std::string (*)(const ROMol &,
@@ -2144,9 +2152,15 @@ NB_MODULE(rdmolfiles, m) {
         This should be set to True when writing TPLs to be read by
         the CombiCode.
   )DOC";
-  m.def("MolToTPLFile", RDKit::MolToTPLFile, "mol"_a, "fileName"_a,
-        "partialChargeProp"_a = "_GasteigerCharge",
-        "writeFirstConfTwice"_a = false, docString.c_str());
+  m.def(
+      "MolToTPLFile",
+      [](const ROMol &mol, const std::filesystem::path &fileName,
+         const std::string &partialChargeProp, bool writeFirstConfTwice) {
+        RDKit::MolToTPLFile(mol, fileName.string(), partialChargeProp,
+                            writeFirstConfTwice);
+      },
+      "mol"_a, "fileName"_a, "partialChargeProp"_a = "_GasteigerCharge",
+      "writeFirstConfTwice"_a = false, docString.c_str());
 
   docString =
       R"DOC(Returns the Tpl block for a molecule.
@@ -2261,8 +2275,14 @@ NB_MODULE(rdmolfiles, m) {
               - flavor & 16 : Write MASTER record
               - flavor & 32 : Write TER record
   )DOC";
-  m.def("MolToPDBFile", RDKit::MolToPDBFile, "mol"_a, "filename"_a,
-        "confId"_a = -1, "flavor"_a = 0, docString.c_str());
+  m.def(
+      "MolToPDBFile",
+      [](const ROMol &mol, const std::filesystem::path &filename, int confId,
+         unsigned int flavor) {
+        RDKit::MolToPDBFile(mol, filename.string(), confId, flavor);
+      },
+      "mol"_a, "filename"_a, "confId"_a = -1, "flavor"_a = 0,
+      docString.c_str());
 
   docString =
       R"DOC(Construct a molecule from a sequence string (currently
@@ -2537,7 +2557,8 @@ NB_MODULE(rdmolfiles, m) {
       .def_rw(
           "restoreBondDirs", &RDKit::PNGMetadataParams::restoreBondDirs,
           "choose what to do with bond dirs in the CXSMILES string (default=rdkit.Chem.rdmolfiles.RestoreBondDirOption.RestoreBondDirOptionClear)")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   docString =
       R"DOC(Construct a molecule from metadata in a PNG string.
@@ -2655,7 +2676,8 @@ NB_MODULE(rdmolfiles, m) {
         &RDKit::v2::CDXMLParser::CDXMLParserParams::strictQueryParsing,
         "controls whether unsupported CDXML query constructs raise instead of warning")
     
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   docString =
       R"DOC(Construct a molecule from a cdxml file.

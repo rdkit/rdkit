@@ -14,17 +14,21 @@
 #include <RDGeneral/Exceptions.h>
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <RDBoost/Wrap_nb.h>
+#include <nanobind/stl/variant.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
 
-ExplicitBitVect *createFromBitString(const std::string &bits) {
+ExplicitBitVect *createFromBitString(const StringOrBytes &text) {
+  const auto bits = pyObjectToString(text);
   auto *res = new ExplicitBitVect(bits.size());
   FromBitString(*res, bits);
   return res;
 }
 
-ExplicitBitVect *createFromFPSText(const std::string &fps) {
+ExplicitBitVect *createFromFPSText(const StringOrBytes &text) {
+  const auto fps = pyObjectToString(text);
   if (fps.size() % 2) {
     throw ValueErrorException(
         "input string must have an even number of characters");
@@ -71,7 +75,9 @@ struct Utils_wrapper {
 
     m.def(
         "InitFromDaylightString",
-        (void (*)(SparseBitVect &, const std::string &))FromDaylightString,
+        [](SparseBitVect &sbv, const StringOrBytes &s) {
+          FromDaylightString(sbv, pyObjectToString(s));
+        },
         "sbv"_a, "s"_a,
         R"DOC(Fill a BitVect using an ASCII (Daylight) encoding of a fingerprint.
 
@@ -83,7 +89,9 @@ struct Utils_wrapper {
 )DOC");
     m.def(
         "InitFromDaylightString",
-        (void (*)(ExplicitBitVect &, const std::string &))FromDaylightString,
+        [](ExplicitBitVect &sbv, const StringOrBytes &s) {
+          FromDaylightString(sbv, pyObjectToString(s));
+        },
         "sbv"_a, "s"_a,
         R"DOC(Fill a BitVect using an ASCII (Daylight) encoding of a fingerprint.
 

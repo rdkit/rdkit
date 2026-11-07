@@ -9,6 +9,7 @@
 //
 #define NO_IMPORT_ARRAY
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/string.h>
 #include <string>
 
@@ -30,8 +31,8 @@ class LocalPDBWriter : public PDBWriter {
       : PDBWriter(new streambuf::ostream(new streambuf(fileObj, 't')), true,
                   flavor) {}
 
-  LocalPDBWriter(std::string fileName, unsigned int flavor = 0)
-      : PDBWriter(fileName, flavor) {}
+  LocalPDBWriter(const std::filesystem::path &fileName, unsigned int flavor = 0)
+      : PDBWriter(fileName.string(), flavor) {}
 };
 }  // namespace
 
@@ -39,7 +40,7 @@ struct pdbwriter_wrap {
   static void wrap(nb::module_ &m) {
     nb::class_<LocalPDBWriter>(
         m, "PDBWriter", R"DOC(A class for writing molecules to PDB files.)DOC")
-        .def(nb::init<std::string, unsigned int>(), "fileName"_a,
+        .def(nb::init<std::filesystem::path, unsigned int>(), "fileName"_a,
              "flavor"_a = 0,
              R"DOC(Constructor.
 

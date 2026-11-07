@@ -9,6 +9,7 @@
 //
 #define NO_IMPORT_ARRAY
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/wstring.h>
 #include <nanobind/stl/vector.h>
@@ -35,10 +36,10 @@ class LocalSmilesWriter : public SmilesWriter {
                      delimiter, nameHeader, includeHeader, true, isomericSmiles,
                      kekuleSmiles) {}
 
-  LocalSmilesWriter(std::string fileName, std::string delimiter,
-                    std::string nameHeader, bool includeHeader,
-                    bool isomericSmiles, bool kekuleSmiles)
-      : SmilesWriter(fileName, delimiter, nameHeader, includeHeader,
+  LocalSmilesWriter(const std::filesystem::path &fileName,
+                    std::string delimiter, std::string nameHeader,
+                    bool includeHeader, bool isomericSmiles, bool kekuleSmiles)
+      : SmilesWriter(fileName.string(), delimiter, nameHeader, includeHeader,
                      isomericSmiles, kekuleSmiles) {}
 };
 }  // namespace
@@ -64,11 +65,11 @@ struct smiwriter_wrap {
     nb::class_<LocalSmilesWriter>(
         m, "SmilesWriter",
         R"DOC(A class for writing molecules to text files.)DOC")
-        .def(
-            nb::init<std::string, std::string, std::string, bool, bool, bool>(),
-            "fileName"_a, "delimiter"_a = " ", "nameHeader"_a = "Name",
-            "includeHeader"_a = true, "isomericSmiles"_a = true,
-            "kekuleSmiles"_a = false, swDocStr.c_str())
+        .def(nb::init<std::filesystem::path, std::string, std::string, bool,
+                      bool, bool>(),
+             "fileName"_a, "delimiter"_a = " ", "nameHeader"_a = "Name",
+             "includeHeader"_a = true, "isomericSmiles"_a = true,
+             "kekuleSmiles"_a = false, swDocStr.c_str())
         .def(nb::init<nb::object, std::string, std::string, bool, bool, bool>(),
              "fileObj"_a, "delimiter"_a = " ", "nameHeader"_a = "Name",
              "includeHeader"_a = true, "isomericSmiles"_a = true,

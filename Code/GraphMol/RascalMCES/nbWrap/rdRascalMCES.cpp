@@ -10,6 +10,7 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/shared_ptr.h>
 
 #include <RDBoost/Wrap_nb.h>
@@ -25,15 +26,19 @@ using namespace nb::literals;
 
 namespace {
 
-nb::list convertVecPairInt(const std::vector<std::pair<int, int>> &vec) {
-  nb::list pyres;
+using ListOfIntPairs = PyListOf<nb::typed<nb::tuple, int, int>>;
+using ListOfRascalResults = PyListOf<RDKit::RascalMCES::RascalResult>;
+
+ListOfIntPairs convertVecPairInt(const std::vector<std::pair<int, int>> &vec) {
+  ListOfIntPairs pyres;
   for (const auto &p : vec) {
     pyres.append(nb::make_tuple(p.first, p.second));
   }
   return pyres;
 }
 
-std::vector<std::shared_ptr<RDKit::ROMol>> extractMols(nb::object mols) {
+std::vector<std::shared_ptr<RDKit::ROMol>> extractMols(
+    const PySequenceOf<RDKit::ROMol> &mols) {
   std::vector<std::shared_ptr<RDKit::ROMol>> cmols;
   unsigned int nElems = nb::len(mols);
   cmols.resize(nElems);
@@ -47,9 +52,9 @@ std::vector<std::shared_ptr<RDKit::ROMol>> extractMols(nb::object mols) {
   return cmols;
 }
 
-nb::list packOutputMols(
+PyListOf<PyListOf<unsigned int>> packOutputMols(
     const std::vector<std::vector<unsigned int>> &clusters) {
-  nb::list pyres;
+  PyListOf<PyListOf<unsigned int>> pyres;
   for (const auto &clus : clusters) {
     nb::list mols;
     for (auto m : clus) {
@@ -185,28 +190,27 @@ is > 0, it will over-ride the
 similarityThreshold.
 Note that this refers to the
 minimum number of BONDS in the MCES. Default=0.)DOC")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
-  m.def("FindMCES",
-        [](const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
-           nb::object py_opts) {
-          RDKit::RascalMCES::RascalOptions opts;
-          if (!py_opts.is_none()) {
-            opts = nb::cast<RDKit::RascalMCES::RascalOptions>(py_opts);
-          }
-          std::vector<RDKit::RascalMCES::RascalResult> results;
-          {
-            NOGIL gil;
-            results = RDKit::RascalMCES::rascalMCES(mol1, mol2, opts);
-          }
-          nb::list pyres;
-          for (auto &res : results) {
-            pyres.append(res);
-          }
-          return pyres;
-        },
-        "mol1"_a, "mol2"_a, "opts"_a = nb::none(),
-        R"DOC(Find one or more MCESs between the 2 molecules given.  Returns a list of
+  m.def(
+      "FindMCES",
+      [](const RDKit::ROMol &mol1, const RDKit::ROMol &mol2,
+         const std::optional<RDKit::RascalMCES::RascalOptions> &py_opts) {
+        auto opts = py_opts.value_or(RDKit::RascalMCES::RascalOptions());
+        std::vector<RDKit::RascalMCES::RascalResult> results;
+        {
+          NOGIL gil;
+          results = RDKit::RascalMCES::rascalMCES(mol1, mol2, opts);
+        }
+        ListOfRascalResults pyres;
+        for (auto &res : results) {
+          pyres.append(res);
+        }
+        return pyres;
+      },
+      "mol1"_a, "mol2"_a, "opts"_a = nb::none(),
+      R"DOC(Find one or more MCESs between the 2 molecules given.  Returns a list of
 RascalResult objects.
 - mol1
 - mol2 The two molecules for which to find the MCES
@@ -241,45 +245,46 @@ their MCESs is greater than this.  Default=0.9.)DOC")
       .def_rw("clusterMergeSim",
               &RDKit::RascalMCES::RascalClusterOptions::clusterMergeSim,
               "Two clusters are merged if the fraction of molecules they have in common is greater than this.  Default=0.6.")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
-  m.def("RascalCluster",
-        [](nb::object mols, nb::object py_opts) {
-          RDKit::RascalMCES::RascalClusterOptions opts;
-          if (!py_opts.is_none()) {
-            opts = nb::cast<RDKit::RascalMCES::RascalClusterOptions>(py_opts);
-          }
-          auto cmols = extractMols(mols);
-          std::vector<RDKit::UINT_VECT> clusters;
-          {
-            NOGIL gil;
-            clusters = RDKit::RascalMCES::rascalCluster(cmols, opts);
-          }
-          return packOutputMols(clusters);
-        },
-        "mols"_a, "opts"_a = nb::none(),
-        R"DOC(Use the RASCAL MCES similarity metric to do fuzzy clustering.  Returns a list of lists
+  m.def(
+      "RascalCluster",
+      [](const PySequenceOf<RDKit::ROMol> &mols,
+         const std::optional<RDKit::RascalMCES::RascalClusterOptions>
+             &py_opts) {
+        auto opts = py_opts.value_or(RDKit::RascalMCES::RascalClusterOptions());
+        auto cmols = extractMols(mols);
+        std::vector<RDKit::UINT_VECT> clusters;
+        {
+          NOGIL gil;
+          clusters = RDKit::RascalMCES::rascalCluster(cmols, opts);
+        }
+        return packOutputMols(clusters);
+      },
+      "mols"_a, "opts"_a = nb::none(),
+      R"DOC(Use the RASCAL MCES similarity metric to do fuzzy clustering.  Returns a list of lists
 of molecules, each inner list being a cluster.  The last cluster is all the
 molecules that didn't fit into another cluster (the singletons).
 - mols List of molecules to be clustered
 - opts Optional RascalOptions object changing the default run mode.)DOC");
 
-  m.def("RascalButinaCluster",
-        [](nb::object mols, nb::object py_opts) {
-          RDKit::RascalMCES::RascalClusterOptions opts;
-          if (!py_opts.is_none()) {
-            opts = nb::cast<RDKit::RascalMCES::RascalClusterOptions>(py_opts);
-          }
-          auto cmols = extractMols(mols);
-          std::vector<RDKit::UINT_VECT> clusters;
-          {
-            NOGIL gil;
-            clusters = RDKit::RascalMCES::rascalButinaCluster(cmols, opts);
-          }
-          return packOutputMols(clusters);
-        },
-        "mols"_a, "opts"_a = nb::none(),
-        R"DOC(Use the RASCAL MCES similarity metric to do Butina clustering
+  m.def(
+      "RascalButinaCluster",
+      [](const PySequenceOf<RDKit::ROMol> &mols,
+         const std::optional<RDKit::RascalMCES::RascalClusterOptions>
+             &py_opts) {
+        auto opts = py_opts.value_or(RDKit::RascalMCES::RascalClusterOptions());
+        auto cmols = extractMols(mols);
+        std::vector<RDKit::UINT_VECT> clusters;
+        {
+          NOGIL gil;
+          clusters = RDKit::RascalMCES::rascalButinaCluster(cmols, opts);
+        }
+        return packOutputMols(clusters);
+      },
+      "mols"_a, "opts"_a = nb::none(),
+      R"DOC(Use the RASCAL MCES similarity metric to do Butina clustering
 (Butina JCICS 39 747-750 (1999)).  Returns a list of lists of molecules,
 each inner list being a cluster.  The last cluster is all the
 molecules that didn't fit into another cluster (the singletons).

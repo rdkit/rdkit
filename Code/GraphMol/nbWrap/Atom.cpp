@@ -233,8 +233,7 @@ struct atom_wrapper {
         .def("GetFormalCharge", &Atom::getFormalCharge)
         .def("SetFormalCharge", &Atom::setFormalCharge, "what"_a)
 
-        .def("SetNoImplicit", &Atom::setNoImplicit,
-             "what"_a
+        .def("SetNoImplicit", &Atom::setNoImplicit, "what"_a,
              "Sets a marker on the atom that *disallows* implicit Hs.\n"
              "  This holds even if the atom would otherwise have implicit Hs "
              "added.\n")

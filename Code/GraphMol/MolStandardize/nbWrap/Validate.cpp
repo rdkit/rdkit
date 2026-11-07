@@ -9,9 +9,11 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/trampoline.h>
+#include <RDBoost/Wrap_nb.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolStandardize/Validate.h>
@@ -37,9 +39,10 @@ struct ValidationMethodTrampoline : MolStandardize::ValidationMethod {
 
 // Wrap ValidationMethod::validate and convert the returned
 // vector into a Python list of strings
-nb::list pythonValidateMethod(const MolStandardize::ValidationMethod &self,
-                              const ROMol &mol, bool reportAllFailures) {
-  nb::list res;
+PyListOf<std::string> pythonValidateMethod(
+    const MolStandardize::ValidationMethod &self, const ROMol &mol,
+    bool reportAllFailures) {
+  PyListOf<std::string> res;
   std::vector<MolStandardize::ValidationErrorInfo> errout =
       self.validate(mol, reportAllFailures);
   for (const auto &msg : errout) {
@@ -86,10 +89,10 @@ MolStandardize::DisallowedAtomsValidation *getDisallowedAtomsValidation(
   return new MolStandardize::DisallowedAtomsValidation(satoms);
 }
 
-nb::list standardizeSmilesHelper(const std::string &smiles) {
-  nb::list res;
+PyListOf<std::string> standardizeSmilesHelper(const StringOrBytes &smiles) {
+  PyListOf<std::string> res;
   std::vector<MolStandardize::ValidationErrorInfo> errout =
-      MolStandardize::validateSmiles(smiles);
+      MolStandardize::validateSmiles(pyObjectToString(smiles));
   for (const auto &msg : errout) {
     res.append(msg);
   }
@@ -132,7 +135,9 @@ void wrap_validate(nb::module_ &m) {
              MolStandardize::ValidationMethod>(m, "MolVSValidation")
       .def(nb::init<>())
       .def("__init__",
-           [](MolStandardize::MolVSValidation *self, nb::object validations) {
+           [](MolStandardize::MolVSValidation *self,
+              const PyIterableOf<MolStandardize::ValidationMethod>
+                  &validations) {
              std::unique_ptr<MolStandardize::MolVSValidation> v(
                  getMolVSValidation(validations));
              new (self) MolStandardize::MolVSValidation(*v);
@@ -143,7 +148,7 @@ void wrap_validate(nb::module_ &m) {
              MolStandardize::ValidationMethod>(m, "AllowedAtomsValidation")
       .def("__init__",
            [](MolStandardize::AllowedAtomsValidation *self,
-              nb::object atoms) {
+              const PyIterableOf<Atom> &atoms) {
              std::unique_ptr<MolStandardize::AllowedAtomsValidation> v(
                  getAllowedAtomsValidation(atoms));
              new (self) MolStandardize::AllowedAtomsValidation(*v);
@@ -154,7 +159,7 @@ void wrap_validate(nb::module_ &m) {
              MolStandardize::ValidationMethod>(m, "DisallowedAtomsValidation")
       .def("__init__",
            [](MolStandardize::DisallowedAtomsValidation *self,
-              nb::object atoms) {
+              const PyIterableOf<Atom> &atoms) {
              std::unique_ptr<MolStandardize::DisallowedAtomsValidation> v(
                  getDisallowedAtomsValidation(atoms));
              new (self) MolStandardize::DisallowedAtomsValidation(*v);

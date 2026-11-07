@@ -11,6 +11,7 @@
 #define NO_IMPORT_ARRAY
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 
@@ -38,7 +39,8 @@ class LocalMaeWriter : public MaeWriter {
     dp_ostream.reset(new streambuf::ostream(*dp_streambuf));
   }
 
-  LocalMaeWriter(const std::string &fname) : RDKit::MaeWriter(fname) {}
+  LocalMaeWriter(const std::filesystem::path &fname)
+      : RDKit::MaeWriter(fname.string()) {}
 
  private:
   std::unique_ptr<streambuf> dp_streambuf = nullptr;
@@ -86,7 +88,7 @@ struct wrap_maewriter {
   isotopes, or even dummy atoms. Note that these are not supported by
   MaeMolSupplier either.
 )DOC")
-        .def(nb::init<std::string>(), "filename"_a)
+        .def(nb::init<std::filesystem::path>(), "filename"_a)
         .def(nb::init<nb::object>(), "fileobj"_a)
         .def("__enter__", &MolIOEnter<LocalMaeWriter>,
              nb::rv_policy::reference_internal)

@@ -25,6 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ***********************************************************************/
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
@@ -48,9 +49,8 @@ NB_MODULE(rdShapeAlign, m) {
       .def_rw(
           "useColors", &ShapeInputOptions::useColors,
           "Whether to use colors (pharmacophore features) in the score.  Default=True.")
-      .def_rw(
-          "includeDummies", &ShapeInputOptions::includeDummies,
-          "Whether to use dummy atoms in the alignment. Default=False.")
+      .def_rw("includeDummies", &ShapeInputOptions::includeDummies,
+              "Whether to use dummy atoms in the alignment. Default=False.")
       .def_rw(
           "dummyRadius", &ShapeInputOptions::dummyRadius,
           R"DOC(If using dummy atoms in the alignment, what radius to use for them.
@@ -64,7 +64,8 @@ NB_MODULE(rdShapeAlign, m) {
             }
             return nb::tuple(py_list);
           },
-          [](ShapeInputOptions &opts, nb::object as) {
+          [](ShapeInputOptions &opts,
+             const std::optional<PyIterableOf<unsigned int>> &as) {
             pythonObjectToVect<unsigned int>(as, opts.atomSubset);
           },
           "If not empty, use just these atoms in the molecule to form the ShapeInput object.")
@@ -77,7 +78,8 @@ NB_MODULE(rdShapeAlign, m) {
             }
             return nb::tuple(py_list);
           },
-          [](ShapeInputOptions &opts, nb::object nca) {
+          [](ShapeInputOptions &opts,
+             const std::optional<PyIterableOf<unsigned int>> &nca) {
             pythonObjectToVect<unsigned int>(nca, opts.notColorAtoms);
           },
           "Any atoms mentioned here by index should not be used in a color feature.")
@@ -90,7 +92,9 @@ NB_MODULE(rdShapeAlign, m) {
             }
             return nb::tuple(py_list);
           },
-          [](ShapeInputOptions &opts, nb::object ar) {
+          [](ShapeInputOptions &opts,
+             const PySequenceOf<nb::typed<nb::tuple, unsigned int, double>>
+                 &ar) {
             int len = nb::len(ar);
             opts.atomRadii.resize(len);
             for (int i = 0; i < len; i++) {
@@ -130,7 +134,8 @@ NB_MODULE(rdShapeAlign, m) {
       .def_rw("normalize", &ShapeInputOptions::normalize,
               R"DOC(Whether to normalise the shape by putting into
 its inertial frame.  Default=True.)DOC")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   nb::class_<ShapeInput>(m, "ShapeInput")
       .def_rw("coord", &ShapeInput::coord)
@@ -146,7 +151,7 @@ its inertial frame.  Default=True.)DOC")
             }
             return py_list;
           },
-          [](ShapeInput &shp, nb::object s) {
+          [](ShapeInput &shp, const std::optional<PyIterableOf<double>> &s) {
             pythonObjectToVect<double>(s, shp.shift);
           },
           "Translation of centre of shape coordinates to origin.")
@@ -347,8 +352,10 @@ Returns
 
   m.def(
       "TransformConformer",
-      [](nb::object pyFinalTrans, nb::object pyFinalRot, nb::object pyMatrix,
-         ShapeInput probeShape, RDKit::Conformer &probeConf) {
+      [](const PyIterableOf<double> &pyFinalTrans,
+         const PyIterableOf<double> &pyFinalRot,
+         const PyIterableOf<float> &pyMatrix, ShapeInput probeShape,
+         RDKit::Conformer &probeConf) {
         std::vector<float> matrix;
         pythonObjectToVect<float>(pyMatrix, matrix);
         if (matrix.size() != 12) {
@@ -375,7 +382,8 @@ Returns
         }
         TransformConformer(finalTrans, finalRot, matrix, probeShape, probeConf);
       },
-      "finalTrans"_a, "finalRot"_a, "matrix"_a, "probeShape"_a, "probeConformer"_a,
+      "finalTrans"_a, "finalRot"_a, "matrix"_a, "probeShape"_a,
+      "probeConformer"_a,
       R"DOC(Assuming that probeShape has been overlaid onto refShape to give
 the supplied transformation matrix, applies that transformation to the
  given conformer.
@@ -394,11 +402,9 @@ probeConformer : Conformer
 
   m.def(
       "PrepareConformer",
-      [](const RDKit::ROMol &mol, int confId, nb::object py_opts) {
-        ShapeInputOptions opts;
-        if (!py_opts.is_none()) {
-          opts = nb::cast<ShapeInputOptions>(py_opts);
-        }
+      [](const RDKit::ROMol &mol, int confId,
+         const std::optional<ShapeInputOptions> &py_opts) {
+        auto opts = py_opts.value_or(ShapeInputOptions());
         return new ShapeInput(PrepareConformer(mol, confId, opts));
       },
       "mol"_a, "confId"_a = -1, "opts"_a = nb::none(),

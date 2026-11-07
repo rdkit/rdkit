@@ -9,6 +9,8 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/variant.h>
+#include <RDBoost/Wrap_nb.h>
 #include <nanobind/stl/bind_vector.h>
 
 #include <GraphMol/RDKitBase.h>
@@ -146,5 +148,11 @@ void wrap_pipeline(nb::module_ &m) {
   nb::class_<MolStandardize::Pipeline>(m, "Pipeline")
       .def(nb::init<>())
       .def(nb::init<const MolStandardize::PipelineOptions &>(), "options"_a)
-      .def("run", &MolStandardize::Pipeline::run, "molData"_a);
+      .def(
+          "run",
+          [](const MolStandardize::Pipeline &self,
+             const StringOrBytes &molData) {
+            return self.run(pyObjectToString(molData));
+          },
+          "molData"_a);
 }

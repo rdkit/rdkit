@@ -9,6 +9,7 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/filesystem.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/FragCatalog/FragCatalogEntry.h>
@@ -24,9 +25,14 @@ void wrap_fragparams(nb::module_ &m) {
   // this exposed to be read only
   // i.e. one constructed there can be no changes done to the parameter object
   nb::class_<RDKit::FragCatParams>(m, "FragCatParams")
-      .def(nb::init<unsigned int, unsigned int, std::string, double>(),
-           "lLen"_a, "uLen"_a,
-           "fgroupFilename"_a, "tol"_a = 1e-8)
+      .def(
+          "__init__",
+          [](RDKit::FragCatParams *self, unsigned int lLen, unsigned int uLen,
+             const std::filesystem::path &fgroupFilename, double tol) {
+            new (self)
+                RDKit::FragCatParams(lLen, uLen, fgroupFilename.string(), tol);
+          },
+          "lLen"_a, "uLen"_a, "fgroupFilename"_a, "tol"_a = 1e-8)
       .def("GetTypeString", &RDKit::FragCatParams::getTypeStr)
       .def("GetUpperFragLength", &RDKit::FragCatParams::getUpperFragLength)
       .def("GetLowerFragLength", &RDKit::FragCatParams::getLowerFragLength)

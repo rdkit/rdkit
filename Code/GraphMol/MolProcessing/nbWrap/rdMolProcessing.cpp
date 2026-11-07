@@ -10,6 +10,7 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/filesystem.h>
 
 #include <GraphMol/MolProcessing/MolProcessing.h>
 #include <GraphMol/FileParsers/GeneralFileReader.h>
@@ -22,22 +23,14 @@ using namespace RDKit;
 namespace {
 template <typename OutputType>
 nb::tuple getFingerprintsHelper(
-    const std::string &fileName, nb::object pyGenerator,
+    const std::filesystem::path &fileName,
+    FingerprintGenerator<OutputType> *generator,
     const GeneralMolSupplier::SupplierOptions &options) {
-  FingerprintGenerator<OutputType> *generator = nullptr;
-  if (!pyGenerator.is_none()) {
-    try {
-      generator = nb::cast<FingerprintGenerator<OutputType> *>(pyGenerator);
-    } catch (const nb::cast_error &) {
-      throw nb::next_overload();
-    }
-  }
-
   std::vector<std::unique_ptr<ExplicitBitVect>> fps;
   {
     NOGIL gil;
-    fps = MolProcessing::getFingerprintsForMolsInFile(fileName, options,
-                                                      generator);
+    fps = MolProcessing::getFingerprintsForMolsInFile(fileName.string(),
+                                                      options, generator);
   }
   nb::list pyFingerprints;
   for (auto &fp : fps) {
@@ -49,6 +42,8 @@ nb::tuple getFingerprintsHelper(
 }  // namespace
 
 NB_MODULE(rdMolProcessing, m) {
+  nb::module_::import_("rdkit.Chem.rdFingerprintGenerator");
+
   m.doc() = "Module containing functions for working with groups of molecules";
 
   nb::class_<GeneralMolSupplier::SupplierOptions>(m, "SupplierOptions",

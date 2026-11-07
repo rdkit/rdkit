@@ -34,6 +34,8 @@
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
+#include <nanobind/stl/variant.h>
+#include <nanobind/stl/filesystem.h>
 
 #include <ChemDraw/chemdraw.h>
 #include <ChemDraw/chemdrawreaction.h>
@@ -41,6 +43,7 @@
 #include <GraphMol/ChemReactions/Reaction.h>
 #include <RDGeneral/FileParseException.h>
 #include <RDGeneral/BadFileException.h>
+#include <RDBoost/Wrap_nb.h>
 
 #include <sstream>
 
@@ -50,16 +53,8 @@ using namespace RDKit;
 
 namespace {
 
-std::string pyObjectToString(nb::object input) {
-  if (nb::isinstance<nb::str>(input)) {
-    return nb::cast<std::string>(input);
-  }
-  std::wstring ws = nb::cast<std::wstring>(input);
-  return std::string(ws.begin(), ws.end());
-}
-
 nb::tuple MolsFromChemDrawBlockHelper(
-    const std::string &block, bool sanitize, bool removeHs,
+    const StringOrBytes &block, bool sanitize, bool removeHs,
     RDKit::v2::NeedsCleanPolicy needsCleanPolicy =
         RDKit::v2::NeedsCleanPolicy::TrustSource,
     bool parseQueries = false, bool strictQueryParsing = false,
@@ -67,8 +62,8 @@ nb::tuple MolsFromChemDrawBlockHelper(
   std::vector<std::unique_ptr<RWMol>> mols;
   try {
     mols = RDKit::v2::MolsFromChemDrawBlock(
-        block, {sanitize, removeHs, format, needsCleanPolicy, parseQueries,
-                strictQueryParsing});
+        pyObjectToString(block), {sanitize, removeHs, format, needsCleanPolicy,
+                                  parseQueries, strictQueryParsing});
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -86,14 +81,14 @@ nb::tuple MolsFromChemDrawBlockHelper(
 }
 
 nb::tuple MolsFromChemDrawFileHelper(
-    nb::object cdxml, bool sanitize, bool removeHs,
+    const std::filesystem::path &filename, bool sanitize, bool removeHs,
     RDKit::v2::NeedsCleanPolicy needsCleanPolicy =
         RDKit::v2::NeedsCleanPolicy::TrustSource,
     bool parseQueries = false, bool strictQueryParsing = false,
     RDKit::v2::CDXFormat format = RDKit::v2::CDXFormat::AUTO) {
   auto mols = RDKit::v2::MolsFromChemDrawFile(
-      pyObjectToString(cdxml), {sanitize, removeHs, format, needsCleanPolicy,
-                                parseQueries, strictQueryParsing});
+      filename.string(), {sanitize, removeHs, format, needsCleanPolicy,
+                          parseQueries, strictQueryParsing});
   nb::list res;
   for (auto &mol : mols) {
     // take ownership of the data from the unique_ptr
@@ -103,12 +98,12 @@ nb::tuple MolsFromChemDrawFileHelper(
   return nb::tuple(res);
 }
 
-nb::tuple ReactionsFromChemDrawFileHelper(const std::string &filename,
+nb::tuple ReactionsFromChemDrawFileHelper(const std::filesystem::path &filename,
                                           bool sanitize, bool removeHs) {
   std::vector<std::unique_ptr<ChemicalReaction>> rxns;
   try {
-    rxns = RDKit::v2::ChemDrawFileToChemicalReactions(filename, sanitize,
-                                                      removeHs);
+    rxns = RDKit::v2::ChemDrawFileToChemicalReactions(filename.string(),
+                                                      sanitize, removeHs);
   } catch (RDKit::BadFileException &e) {
     PyErr_SetString(PyExc_IOError, e.what());
     throw nb::python_error();
@@ -124,8 +119,8 @@ nb::tuple ReactionsFromChemDrawFileHelper(const std::string &filename,
   return nb::tuple(res);
 }
 
-nb::tuple ReactionsFromChemDrawBlockHelper(nb::object imolBlock, bool sanitize,
-                                           bool removeHs) {
+nb::tuple ReactionsFromChemDrawBlockHelper(const StringOrBytes &imolBlock,
+                                           bool sanitize, bool removeHs) {
   std::istringstream inStream(pyObjectToString(imolBlock));
   std::vector<std::unique_ptr<ChemicalReaction>> rxns;
   try {

@@ -12,12 +12,14 @@
 #include <string>
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/string.h>
 
 // ours
 #include <GraphMol/FileParsers/MultithreadedSDMolSupplier.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/FileParseException.h>
+#include <RDBoost/Wrap_nb.h>
 #include "ContextManagers.h"
 
 namespace nb = nanobind;
@@ -32,7 +34,7 @@ T *MTMolSupplIter(T *suppl) {
 }
 
 template <typename T>
-ROMol *MolForwardSupplNext(T *suppl) {
+Nullable<ROMol *> MolForwardSupplNext(T *suppl) {
   ROMol *res = nullptr;
   if (!suppl->atEnd()) {
     try {
@@ -114,12 +116,20 @@ struct multiSDMolSup_wrap {
     nb::class_<MultithreadedSDMolSupplier>(m, "MultithreadedSDMolSupplier",
                                            multiSDMolSupplierClassDoc.c_str())
         .def(nb::init<>())
-        .def(nb::init<std::string, bool, bool, bool, unsigned int, size_t,
-                      size_t>(),
-             "fileName"_a, "sanitize"_a = true, "removeHs"_a = true,
-             "strictParsing"_a = true, "numWriterThreads"_a = 1,
-             "sizeInputQueue"_a = 5, "sizeOutputQueue"_a = 5,
-             multiSdsDocStr.c_str())
+        .def(
+            "__init__",
+            [](MultithreadedSDMolSupplier *self,
+               const std::filesystem::path &fileName, bool sanitize,
+               bool removeHs, bool strictParsing, unsigned int numWriterThreads,
+               size_t sizeInputQueue, size_t sizeOutputQueue) {
+              new (self) MultithreadedSDMolSupplier(
+                  fileName.string(), sanitize, removeHs, strictParsing,
+                  numWriterThreads, sizeInputQueue, sizeOutputQueue);
+            },
+            "fileName"_a, "sanitize"_a = true, "removeHs"_a = true,
+            "strictParsing"_a = true, "numWriterThreads"_a = 1,
+            "sizeInputQueue"_a = 5, "sizeOutputQueue"_a = 5,
+            multiSdsDocStr.c_str())
         .def("__iter__", &MTMolSupplIter<MultithreadedSDMolSupplier>,
              nb::rv_policy::reference_internal)
         .def("__enter__", &MolIOEnter<MultithreadedSDMolSupplier>,

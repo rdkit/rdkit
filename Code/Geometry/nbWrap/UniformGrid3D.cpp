@@ -13,6 +13,7 @@
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/filesystem.h>
 
 #include <RDGeneral/types.h>
 #include <RDGeneral/Invariant.h>
@@ -185,7 +186,12 @@ struct uGrid3D_wrapper {
              })
         .doc() = uGridClassDoc.c_str();
 
-    m.def("WriteGridToFile", writeGridToFile, "grid"_a, "filename"_a,
+    m.def(
+        "WriteGridToFile",
+        [](const UniformGrid3D &grid, const std::filesystem::path &filename) {
+          writeGridToFile(grid, filename.string());
+        },
+        "grid"_a, "filename"_a,
           "Write the grid to a grid file");
 
     m.def("TverskyIndex", tverskyIndex<UniformGrid3D>, "grid1"_a, "grid2"_a,
@@ -203,6 +209,7 @@ struct uGrid3D_wrapper {
               computeGridCentroid(grid, pt, windowRadius, weightSum);
           return std::make_tuple(weightSum, centroid);
         },
+        "grid"_a, "pt"_a, "windowRadius"_a,
         "Compute the grid point at the center of sphere around a Point3D");
     m.def("FindGridTerminalPoints", &findGridTerminalPoints, "grid"_a,
           "windowRadius"_a, "inclusionFraction"_a,
