@@ -131,8 +131,6 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
     target_link_libraries(ChemDraw_static PUBLIC expatpp)
   endif()
 
-  install(TARGETS ChemDraw DESTINATION ${RDKit_LibDir})
-
   # When building static libs, expat will not be included into ChemDraw,
   # so it needs to be installed so that it can be linked later on
   # when the libs are used.
@@ -193,8 +191,6 @@ if(RDK_BUILD_CHEMDRAW_SUPPORT)
   target_link_libraries(RDChemDrawLib PRIVATE EXPAT::EXPAT)
   target_link_libraries(RDChemDrawReactionLib PRIVATE EXPAT::EXPAT)
 
-  install(TARGETS RDChemDrawLib DESTINATION ${RDKit_LibDir})
-  install(TARGETS RDChemDrawReactionLib DESTINATION ${RDKit_LibDir})
   set(RDK_CHEMDRAW_LIBS RDChemDrawLib CACHE STRING "the external libraries" FORCE)
   set(RDK_CHEMDRAWREACTION_LIBS RDChemDrawReactinoLib CACHE STRING "the external libraries" FORCE)
 

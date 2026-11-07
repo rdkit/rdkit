@@ -1,9 +1,11 @@
 # Find the RDKitPython dependencies
 include(CMakeFindDependencyMacro)
 
-find_dependency(Python @Python_VERSION_MAJOR@.@Python_VERSION_MINOR@ COMPONENTS Interpreter Development.Module NumPy)
-find_dependency(Boost @Boost_VERSION_STRING@ COMPONENTS python@Python_VERSION_MAJOR@@Python_VERSION_MINOR@ numpy@Python_VERSION_MAJOR@@Python_VERSION_MINOR@)
-find_dependency(RDKit @RDKit_RELEASENAME@ REQUIRED)
+# The wrappers and Boost.Python are built for one Python minor version.
+find_dependency(Python @Python_VERSION_MAJOR@.@Python_VERSION_MINOR@ EXACT COMPONENTS Interpreter Development.Module NumPy)
+find_dependency(Boost @Boost_VERSION_STRING@ CONFIG COMPONENTS python@Python_VERSION_MAJOR@@Python_VERSION_MINOR@ numpy@Python_VERSION_MAJOR@@Python_VERSION_MINOR@)
+# find_package takes only a numeric version, so leave out RDKit_RevisionModifier.
+find_dependency(RDKit @RDKit_Year@.@RDKit_Month@.@RDKit_Revision@)
 
 # Import the targets
 include("${CMAKE_CURRENT_LIST_DIR}/@RDKitPython_EXPORTED_TARGETS@.cmake")

@@ -323,15 +323,15 @@ cmake -DBOOST_ROOT=/opt/local ..
 
 ##### Specifying an alternate Python installation
 
-If you aren't using the default python installation for your computer, You need to tell cmake where to find the python library it should link against and the python header files.
+If you aren't using the default python installation for your computer, tell cmake which python to build the wrappers for. cmake finds the matching header files and NumPy from that installation.
 
 Here's a sample command line:
 
 ```
-cmake -D PYTHON_LIBRARY=/usr/lib/python3.6/config/libpython3.6.a -D PYTHON_INCLUDE_DIR=/usr/include/python3.6/ -D PYTHON_EXECUTABLE=/usr/bin/python3 ..
+cmake -D Python_EXECUTABLE=/usr/bin/python3 ..
 ```
 
-The `PYTHON_EXECUTABLE` part is optional if the correct python is the first version in your `PATH`.
+Without `Python_EXECUTABLE`, cmake prefers the python of an active conda or virtual environment, and on macOS a framework install, over the first python in your `PATH`.
 
 ##### Disabling the Python wrappers
 
