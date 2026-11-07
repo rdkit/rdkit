@@ -149,10 +149,10 @@ class streambuf : public std::basic_streambuf<char> {
        have non-functional seek and tell. If so, assign None to
        py_tell and py_seek.
      */
-    if (py_tell != bp::object()) {
+    if (!py_tell.is_none()) {
       try {
         off_type py_pos = bp::extract<off_type>(py_tell());
-        if (py_seek != bp::object()) {
+        if (!py_seek.is_none()) {
           /* Make sure we can actually seek.
              bzip2 readers from python have a seek method, but it fails
              when they are in write mode.
@@ -169,7 +169,7 @@ class streambuf : public std::basic_streambuf<char> {
       }
     }
 
-    if (py_write != bp::object()) {
+    if (!py_write.is_none()) {
       // C-like string to make debugging easier
       write_buffer = new char[buffer_size + 1];
       write_buffer[buffer_size] = '\0';
@@ -180,7 +180,7 @@ class streambuf : public std::basic_streambuf<char> {
       setp(nullptr, nullptr);
     }
 
-    if (py_tell != bp::object()) {
+    if (!py_tell.is_none()) {
       off_type py_pos = bp::extract<off_type>(py_tell());
       pos_of_read_buffer_end_in_py_file = py_pos;
       pos_of_write_buffer_end_in_py_file = py_pos;
@@ -254,7 +254,7 @@ class streambuf : public std::basic_streambuf<char> {
   /// C.f. C++ standard section 27.5.2.4.3
   int_type underflow() override {
     int_type const failure = traits_type::eof();
-    if (py_read == bp::object()) {
+    if (py_read.is_none()) {
       throw std::invalid_argument(
           "That Python file object has no 'read' attribute");
     }
@@ -280,7 +280,7 @@ class streambuf : public std::basic_streambuf<char> {
 
   /// C.f. C++ standard section 27.5.2.4.5
   int_type overflow(int_type c = traits_type_eof()) override {
-    if (py_write == bp::object()) {
+    if (py_write.is_none()) {
       throw std::invalid_argument(
           "That Python file object has no 'write' attribute");
     }
@@ -344,11 +344,11 @@ class streambuf : public std::basic_streambuf<char> {
       if (traits_type::eq_int_type(status, traits_type::eof())) {
         result = -1;
       }
-      if (py_seek != bp::object()) {
+      if (!py_seek.is_none()) {
         py_seek(delta, 1);
       }
     } else if (gptr() && gptr() < egptr()) {
-      if (py_seek != bp::object()) {
+      if (!py_seek.is_none()) {
         py_seek(gptr() - egptr(), 1);
       }
     }
@@ -372,7 +372,7 @@ class streambuf : public std::basic_streambuf<char> {
     */
     int const failure = off_type(-1);
 
-    if (py_seek == bp::object()) {
+    if (py_seek.is_none()) {
       throw std::invalid_argument(
           "That Python file object has no 'seek' attribute");
     }
@@ -509,6 +509,12 @@ class streambuf : public std::basic_streambuf<char> {
   class istream : public std::istream {
    public:
     istream(streambuf &buf) : std::istream(&buf) {
+      // Checked here rather than on the first read: some readers loop until
+      // end of file, which a stream that cannot read never reaches.
+      if (buf.py_read.is_none()) {
+        throw ValueErrorException(
+            "That Python file object has no 'read' attribute");
+      }
       exceptions(std::ios_base::badbit);
     }
 

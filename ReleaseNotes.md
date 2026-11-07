@@ -18,6 +18,21 @@ GitHub)
   `std::span<const int>` instead of `const INT_VECT &`. These views are
   invalidated when the `RingInfo` is modified. `RingInfo::addRing()` now takes
   `std::span<const int>` arguments. The Python, Java, and C# APIs are unchanged.
+- `GetMorganFeatureAtomInvGen()` now uses the `patterns` it is given. The
+  Boost.Python wrapper could not convert a list or a tuple of molecules, so it
+  silently used the default feature definitions instead; fingerprints from a
+  generator built with `patterns` change accordingly.
+- `getFeatureInvariants()` and `MorganFeatureAtomInvGenerator`
+  (`GetMorganFeatureAtomInvGen()` from Python) now raise a `ValueError` for more
+  than 32 patterns or for a null (`None`) pattern. Each pattern is one bit of a
+  32-bit invariant, and the patterns past the 32nd were shifted out of it.
+- Reading a `MorganFeatureAtomInvGenerator` from JSON now raises a `ValueError`
+  for more than 32 patterns or for a pattern SMARTS that does not parse. An
+  unparseable pattern was dropped, which moved every later pattern to another
+  bit.
+- Creating a reader from a Python file object with no `read` attribute now
+  raises `ValueError`. Such an object was accepted before, and reading from it
+  returned no molecules.
 
 ## Code removed in this release:
 
