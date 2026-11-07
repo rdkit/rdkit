@@ -93,7 +93,7 @@ struct uGrid3D_wrapper {
                       DiscreteValueVect::DiscreteValueType, const Point3D *>(),
              "dimX"_a, "dimY"_a, "dimZ"_a, "spacing"_a = 0.5,
              "valType"_a = DiscreteValueVect::TWOBITVALUE,
-             "offSet"_a = (const Point3D *)nullptr,
+             "offSet"_a = nb::none(),
              "Constructor for a UniformGrid3D object")
         .def(nb::init<std::string>(), "pkl"_a, "pickle constructor")
         .def("__init__",

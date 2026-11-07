@@ -10,7 +10,7 @@ steps:
         libboost-devel=$(boost_version) \
         libboost=$(boost_version) \
         libboost-headers=$(boost_version) \
-        nanobind=2 \
+        "nanobind>=3,<4" \
         numpy pillow eigen pandas matplotlib-base \
         cairo \
         ccache
