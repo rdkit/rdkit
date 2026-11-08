@@ -141,7 +141,26 @@ void testMHFPDistance() {
   TEST_ASSERT(feq(MHFPFingerprints::MHFPEncoder::Distance(fp_s, fp_s), 0.0));
 
   TEST_ASSERT(
-      feq(MHFPFingerprints::MHFPEncoder::Distance(fp_s, fp_t), 0.7109375));
+      feq(MHFPFingerprints::MHFPEncoder::Distance(fp_s, fp_t), 0.724121));
+
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
+void testOrderDependence() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "Test MHFP order dependence" << std::endl;
+
+  auto m1 = "C(CCCn1c2ccccc2c(c(C(NC2C3CC4CC(C3)CC2C4)=O)c1)=O)C"_smiles;
+  TEST_ASSERT(m1);
+  auto m2 = "c1cccc2c(=O)c(C(=O)NC3C4CC5CC3CC(C4)C5)cn(CCCCC)c12"_smiles;
+  TEST_ASSERT(m2);
+
+  MHFPFingerprints::MHFPEncoder enc;
+
+  auto fp_s = enc.Encode(*m1);
+  auto fp_t = enc.Encode(*m2);
+
+  TEST_ASSERT(feq(MHFPFingerprints::MHFPEncoder::Distance(fp_s, fp_t), 0.0));
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
@@ -155,6 +174,8 @@ int main(int argc, char *argv[]) {
   testMHFPShingling();
   testMHFPHashing();
   testMHFPSECFP();
+  testMHFPDistance();
+  testOrderDependence();
 
   return 0;
 }

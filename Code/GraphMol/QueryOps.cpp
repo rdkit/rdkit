@@ -48,10 +48,12 @@ int queryIsAtomBridgehead(Atom const *at) {
 
   boost::dynamic_bitset<> bondsInRingI(mol.getNumBonds());
   boost::dynamic_bitset<> ringsOverlap(ri->numRings());
-  for (unsigned int i = 0; i < ri->bondRings().size(); ++i) {
+  const auto bondRings = ri->bondRings();
+  for (unsigned int i = 0; i < bondRings.size(); ++i) {
     bondsInRingI.reset();
     bool atomInRingI = false;
-    for (const auto bidx : ri->bondRings()[i]) {
+    const auto ringI = bondRings[i];
+    for (const auto bidx : ringI) {
       bondsInRingI.set(bidx);
       if (atomRingBonds[bidx]) {
         atomInRingI = true;
@@ -60,10 +62,11 @@ int queryIsAtomBridgehead(Atom const *at) {
     if (!atomInRingI) {
       continue;
     }
-    for (unsigned int j = i + 1; j < ri->bondRings().size(); ++j) {
+    for (unsigned int j = i + 1; j < bondRings.size(); ++j) {
       unsigned int overlap = 0;
       bool atomInRingJ = false;
-      for (const auto bidx : ri->bondRings()[j]) {
+      const auto ringJ = bondRings[j];
+      for (const auto bidx : ringJ) {
         if (atomRingBonds[bidx]) {
           atomInRingJ = true;
         }
@@ -1003,21 +1006,15 @@ Atom *replaceAtomWithQueryAtom(RWMol *mol, Atom *atom) {
   return mol->getAtomWithIdx(idx);
 }
 
-enum class RangeQueryType : char {
-  EQUAL,
-  LESS,
-  GREATER,
-  RANGE
-};
 void finalizeAtomRingSizeQuery(Queries::Query<int, Atom const *, true> *query,
-                               RangeQueryType qtype) {
+                               detail::RangeQueryType qtype) {
   switch (qtype) {
-    case RangeQueryType::EQUAL: {
+    case detail::RangeQueryType::EQUAL: {
       auto tgt = static_cast<ATOM_EQUALS_QUERY *>(query)->getVal();
       query->setDataFunc(
           [tgt](Atom const *at) { return queryAtomIsInRingOfSize(at, tgt); });
     } break;
-    case RangeQueryType::RANGE: {
+    case detail::RangeQueryType::RANGE: {
       auto rq = static_cast<ATOM_RANGE_QUERY *>(query);
       auto uv = rq->getUpper();
       auto lv = rq->getLower();
@@ -1026,14 +1023,14 @@ void finalizeAtomRingSizeQuery(Queries::Query<int, Atom const *, true> *query,
         return queryAtomIsInRingOfSize(at, lv, uv, lo, uo);
       });
     } break;
-    case RangeQueryType::LESS: {
+    case detail::RangeQueryType::LESS: {
       auto lv = static_cast<ATOM_LESSEQUAL_QUERY *>(query)->getVal();
       auto uv = -1;
       query->setDataFunc([lv, uv](Atom const *at) {
         return queryAtomIsInRingOfSize(at, lv, uv);
       });
     } break;
-    case RangeQueryType::GREATER: {
+    case detail::RangeQueryType::GREATER: {
       auto lv = -1;
       auto uv = static_cast<ATOM_GREATEREQUAL_QUERY *>(query)->getVal();
       query->setDataFunc([lv, uv](Atom const *at) {
@@ -1048,18 +1045,7 @@ void finalizeAtomRingSizeQuery(Queries::Query<int, Atom const *, true> *query,
 void finalizeQueryFromDescription(
     Queries::Query<int, Atom const *, true> *query, Atom const *) {
   std::string descr = query->getDescription();
-
-  RangeQueryType qtype = RangeQueryType::EQUAL;
-  if (boost::starts_with(descr, "range_")) {
-    descr = descr.substr(6);
-    qtype = RangeQueryType::RANGE;
-  } else if (boost::starts_with(descr, "less_")) {
-    descr = descr.substr(5);
-    qtype = RangeQueryType::LESS;
-  } else if (boost::starts_with(descr, "greater_")) {
-    descr = descr.substr(8);
-    qtype = RangeQueryType::GREATER;
-  }
+  detail::RangeQueryType qtype = detail::parseRangeQueryType(descr);
 
   if (descr == "AtomRingBondCount") {
     query->setDataFunc(queryAtomRingBondCount);
@@ -1140,6 +1126,7 @@ void finalizeQueryFromDescription(
 void finalizeQueryFromDescription(
     Queries::Query<int, Bond const *, true> *query, Bond const *) {
   std::string descr = query->getDescription();
+  detail::parseRangeQueryType(descr);
   Queries::Query<int, Bond const *, true> *tmpQuery;
   if (descr == "BondRingSize") {
     tmpQuery = makeBondInRingOfSizeQuery(

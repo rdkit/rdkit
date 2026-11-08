@@ -1430,10 +1430,10 @@ void _recurseAtomOneSide(unsigned int endAid, unsigned int begAid,
   return;
 }
 
-std::vector<RDKit::INT_VECT> _getRingsForSpiroCenter(unsigned int spiroAid,
-                                                     const RDKit::ROMol *mol) {
+std::vector<std::span<const int>> _getRingsForSpiroCenter(
+    unsigned int spiroAid, const RDKit::ROMol *mol) {
   PRECONDITION(mol, "");
-  std::vector<RDKit::INT_VECT> result;
+  std::vector<std::span<const int>> result;
   const auto &atomRings = mol->getRingInfo()->atomRings();
 
   // Collect the 2 rings containing this spiro atom
@@ -2550,7 +2550,7 @@ void EmbeddedFrag::removeCollisionsPathAngleExpansion() {
   std::unordered_map<int, std::unordered_set<int>> atomRings;
   auto ringInfo = dp_mol->getRingInfo();
   for (size_t ringIdx = 0; ringIdx < ringInfo->atomRings().size(); ++ringIdx) {
-    const auto &ring = ringInfo->atomRings()[ringIdx];
+    const auto ring = ringInfo->atomRings()[ringIdx];
     for (auto atomId : ring) {
       atomRings[atomId].insert(ringIdx);
     }

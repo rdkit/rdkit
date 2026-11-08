@@ -63,7 +63,8 @@ struct RingSystemInfo {
 // distinguish a single fused bond from a longer shared path. Return true when
 // two rings share adjacent bonds: their common atom is an interior bridge atom.
 bool ringsSharePathWithInteriorAtom(
-    const ROMol &mol, const INT_VECT &firstRing, const INT_VECT &secondRing) {
+    const ROMol &mol, std::span<const int> firstRing,
+    std::span<const int> secondRing) {
   // Count only bonds that belong to both rings. Two such bonds incident on the
   // same atom are consecutive and make that atom interior to the shared path.
   std::vector<unsigned int> numIncidentSharedBonds(mol.getNumAtoms());
@@ -85,7 +86,7 @@ bool ringsSharePathWithInteriorAtom(
 // member of multiple rings, so start the traversal from every containing ring.
 std::vector<unsigned int> getFusedRingSystem(RingInfo &ringInfo,
                                              unsigned int bondIdx) {
-  const auto &bondRings = ringInfo.bondRings();
+  const auto bondRings = ringInfo.bondRings();
   boost::dynamic_bitset<> visitedRings(bondRings.size());
   std::vector<unsigned int> ringsToVisit;
   const auto addRingToVisit = [&](unsigned int ringIdx) {
@@ -113,7 +114,7 @@ std::vector<unsigned int> getFusedRingSystem(RingInfo &ringInfo,
 bool ringSystemHasBridgeWithInteriorAtom(
     const ROMol &mol, RingInfo &ringInfo,
     const std::vector<unsigned int> &ringIndices) {
-  const auto &bondRings = ringInfo.bondRings();
+  const auto bondRings = ringInfo.bondRings();
   for (const auto ringIdx : ringIndices) {
     // fusedRingNeighbors() is lazy and cached by RingInfo. Checking only those
     // pairs avoids repeating RingInfo's fused-ring discovery here.
@@ -135,7 +136,7 @@ RDGeom::Point3D getRingSystemCenter(
     const std::vector<unsigned int> &ringIndices, const Conformer &conf) {
   // An atom shared by multiple rings contributes only once to the center.
   boost::dynamic_bitset<> ringAtoms(mol.getNumAtoms());
-  const auto &atomRings = ringInfo.atomRings();
+  const auto atomRings = ringInfo.atomRings();
   for (const auto ringIdx : ringIndices) {
     for (const auto atomIdx : atomRings[ringIdx]) {
       ringAtoms.set(atomIdx);

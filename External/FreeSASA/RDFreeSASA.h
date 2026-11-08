@@ -61,6 +61,10 @@ struct RDKIT_FREESASALIB_EXPORT SASAOpts {
   Algorithm algorithm;
   Classifier classifier;
   double probeRadius;
+  //! number of test points per atom used by ShrakeRupley
+  int shrakeRupleyNumPoints;
+  //! number of slices per atom used by LeeRichards
+  int leeRichardsNumSlices;
   SASAOpts();
   SASAOpts(Algorithm alg, Classifier cls);
   SASAOpts(Algorithm alg, Classifier cls, double pr);

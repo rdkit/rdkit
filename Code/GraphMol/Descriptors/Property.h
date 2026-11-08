@@ -44,6 +44,14 @@
 
 namespace RDKit {
 namespace Descriptors {
+//! What computePropertiesForMols() does when a property's calculation
+//! throws a std::exception (std::bad_alloc is always rethrown)
+enum class PropertyFailureMode {
+  THROW,         //!< rethrow to the caller once all workers have finished
+  DEFAULT_ZERO,  //!< use 0.0 for that value
+  DEFAULT_NAN    //!< use NaN for that value
+};
+
 struct RDKIT_DESCRIPTORS_EXPORT PropertyFunctor {
   // Registry of property functions
   //  See REGISTER_DESCRIPTOR
@@ -70,6 +78,14 @@ struct RDKIT_DESCRIPTORS_EXPORT PropertyFunctor {
   const std::string getName() const { return propName; }
   //! Return the properties version
   const std::string getVersion() const { return propVersion; }
+
+  //! What computePropertiesForMols() does if this property throws a
+  //! std::exception. Only the batch path uses this; computeProperties() does
+  //! not catch exceptions. The answer must not change for the lifetime of the
+  //! functor.
+  virtual PropertyFailureMode failureMode() const {
+    return PropertyFailureMode::DEFAULT_NAN;
+  }
 };
 
 //! Holds a collection of properties for computation purposes
@@ -84,6 +100,39 @@ class RDKIT_DESCRIPTORS_EXPORT Properties {
   std::vector<std::string> getPropertyNames() const;
   std::vector<double> computeProperties(const RDKit::ROMol &mol,
                                         bool annotate = false) const;
+  //! Computes the properties for each molecule in \c mols, optionally in
+  //! parallel
+  /*!
+    \param mols        the molecules. Null pointers are allowed; the
+                       corresponding rows are filled with NaN.
+    \param numThreads  the number of threads to use. If this is <= 0, the
+                       number of hardware threads plus this value is used (see
+                       getNumThreadsToUse()). Has no effect if the RDKit was
+                       built without thread support.
+
+    \return one row per molecule; row \c i contains the values
+            computeProperties(*mols[i]) returns, in getPropertyNames() order.
+
+    Notes:
+      - if calculating a value throws a std::exception, the property's
+        failureMode() decides the result: the value is set to 0.0 or NaN, or
+        the exception is rethrown. std::bad_alloc is always rethrown.
+        Rethrown exceptions reach the caller once all worker threads have
+        finished.
+      - properties that must run on the calling thread (e.g. Python
+        callbacks) need \c numThreads = 1; the Python wrappers arrange this.
+      - each distinct molecule is processed only once, by a single thread, so
+        molecules may appear more than once in \c mols
+      - property calculators may cache results on the molecules, so the
+        molecules must not be modified or used by other threads while this
+        function is running
+  */
+  std::vector<std::vector<double>> computePropertiesForMols(
+      const std::vector<const RDKit::ROMol *> &mols, int numThreads = 1) const;
+  //! The functors this instance computes, in getPropertyNames() order
+  const std::vector<boost::shared_ptr<PropertyFunctor>> &getProperties() const {
+    return m_properties;
+  }
   void annotateProperties(RDKit::ROMol &mol) const;
 
   //! Register a property function - takes ownership

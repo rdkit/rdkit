@@ -38,8 +38,8 @@ Alternatively, you can also send Cookbook revisions and addition requests to the
 .. note::
 
    The Index ID# (e.g., **RDKitCB_##**) is simply a way to track Cookbook entries and image file names. 
-   New Cookbook additions are sequentially index numbered, regardless of where they are placed 
-   within the document. As such, for reference, the next Cookbook entry is **RDKitCB_41**.
+    New Cookbook additions are sequentially index numbered, regardless of where they are placed 
+    within the document. As such, for reference, the next Cookbook entry is **RDKitCB_42**.
 
 Drawing Molecules (Jupyter)
 *******************************
@@ -1385,6 +1385,38 @@ Macrocycles with SMARTS queries
    erythromycin
 
 .. image:: images/RDKitCB_13_im1.png
+
+
+Find Bonds Shared by Multiple Rings
+====================================
+
+| **Author:** Malte Korn
+| **Index ID#:** RDKitCB_41
+| **Summary:** Use the ``@{n}`` SMARTS extension to match bonds that belong to a specific number of rings.
+
+The ``@{n}`` bond SMARTS (RDKit extension) matches bonds that are part of exactly ``n`` SSSR rings.
+Variants ``@{n-m}``, ``@{n-}``, and ``@{-m}`` support range queries.
+This is useful for identifying ring-fusion bonds in polycyclic systems.
+
+.. testcode::
+
+   from rdkit import Chem
+   from rdkit.Chem.Draw import IPythonConsole
+   from rdkit.Chem import Draw
+   phen = Chem.MolFromSmiles("C1C=CC=C2C3C=CC=CC=3C=CC=12")
+   # Match bonds shared by exactly 2 rings (the two fusion bonds in phenanthrene)
+   pat = Chem.MolFromSmarts("*@{2}*")
+   print(phen.GetSubstructMatches(pat))
+
+.. testoutput::
+
+   ((4, 13), (5, 10))
+
+.. testcode::
+
+   phen
+
+.. image:: images/RDKitCB_41_im0.png
 
 
 Returning Substructure Matches as SMILES

@@ -20,7 +20,7 @@
 
 namespace RDKit {
 
-RGroupDecompData::RGroupDecompData(const RWMol &inputCore,
+RGroupDecompData::RGroupDecompData(const ROMol &inputCore,
                                    RGroupDecompositionParameters inputParams)
     : params(std::move(inputParams)) {
   addInputCore(inputCore);

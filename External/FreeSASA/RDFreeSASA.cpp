@@ -63,11 +63,21 @@ using namespace RDKit;
 SASAOpts::SASAOpts()
     : algorithm(SASAOpts::LeeRichards),
       classifier(SASAOpts::Protor),
-      probeRadius(FREESASA_DEF_PROBE_RADIUS) {}
+      probeRadius(FREESASA_DEF_PROBE_RADIUS),
+      shrakeRupleyNumPoints(FREESASA_DEF_SR_N),
+      leeRichardsNumSlices(FREESASA_DEF_LR_N) {}
 SASAOpts::SASAOpts(SASAOpts::Algorithm alg, SASAOpts::Classifier cls)
-    : algorithm(alg), classifier(cls), probeRadius(FREESASA_DEF_PROBE_RADIUS) {}
+    : algorithm(alg),
+      classifier(cls),
+      probeRadius(FREESASA_DEF_PROBE_RADIUS),
+      shrakeRupleyNumPoints(FREESASA_DEF_SR_N),
+      leeRichardsNumSlices(FREESASA_DEF_LR_N) {}
 SASAOpts::SASAOpts(SASAOpts::Algorithm alg, SASAOpts::Classifier cls, double pr)
-    : algorithm(alg), classifier(cls), probeRadius(pr) {}
+    : algorithm(alg),
+      classifier(cls),
+      probeRadius(pr),
+      shrakeRupleyNumPoints(FREESASA_DEF_SR_N),
+      leeRichardsNumSlices(FREESASA_DEF_LR_N) {}
 
 bool classifyAtoms(ROMol &mol, std::vector<double> &radii,
                    const SASAOpts &opts) {
@@ -140,10 +150,18 @@ double internalCalcSASA(const ROMol &mol, const std::vector<double> &radii,
   params.probe_radius = opts.probeRadius;
   switch (opts.algorithm) {
     case SASAOpts::LeeRichards:
+      if (opts.leeRichardsNumSlices <= 0) {
+        throw ValueErrorException("leeRichardsNumSlices must be positive");
+      }
       params.alg = FREESASA_LEE_RICHARDS;
+      params.lee_richards_n_slices = opts.leeRichardsNumSlices;
       break;
     case SASAOpts::ShrakeRupley:
+      if (opts.shrakeRupleyNumPoints <= 0) {
+        throw ValueErrorException("shrakeRupleyNumPoints must be positive");
+      }
       params.alg = FREESASA_SHRAKE_RUPLEY;
+      params.shrake_rupley_n_points = opts.shrakeRupleyNumPoints;
       break;
     default:
       throw ValueErrorException("Unknown freesasa algorithm");
