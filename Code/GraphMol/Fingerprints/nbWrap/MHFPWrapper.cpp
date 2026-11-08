@@ -60,7 +60,7 @@ NB_MODULE(rdMHFPFingerprint, m) {
                                         isomeric, kekulize, min_radius);
           },
           "smiles"_a, "radius"_a = 3, "rings"_a = true, "isomeric"_a = false,
-          "kekulize"_a = true, "min_radius"_a = 1,
+          "kekulize"_a = false, "min_radius"_a = 1,
           R"DOC(Creates a shingling (a list of circular n-grams / substructures) from a SMILES string.)DOC")
       .def(
           "CreateShinglingFromMol",
@@ -72,7 +72,7 @@ NB_MODULE(rdMHFPFingerprint, m) {
                                         kekulize, min_radius);
           },
           "mol"_a, "radius"_a = 3, "rings"_a = true, "isomeric"_a = false,
-          "kekulize"_a = true, "min_radius"_a = 1,
+          "kekulize"_a = false, "min_radius"_a = 1,
           R"DOC(Creates a shingling (a list of circular n-grams / substructures) from a RDKit Mol instance.)DOC")
       .def(
           "EncodeSmiles",
@@ -84,7 +84,7 @@ NB_MODULE(rdMHFPFingerprint, m) {
                                min_radius);
           },
           "smiles"_a, "radius"_a = 3, "rings"_a = true, "isomeric"_a = false,
-          "kekulize"_a = true, "min_radius"_a = 1,
+          "kekulize"_a = false, "min_radius"_a = 1,
           "Creates a MHFP vector from a SMILES string.")
       .def(
           "EncodeMol",
@@ -96,7 +96,7 @@ NB_MODULE(rdMHFPFingerprint, m) {
                                min_radius);
           },
           "mol"_a, "radius"_a = 3, "rings"_a = true, "isomeric"_a = false,
-          "kekulize"_a = true, "min_radius"_a = 1,
+          "kekulize"_a = false, "min_radius"_a = 1,
           "Creates a MHFP vector from an RDKit Mol instance.")
       .def(
           "EncodeSmilesBulk",
@@ -113,7 +113,7 @@ NB_MODULE(rdMHFPFingerprint, m) {
             return nb::tuple(resList);
           },
           "smiles"_a, "radius"_a = 3, "rings"_a = true, "isomeric"_a = false,
-          "kekulize"_a = true, "min_radius"_a = 1,
+          "kekulize"_a = false, "min_radius"_a = 1,
           "Creates a MHFP vector from a list of SMILES strings.")
       .def(
           "EncodeMolsBulk",
@@ -135,7 +135,7 @@ NB_MODULE(rdMHFPFingerprint, m) {
             return nb::tuple(resList);
           },
           "mols"_a, "radius"_a = 3, "rings"_a = true, "isomeric"_a = false,
-          "kekulize"_a = true, "min_radius"_a = 1,
+          "kekulize"_a = false, "min_radius"_a = 1,
           "Creates a MHFP vector from a list of RDKit Mol instances.")
       .def(
           "EncodeSECFPSmiles",
@@ -147,7 +147,7 @@ NB_MODULE(rdMHFPFingerprint, m) {
                                     min_radius, length);
           },
           "smiles"_a, "radius"_a = 3, "rings"_a = true, "isomeric"_a = false,
-          "kekulize"_a = true, "min_radius"_a = 1, "length"_a = 2048,
+          "kekulize"_a = false, "min_radius"_a = 1, "length"_a = 2048,
           "Creates a SECFP binary vector from a SMILES string.")
       .def(
           "EncodeSECFPMol",
@@ -159,7 +159,7 @@ NB_MODULE(rdMHFPFingerprint, m) {
                                     min_radius, length);
           },
           "mol"_a, "radius"_a = 3, "rings"_a = true, "isomeric"_a = false,
-          "kekulize"_a = true, "min_radius"_a = 1, "length"_a = 2048,
+          "kekulize"_a = false, "min_radius"_a = 1, "length"_a = 2048,
           "Creates a SECFP binary vector from an RDKit Mol instance.")
       .def(
           "EncodeSECFPSmilesBulk",
@@ -176,7 +176,7 @@ NB_MODULE(rdMHFPFingerprint, m) {
             return nb::tuple(resList);
           },
           "smiles"_a, "radius"_a = 3, "rings"_a = true, "isomeric"_a = false,
-          "kekulize"_a = true, "min_radius"_a = 1, "length"_a = 2048,
+          "kekulize"_a = false, "min_radius"_a = 1, "length"_a = 2048,
           "Creates a SECFP binary vector from a list of SMILES strings.")
       .def(
           "EncodeSECFPMolsBulk",
@@ -196,7 +196,7 @@ NB_MODULE(rdMHFPFingerprint, m) {
             return nb::tuple(resList);
           },
           "mols"_a, "radius"_a = 3, "rings"_a = true, "isomeric"_a = false,
-          "kekulize"_a = true, "min_radius"_a = 1, "length"_a = 2048,
+          "kekulize"_a = false, "min_radius"_a = 1, "length"_a = 2048,
           "Creates a SECFP binary vector from a list of RDKit Mol instances.")
       .def_static("Distance", &MHFPEncoder::Distance, "a"_a, "b"_a);
 }

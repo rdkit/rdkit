@@ -171,3 +171,140 @@ TEST_CASE("k SMARTS extensions") {
     }
   }
 }
+
+TEST_CASE("@{n} SMARTS bond ring count") {
+  SECTION("parsing and writing") {
+    auto q = "*@{0}*"_smarts;
+    REQUIRE(q);
+    CHECK(MolToSmarts(*q) == "*@{0}*");
+
+    auto q2 = "*!@*"_smarts;
+    REQUIRE(q2);
+    CHECK(MolToSmarts(*q2) == "*!@*");
+
+    auto q3 = "*@{2}*"_smarts;
+    REQUIRE(q3);
+    CHECK(MolToSmarts(*q3) == "*@{2}*");
+
+    auto q4 = "*@{2-}*"_smarts;
+    REQUIRE(q4);
+    CHECK(MolToSmarts(*q4) == "*@{2-}*");
+
+    auto q5 = "*@{-2}*"_smarts;
+    REQUIRE(q5);
+    CHECK(MolToSmarts(*q5) == "*@{-2}*");
+
+    auto q6 = "*@{1-3}*"_smarts;
+    REQUIRE(q6);
+    CHECK(MolToSmarts(*q6) == "*@{1-3}*");
+  }
+
+  SECTION("matching") {
+    auto naph = "c1ccc2ccccc2c1"_smiles;
+    REQUIRE(naph);
+    auto q = "*@{2}*"_smarts;
+    REQUIRE(q);
+    std::vector<MatchVectType> matches;
+    CHECK(SubstructMatch(*naph, *q, matches));
+    CHECK(matches.size() == 1);
+
+    auto bip = "c1ccc2c(c1)c1ccccc12"_smiles;
+    REQUIRE(bip);
+    auto q2 = "*@{2}*"_smarts;
+    REQUIRE(q2);
+    matches.clear();
+    CHECK(SubstructMatch(*bip, *q2, matches));
+    CHECK(matches.size() == 2);
+
+    auto cub = "C12C3C4C1C5C2C3C45"_smiles;
+    REQUIRE(cub);
+    auto q3 = "*@{2}*"_smarts;
+    REQUIRE(q3);
+    matches.clear();
+    CHECK(SubstructMatch(*cub, *q3, matches));
+    CHECK(matches.size() == 12);
+
+    auto cyc = "C1CCCCC1"_smiles;
+    REQUIRE(cyc);
+    auto q4 = "*@{1}*"_smarts;
+    REQUIRE(q4);
+    matches.clear();
+    CHECK(SubstructMatch(*cyc, *q4, matches));
+    CHECK(matches.size() == 6);
+
+    auto eth = "CC"_smiles;
+    REQUIRE(eth);
+    auto q5 = "*@{0}*"_smarts;
+    REQUIRE(q5);
+    matches.clear();
+    CHECK(SubstructMatch(*eth, *q5, matches));
+    CHECK(matches.size() == 1);
+  }
+
+  SECTION("ranges") {
+    std::string smiles = "c1ccc2ccccc2c1";
+    std::vector<std::pair<std::string, size_t>> smartses = {
+        {"*@{1}*", 10},  {"*@{2}*", 1},   {"*@{2-}*", 1},  {"*@{1-2}*", 11},
+        {"*@{-1}*", 10}, {"*@{-2}*", 11}, {"*!@{2}*", 10},
+    };
+    for (const auto &[sma, val] : smartses) {
+      checkMatches(sma, smiles, val, 2);
+    }
+  }
+
+  SECTION("composite bond range round-trip") {
+    // @{1-2} combined with another bond primitive must not trigger an invalid
+    // static_cast. The composite-bond path in _recurseBondSmarts passes the
+    // raw QUERYBOND_QUERY * to getBondSmartsSimple, which does its own
+    // dynamic_cast to BOND_RANGE_QUERY.
+    auto q = "*@{1-2}&-*"_smarts;
+    REQUIRE(q);
+    CHECK(MolToSmarts(*q) == "*@{1-2}&-*");
+
+    // Test less and greater forms in composite bonds too
+    auto q2 = "*@{-2}&-*"_smarts;
+    REQUIRE(q2);
+    CHECK(MolToSmarts(*q2) == "*@{-2}&-*");
+
+    auto q3 = "*@{3-}&-*"_smarts;
+    REQUIRE(q3);
+    CHECK(MolToSmarts(*q3) == "*@{3-}&-*");
+  }
+
+  SECTION("bond range query-query matching") {
+    SubstructMatchParameters params;
+    params.useQueryQueryMatches = true;
+
+    // Same range matches itself
+    auto q1 = "*@{1-2}*"_smarts;
+    REQUIRE(q1);
+    auto q2 = "*@{1-2}*"_smarts;
+    REQUIRE(q2);
+    auto qb1 = static_cast<QueryBond *>(q1->getBondWithIdx(0));
+    auto qb2 = static_cast<QueryBond *>(q2->getBondWithIdx(0));
+    CHECK(qb1->QueryMatch(qb2));
+
+    // Different ranges do not match
+    auto q3 = "*@{3-4}*"_smarts;
+    REQUIRE(q3);
+    auto qb3 = static_cast<QueryBond *>(q3->getBondWithIdx(0));
+    CHECK(!qb1->QueryMatch(qb3));
+
+    auto qEq = "*@{2}*"_smarts;
+    REQUIRE(qEq);
+    auto qRange = "*@{1-3}*"_smarts;
+    REQUIRE(qRange);
+    auto qbEq = static_cast<QueryBond *>(qEq->getBondWithIdx(0));
+    auto qbRange = static_cast<QueryBond *>(qRange->getBondWithIdx(0));
+    CHECK(!qbEq->QueryMatch(qbRange));
+    CHECK(!qbRange->QueryMatch(qbEq));
+
+    auto qG1 = "*@{2-}*"_smarts;
+    REQUIRE(qG1);
+    auto qL1 = "*@{-2}*"_smarts;
+    REQUIRE(qL1);
+    auto qbG1 = static_cast<QueryBond *>(qG1->getBondWithIdx(0));
+    auto qbL1 = static_cast<QueryBond *>(qL1->getBondWithIdx(0));
+    CHECK(qbG1->QueryMatch(qbL1));
+  }
+}

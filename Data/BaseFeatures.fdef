@@ -16,10 +16,10 @@ DefineFeature SingleAtomDonor [{NDonor},{ChalcDonor}]
 EndFeature
 
 # aromatic N, but not indole or pyrole or fusing two rings
-AtomType NAcceptor [n;+0;!X3;!$([n;H1](cc)cc)]
+AtomType NAcceptor [n&+0&!X3&!$([n&H1](cc)cc)]
 AtomType NAcceptor [$([N;H0]#[C&v4])]
 # tertiary nitrogen adjacent to aromatic carbon
-AtomType NAcceptor [N&v3;H0;$(Nc)]
+AtomType NAcceptor [N&v3&H0&$(Nc)]
 
 # removes thioether and nitro oxygen
 AtomType ChalcAcceptor [O;H0;v2;!$(O=N-*)] 

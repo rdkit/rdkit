@@ -13,7 +13,7 @@
 
 #include <vector>
 #include <map>
-#include <list>
+#include <memory>
 #include <string_view>
 #include <RDGeneral/BoostStartInclude.h>
 #include <boost/smart_ptr.hpp>
@@ -203,6 +203,27 @@ struct RDKIT_GRAPHMOL_EXPORT AddHsParameters {
  */
 RDKIT_GRAPHMOL_EXPORT void addHs(RWMol &mol, const AddHsParameters &params,
                                  const UINT_VECT *onlyOnAtoms = nullptr);
+
+//! adds Hs to a molecule as explicit Atoms
+/*!
+    \param mol          the molecule to add Hs to
+    \param params       parameters controlling which Hs are added.
+    \param onlyOnAtoms   (optional) if provided, this should be a vector of
+                IDs of the atoms that will be considered for H addition.
+
+    <b>Notes:</b>
+       - it makes no sense to use the \c addCoords option if the molecule's
+   heavy atoms don't already have coordinates.
+       - the caller is responsible for <tt>delete</tt>ing the pointer this
+   returns.
+ */
+inline RDKIT_GRAPHMOL_EXPORT ROMol *addHs(
+    const ROMol &mol, const AddHsParameters &params,
+    const UINT_VECT *onlyOnAtoms = nullptr) {
+  std::unique_ptr<RWMol> res{new RWMol(mol)};
+  addHs(*res, params, onlyOnAtoms);
+  return static_cast<ROMol *>(res.release());
+}
 
 //! returns a copy of a molecule with hydrogens added in as explicit Atoms
 /*!

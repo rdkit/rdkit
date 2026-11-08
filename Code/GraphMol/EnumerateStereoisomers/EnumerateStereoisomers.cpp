@@ -74,8 +74,7 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::next() {
   if (d_flippers.empty()) {
     ++d_numReturned;
     return std::make_unique<ROMol>(d_mol);
-  }
-  else {
+  } else {
     auto isomer = generateRandomIsomer();
     ++d_numReturned;
     return isomer;
@@ -156,7 +155,11 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::generateRandomIsomer() {
       if (d_options.unique) {
         auto smi =
             MolToCXSmiles(*isomer, SmilesWriteParams(),
-                          SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+                          SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS ^
+                              SmilesWrite::CXSmilesFields::CX_ATOM_LABELS ^
+                              SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES ^
+                              SmilesWrite::CXSmilesFields::CX_ATOM_PROPS);
+
         if (d_generatedIsomers.find(smi) != d_generatedIsomers.end()) {
           continue;
         }
@@ -194,4 +197,3 @@ bool StereoisomerEnumerator::embeddable(ROMol &isomer) {
 
 }  // namespace EnumerateStereoisomers
 }  // namespace RDKit
-

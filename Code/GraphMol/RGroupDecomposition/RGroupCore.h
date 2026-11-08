@@ -33,7 +33,7 @@ struct RCore {
   // Number of user labelled rgroups in the core
   size_t numberUserRGroups = 0;
   RCore() {}
-  RCore(const RWMol &c) : core(new RWMol(c)) { init(); }
+  RCore(const ROMol &c) : core(new RWMol(c)) { init(); }
 
   void init();
 

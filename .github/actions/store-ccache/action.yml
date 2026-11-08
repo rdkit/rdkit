@@ -1,0 +1,18 @@
+name: Trim and store ccache
+description: Trim and save the shared ccache cache for a CI job.
+runs:
+  using: composite
+  steps:
+    # JOB_START_TIMESTAMP should be set at the start of the job,
+    # e.g. in ci-env:  echo "JOB_START_TIMESTAMP=$(date +%s)"
+    - name: Trim ccache cache to this build's touched entries
+      shell: bash
+      run: |
+        source ${CONDA}/etc/profile.d/conda.sh
+        conda activate rdkit_build
+        ccache --evict-older-than "$(( $(date +%s) - JOB_START_TIMESTAMP ))s"
+    - name: Store ccache cache
+      uses: actions/cache/save@v6
+      with:
+        path: ${{ env.CCACHE_DIR }}
+        key: ccache-${{ runner.os }}-${{ github.job }}-${{ env.BUILD_BRANCH_NAME }}-${{ github.sha }}
