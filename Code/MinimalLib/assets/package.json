@@ -1,5 +1,5 @@
 {
-  "name": "@rdkit/rdkit",
+  "name": "@charnley/rdkit",
   "version": "0.0.0",
   "description": "RDKit MinimalLib compiled to WebAssembly",
   "main": "./dist/RDKit_minimal.js",
