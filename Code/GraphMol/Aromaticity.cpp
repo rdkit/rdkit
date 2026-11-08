@@ -153,13 +153,13 @@ VECT_INT_VECT findFusedRingSystems(const VECT_INT_VECT &rings) {
   // ringIdx, or -1. pickFusedRings() visits neighbors in sorted order, so this
   // is the ring it would visit next.
   std::vector<size_t> cursors(ringsWith.size(), 0);
-  boost::dynamic_bitset<> done(nRings);
+  boost::dynamic_bitset<> seen(nRings);
   auto nextNeighbor = [&](int ringIdx) {
     int res = -1;
     for (auto idx : rings[ringIdx]) {
       const auto &candidates = ringsWith[idx];
       auto &cursor = cursors[idx];
-      while (cursor < candidates.size() && done[candidates[cursor]]) {
+      while (cursor < candidates.size() && seen[candidates[cursor]]) {
         ++cursor;
       }
       if (cursor < candidates.size() && (res < 0 || candidates[cursor] < res)) {
@@ -172,15 +172,15 @@ VECT_INT_VECT findFusedRingSystems(const VECT_INT_VECT &rings) {
   VECT_INT_VECT res;
   std::vector<int> stack;
   for (int start = 0; start < nRings; ++start) {
-    if (done[start]) {
+    if (seen[start]) {
       continue;
     }
     INT_VECT fused{start};
-    done[start] = 1;
+    seen[start] = 1;
     stack.push_back(start);
     while (!stack.empty()) {
       if (const auto neighbor = nextNeighbor(stack.back()); neighbor >= 0) {
-        done[neighbor] = 1;
+        seen[neighbor] = 1;
         fused.push_back(neighbor);
         stack.push_back(neighbor);
       } else {
