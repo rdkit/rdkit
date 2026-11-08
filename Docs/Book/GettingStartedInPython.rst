@@ -2938,10 +2938,6 @@ generated via the usual RDKit feature-typing mechanism:
   >>> fdefName = 'data/MinimalFeatures.fdef'
   >>> featFactory = ChemicalFeatures.BuildFeatureFactory(fdefName)
 
-The minimal donor definition requires a nitrogen or chalcogen donor and applies
-the carbonyl-adjacent exclusion to both alternatives. Carbon atoms and ether
-oxygens therefore do not generate donor features.
-
 The fingerprints themselves are calculated using a signature
 (fingerprint) factory, which keeps track of all the parameters
 required to generate the pharmacophore:
