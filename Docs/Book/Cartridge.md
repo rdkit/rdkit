@@ -543,7 +543,7 @@ Available parameters and their default values are:
 ### Parameters
 
 -   rdkit.tanimoto\_threshold : threshold value for the Tanimoto similarity operator. Searches done using Tanimoto similarity will only return results with a similarity of at least this value.
--   rdkit.dice\_threshold : threshold value for the Dice similiarty operator. Searches done using Dice similarity will only return results with a similarity of at least this value.
+-   rdkit.dice\_threshold : threshold value for the Dice similarity operator. Searches done using Dice similarity will only return results with a similarity of at least this value.
 -   rdkit.do\_chiral\_sss : toggles whether or not stereochemistry is used in substructure matching. (*available from 2013\_03 release*).
 -   rdkit.do\_enhanced\_stereo\_sss : toggles whether or not enhanced stereo is used in substructure matching. Has no effect if `rdkit.do_chiral_sss` is false. (*available from 2021\_09 release*).
 -   rdkit.sss\_fp\_size : the size (in bits) of the fingerprint used for substructure screening.
@@ -551,9 +551,20 @@ Available parameters and their default values are:
 -   rdkit.featmorgan\_fp\_size : the size (in bits) of featmorgan fingerprints
 -   rdkit.layered\_fp\_size : the size (in bits) of layered fingerprints
 -   rdkit.rdkit\_fp\_size : the size (in bits) of RDKit fingerprints
--   rdkit.torsion\_fp\_size : the size (in bits) of topological torsion bit vector fingerprints
--   rdkit.atompair\_fp\_size : the size (in bits) of atom pair bit vector fingerprints
+-   rdkit.hashed\_torsion\_fp\_size : the size (in bits) of topological torsion bit vector fingerprints
+-   rdkit.hashed\_atompair\_fp\_size : the size (in bits) of atom pair bit vector fingerprints
 -   rdkit.avalon\_fp\_size : the size (in bits) of avalon fingerprints
+
+Parameter names starting with `rdkit.` are reserved by the cartridge (*from the 2027\_03\_1 release*). The check starts once the cartridge library is loaded in a session, which normally happens at the first call to an RDKit function, or at startup if `rdkit` is listed in `shared_preload_libraries` or `session_preload_libraries`. On PostgreSQL 15 and later:
+
+-   setting an unknown `rdkit.*` parameter, such as a misspelled name, raises an error instead of being silently accepted and ignored;
+-   unknown `rdkit.*` settings made before the library was loaded are removed with a warning when it loads.
+
+On PostgreSQL 14 and earlier, unknown `rdkit.*` settings that exist when the library loads only produce a warning, and are not removed.
+
+Two old parameter names are still accepted, with a warning (*from the 2026\_09\_2 release*):
+
+-   `rdkit.torsion_fp_size` and `rdkit.atompair_fp_size` appeared in earlier versions of this documentation but never had any effect, and still have none. Use `rdkit.hashed_torsion_fp_size` and `rdkit.hashed_atompair_fp_size` instead.
 
 ### Operators
 
