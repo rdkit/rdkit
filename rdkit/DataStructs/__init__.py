@@ -45,7 +45,7 @@ def FingerprintSimilarity(fp1, fp2, metric=TanimotoSimilarity):
 
 
 def FoldToTargetDensity(fp, density=0.3, minLength=64):
-  while fp.GetNumOnBits() / len(fp) < density and len(fp) // 2 >= minLength:
+  while (fp.GetNumOnBits() / len(fp) < density) and (len(fp) // 2 >= minLength):
     fp = FoldFingerprint(fp, 2)
   return fp
 
