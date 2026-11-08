@@ -3348,8 +3348,8 @@ TEST_CASE("Inconsistent stereo bonds (see PR #9734)") {
 }
 
 TEST_CASE("highly strained chiral centers") {
-  // structures from the COD or derived from COD structures
   std::vector<std::pair<std::string, int>> smileses = {
+      // structures from the COD or derived from COD structures
       {"COC(=O)[C@@]1(c2ccccc2C(F)(F)F)[C@@H]2OC3(C=CC(=O)C=C3)[C@@]21c1ccc(F)cc1",
        0},
       {"COC(=O)[C@@]1(c2ccccc2C(F)(F)F)[C@H]2OC3(C=CC(=O)C=C3)[C@@]21c1ccc(F)cc1",
