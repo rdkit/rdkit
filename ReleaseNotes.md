@@ -24,8 +24,9 @@ GitHub)
   generator built with `patterns` change accordingly.
 - `getFeatureInvariants()` and `MorganFeatureAtomInvGenerator`
   (`GetMorganFeatureAtomInvGen()` from Python) now raise a `ValueError` for more
-  than 32 patterns or for a null (`None`) pattern. Each pattern is one bit of a
-  32-bit invariant, and the patterns past the 32nd were shifted out of it.
+  than 32 patterns or for a null pattern. Each pattern is one bit of a 32-bit
+  invariant, and the patterns past the 32nd were shifted out of it. A `None`
+  pattern raises a `TypeError` from the Boost.Python wrapper.
 - Reading a `MorganFeatureAtomInvGenerator` from JSON now raises a `ValueError`
   for more than 32 patterns or for a pattern SMARTS that does not parse. An
   unparseable pattern was dropped, which moved every later pattern to another

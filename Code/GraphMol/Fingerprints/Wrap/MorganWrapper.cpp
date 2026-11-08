@@ -67,7 +67,8 @@ AtomInvariantsGenerator *getMorganFeatureAtomInvGen(
   std::vector<const ROMol *> patterns;
   patterns.reserve(python::len(items));
   for (unsigned int i = 0; i < python::len(items); ++i) {
-    patterns.push_back(python::extract<const ROMol *>(items[i])());
+    // By reference, so None raises TypeError rather than becoming nullptr.
+    patterns.push_back(&python::extract<const ROMol &>(items[i])());
   }
   return new MorganFingerprint::MorganFeatureAtomInvGenerator(&patterns);
 }

@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from rdkit import Chem, DataStructs
+from rdkit import Chem, DataStructs, rdBase
 from rdkit.Chem import rdFingerprintGenerator
 
 
@@ -119,7 +119,12 @@ class TestCase(unittest.TestCase):
 
   def testMorganFeatureAtomInvGenNonePattern(self):
     pattern = Chem.MolFromSmarts('[OX2]')
-    with self.assertRaisesRegex(ValueError, 'null pattern'):
+    if rdBase._wrapperType == 'nanobind':
+      # nanobind casts None to a null pattern, which the generator rejects.
+      error, message = ValueError, 'null pattern'
+    else:
+      error, message = TypeError, 'NoneType'
+    with self.assertRaisesRegex(error, message):
       rdFingerprintGenerator.GetMorganFeatureAtomInvGen([pattern, None])
 
   def testRDKitFPGenerator(self):
