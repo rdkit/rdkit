@@ -106,6 +106,7 @@ RUN \
   VERSION=$(/opt/emsdk/node/*/bin/node -e 'require("./dist/RDKit_minimal.js")().then(m => console.log(m.version()))') && \
   test -n "$VERSION" && \
   jq --arg v "$VERSION" '.version = $v' package.json > package.json.tmp && mv package.json.tmp package.json
+# Normalize package.json the same way npm publish would (e.g. fixes version format)
 RUN npm pkg fix
 
 # run the tests
