@@ -57,7 +57,6 @@ ARG EXCEPTION_HANDLING="-fwasm-exceptions"
 
 FROM rdkit-minimallib-rdkit-src AS build-stage
 ARG EXCEPTION_HANDLING
-ARG VERSION=0.0.0
 
 LABEL maintainer="Greg Landrum <greg.landrum@t5informatics.com>"
 
@@ -101,9 +100,11 @@ RUN cp assets/package.json ./build
 RUN cp README.md ./build
 RUN mv ./dist ./build
 
-# Set version in package
+# Set package version
 WORKDIR /src/rdkit/Code/MinimalLib/build
-RUN jq --arg v "${VERSION}" '.version = $v' package.json > package.json.tmp && mv package.json.tmp package.json
+RUN \
+  VERSION=$(/opt/emsdk/node/*/bin/node -e 'require("./dist/RDKit_minimal.js")().then(m => console.log(m.version()))') && \
+  jq --arg v "$VERSION" '.version = $v' package.json > package.json.tmp && mv package.json.tmp package.json
 
 # run the tests
 WORKDIR /src/rdkit/Code/MinimalLib/tests
