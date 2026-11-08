@@ -66,8 +66,6 @@ ENV LANG C
 
 WORKDIR /opt
 RUN git clone https://github.com/emscripten-core/emsdk.git
-WORKDIR /opt/emsdk
-RUN git checkout 6.0.13
 
 WORKDIR /src
 ARG BOOST_DOT_VERSION="${BOOST_MAJOR_VERSION}.${BOOST_MINOR_VERSION}.${BOOST_PATCH_VERSION}"
@@ -105,7 +103,9 @@ RUN wget -q https://github.com/madler/zlib/releases/download/v${ZLIB_VERSION}/zl
 WORKDIR /src/zlib-${ZLIB_VERSION}
 RUN mkdir build
 WORKDIR /src/zlib-${ZLIB_VERSION}/build
-RUN emcmake cmake -DCMAKE_BUILD_TYPE=Release -DZLIB_BUILD_EXAMPLES=OFF \
+RUN emcmake cmake \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DZLIB_BUILD_TESTING=OFF -DZLIB_BUILD_SHARED=OFF \
   -DCMAKE_C_FLAGS="${EXCEPTION_HANDLING}" -DCMAKE_EXE_LINKER_FLAGS="${EXCEPTION_HANDLING}" \
   -DCMAKE_INSTALL_PREFIX=/opt/zlib ..
 RUN make && make install
