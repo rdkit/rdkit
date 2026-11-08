@@ -35,7 +35,6 @@
 #include <GraphMol/SynthonSpaceSearch/ProgressBar.h>
 #include <RDGeneral/ControlCHandler.h>
 #include <RDGeneral/RDThreads.h>
-#include <SimDivPickers/LeaderPicker.h>
 #include <boost/variant2/variant.hpp>
 
 namespace RDKit::SynthonSpaceSearch::details {
