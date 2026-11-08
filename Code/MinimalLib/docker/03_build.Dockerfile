@@ -103,16 +103,15 @@ RUN mv ./dist ./build
 # Set package version from the compiled WASM module
 WORKDIR /src/rdkit/Code/MinimalLib/build
 RUN \
-  VERSION=$(/opt/emsdk/node/*/bin/node -e 'require("./dist/RDKit_minimal.js")().then(m => console.log(m.version()))') && \
+  VERSION=$(node -e 'require("./dist/RDKit_minimal.js")().then(m => console.log(m.version()))') && \
   test -n "$VERSION" && \
   jq --arg v "$VERSION" '.version = $v' package.json > package.json.tmp && mv package.json.tmp package.json
-
 # Normalize package.json the same way npm publish would (e.g. version format).
-RUN /opt/emsdk/node/*/bin/npm pkg fix
+RUN npm pkg fix
 
 # run the tests
 WORKDIR /src/rdkit/Code/MinimalLib/tests
-RUN /opt/emsdk/node/*/bin/node tests.js
+RUN node tests.js
 
 # Copy js and wasm rdkit files to use in browser
 # This feature requires the BuildKit backend
