@@ -100,11 +100,13 @@ RUN cp assets/package.json ./build
 RUN cp README.md ./build
 RUN mv ./dist ./build
 
-# Set package version
+# Set package version from the compiled WASM module
 WORKDIR /src/rdkit/Code/MinimalLib/build
 RUN \
   VERSION=$(/opt/emsdk/node/*/bin/node -e 'require("./dist/RDKit_minimal.js")().then(m => console.log(m.version()))') && \
+  test -n "$VERSION" && \
   jq --arg v "$VERSION" '.version = $v' package.json > package.json.tmp && mv package.json.tmp package.json
+RUN npm pkg fix
 
 # run the tests
 WORKDIR /src/rdkit/Code/MinimalLib/tests
