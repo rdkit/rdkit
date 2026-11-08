@@ -55,8 +55,7 @@ RUN apt-get update && apt-get upgrade -y && apt install -y \
   git \
   jq \
   xz-utils \
-  nodejs \
-  npm
+  nodejs
 
 # If you are in an organization, put your organization certs inside
 # the certs directory otherwise HTTPS might not work
