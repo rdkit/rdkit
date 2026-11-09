@@ -15,7 +15,7 @@
 //! The O(dim) and O(dim^2) array kernels used by BFGSOpt::minimize().
 /*!
   These are compiled into the Optimizer library rather than living in the
-  header so that the implementation (scalar, SVE, or Highway, depending on
+  header so that the implementation (scalar or Highway, depending on
   the build) is selected in one place. All matrices are dense, row-major and
   dim x dim.
 */
