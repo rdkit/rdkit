@@ -1,6 +1,9 @@
 name: AddressSanitizer
 
 on:
+  pull_request:
+    paths:
+      - .github/workflows/asan.yml
   workflow_dispatch:
   schedule:
     # Sunday at 04:23 UTC.
@@ -15,13 +18,13 @@ concurrency:
 
 jobs:
   asan:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 180
     env:
-      CC: clang-18
-      CXX: clang++-18
+      CC: clang-22
+      CXX: clang++-22
       PYTHON_EXECUTABLE: /usr/bin/python3
-      ASAN_SYMBOLIZER_PATH: /usr/bin/llvm-symbolizer-18
+      ASAN_SYMBOLIZER_PATH: /usr/bin/llvm-symbolizer-22
 
     steps:
       - name: Check out RDKit
@@ -31,7 +34,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --yes --no-install-recommends \
-            clang-18 libclang-rt-18-dev llvm-18 ninja-build \
+            clang-22 libclang-rt-22-dev llvm-22 ninja-build \
             libboost-all-dev libcairo2-dev libeigen3-dev libfreetype6-dev \
             python3-dev python3-matplotlib python3-numpy python3-pandas \
             python3-pil python3-pytest
