@@ -3,6 +3,7 @@ if(RDK_BUILD_CPP_TESTS)
   add_executable(bench EXCLUDE_FROM_ALL bench_main.cpp
     bench_common.cpp
     descriptors.cpp
+    distgeom.cpp
     fingerprint.cpp
     forcefield.cpp
     meta.cpp
@@ -10,6 +11,7 @@ if(RDK_BUILD_CPP_TESTS)
     molops.cpp
     pickle.cpp
     ringinfo.cpp
+    shape.cpp
     smiles.cpp
     stereo.cpp
     substruct_match.cpp
@@ -20,6 +22,7 @@ if(RDK_BUILD_CPP_TESTS)
     DistGeomHelpers
     Fingerprints
     ForceFieldHelpers
+    GaussianShape
     SmilesParse
   )
 endif()
