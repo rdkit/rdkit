@@ -3,7 +3,7 @@ name: AddressSanitizer
 on:
   workflow_dispatch:
   schedule:
-    # Sunday at 04:23 UTC; scheduled jobs are opt-in (see .github/sanitizers.md).
+    # Sunday at 04:23 UTC.
     - cron: '23 4 * * 0'
 
 permissions:
@@ -15,7 +15,6 @@ concurrency:
 
 jobs:
   asan:
-    if: github.event_name == 'workflow_dispatch' || vars.RUN_WEEKLY_SANITIZERS == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     env:
