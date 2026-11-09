@@ -639,16 +639,6 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
   }
   // if any bonds to kekulize then give it a try:
   if (bondsToUse.any()) {
-    // mark atoms at the beginning of wedged bonds
-    boost::dynamic_bitset<> wedgedAtoms(numAtoms);
-    for (const auto bond : mol.bonds()) {
-      if (bondsToUse[bond->getIdx()] &&
-          (bond->getBondDir() == Bond::BEGINWEDGE ||
-           bond->getBondDir() == Bond::BEGINDASH)) {
-        wedgedAtoms.set(bond->getBeginAtomIdx());
-      }
-    }
-
     // A bit on the state of the molecule at this point
     // - aromatic and non aromatic atoms and bonds may be mixed up
 
@@ -664,7 +654,7 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
       MolOps::findSSSR(mol);
     }
     const auto allrings = mol.getRingInfo()->atomRings();
-    std::deque<INT_VECT> tmpRings;
+    const auto allbrings = mol.getRingInfo()->bondRings();
     auto containsNonDummy = [&atomsToUse,
                              &dummyAts](std::span<const int> ring) {
       bool ringOk = false;
@@ -678,54 +668,20 @@ void KekulizeFragment(RWMol &mol, const boost::dynamic_bitset<> &atomsToUse,
       }
       return ringOk;
     };
-    // we can't just copy the rings over: we're going to rearrange them so that
-    // we try to favor starting the traversal of any ring from an atom that is
-    // at the beginning of a wedged ring bond. This is part of our attempt to avoid
-    // assigning double bonds to bonds with wedging
-    for (const auto ring : allrings) {
-      if (containsNonDummy(ring)) {
-        unsigned int startPos = 0;
-        bool hasWedge = false;
-        for (auto ri = 0u; ri < ring.size(); ++ri) {
-          if (wedgedAtoms[ring[ri]]) {
-            startPos = ri;
-            hasWedge = true;
-            break;
-          }
-        }
-        INT_VECT nring(ring.size());
-        for (auto ri = 0u; ri < ring.size(); ++ri) {
-          nring[ri] = ring[(ri + startPos) % ring.size()];
-        }
-        if (!hasWedge) {
-          tmpRings.push_back(std::move(nring));
-        } else {
-          tmpRings.push_front(std::move(nring));
-        }
-      }
-    }
-    VECT_INT_VECT arings;
-    arings.reserve(allrings.size());
-    arings.insert(arings.end(), std::make_move_iterator(tmpRings.begin()),
-                  std::make_move_iterator(tmpRings.end()));
-    VECT_INT_VECT allbrings;
-    RingUtils::convertToBonds(arings, allbrings, mol);
-    VECT_INT_VECT brings;
-    brings.reserve(allbrings.size());
-    auto copyBondRingsWithinFragment = [&bondsToUse](const INT_VECT &ring) {
+    auto copyBondRingsWithinFragment = [&bondsToUse](const auto &ring) {
       return std::all_of(ring.begin(), ring.end(), [&bondsToUse](const int bi) {
         return bondsToUse[bi];
       });
     };
-    VECT_INT_VECT aringsRemaining;
-    aringsRemaining.reserve(arings.size());
+    VECT_INT_VECT arings;
+    VECT_INT_VECT brings;
     for (unsigned i = 0; i < allbrings.size(); ++i) {
-      if (copyBondRingsWithinFragment(allbrings[i])) {
-        brings.push_back(allbrings[i]);
-        aringsRemaining.push_back(arings[i]);
+      if (containsNonDummy(allrings[i]) &&
+          copyBondRingsWithinFragment(allbrings[i])) {
+        brings.emplace_back(allbrings[i].begin(), allbrings[i].end());
+        arings.emplace_back(allrings[i].begin(), allrings[i].end());
       }
     }
-    arings = std::move(aringsRemaining);
 
     // group the rings into fused systems, i.e. rings that share at least one
     // bond
