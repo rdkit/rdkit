@@ -9,6 +9,7 @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Atropisomers.h>
+#include <GraphMol/Rings.h>
 #include <RDGeneral/types.h>
 #include <sstream>
 #include <set>
@@ -82,33 +83,21 @@ bool ringsSharePathWithInteriorAtom(
   return false;
 }
 
-// Return all rings in the fused component containing bondIdx. A bond can be a
-// member of multiple rings, so start the traversal from every containing ring.
+// Return all rings in the fused component containing bondIdx.
 std::vector<unsigned int> getFusedRingSystem(RingInfo &ringInfo,
                                              unsigned int bondIdx) {
-  const auto bondRings = ringInfo.bondRings();
-  boost::dynamic_bitset<> visitedRings(bondRings.size());
-  std::vector<unsigned int> ringsToVisit;
-  const auto addRingToVisit = [&](unsigned int ringIdx) {
-    if (!visitedRings[ringIdx]) {
-      visitedRings.set(ringIdx);
-      ringsToVisit.push_back(ringIdx);
-    }
-  };
-  for (const auto ringIdx : ringInfo.bondMembers(bondIdx)) {
-    addRingToVisit(ringIdx);
+  VECT_INT_VECT bondRings;
+  for (const auto ring : ringInfo.bondRings()) {
+    bondRings.emplace_back(ring.begin(), ring.end());
   }
-
-  std::vector<unsigned int> result;
-  while (!ringsToVisit.empty()) {
-    const auto ringIdx = ringsToVisit.back();
-    ringsToVisit.pop_back();
-    result.push_back(ringIdx);
-    for (const auto neighborIdx : ringInfo.fusedRingNeighbors(ringIdx)) {
-      addRingToVisit(neighborIdx);
+  // all rings containing bondIdx are in the same system
+  const auto ringIdx = ringInfo.bondMembers(bondIdx).front();
+  for (const auto &fused : RingUtils::findFusedRingSystems(bondRings)) {
+    if (std::ranges::find(fused, ringIdx) != fused.end()) {
+      return {fused.begin(), fused.end()};
     }
   }
-  return result;
+  return {};
 }
 
 bool ringSystemHasBridgeWithInteriorAtom(
