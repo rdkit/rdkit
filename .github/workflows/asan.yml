@@ -64,7 +64,6 @@ jobs:
 
       - name: Test
         env:
-          # Establish address-checking coverage first; leak checking is deferred.
           ASAN_OPTIONS: detect_leaks=0:halt_on_error=1
           MPLBACKEND: Agg
           LD_LIBRARY_PATH: ${{ github.workspace }}/lib
