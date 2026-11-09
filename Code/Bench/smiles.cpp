@@ -1,5 +1,8 @@
 #include <catch2/catch_all.hpp>
+#include <exception>
+#include <memory>
 #include <string>
+#include <vector>
 
 #include "bench_common.hpp"
 
@@ -10,9 +13,24 @@
 using namespace RDKit;
 
 TEST_CASE("SmilesToMol", "[smiles]") {
+  // the built-in samples, or the --smiles file without the lines that fail
+  // to parse
+  std::vector<std::string> inputs;
+  for (const auto &smiles :
+       bench_common::dataset_smiles(bench_common::Dataset::Canonical)) {
+    std::unique_ptr<RWMol> mol;
+    try {
+      mol = v2::SmilesParse::MolFromSmiles(smiles);
+    } catch (const std::exception &) {
+    }
+    if (mol) {
+      inputs.push_back(smiles);
+    }
+  }
+  REQUIRE(!inputs.empty());
   BENCHMARK("SmilesToMol") {
     auto total_atoms = 0;
-    for (auto smiles : bench_common::SAMPLES) {
+    for (const auto &smiles : inputs) {
       auto mol = v2::SmilesParse::MolFromSmiles(smiles);
       REQUIRE(mol);
       total_atoms += mol->getNumAtoms();
