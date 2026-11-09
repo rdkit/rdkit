@@ -2006,9 +2006,10 @@ TEST_CASE("Github #9404: competing 1-4s in six membered rings") {
     CHECK(bm->getUpperBound(0, 3) - bm->getLowerBound(0, 3) > 0.2);
   }
   SECTION("Fused rings overlapping") {
-    auto mol = "C1CC2CCC1SS2"_smiles;
+    auto mol = "C1CC2CCC1[Se][Se]2"_smiles;
     auto molref = "C1CCCCC1"_smiles;
-    auto molref2 = "C1SSCSS1"_smiles;
+    // use [SE] for large ranges
+    auto molref2 = "C1[Se][Se]C[Se][Se]1"_smiles;
 
     REQUIRE(mol);
     REQUIRE(molref);
@@ -3370,7 +3371,7 @@ TEST_CASE("Aryl ether ring torsion is not hard cis-constrained") {
   DGeomHelpers::setTopolBounds(*mol, mmat, DGeomHelpers::DG, false, true, true,
                                true);
 
-  // 2-3-4-5 should be flexible 
+  // 2-3-4-5 should be flexible
   CHECK(mmat->getUpperBound(2, 5) - mmat->getLowerBound(2, 5) > 0.2);
 }
 

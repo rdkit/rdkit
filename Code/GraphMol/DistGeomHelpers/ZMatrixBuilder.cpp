@@ -69,11 +69,6 @@ void addNeighborsToStack(const unsigned int atomIdx,
 
   const auto &references = zmat.getReferences(atomIdx);
   const auto rInfo = mol.getRingInfo();
-
-  const auto ringSize = [rInfo](const Bond *bond) {
-    return rInfo->minBondRingSize(bond->getIdx());
-  };
-
   const Bond *mostConstrained = nullptr;
 
   if (references.angleRef && !bonds.empty()) {
@@ -94,10 +89,24 @@ void addNeighborsToStack(const unsigned int atomIdx,
       const auto &ta = bondToTorsion(a);
       const auto &tb = bondToTorsion(b);
 
-      if (DistGeom::less(ta, tb)) return true;
-      if (DistGeom::less(tb, ta)) return false;
+      if (DistGeom::less(ta, tb)) {
+        return true;
+      }
+      if (DistGeom::less(tb, ta)) {
+        return false;
+      }
 
-      return ringSize(a) < ringSize(b);
+      auto rSizeA = rInfo->minBondRingSize(a->getIdx()),
+           rSizeB = rInfo->minBondRingSize(b->getIdx());
+
+      if (!rSizeB) {
+        return true;
+      }
+      if (!rSizeA) {
+        return false;
+      }
+
+      return rSizeA < rSizeB;
     };
 
     const auto first = std::ranges::min_element(bonds, compare);
@@ -107,7 +116,9 @@ void addNeighborsToStack(const unsigned int atomIdx,
   }
 
   // Descending ring size because the stack is LIFO.
-  std::ranges::sort(bonds, std::ranges::greater{}, ringSize);
+  std::ranges::sort(bonds, std::ranges::greater{}, [&rInfo](const Bond *bnd) {
+    return rInfo->minBondRingSize(bnd->getIdx());
+  });
 
   for (const auto *bond : bonds) {
     stack.emplace_back(bond->getOtherAtomIdx(atomIdx), atomIdx);

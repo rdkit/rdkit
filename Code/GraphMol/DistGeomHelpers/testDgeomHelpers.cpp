@@ -251,7 +251,8 @@ TEST_CASE("test2") {
     CHECK(bm->getUpperBound(2, 5) - dmat->getVal(2, 5) > -0.1);
     CHECK(bm->getLowerBound(2, 5) - dmat->getVal(2, 5) < 0.10);
 
-    CHECK((bm->getUpperBound(8, 4) - bm->getLowerBound(8, 4)) <= 0.21);
+    // the central bond is flexible here
+    CHECK((bm->getUpperBound(8, 4) - bm->getLowerBound(8, 4)) > 0.21);
     CHECK((bm->getUpperBound(8, 4) - dmat->getVal(8, 4) > -0.1));
     CHECK((bm->getLowerBound(8, 4) - dmat->getVal(8, 4) < 0.10));
 
@@ -620,8 +621,9 @@ TEST_CASE("testIssue355") {
   }
 
   SECTION("2") {
-    // If the central carbon is not bonded to another carbon, it's no longer considered
-    // to be an aminde. Thus cases 2 and 3 are no longer forced to be trans
+    // If the central carbon is not bonded to another carbon, it's no longer
+    // considered to be an aminde. Thus cases 2 and 3 are no longer forced to be
+    // trans
     const std::string smi = "CNC(=O)NC";
     const auto bm = _getBoundsMatrix(smi);
     CHECK(bm->getLowerBound(0, 3) < 3.0);

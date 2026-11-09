@@ -853,55 +853,6 @@ Bond::BondStereo _getAtomStereo(const Bond *bnd, unsigned int aid1,
   return stype;
 }
 
-TorsionValue _getChain14Type(const ROMol &mol, const Bond *bnd1,
-                             const Bond *bnd2, const Bond *bnd3,
-                             const Atom *atm1, const Atom *atm2,
-                             const Atom *atm3, const Atom *atm4,
-                             bool forceTransAmides);
-
-bool _isFlatRingBond(const ROMol &mol, const Bond *bnd1, const Bond *bnd2,
-                     const Bond *bnd3, const Atom *atm1, const Atom *atm2,
-                     const Atom *atm3, const Atom *atm4) {
-                      const auto chainType =
-    _getChain14Type(mol, bnd1, bnd2, bnd3,
-                    atm1, atm2, atm3, atm4, false)
-        .type;
-
-    return atm2->getHybridization() == Atom::SP2 &&
-       atm3->getHybridization() == Atom::SP2 &&
-       (bnd2->getIsAromatic() ||
-        bnd2->getBondType() >= Bond::DOUBLE ||
-        chainType == TorsionType::CISTRANS);
-}
-
-TorsionValue _getInRing14Type(const ROMol &mol, const Bond *bnd1,
-                              const Bond *bnd2, const Bond *bnd3,
-                              const Atom *atm1, const Atom *atm2,
-                              const Atom *atm3, const Atom *atm4,
-                              int ringSize) {
-  Bond::BondStereo stype = _getAtomStereo(bnd2, atm1->getIdx(), atm4->getIdx());
-
-  const bool isFlat =
-      _isFlatRingBond(mol, bnd1, bnd2, bnd3, atm1, atm2, atm3, atm4);
-
-  // we add a check for the ring size here because there's no reason to
-  // assume cis bonds in bigger rings. This was part of github #1240:
-  // failure to embed larger aromatic rings
-  if ((ringSize <= 8 && isFlat &&
-       (stype != Bond::STEREOE && stype != Bond::STEREOTRANS)) ||
-      stype == Bond::STEREOZ || stype == Bond::STEREOCIS) {
-    return {TorsionType::CIS};
-  } else if (stype == Bond::STEREOE || stype == Bond::STEREOTRANS) {
-    return {TorsionType::TRANS};
-  }
-
-  if (isFlat) {
-    return {TorsionType::CISTRANS};
-  }
-
-  return {TorsionType::FLEXIBLE};
-}
-
 bool _checkH2NX3H1OX2(const Atom *atm) {
   if ((atm->getAtomicNum() == 6) && (atm->getTotalNumHs(true) == 2)) {
     // CH2
@@ -1157,6 +1108,32 @@ TorsionValue _getChain14Type(const ROMol &mol, const Bond *bnd1,
   }
 }
 
+TorsionValue _getInRing14Type(const ROMol &mol, const Bond *bnd1,
+                              const Bond *bnd2, const Bond *bnd3,
+                              const Atom *atm1, const Atom *atm2,
+                              const Atom *atm3, const Atom *atm4,
+                              int ringSize) {
+  Bond::BondStereo stype = _getAtomStereo(bnd2, atm1->getIdx(), atm4->getIdx());
+
+  const auto chainTorsionValue =
+      _getChain14Type(mol, bnd1, bnd2, bnd3, atm1, atm2, atm3, atm4, false);
+
+  const bool srEnforcedCIS =
+      chainTorsionValue.type == TorsionType::CISTRANS || bnd2->getIsAromatic();
+
+  // we add a check for the ring size here because there's no reason to
+  // assume cis bonds in bigger rings. This was part of github #1240:
+  // failure to embed larger aromatic rings
+  if ((ringSize <= 8 && srEnforcedCIS) || stype == Bond::STEREOZ ||
+      stype == Bond::STEREOCIS) {
+    return {TorsionType::CIS};
+  } else if (stype == Bond::STEREOE || stype == Bond::STEREOTRANS) {
+    return {TorsionType::TRANS};
+  }
+
+  return chainTorsionValue;
+}
+
 Path14Configuration _record14Path(const ROMol &mol, unsigned int bid1,
                                   unsigned int bid2, unsigned int bid3,
                                   ComputedData &accumData, std::size_t rSize) {
@@ -1171,16 +1148,16 @@ Path14Configuration _record14Path(const ROMol &mol, unsigned int bid1,
 
   Path14Configuration path14 = {bid1, bid2, bid3, aid1, aid2,
                                 aid3, aid4, {},   rSize};
-  if (_isFlatRingBond(mol, mol.getBondWithIdx(bid1),
-                      mol.getBondWithIdx(bid2), mol.getBondWithIdx(bid3),
-                      mol.getAtomWithIdx(aid1), atm2, atm3,
-                      mol.getAtomWithIdx(aid4))) {
-    path14.value = {.type = TorsionType::CIS};
+  auto torsionValue =
+      _getInRing14Type(mol, mol.getBondWithIdx(bid1), mol.getBondWithIdx(bid2),
+                       mol.getBondWithIdx(bid3), mol.getAtomWithIdx(aid1), atm2,
+                       atm3, mol.getAtomWithIdx(aid4), 4);
+  if (torsionValue.type == TorsionType::CIS) {
     accumData.cisPaths.insert(
         getUnifiedId(bid1, bid2, bid3, mol.getNumBonds()));
-  } else {
-    path14.value = {.type = TorsionType::FLEXIBLE};
   }
+
+  path14.value = torsionValue;
   accumData.paths14.push_back(path14);
   return path14;
 }
