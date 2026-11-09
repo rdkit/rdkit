@@ -18,6 +18,7 @@
 #include <GraphMol/EnumerateStereoisomers/Flippers.h>
 
 #include <random>
+#include <set>
 #include <unordered_set>
 
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>
@@ -57,6 +58,10 @@ struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoEnumerationOptions {
                                 // keep an eye on this.
   int randomSeed{-1};  // Seed for random number generator.  -1 means don't
                        // seed.
+
+  bool useRingSystemFilter{
+      true};  // filter out stereoisomers containing ring systems that
+              // are known to be impossible in 3D space
 };
 
 // Class that enumerates the stereoisomers of a molecule.  Acts like a
@@ -82,6 +87,10 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
   std::unique_ptr<ROMol> next();
 
  private:
+  // Whether the generated stereoisomer is considered valid based
+  // on the ring systems patterns
+  bool passesRingPatternsCheck() const;
+
   RWMol d_mol;
   const StereoEnumerationOptions d_options;
   bool d_verbose;
@@ -105,6 +114,12 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
 
   // The stereo orientations we've already made
   std::unordered_set<boost::dynamic_bitset<>> d_seen;
+
+  // For the ring systems patterns. We check if pairs of parities
+  // are same/opposite instead of individual CW/CCW because the
+  // configurations can mirrored and still be valid.
+  std::set<std::pair<unsigned int, unsigned int>> d_pattern_same_parity;
+  std::set<std::pair<unsigned int, unsigned int>> d_pattern_opposite_parity;
 
   void buildFlippers();
   std::unique_ptr<ROMol> generateRandomIsomer();
