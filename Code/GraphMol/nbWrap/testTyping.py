@@ -15,7 +15,6 @@ from rdkit.Chem import (rdChemReactions, rdDepictor, rdDistGeom, rdEnumerateSter
                         rdMolChemicalFeatures, rdMolDescriptors, rdMolProcessing,
                         rdRGroupDecomposition, rdShapeHelpers, rdSubstructLibrary)
 from rdkit.Chem.MolStandardize import rdMolStandardize
-from rdkit.ML.Cluster import Clustering
 from rdkit.ML.Data import cQuantize
 from rdkit.Numerics import rdAlignment
 
@@ -24,6 +23,12 @@ try:
   from rdkit.Chem import rdSynthonSpaceSearch
 except ImportError:
   rdSynthonSpaceSearch = None
+
+# Not built on big-endian systems.
+try:
+  from rdkit.ML.Cluster import Clustering
+except ImportError:
+  Clustering = None
 
 
 def signature_annotations(signature):
@@ -152,11 +157,13 @@ class TestSignatures(unittest.TestCase):
       (rdShapeHelpers.ComputeConfBox, f'tuple[{point}, {point}]'),
       (rdSubstructLibrary.SubstructLibrary.GetSearchOrder, 'tuple[int, ...]'),
       # parse_signature drops a numpy.ndarray's dtype and shape.
-      (Clustering.MurtaghCluster, 'tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]'),
       (rdAlignment.GetAlignmentTransform, 'tuple[float, numpy.ndarray]'),
       (cQuantize._RecurseOnBounds, 'tuple[float, list[int]]'),
       (cQuantize._FindStartPoints, 'list[int]'),
     ]
+    if Clustering is not None:
+      cases.append(
+        (Clustering.MurtaghCluster, 'tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]'))
     for func, expected in cases:
       # A property getter's __qualname__ is None, so expected tells those subtests apart.
       with self.subTest(func=func.__qualname__, expected=expected):
