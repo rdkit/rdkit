@@ -2,6 +2,7 @@ add_executable(bench EXCLUDE_FROM_ALL bench_main.cpp
   bench_common.cpp
   descriptors.cpp
   fingerprint.cpp
+  forcefield.cpp
   meta.cpp
   mol.cpp
   molops.cpp
@@ -14,7 +15,9 @@ add_executable(bench EXCLUDE_FROM_ALL bench_main.cpp
 target_link_libraries(bench Catch2::Catch2 rdkit_base
   CIPLabeler
   Descriptors
+  DistGeomHelpers
   Fingerprints
+  ForceFieldHelpers
   SmilesParse
 )
 
