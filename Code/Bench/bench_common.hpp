@@ -39,6 +39,10 @@ enum class Dataset {
 };
 
 const char *dataset_name(Dataset dataset);
+
+//! Replaces the canonical samples with the molecules in \p path (set from
+//! the bench's --smiles option). Lines that fail to parse are skipped.
+void set_smiles_file(const std::string &path);
 const std::vector<std::string> &dataset_smiles(Dataset dataset);
 
 std::vector<RDKit::ROMol> load_samples();

@@ -1,4 +1,5 @@
-add_executable(bench EXCLUDE_FROM_ALL bench_common.cpp
+add_executable(bench EXCLUDE_FROM_ALL bench_main.cpp
+  bench_common.cpp
   descriptors.cpp
   fingerprint.cpp
   meta.cpp
@@ -10,7 +11,7 @@ add_executable(bench EXCLUDE_FROM_ALL bench_common.cpp
   stereo.cpp
   substruct_match.cpp
 )
-target_link_libraries(bench rdkitCatch
+target_link_libraries(bench Catch2::Catch2 rdkit_base
   CIPLabeler
   Descriptors
   Fingerprints
