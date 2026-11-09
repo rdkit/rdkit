@@ -891,7 +891,7 @@ void SynthonSpaceSearcher::processToTrySet(
   // There are possibly duplicate entries in toTry, because 2
   // different fragmentations might produce overlapping synthon lists in
   // the same reaction. The duplicates need to be removed.
-  details::sortAndUniquifyToTry(toTry);
+  details::uniquifyToTry(toTry);
 
   if (d_params.randomSample) {
     std::shuffle(toTry.begin(), toTry.end(), *d_randGen);
