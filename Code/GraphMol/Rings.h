@@ -44,6 +44,7 @@ typedef std::map<int, std::vector<int>> INT_INT_VECT_MAP;
    \param depth retained for API compatibility; no longer used
 
 */
+[[deprecated("use findFusedRingSystems() instead")]]
 RDKIT_GRAPHMOL_EXPORT void pickFusedRings(int curr,
                                           const INT_INT_VECT_MAP &neighMap,
                                           INT_VECT &res,
@@ -66,20 +67,21 @@ RDKIT_GRAPHMOL_EXPORT void pickFusedRings(int curr,
                         this will not be considered to be neighbors
 
 */
+[[deprecated("use findFusedRingSystems() instead")]]
 RDKIT_GRAPHMOL_EXPORT void makeRingNeighborMap(const VECT_INT_VECT &brings,
                                                INT_INT_VECT_MAP &neighMap,
                                                unsigned int maxSize = 0,
                                                unsigned int maxOverlapSize = 0);
 
-//! \brief Groups rings that share atoms or bonds into fused ring systems.
+//! \brief Groups rings into fused ring systems.
 /*!
-  Gives the same result, in the same order, as makeRingNeighborMap() followed
-  by repeated pickFusedRings() calls, but avoids building the quadratic
-  all-pairs ring neighbor map.
+  Two rings are fused if they share at least one atom or bond. Rings in the
+  same system are connected through a chain of fused rings.
 
   \param rings each ring as a list of atom or bond indices
 
-  \return the fused ring systems, each as a list of ring indices
+  \return the fused ring systems, each as a list of ring indices in ascending
+          order. Systems are ordered by their lowest ring index.
 */
 RDKIT_GRAPHMOL_EXPORT VECT_INT_VECT
 findFusedRingSystems(const VECT_INT_VECT &rings);

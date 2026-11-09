@@ -603,7 +603,9 @@ TEST_CASE("findFusedRingSystems matches makeRingNeighborMap + pickFusedRings") {
     VECT_INT_VECT expected;
     for (int i = 0; i < static_cast<int>(rings.size()); ++i) {
       if (!done[i]) {
-        RingUtils::pickFusedRings(i, neighMap, expected.emplace_back(), done);
+        auto &fused = expected.emplace_back();
+        RingUtils::pickFusedRings(i, neighMap, fused, done);
+        std::ranges::sort(fused);
       }
     }
     CHECK(RingUtils::findFusedRingSystems(rings) == expected);
@@ -615,6 +617,7 @@ TEST_CASE("findFusedRingSystems matches makeRingNeighborMap + pickFusedRings") {
     check({{0, 1}, {2, 3}});
     check({{0, 1}, {1, 2}, {0, 3}, {2, 4}, {5, 6}});
     check({{0, 1}, {2, 3}, {1, 2}});
+    check({{0, 1, 2}, {}, {2, 3}});
   }
 
   SECTION("molecules") {
