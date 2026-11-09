@@ -34,10 +34,10 @@ add_executable(smiles_pipeline_bench EXCLUDE_FROM_ALL
 )
 target_link_libraries(smiles_pipeline_bench SmilesParse)
 
-if(RDK_BUILD_INCHI_SUPPORT)
+if(RDK_BUILD_CPP_TESTS AND RDK_BUILD_INCHI_SUPPORT)
   target_link_libraries(bench RDInchiLib)
   target_sources(bench PRIVATE inchi.cpp)
-endif(RDK_BUILD_INCHI_SUPPORT)
+endif()
 
 if(RDK_BUILD_CPP_TESTS)
   # add a fast version of the benchmarks to the default unit tests
