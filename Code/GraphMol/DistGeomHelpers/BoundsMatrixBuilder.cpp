@@ -1129,6 +1129,9 @@ TorsionValue _getInRing14Type(const ROMol &mol, const Bond *bnd1,
     return {TorsionType::CIS};
   } else if (stype == Bond::STEREOE || stype == Bond::STEREOTRANS) {
     return {TorsionType::TRANS};
+  } else if (srEnforcedCIS) {
+    // planar but larger than 8 members
+    return {TorsionType::CISTRANS};
   }
 
   return chainTorsionValue;
@@ -1148,13 +1151,32 @@ Path14Configuration _record14Path(const ROMol &mol, unsigned int bid1,
 
   Path14Configuration path14 = {bid1, bid2, bid3, aid1, aid2,
                                 aid3, aid4, {},   rSize};
-  auto torsionValue =
-      _getInRing14Type(mol, mol.getBondWithIdx(bid1), mol.getBondWithIdx(bid2),
-                       mol.getBondWithIdx(bid3), mol.getAtomWithIdx(aid1), atm2,
-                       atm3, mol.getAtomWithIdx(aid4), 4);
-  if (torsionValue.type == TorsionType::CIS) {
-    accumData.cisPaths.insert(
-        getUnifiedId(bid1, bid2, bid3, mol.getNumBonds()));
+  const auto *bnd2 = mol.getBondWithIdx(bid2);
+  auto torsionValue = _getInRing14Type(
+      mol, mol.getBondWithIdx(bid1), bnd2, mol.getBondWithIdx(bid3),
+      mol.getAtomWithIdx(aid1), atm2, atm3, mol.getAtomWithIdx(aid4), 4);
+
+  const auto pid = getUnifiedId(bid1, bid2, bid3, mol.getNumBonds());
+
+  switch (torsionValue.type) {
+    case TorsionType::TRANS:
+      [[fallthrough]];
+    case TorsionType::CISTRANS:
+      torsionValue.type = TorsionType::CIS;
+      [[fallthrough]];
+    case TorsionType::CIS:
+      accumData.cisPaths.insert(pid);
+      break;
+    case TorsionType::CUSTOM:
+      // this would be the S-S case, but we 90 degree torsions in 4-membered
+      // rings are not realizable
+      torsionValue.type = TorsionType::FLEXIBLE;
+      [[fallthrough]];
+    case TorsionType::FLEXIBLE:
+      if (bnd2->getIsAromatic()) {
+        torsionValue.type = TorsionType::CIS;
+        accumData.cisPaths.insert(pid);
+      }
   }
 
   path14.value = torsionValue;

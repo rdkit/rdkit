@@ -84,7 +84,8 @@ void addNeighborsToStack(const unsigned int atomIdx,
           getUnifiedId(bondIdx1, bondIdx2, bond->getIdx(), mol.getNumBonds()));
     };
 
-    // Prefer the most constrained torsion, breaking ties by smaller ring size.
+    // Prefer the most constrained torsion, breaking ties by non-rings first and
+    // then rings in their ascending ring order.
     const auto compare = [&](const Bond *a, const Bond *b) {
       const auto &ta = bondToTorsion(a);
       const auto &tb = bondToTorsion(b);
@@ -98,14 +99,6 @@ void addNeighborsToStack(const unsigned int atomIdx,
 
       auto rSizeA = rInfo->minBondRingSize(a->getIdx()),
            rSizeB = rInfo->minBondRingSize(b->getIdx());
-
-      if (!rSizeB) {
-        return true;
-      }
-      if (!rSizeA) {
-        return false;
-      }
-
       return rSizeA < rSizeB;
     };
 
