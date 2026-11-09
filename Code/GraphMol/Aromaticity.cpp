@@ -818,7 +818,6 @@ int mdlAromaticityHelper(RWMol &mol, const RingInfo::RingsView &srings) {
     bondsByIdx.push_back(b);
   }
 
-  // now loop over all the candidate fused systems and check the huckel rule
   for (const auto &fused : findAromaticFusedSystems(brings)) {
     const unsigned int maxFused = 6;
     const unsigned int minRingSize = 6;
@@ -961,7 +960,8 @@ int aromaticityHelper(RWMol &mol, const RingInfo::RingsView &srings,
                          bondsByIdx, minRingSize);
     }
   } else {
-    // now loop over all the candidate fused systems and check the huckel rule
+    // now loop over all the candidate rings and check the
+    // huckel rule - of course paying attention to fused systems.
     for (const auto &fused : findAromaticFusedSystems(brings)) {
       applyHuckelToFused(mol, cRings, brings, fused, edon, narom, 6,
                          bondsByIdx);
