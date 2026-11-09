@@ -149,24 +149,22 @@ def CalcEnrichment(scores, col, fractions):
     if i > 1 or i < 0:
       raise ValueError('fractions must be between [0,1]')
 
-  numPerFrac = [math.ceil(numMol * f) for f in fractions]
-  numPerFrac.append(numMol)
+  # number of actives among the first i+1 molecules of the score list
+  numActivesAt = []
   numActives = 0
-  enrich = []
-
-  # loop over score list
-  for i in range(numMol):
-    if i > (numPerFrac[0] - 1) and i > 0:
-      enrich.append(1.0 * numActives * numMol / i)
-      numPerFrac.pop(0)
-    active = scores[i][col]
-    if active:
+  for score in scores:
+    if score[col]:
       numActives += 1
+    numActivesAt.append(numActives)
 
-  if numActives > 0:  # check that there are actives
-    enrich = [e / numActives for e in enrich]
-  else:
-    enrich = [0.0] * len(fractions)
+  if numActives == 0:  # check that there are actives
+    return [0.0] * len(fractions)
+
+  # each fraction is evaluated on its own top-scored molecules (at least one)
+  enrich = []
+  for f in fractions:
+    numTop = max(1, math.ceil(numMol * f))
+    enrich.append(1.0 * numActivesAt[numTop - 1] * numMol / (numTop * numActives))
   return enrich
 
 
