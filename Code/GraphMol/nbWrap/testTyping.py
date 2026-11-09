@@ -10,10 +10,14 @@ import sys
 import unittest
 
 from rdkit import Chem, DataStructs, rdBase
-from rdkit.Chem import (rdChemReactions, rdDistGeom, rdEnumerateStereoisomers, rdFMCS,
-                        rdMolDescriptors, rdSubstructLibrary)
+from rdkit.Chem import (rdChemReactions, rdDepictor, rdDistGeom, rdEnumerateStereoisomers,
+                        rdFMCS, rdGaussianShape, rdMHFPFingerprint, rdMolAlign,
+                        rdMolChemicalFeatures, rdMolDescriptors, rdMolProcessing,
+                        rdRGroupDecomposition, rdShapeHelpers, rdSubstructLibrary)
 from rdkit.Chem.MolStandardize import rdMolStandardize
+from rdkit.ML.Cluster import Clustering
 from rdkit.ML.Data import cQuantize
+from rdkit.Numerics import rdAlignment
 
 # Built only with RDK_BUILD_THREADSAFE_SSS.
 try:
@@ -123,14 +127,44 @@ class TestSignatures(unittest.TestCase):
         self.assertEqual(set(return_annotations(func)), {expected})
 
   def testReturnAnnotations(self):
+    mol = 'rdkit.Chem.rdchem.Mol'
+    point = 'rdkit.Geometry.rdGeometry.Point3D'
     cases = [
+      (Chem.Mol.GetPropsAsDict, 'dict[str, typing.Any]'),
+      (rdChemReactions.EnumerateLibrary.GetReagents, f'list[list[{mol}]]'),
+      (rdChemReactions.EnumerateLibrary.__next__, f'tuple[tuple[{mol}, ...], ...]'),
       (rdDistGeom.GetExperimentalTorsions, 'tuple[dict[str, typing.Any], ...]'),
+      (rdDistGeom.EmbedParameters.GetFailureCounts, 'tuple[int, ...]'),
+      (rdDistGeom.OrderedEmbedFailureCauses,
+       'list[tuple[rdkit.Chem.rdDistGeom.EmbedFailureCauses, int]]'),
+      (rdFMCS.MCSResult.degenerateSmartsQueryMolDict.fget, f'dict[str, {mol}]'),
+      (rdGaussianShape.ScoreShape, 'tuple[float, float, float, float, float]'),
+      (rdGaussianShape.ShapeInputOptions.atomRadii.fget, 'tuple[tuple[int, float], ...]'),
+      (rdMHFPFingerprint.MHFPEncoder.EncodeSmilesBulk, 'tuple[list[int], ...]'),
+      (rdMHFPFingerprint.MHFPEncoder.EncodeSECFPMolsBulk,
+       'tuple[rdkit.DataStructs.cDataStructs.ExplicitBitVect, ...]'),
+      (rdMolAlign.BestAlignmentParams.map.fget, 'tuple[list[tuple[int, int]], ...]'),
+      (rdMolChemicalFeatures.GetAtomMatch, 'list[list[int]]'),
+      (rdMolProcessing.GetFingerprintsForMolsInFile,
+       'tuple[rdkit.DataStructs.cDataStructs.ExplicitBitVect | None, ...]'),
+      (rdRGroupDecomposition.RGroupDecomposition.GetRGroupsAsRows,
+       f'list[dict[str, {mol} | str]]'),
+      (rdShapeHelpers.ComputeConfBox, f'tuple[{point}, {point}]'),
+      (rdSubstructLibrary.SubstructLibrary.GetSearchOrder, 'tuple[int, ...]'),
+      # parse_signature drops a numpy.ndarray's dtype and shape.
+      (Clustering.MurtaghCluster, 'tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]'),
+      (rdAlignment.GetAlignmentTransform, 'tuple[float, numpy.ndarray]'),
       (cQuantize._RecurseOnBounds, 'tuple[float, list[int]]'),
       (cQuantize._FindStartPoints, 'list[int]'),
     ]
     for func, expected in cases:
-      with self.subTest(func=func.__qualname__):
+      # A property getter's __qualname__ is None, so expected tells those subtests apart.
+      with self.subTest(func=func.__qualname__, expected=expected):
         self.assertEqual(set(return_annotations(func)), {expected})
+    with self.subTest(func='GenerateDepictionMatching2DStructure'):
+      # The overloads taking an atomMap return None.
+      self.assertIn('tuple[tuple[int, int], ...]',
+                    return_annotations(rdDepictor.GenerateDepictionMatching2DStructure))
 
   def testNullableReturnsReturnNone(self):
     with rdBase.BlockLogs():

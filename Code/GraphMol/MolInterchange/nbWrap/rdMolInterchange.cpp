@@ -94,7 +94,7 @@ RETURNS:
         for (auto &mol : mols) {
           result.append(mol);
         }
-        return nb::tuple(result);
+        return PyTupleOf<RDKit::ROMol *>(nb::tuple(result));
       },
       "jsonBlock"_a,
       "params"_a = RDKit::MolInterchange::defaultJSONParseParameters,

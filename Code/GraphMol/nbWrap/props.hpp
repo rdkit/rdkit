@@ -75,8 +75,9 @@ const std::string getPropsAsDictDocString =
     "  RETURNS: a dictionary\n";
 
 template <class T>
-nb::dict GetPropsAsDict(const T &obj, bool includePrivate, bool includeComputed,
-                        bool autoConvertStrings = true) {
+nb::typed<nb::dict, std::string, nb::any> GetPropsAsDict(
+    const T &obj, bool includePrivate, bool includeComputed,
+    bool autoConvertStrings = true) {
   nb::dict dict;
   auto &rd_dict = obj.getDict();
 

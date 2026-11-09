@@ -40,7 +40,8 @@ std::vector<RDKit::MOL_SPTR_VECT> ConvertToVect(const Reagents &bbs) {
   return vect;
 }
 
-nb::tuple EnumerateLibraryBase__next__(RDKit::EnumerateLibraryBase *base) {
+PyTupleOf<PyTupleOf<RDKit::ROMol *>> EnumerateLibraryBase__next__(
+    RDKit::EnumerateLibraryBase *base) {
   if (!static_cast<bool>(*base)) {
     PyErr_SetString(PyExc_StopIteration, "Enumerations exhausted");
     throw nb::python_error();
@@ -239,7 +240,7 @@ for result in itertools.islice(libary2, 1000):
               }
               outer.append(inner);
             }
-            return outer;
+            return PyListOf<PyListOf<RDKit::ROMol *>>(outer);
           },
           R"DOC(Return the reagents used in this library.  These are the subset
 of the input reagents that are compatible with the reaction so may

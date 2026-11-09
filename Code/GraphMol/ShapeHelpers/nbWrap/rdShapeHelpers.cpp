@@ -33,6 +33,9 @@ namespace {
 using TransformMatrix =
     nb::ndarray<nb::numpy, const double, nb::ndim<2>, nb::c_contig>;
 
+//! A box's two corners, or its dimensions and offset.
+using PointPair = nb::typed<nb::tuple, RDGeom::Point3D, RDGeom::Point3D>;
+
 static void copyTransform(const TransformMatrix &transMat,
                           RDGeom::Transform3D &trans) {
   unsigned int nrows = transMat.shape(0);
@@ -193,7 +196,7 @@ ARGUMENTS:
           MolShapes::computeConfDimsAndOffset(conf, dims, offSet, nullptr,
                                               padding);
         }
-        return nb::make_tuple(dims, offSet);
+        return PointPair(nb::make_tuple(dims, offSet));
       },
       "conf"_a, "trans"_a = nb::none(), "padding"_a = 2.0,
       R"DOC(Compute the size of the box that can fit the conformations, and offset
@@ -213,7 +216,7 @@ of the box from the origin)DOC");
           MolShapes::computeConfBox(conf, lowerCorner, upperCorner, nullptr,
                                     padding);
         }
-        return nb::make_tuple(lowerCorner, upperCorner);
+        return PointPair(nb::make_tuple(lowerCorner, upperCorner));
       },
       "conf"_a, "trans"_a = nb::none(), "padding"_a = 2.0,
       "Compute the lower and upper corners of a cuboid that will fit the conformer");
@@ -234,7 +237,7 @@ of the box from the origin)DOC");
         RDGeom::Point3D lowerCorner, upperCorner;
         MolShapes::computeUnionBox(lC1, uC1, lC2, uC2, lowerCorner,
                                    upperCorner);
-        return nb::make_tuple(lowerCorner, upperCorner);
+        return PointPair(nb::make_tuple(lowerCorner, upperCorner));
       },
       "box1"_a, "box2"_a,
       R"DOC(Compute the union of two boxes, so that all the points in both boxes are

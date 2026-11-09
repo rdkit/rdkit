@@ -106,7 +106,10 @@ static unsigned int compute2DCoordsMimicDistmatHelper(
   return res;
 }
 
-static nb::tuple generate2DStructureHelper(
+// (reference atom, molecule atom) pairs
+using AtomMatch = PyTupleOf<nb::typed<nb::tuple, int, int>>;
+
+static AtomMatch generate2DStructureHelper(
     RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId,
     const RDKit::ROMol *refPatt, const ConstrainedDepictionParams &params) {
   auto matchVect = RDDepict::generateDepictionMatching2DStructure(
@@ -118,7 +121,7 @@ static nb::tuple generate2DStructureHelper(
   return nb::tuple(atomMap);
 }
 
-static nb::tuple generate2DStructureWithParamsHelper(
+static AtomMatch generate2DStructureWithParamsHelper(
     RDKit::ROMol &mol, const RDKit::ROMol &reference, int confId,
     const RDKit::ROMol *refPatt,
     const std::optional<ConstrainedDepictionParams> &pyParams) {

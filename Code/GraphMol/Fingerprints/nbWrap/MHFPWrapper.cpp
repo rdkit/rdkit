@@ -102,7 +102,7 @@ NB_MODULE(rdMHFPFingerprint, m) {
           "EncodeSmilesBulk",
           [](MHFPEncoder *enc, const PyIterableOf<std::string> &smiles,
              unsigned char radius, bool rings, bool isomeric, bool kekulize,
-             unsigned char min_radius) -> nb::tuple {
+             unsigned char min_radius) -> PyTupleOf<std::vector<uint32_t>> {
             auto vec = ListToVector<std::string>(smiles);
             auto resVect =
                 enc->Encode(vec, radius, rings, isomeric, kekulize, min_radius);
@@ -119,7 +119,7 @@ NB_MODULE(rdMHFPFingerprint, m) {
           "EncodeMolsBulk",
           [](MHFPEncoder *enc, const PyIterableOf<ROMol> &mols,
              unsigned char radius, bool rings, bool isomeric, bool kekulize,
-             unsigned char min_radius) -> nb::tuple {
+             unsigned char min_radius) -> PyTupleOf<std::vector<uint32_t>> {
             // There are access problems for vector and std::vector<ROMol>.
             // So let's fall back to an inefficient Python list.
             std::vector<ROMol> vec;
@@ -165,7 +165,8 @@ NB_MODULE(rdMHFPFingerprint, m) {
           "EncodeSECFPSmilesBulk",
           [](MHFPEncoder *enc, const PyIterableOf<std::string> &smiles,
              unsigned char radius, bool rings, bool isomeric, bool kekulize,
-             unsigned char min_radius, size_t length) -> nb::tuple {
+             unsigned char min_radius,
+             size_t length) -> PyTupleOf<ExplicitBitVect> {
             auto vec = ListToVector<std::string>(smiles);
             auto resVect = enc->EncodeSECFP(vec, radius, rings, isomeric,
                                             kekulize, min_radius, length);
@@ -182,7 +183,8 @@ NB_MODULE(rdMHFPFingerprint, m) {
           "EncodeSECFPMolsBulk",
           [](MHFPEncoder *enc, const PyIterableOf<ROMol> &mols,
              unsigned char radius, bool rings, bool isomeric, bool kekulize,
-             unsigned char min_radius, size_t length) -> nb::tuple {
+             unsigned char min_radius,
+             size_t length) -> PyTupleOf<ExplicitBitVect> {
             std::vector<ROMol> vec;
             for (auto item : mols) {
               vec.push_back(*nb::cast<const ROMol *>(item));

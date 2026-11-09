@@ -21,8 +21,9 @@ using namespace nb::literals;
 using namespace RDKit;
 
 namespace {
+// None for each molecule that could not be read
 template <typename OutputType>
-nb::tuple getFingerprintsHelper(
+PyTupleOf<Nullable<ExplicitBitVect *>> getFingerprintsHelper(
     const std::filesystem::path &fileName,
     FingerprintGenerator<OutputType> *generator,
     const GeneralMolSupplier::SupplierOptions &options) {

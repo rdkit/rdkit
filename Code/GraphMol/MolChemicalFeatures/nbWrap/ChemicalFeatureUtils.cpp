@@ -22,8 +22,8 @@ using namespace nb::literals;
 using namespace RDKit;
 
 namespace {
-nb::list GetAtomMatch(const PySequenceOf<MolChemicalFeature> &featMatch,
-                      int maxAts = 1024) {
+PyListOf<PyListOf<unsigned int>> GetAtomMatch(
+    const PySequenceOf<MolChemicalFeature> &featMatch, int maxAts = 1024) {
   nb::list res;
   auto nEntries = nb::len(featMatch);
 

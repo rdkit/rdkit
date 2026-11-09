@@ -35,6 +35,7 @@
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/pair.h>
+#include <nanobind/stl/variant.h>
 #include <chrono>
 #include <utility>
 
@@ -49,6 +50,9 @@ namespace nb = nanobind;
 using namespace nb::literals;
 
 namespace RDKit {
+
+// a core or side chain, as a molecule or, with asSmiles, as SMILES
+using MolOrSmiles = std::variant<ROMol *, std::string>;
 
 class RGroupDecompositionHelper {
   std::unique_ptr<RGroupDecomposition> decomp;
@@ -113,7 +117,7 @@ class RGroupDecompositionHelper {
     return {result.success, result.score};
   }
 
-  nb::list GetRGroupLabels() {
+  PyListOf<std::string> GetRGroupLabels() {
     nb::list result;
     std::vector<std::string> labels = decomp->getRGroupLabels();
     for (const auto &label : labels) {
@@ -122,7 +126,8 @@ class RGroupDecompositionHelper {
     return result;
   }
 
-  nb::list GetRGroupsAsRows(bool asSmiles = false) {
+  PyListOf<PyDictOf<std::string, MolOrSmiles>> GetRGroupsAsRows(
+      bool asSmiles = false) {
     const RGroupRows &groups = decomp->getRGroupsAsRows();
     nb::list result;
 
@@ -140,7 +145,8 @@ class RGroupDecompositionHelper {
     return result;
   }
 
-  nb::dict GetRGroupsAsColumns(bool asSmiles = false) {
+  PyDictOf<std::string, PyListOf<MolOrSmiles>> GetRGroupsAsColumns(
+      bool asSmiles = false) {
     nb::dict result;
 
     RGroupColumns groups = decomp->getRGroupsAsColumns();

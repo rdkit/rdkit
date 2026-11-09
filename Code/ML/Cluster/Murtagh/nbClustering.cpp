@@ -18,6 +18,12 @@ typedef double real;
 namespace nb = nanobind;
 using namespace nb::literals;
 
+// the arrays ia, ib and crit that describe the merges
+using ClusterResult =
+    nb::typed<nb::tuple, nb::ndarray<nb::numpy, long, nb::ndim<1>>,
+              nb::ndarray<nb::numpy, long, nb::ndim<1>>,
+              nb::ndarray<nb::numpy, double, nb::ndim<1>>>;
+
 extern "C" int distdriver_(long *n, long *len, real *dists, long *toggle,
                            long *ia, long *ib, real *crit);
 
@@ -52,7 +58,7 @@ static void clusterit(const real *dataP, long n, long m, long iopt, long *ia,
   free(dists);
 };
 
-static nb::tuple Clustering_MurtaghCluster(
+static ClusterResult Clustering_MurtaghCluster(
     nb::ndarray<nb::numpy, const double, nb::ndim<2>, nb::c_contig> data,
     int nPts, int sz, int option) {
   auto dataRows = static_cast<long>(data.shape(0));
@@ -98,7 +104,7 @@ void distclusterit(real *dists, long n, long iopt, long *ia, long *ib,
   distdriver_(&n, &len, dists, &iopt, ia, ib, crit);
 };
 
-static nb::tuple Clustering_MurtaghDistCluster(
+static ClusterResult Clustering_MurtaghDistCluster(
     nb::ndarray<nb::numpy, const double, nb::ndim<1>, nb::c_contig> data,
     int nPts, int option) {
   auto dataLen = static_cast<long>(data.shape(0));

@@ -41,6 +41,13 @@ using BestSimilarityResult =
 using ScoreAllConformersResult =
     nb::typed<nb::tuple, nb::typed<nb::list, nb::typed<nb::list, double>>, int,
               int, nb::typed<nb::list, double>>;
+// (combo_score, shape_score, color_score), then the transformation matrix or
+// the two overlap volumes
+using Scores = nb::typed<nb::tuple, double, double, double>;
+using ScoresAndMatrix =
+    nb::typed<nb::tuple, double, double, double, nb::typed<nb::list, double>>;
+using ScoresAndVolumes =
+    nb::typed<nb::tuple, double, double, double, double, double>;
 
 void set_customFeatures(GaussianShape::ShapeInputOptions &shp, nb::object s) {
   shp.customFeatures.clear();
@@ -215,7 +222,7 @@ slight accuracy penalty but significant speed gain if used.  Default=True.)DOC")
             for (const auto &val : opts.atomSubset) {
               py_list.append(val);
             }
-            return nb::tuple(py_list);
+            return PyTupleOf<unsigned int>(nb::tuple(py_list));
           },
           [](GaussianShape::ShapeInputOptions &opts,
              const std::optional<PyIterableOf<unsigned int>> &as) {
@@ -236,7 +243,8 @@ and optionally a list of indices of the atoms that the feature was derived from.
               py_list.append(
                   nb::make_tuple(static_cast<int>(val.first), val.second));
             }
-            return nb::tuple(py_list);
+            return PyTupleOf<nb::typed<nb::tuple, int, double>>(
+                nb::tuple(py_list));
           },
           [](GaussianShape::ShapeInputOptions &opts,
              const PySequenceOf<nb::typed<nb::tuple, unsigned int, double>>
@@ -414,7 +422,8 @@ faster but gives less precise overlays.  Default=0.001.)DOC")
             py_fitOpts.value_or(GaussianShape::ShapeInputOptions()), nullptr,
             py_overlayOpts.value_or(GaussianShape::ShapeOverlayOptions()),
             refConfId, fitConfId);
-        return nb::make_tuple(results[0], results[1], results[2]);
+        return helpers::Scores(
+            nb::make_tuple(results[0], results[1], results[2]));
       },
       "ref"_a, "fit"_a, "refOpts"_a = nb::none(), "fitOpts"_a = nb::none(),
       "overlayOpts"_a = nb::none(), "refConfId"_a = -1, "fitConfId"_a = -1,
@@ -456,7 +465,8 @@ Returns
             py_fitOpts.value_or(GaussianShape::ShapeInputOptions()), nullptr,
             py_overlayOpts.value_or(GaussianShape::ShapeOverlayOptions()),
             fitConfId);
-        return nb::make_tuple(results[0], results[1], results[2]);
+        return helpers::Scores(
+            nb::make_tuple(results[0], results[1], results[2]));
       },
       "refShape"_a, "fit"_a, "fitOpts"_a = nb::none(),
       "overlayOpts"_a = nb::none(), "fitConfId"_a = -1,
@@ -497,7 +507,8 @@ Returns
             pyMatrix.append(xform.getValUnchecked(i, j));
           }
         }
-        return nb::make_tuple(results[0], results[1], results[2], pyMatrix);
+        return helpers::ScoresAndMatrix(
+            nb::make_tuple(results[0], results[1], results[2], pyMatrix));
       },
       "refShape"_a, "fitShape"_a, "overlayOpts"_a = nb::none(),
       R"DOC(Aligns a fit shape to a reference shape. The fit is modified.
@@ -531,8 +542,9 @@ Returns
             py_fitOpts.value_or(GaussianShape::ShapeInputOptions()),
             py_overlayOpts.value_or(GaussianShape::ShapeOverlayOptions()),
             refConfId, fitConfId, &ovVols);
-        return nb::make_tuple(results[0], results[1], results[2], ovVols.first,
-                              ovVols.second);
+        return helpers::ScoresAndVolumes(
+            nb::make_tuple(results[0], results[1], results[2], ovVols.first,
+                           ovVols.second));
       },
       "ref"_a, "fit"_a, "refOpts"_a = nb::none(), "fitOpts"_a = nb::none(),
       "overlayOpts"_a = nb::none(), "refConfId"_a = -1, "fitConfId"_a = -1,
@@ -576,8 +588,9 @@ Returns
             py_fitOpts.value_or(GaussianShape::ShapeInputOptions()),
             py_overlayOpts.value_or(GaussianShape::ShapeOverlayOptions()),
             fitConfId, &ovVols);
-        return nb::make_tuple(results[0], results[1], results[2], ovVols.first,
-                              ovVols.second);
+        return helpers::ScoresAndVolumes(
+            nb::make_tuple(results[0], results[1], results[2], ovVols.first,
+                           ovVols.second));
       },
       "refShape"_a, "fit"_a, "fitOpts"_a = nb::none(),
       "overlayOpts"_a = nb::none(), "fitConfId"_a = -1,
@@ -615,8 +628,9 @@ Returns
             refShape, fitShape,
             py_overlayOpts.value_or(GaussianShape::ShapeOverlayOptions()),
             &ovVols);
-        return nb::make_tuple(results[0], results[1], results[2], ovVols.first,
-                              ovVols.second);
+        return helpers::ScoresAndVolumes(
+            nb::make_tuple(results[0], results[1], results[2], ovVols.first,
+                           ovVols.second));
       },
       "refShape"_a, "fitShape"_a, "overlayOpts"_a = nb::none(),
       R"DOC(Calculates the scores between a reference shape and a fit shape without

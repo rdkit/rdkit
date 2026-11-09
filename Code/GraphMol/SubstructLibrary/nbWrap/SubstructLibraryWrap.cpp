@@ -178,7 +178,7 @@ nb::bytes SubstructLibrary_Serialize(const SubstructLibrary &self) {
   return nb::bytes(res.c_str(), res.size());
 }
 
-nb::tuple getSearchOrderHelper(const SubstructLibrary &self) {
+PyTupleOf<unsigned int> getSearchOrderHelper(const SubstructLibrary &self) {
   nb::list res;
   for (const auto v : self.getSearchOrder()) {
     res.append(v);

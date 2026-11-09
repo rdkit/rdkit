@@ -689,7 +689,8 @@ will be considered symmetrically.)DOC")
               }
               result.append(matchList);
             }
-            return nb::tuple(result);
+            return PyTupleOf<PyListOf<nb::typed<nb::tuple, int, int>>>(
+                nb::tuple(result));
           },
           [](NbBestAlignmentParams &p, const PySequenceOf<AtomMap> &obj) {
             p.map = nbTranslateAtomMapSeq(obj);
@@ -702,7 +703,7 @@ will be considered symmetrically.)DOC")
             for (double w : p.weights) {
               result.append(w);
             }
-            return nb::tuple(result);
+            return PyTupleOf<double>(nb::tuple(result));
           },
           [](NbBestAlignmentParams &p, const PySequenceOf<double> &obj) {
             p.weights = nbTranslateDoubleVec(obj);

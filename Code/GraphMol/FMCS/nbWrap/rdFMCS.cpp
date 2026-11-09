@@ -595,7 +595,7 @@ NB_MODULE(rdFMCS, m) {
             for (const auto &pair : self.DegenerateSmartsQueryMolDict) {
               res[nb::cast(pair.first)] = nb::cast(toStd(pair.second));
             }
-            return res;
+            return PyDictOf<std::string, RDKit::ROMol *>(res);
           },
           "Dictionary collecting all degenerate (SMARTS, queryMol) pairs "
           "(empty if MCSParameters.StoreAll is False)");

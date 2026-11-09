@@ -53,7 +53,7 @@ using namespace RDKit;
 
 namespace {
 
-nb::tuple MolsFromChemDrawBlockHelper(
+PyTupleOf<ROMol *> MolsFromChemDrawBlockHelper(
     const StringOrBytes &block, bool sanitize, bool removeHs,
     RDKit::v2::NeedsCleanPolicy needsCleanPolicy =
         RDKit::v2::NeedsCleanPolicy::TrustSource,
@@ -80,7 +80,7 @@ nb::tuple MolsFromChemDrawBlockHelper(
   return nb::tuple(res);
 }
 
-nb::tuple MolsFromChemDrawFileHelper(
+PyTupleOf<ROMol *> MolsFromChemDrawFileHelper(
     const std::filesystem::path &filename, bool sanitize, bool removeHs,
     RDKit::v2::NeedsCleanPolicy needsCleanPolicy =
         RDKit::v2::NeedsCleanPolicy::TrustSource,
@@ -98,8 +98,8 @@ nb::tuple MolsFromChemDrawFileHelper(
   return nb::tuple(res);
 }
 
-nb::tuple ReactionsFromChemDrawFileHelper(const std::filesystem::path &filename,
-                                          bool sanitize, bool removeHs) {
+PyTupleOf<ChemicalReaction *> ReactionsFromChemDrawFileHelper(
+    const std::filesystem::path &filename, bool sanitize, bool removeHs) {
   std::vector<std::unique_ptr<ChemicalReaction>> rxns;
   try {
     rxns = RDKit::v2::ChemDrawFileToChemicalReactions(filename.string(),
@@ -119,8 +119,8 @@ nb::tuple ReactionsFromChemDrawFileHelper(const std::filesystem::path &filename,
   return nb::tuple(res);
 }
 
-nb::tuple ReactionsFromChemDrawBlockHelper(const StringOrBytes &imolBlock,
-                                           bool sanitize, bool removeHs) {
+PyTupleOf<ChemicalReaction *> ReactionsFromChemDrawBlockHelper(
+    const StringOrBytes &imolBlock, bool sanitize, bool removeHs) {
   std::istringstream inStream(pyObjectToString(imolBlock));
   std::vector<std::unique_ptr<ChemicalReaction>> rxns;
   try {

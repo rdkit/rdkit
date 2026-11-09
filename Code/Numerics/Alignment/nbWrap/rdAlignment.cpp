@@ -65,7 +65,9 @@ auto makeTransform4x4(const RDGeom::Transform3D &trans) {
   return nb::ndarray<nb::numpy, double, nb::ndim<2>>(resData, {4, 4}, owner);
 }
 
-nb::tuple AlignPointPairs(
+// the sum of squared distances and the 4x4 transformation matrix
+nb::typed<nb::tuple, double, nb::ndarray<nb::numpy, double, nb::ndim<2>>>
+AlignPointPairs(
     nb::object refPoints, nb::object probePoints,
     const std::optional<PySequenceOf<double>> &weights = std::nullopt,
     bool reflect = false, unsigned int maxIterations = 50) {

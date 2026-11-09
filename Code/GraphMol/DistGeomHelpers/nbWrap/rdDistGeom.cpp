@@ -42,7 +42,7 @@ struct PyEmbedParameters : public RDKit::DGeomHelpers::EmbedParameters {
     coordMap = d_coordMap.get();
   }
 
-  nb::tuple getFailureCounts() const {
+  PyTupleOf<unsigned int> getFailureCounts() const {
     nb::list lst;
     for (auto failure : failures) {
       lst.append(failure);
@@ -533,7 +533,7 @@ RETURNS:
         for (const auto &c : causes) {
           result.append(nb::make_tuple(c.first, c.second));
         }
-        return result;
+        return PyListOf<nb::typed<nb::tuple, E, std::size_t>>(result);
       },
       "legacyImplementation"_a = true);
 
