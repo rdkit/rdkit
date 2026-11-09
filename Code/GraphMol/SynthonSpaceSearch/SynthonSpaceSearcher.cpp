@@ -75,6 +75,7 @@ SearchResults SynthonSpaceSearcher::search(const ThreadMode threadMode) {
   if (!timedOut && !ControlCHandler::getGotSignal() && d_params.buildHits) {
     buildHits(allHits, endTime, timedOut, results);
   }
+  timedOut = timedOut || details::checkTimeOut(endTime);
   return SearchResults{std::move(results), std::move(d_bestHitFound), totHits,
                        timedOut, ControlCHandler::getGotSignal()};
 }
