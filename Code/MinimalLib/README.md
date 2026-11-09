@@ -58,8 +58,6 @@ scripts/build_rdkitjs.sh
 ```
 
 The script results in a `build` directory with a valid JavaScript module, and includes `RDKit_minimal.{js,wasm,d.ts}`.
-To set the version of the JavaScript module use `NPM_VERSION`, e.g., `export NPM_VERSION=1.2.3`.
-Defaults to `0.0.0`.
 
 Set `GET_SRC=clone` to swap the local copy for a fresh clone from GitHub.
 This is relevant when you want to pass a release tag (defaults to `master`) and a git URL (defaults to `https://github.com/rdkit/rdkit.git`):
