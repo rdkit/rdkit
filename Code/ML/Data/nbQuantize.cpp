@@ -15,6 +15,10 @@
 #include "Quantize.h"
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/pair.h>
+#include <nanobind/stl/vector.h>
+
+#include <RDBoost/Wrap_nb.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -39,10 +43,9 @@ std::vector<T> sequenceToVector(const nb::object &sequence) {
 }  // namespace
 
 
-static nb::tuple cQuantize_RecurseOnBounds(nb::object vals, nb::list pyCuts,
-                                           int which, nb::list pyStarts,
-                                           nb::object results,
-                                           int nPossibleRes) {
+static std::pair<double, std::vector<long int>> cQuantize_RecurseOnBounds(
+    PySequenceOf<double> vals, PySequenceOf<int> pyCuts, int which,
+    PySequenceOf<int> pyStarts, PySequenceOf<int> results, int nPossibleRes) {
   auto values = sequenceToVector<double>(vals);
   auto resultCodes = sequenceToVector<long int>(results);
   auto cuts = sequenceToVector<long int>(pyCuts);
@@ -56,16 +59,13 @@ static nb::tuple cQuantize_RecurseOnBounds(nb::object vals, nb::list pyCuts,
                               starts.data(), static_cast<int>(starts.size()),
                               resultCodes.data(), nPossibleRes);
 
-  nb::list cutObj;
-  for (auto cut : cuts) {
-    cutObj.append(cut);
-  }
-  return nb::make_tuple(gain, cutObj);
+  return {gain, cuts};
 }
 
-static nb::list cQuantize_FindStartPoints(nb::object values, nb::object results,
-                                          int nData) {
-  nb::list startPts;
+static std::vector<int> cQuantize_FindStartPoints(PySequenceOf<double> values,
+                                                  PySequenceOf<int> results,
+                                                  int nData) {
+  std::vector<int> startPts;
   if (nData < 2) {
     return startPts;
   }
@@ -96,7 +96,7 @@ static nb::list cQuantize_FindStartPoints(nb::object values, nb::object results,
       lastDiv = i;
     } else {
       if (blockAct == -1 || lastBlockAct == -1 || blockAct != lastBlockAct) {
-        startPts.append(lastDiv);
+        startPts.push_back(lastDiv);
         lastDiv = i;
         lastBlockAct = blockAct;
       } else {
@@ -110,7 +110,7 @@ static nb::list cQuantize_FindStartPoints(nb::object values, nb::object results,
   }
 
   if (blockAct != lastBlockAct) {
-    startPts.append(lastDiv);
+    startPts.push_back(lastDiv);
   }
   return startPts;
 }

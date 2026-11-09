@@ -10,9 +10,10 @@ import sys
 import unittest
 
 from rdkit import Chem, DataStructs, rdBase
-from rdkit.Chem import (rdChemReactions, rdEnumerateStereoisomers, rdFMCS, rdMolDescriptors,
-                        rdSubstructLibrary)
+from rdkit.Chem import (rdChemReactions, rdDistGeom, rdEnumerateStereoisomers, rdFMCS,
+                        rdMolDescriptors, rdSubstructLibrary)
 from rdkit.Chem.MolStandardize import rdMolStandardize
+from rdkit.ML.Data import cQuantize
 
 # Built only with RDK_BUILD_THREADSAFE_SSS.
 try:
@@ -22,12 +23,7 @@ except ImportError:
 
 
 def signature_annotations(signature):
-  """Returns a {parameter: annotation} dict for one nanobind signature string.
-
-  Raises:
-    SyntaxError: If the signature names a numpy.ndarray, which nanobind writes with keyword
-      arguments inside the brackets.
-  """
+  """Returns a {parameter: annotation} dict for one nanobind signature string."""
   args = parse_signature(signature).args
   return {arg.arg: ast.unparse(arg.annotation)
           for arg in args.args + args.kwonlyargs if arg.annotation}
@@ -45,10 +41,16 @@ def return_annotations(func):
 
 
 def parse_signature(signature):
-  """Returns the ast.FunctionDef for one nanobind signature string."""
-  # nanobind writes each default value as a \N placeholder, which is not valid Python, and leaves
-  # the name out of a property's getter and setter.
-  signature = re.sub(r'\\\d+', '...', re.sub(r'^def \(', 'def property(', signature))
+  """Returns the ast.FunctionDef for one nanobind signature string.
+
+  A numpy.ndarray annotation loses its bracketed dtype and shape.
+  """
+  # nanobind writes each default value as a \N placeholder and each numpy.ndarray with keyword
+  # arguments inside its brackets, neither of which is valid Python, and leaves the name out of a
+  # property's getter and setter.
+  signature = re.sub(r'^def \(', 'def property(', signature)
+  signature = re.sub(r'\\\d+', '...', re.sub(r'numpy\.ndarray\[[^\]]*\]', 'numpy.ndarray',
+                                             signature))
   return ast.parse(signature + ': ...').body[0]
 
 
@@ -79,6 +81,11 @@ class TestSignatures(unittest.TestCase):
       # placeholders of any type.
       (rdMolDescriptors.CalcHallKierAlpha, 0, 'atomContribs', 'list[typing.Any] | None'),
       (rdMolDescriptors._CalcCrippenContribs, 0, 'atomTypeLabels', 'list[typing.Any] | None'),
+      (rdMolDescriptors.Properties.ComputeProperties, 1, 'mols',
+       'collections.abc.Iterable[rdkit.Chem.rdchem.Mol | None]'),
+      (cQuantize._RecurseOnBounds, 0, 'vals', 'collections.abc.Sequence[float]'),
+      (cQuantize._RecurseOnBounds, 0, 'pyCuts', 'collections.abc.Sequence[int]'),
+      (cQuantize._FindStartPoints, 0, 'results', 'collections.abc.Sequence[int]'),
     ]
     # The PNG functions are built only with RDK_USE_BOOST_IOSTREAMS.
     if hasattr(Chem, 'MolFromPNGFile'):
@@ -110,6 +117,16 @@ class TestSignatures(unittest.TestCase):
       (rdEnumerateStereoisomers.StereoisomerEnumerator.next, mol + ' | None'),
       # A function that never returns None keeps a plain annotation.
       (Chem.AddHs, mol),
+    ]
+    for func, expected in cases:
+      with self.subTest(func=func.__qualname__):
+        self.assertEqual(set(return_annotations(func)), {expected})
+
+  def testReturnAnnotations(self):
+    cases = [
+      (rdDistGeom.GetExperimentalTorsions, 'tuple[dict[str, typing.Any], ...]'),
+      (cQuantize._RecurseOnBounds, 'tuple[float, list[int]]'),
+      (cQuantize._FindStartPoints, 'list[int]'),
     ]
     for func, expected in cases:
       with self.subTest(func=func.__qualname__):

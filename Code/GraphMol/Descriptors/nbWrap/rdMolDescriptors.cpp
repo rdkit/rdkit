@@ -906,8 +906,8 @@ bool hasPythonProperties(const RDKit::Descriptors::Properties &props) {
 }
 
 nb::ndarray<nb::numpy, double, nb::ndim<2>> computePropertiesForMolsHelper(
-    const RDKit::Descriptors::Properties &self, nb::object pymols,
-    int numThreads) {
+    const RDKit::Descriptors::Properties &self,
+    PyIterableOf<std::optional<const RDKit::ROMol *>> pymols, int numThreads) {
   // keep the Python objects alive while the C++ work runs without the GIL
   std::vector<nb::object> keepAlive;
   std::vector<const RDKit::ROMol *> mols;

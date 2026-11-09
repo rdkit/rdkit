@@ -237,12 +237,12 @@ static nb::ndarray<nb::numpy, double, nb::ndim<2>> getMolBoundsMatrix(
                              set15bounds, set14bounds, set13bounds);
 }
 
-static nb::tuple getExpTorsHelper(const ROMol &mol, const bool useExpTorsions,
-                                  const bool useSmallRingTorsions,
-                                  const bool useMacrocycleTorsions,
-                                  const bool useBasicKnowledge,
-                                  const unsigned int version,
-                                  const bool verbose) {
+// one dict per torsion, whose values are ints, strings and lists of numbers
+static PyTupleOf<PyDictOf<std::string, nb::any>> getExpTorsHelper(
+    const ROMol &mol, const bool useExpTorsions,
+    const bool useSmallRingTorsions, const bool useMacrocycleTorsions,
+    const bool useBasicKnowledge, const unsigned int version,
+    const bool verbose) {
   switch (version) {
     case 1:
       [[fallthrough]];
