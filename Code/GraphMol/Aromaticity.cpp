@@ -206,20 +206,6 @@ static void applyHuckelToFused(
     unsigned int maxNumFusedRings, const std::vector<Bond *> &bondsByIdx,
     unsigned int minRingSize = 0);
 
-// Fused ring systems as used for aromaticity. Rings larger than
-// maxFusedAromaticRingSize are left out of the grouping, so they end up as
-// single-ring systems; without this, macrocycles would merge everything around
-// them into one huge system and the Huckel subset search would explode.
-VECT_INT_VECT findAromaticFusedSystems(const VECT_INT_VECT &brings) {
-  auto fusableRings = brings;
-  for (auto &ring : fusableRings) {
-    if (ring.size() > maxFusedAromaticRingSize) {
-      ring.clear();
-    }
-  }
-  return RingUtils::findFusedRingSystems(fusableRings);
-}
-
 // Returns whether the rings in ringIds are connected to each other. For
 // aromaticity, two rings only count as fused if they share exactly one bond.
 bool areRingsFused(const VECT_INT_VECT &brings, const INT_VECT &ringIds) {
@@ -237,6 +223,35 @@ bool areRingsFused(const VECT_INT_VECT &brings, const INT_VECT &ringIds) {
     }
   }
   return reached.size() == ringIds.size();
+}
+
+// Fused ring systems as used for aromaticity: rings are fused as defined by
+// areRingsFused(). Rings larger than maxFusedAromaticRingSize are never fused;
+// without this, macrocycles would merge everything around them into one huge
+// system and the Huckel subset search would explode.
+VECT_INT_VECT findAromaticFusedSystems(const VECT_INT_VECT &brings) {
+  // give each pair of fused rings a shared id, then group the rings by them
+  VECT_INT_VECT ringsWithBond;
+  VECT_INT_VECT links(brings.size());
+  int nLinks = 0;
+  for (int ringIdx = 0; ringIdx < rdcast<int>(brings.size()); ++ringIdx) {
+    if (brings[ringIdx].size() > maxFusedAromaticRingSize) {
+      continue;
+    }
+    for (auto bondIdx : brings[ringIdx]) {
+      if (bondIdx >= rdcast<int>(ringsWithBond.size())) {
+        ringsWithBond.resize(bondIdx + 1);
+      }
+      for (auto other : ringsWithBond[bondIdx]) {
+        if (areRingsFused(brings, {ringIdx, other})) {
+          links[ringIdx].push_back(nLinks);
+          links[other].push_back(nLinks++);
+        }
+      }
+      ringsWithBond[bondIdx].push_back(ringIdx);
+    }
+  }
+  return RingUtils::findFusedRingSystems(links);
 }
 
 void markAtomsBondsArom(const VECT_INT_VECT &brings, const INT_VECT &ringIds,
