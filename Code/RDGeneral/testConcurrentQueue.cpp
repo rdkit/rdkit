@@ -3,7 +3,9 @@
 #include <RDGeneral/RDLog.h>
 
 #include <functional>
+#include <chrono>
 #include <iomanip>
+#include <memory>
 #include <sstream>
 
 #include "ConcurrentQueue.h"
@@ -29,7 +31,101 @@ void exerciseControlCHandler(std::atomic<bool> &start) {
     (void)ControlCHandler::getGotSignal();
   }
 }
+
+#ifdef RDK_TEST_WRAPPED_SIGNAL
+std::atomic_flag interruptInstallation{};
+std::atomic_flag pauseRestoration{};
+std::atomic_flag restorationEntered{};
+std::atomic_flag releaseRestoration{};
+std::atomic_flag replacementReady{};
+std::atomic_flag finishReplacement{};
+
+void ignorePreviousSigInt(int) {}
+
+bool waitForFlag(const std::atomic_flag &flag) {
+  const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+  while (!flag.test()) {
+    if (std::chrono::steady_clock::now() >= deadline) {
+      return false;
+    }
+    std::this_thread::yield();
+  }
+  return true;
+}
+
+void replaceControlCHandler(std::unique_ptr<ControlCHandler> first) {
+  first.reset();
+  ControlCHandler second;
+  replacementReady.test_and_set();
+  while (!finishReplacement.test()) {
+    std::this_thread::yield();
+  }
+}
+#endif
 }  // namespace
+
+#ifdef RDK_TEST_WRAPPED_SIGNAL
+using SignalHandler = void (*)(int);
+extern "C" SignalHandler __real_signal(int, SignalHandler);
+extern "C" SignalHandler __wrap_signal(int number, SignalHandler handler) {
+  if (number == SIGINT && handler == ignorePreviousSigInt &&
+      pauseRestoration.test() && !restorationEntered.test_and_set()) {
+    while (!releaseRestoration.test()) {
+    }
+  }
+  const auto previous = __real_signal(number, handler);
+  if (number == SIGINT && handler == ControlCHandler::signalHandler &&
+      interruptInstallation.test()) {
+    interruptInstallation.clear();
+    std::raise(SIGINT);
+  }
+  return previous;
+}
+
+TEST_CASE("ControlCHandler handles an interrupt during installation") {
+  const auto original = __real_signal(SIGINT, ignorePreviousSigInt);
+  {
+    interruptInstallation.test_and_set();
+    ControlCHandler handler;
+    const auto restored = __real_signal(SIGINT, ignorePreviousSigInt);
+    CHECK(ControlCHandler::getGotSignal());
+    CHECK(restored == ignorePreviousSigInt);
+  }
+  __real_signal(SIGINT, original);
+}
+
+TEST_CASE("ControlCHandler finishes restoration before replacing a scope") {
+  const auto original = __real_signal(SIGINT, ignorePreviousSigInt);
+  restorationEntered.clear();
+  releaseRestoration.clear();
+  replacementReady.clear();
+  finishReplacement.clear();
+  auto first = std::make_unique<ControlCHandler>();
+  pauseRestoration.test_and_set();
+  std::thread interrupted([] { std::raise(SIGINT); });
+  const bool entered = waitForFlag(restorationEntered);
+  std::thread replacement(replaceControlCHandler, std::move(first));
+  // Give a replacement scope a chance to overtake the paused restoration.
+  const auto deadline = std::chrono::steady_clock::now() +
+                        std::chrono::milliseconds(100);
+  while (!replacementReady.test() && std::chrono::steady_clock::now() < deadline) {
+    std::this_thread::yield();
+  }
+  releaseRestoration.test_and_set();
+  interrupted.join();
+  const bool ready = waitForFlag(replacementReady);
+  const auto current = __real_signal(SIGINT, ControlCHandler::signalHandler);
+  const bool cancelled = ControlCHandler::getGotSignal();
+  finishReplacement.test_and_set();
+  replacement.join();
+  pauseRestoration.clear();
+  __real_signal(SIGINT, original);
+  CHECK(entered);
+  CHECK(ready);
+  CHECK(current == ControlCHandler::signalHandler);
+  CHECK_FALSE(cancelled);
+}
+#endif
 
 TEST_CASE("ControlCHandler preserves nested signal handlers") {
   previousSigIntCount = 0;

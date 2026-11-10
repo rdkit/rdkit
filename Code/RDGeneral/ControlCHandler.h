@@ -49,6 +49,7 @@ class ControlCHandler {
 #ifdef RDK_BUILD_THREADSAFE_SSS
     std::lock_guard<std::mutex> lock(d_mutex);
 #endif
+    HandlerTransitionGuard transition;
     if (d_handlerCount++ == 0) {
       installHandler();
     }
@@ -61,6 +62,7 @@ class ControlCHandler {
 #ifdef RDK_BUILD_THREADSAFE_SSS
     std::lock_guard<std::mutex> lock(d_mutex);
 #endif
+    HandlerTransitionGuard transition;
     if (--d_handlerCount == 0) {
       std::signal(SIGINT, d_prev_handler.load(std::memory_order_relaxed));
       d_gotSignal.clear(std::memory_order_relaxed);
@@ -71,29 +73,48 @@ class ControlCHandler {
   }
   static void signalHandler(int signalNumber) {
     if (signalNumber == SIGINT) {
-      // A signal can interrupt code holding d_mutex: only lock-free atomics
-      // are safe here. Restore the previous handler so a repeated SIGINT
-      // retains its existing behavior until reset() explicitly rearms us.
       d_gotSignal.test_and_set();
-      if (d_handlerReady.test()) {
-        std::signal(SIGINT, d_prev_handler.load(std::memory_order_relaxed));
-      }
+      restoreInterruptedHandler();
     }
   }
   static void reset() {
 #ifdef RDK_BUILD_THREADSAFE_SSS
     std::lock_guard<std::mutex> lock(d_mutex);
 #endif
+    HandlerTransitionGuard transition;
     installHandler();
   }
 
  private:
   using SignalHandler = void (*)(int);
+  class HandlerTransitionGuard {
+   public:
+    HandlerTransitionGuard() {
+      while (d_handlerTransition.test_and_set(std::memory_order_acquire)) {
+      }
+    }
+    ~HandlerTransitionGuard() {
+      d_handlerTransition.clear(std::memory_order_release);
+      // A signal arriving during a transition records cancellation and leaves
+      // restoration to the code completing that transition.
+      restoreInterruptedHandler();
+    }
+  };
+
+  static void restoreInterruptedHandler() {
+    // Never wait in a signal handler: it may have interrupted a transition
+    // on this thread. Ordinary transitions and signal-driven restoration use
+    // the same gate so an old handler cannot overwrite a new registration.
+    if (d_gotSignal.test() &&
+        !d_handlerTransition.test_and_set(std::memory_order_acquire)) {
+      if (d_gotSignal.test()) {
+        std::signal(SIGINT, d_prev_handler.load(std::memory_order_relaxed));
+      }
+      d_handlerTransition.clear(std::memory_order_release);
+    }
+  }
+
   static void installHandler() {
-    // signal() installs us before returning the previous handler. An interrupt
-    // during publication records cancellation; registration then restores the
-    // original handler. Never wait in the signal handler for this to complete.
-    d_handlerReady.clear();
     d_gotSignal.clear();
     const auto previous = std::signal(SIGINT, signalHandler);
     // reset() may have armed us before the first RAII scope, or may rearm an
@@ -101,14 +122,10 @@ class ControlCHandler {
     if (previous != signalHandler) {
       d_prev_handler.store(previous, std::memory_order_relaxed);
     }
-    d_handlerReady.test_and_set();
-    if (d_gotSignal.test()) {
-      std::signal(SIGINT, d_prev_handler.load(std::memory_order_relaxed));
-    }
   }
   static_assert(std::atomic<SignalHandler>::is_always_lock_free);
   inline static std::atomic_flag d_gotSignal{};
-  inline static std::atomic_flag d_handlerReady{};
+  inline static std::atomic_flag d_handlerTransition{};
   // A concurrent scope must neither replace the original handler nor restore
   // it while another calculation is still using our handler.
 #ifdef RDK_BUILD_THREADSAFE_SSS
