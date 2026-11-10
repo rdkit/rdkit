@@ -109,6 +109,13 @@ namespace DGeomHelpers {
 
 namespace {
 
+#ifdef RDK_BUILD_THREADSAFE_SSS
+std::mutex &getEmbeddingRngMutex() {
+  static std::mutex mutex;
+  return mutex;
+}
+#endif
+
 // The random source for a single conformer: a locally seeded generator when
 // seed > -1, otherwise the global source.
 class EmbedRng {
@@ -128,6 +135,16 @@ class EmbedRng {
   RDKit::double_source_type &get() {
     return d_source ? *d_source : RDKit::getDoubleRandomSource();
   }
+
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  std::unique_lock<std::mutex> lockGlobalSource() const {
+    std::unique_lock<std::mutex> lock(getEmbeddingRngMutex(), std::defer_lock);
+    if (!d_source) {
+      lock.lock();
+    }
+    return lock;
+  }
+#endif
 
  private:
   std::unique_ptr<RDKit::rng_type> d_generator;
@@ -495,7 +512,14 @@ bool generateInitialCoords(RDGeom::PointPtrVect *positions,
                            const detail::EmbedArgs &eargs,
                            const EmbedParameters &embedParams,
                            RDNumeric::DoubleSymmMatrix &distMat,
-                           RDKit::double_source_type *rng) {
+                           EmbedRng &embedRng) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  // Default-seed calls share the global stream. Only the phase consuming it
+  // is serialized: callbacks may reenter embedding, and minimization should
+  // remain parallel. Explicitly seeded conformers own their sources.
+  auto rngLock = embedRng.lockGlobalSource();
+#endif
+  auto *rng = &embedRng.get();
   bool gotCoords = false;
 
   switch (embedParams.initialEmbeddingMode) {
@@ -1005,7 +1029,6 @@ bool embedPoints(RDGeom::PointPtrVect *positions,
   }
 
   EmbedRng embedRng(seed);
-  auto *rng = &embedRng.get();
 
   bool gotCoords = false;
   unsigned int iter = 0;
@@ -1017,7 +1040,7 @@ bool embedPoints(RDGeom::PointPtrVect *positions,
     gotCoords = embedParams.optimizeConfWithId.has_value()
                     ? EmbeddingOps::setInitialCoords(positions, embedParams)
                     : EmbeddingOps::generateInitialCoords(
-                          positions, eargs, embedParams, distMat, rng);
+                          positions, eargs, embedParams, distMat, embedRng);
 
     if (!gotCoords) {
       recordFailure(embedParams, EmbedFailureCauses::INITIAL_COORDS);
@@ -1120,7 +1143,6 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions,
   }
   RDNumeric::DoubleSymmMatrix distMat(positions->size(), 0.0);
   EmbedRng embedRng(seed);
-  auto *rng = &embedRng.get();
 
   bool gotCoords = false;
   unsigned int iter = 0;
@@ -1136,7 +1158,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions,
     gotCoords = embedParams.optimizeConfWithId
                     ? EmbeddingOps::setInitialCoords(positions, embedParams)
                     : EmbeddingOps::generateInitialCoords(
-                          positions, eargs, embedParams, distMat, rng);
+                          positions, eargs, embedParams, distMat, embedRng);
 
     if (!gotCoords) {
       recordFailure(embedParams, EmbedFailureCauses::INITIAL_COORDS);
