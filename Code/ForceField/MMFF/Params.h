@@ -838,8 +838,14 @@ class RDKIT_FORCEFIELD_EXPORT MMFFTorCollection {
 #else
 #endif
 
+    // The second clause only serves to enter the iteration that switches
+    // canTorType to torType.second at the end of the first pass
+    // (maxIter == 5). Without the maxIter == 5 guard, the loop body was
+    // re-entered with iter == 4 at the end of the second pass when no
+    // parameters were found, reading eqLevel[4] out of bounds.
     while (((iter < maxIter) && ((!mmffTorParams) || (maxIter == 4))) ||
-           ((iter == 4) && (torType.first == 5) && torType.second)) {
+           ((maxIter == 5) && (iter == 4) && (torType.first == 5) &&
+            torType.second)) {
       // The rule of setting the torsion type to the value it had
       // before being set to 5 as a last resort in case parameters
       // could not be found is not mentioned in MMFF.IV; it was
