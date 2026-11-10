@@ -22,6 +22,13 @@ RDLogger rdInfoLog = nullptr;
 RDLogger rdErrorLog = nullptr;
 RDLogger rdWarningLog = nullptr;
 RDLogger rdStatusLog = nullptr;
+namespace {
+// Synchronize library-owned flag accesses while preserving the public bool.
+// The flag publishes no other logger state, so relaxed ordering is sufficient.
+std::atomic_ref<bool> enabledState(const RDLogger &log) {
+  return std::atomic_ref<bool>(log->df_enabled);
+}
+}  // namespace
 namespace RDLog {
 
 namespace {
@@ -32,9 +39,9 @@ const std::vector<RDLogger *> allLogs = {&rdAppLog,     &rdDebugLog,
 
 LogStateSetter::LogStateSetter() {
   for (auto i = 0u; i < allLogs.size(); ++i) {
-    if (*allLogs[i] && (*allLogs[i])->df_enabled) {
+    if (*allLogs[i] &&
+        enabledState(*allLogs[i]).exchange(false, std::memory_order_relaxed)) {
       d_origState |= 1 << i;
-      (*allLogs[i])->df_enabled = false;
     }
   }
 }
@@ -44,15 +51,19 @@ LogStateSetter::LogStateSetter(RDLoggerList toEnable) : LogStateSetter() {
     if (*allLogs[i] && std::find(toEnable.begin(), toEnable.end(),
                                  *allLogs[i]) != toEnable.end()) {
       d_origState ^= 1 << i;
-      (*allLogs[i])->df_enabled = true;
+      enabledState(*allLogs[i]).store(true, std::memory_order_relaxed);
     }
   }
 }
 
 LogStateSetter::~LogStateSetter() {
   for (auto i = 0u; i < allLogs.size(); ++i) {
-    if (*allLogs[i]) {
-      (*allLogs[i])->df_enabled ^= d_origState >> i & 1;
+    if (*allLogs[i] && (d_origState >> i & 1)) {
+      auto state = enabledState(*allLogs[i]);
+      auto enabled = state.load(std::memory_order_relaxed);
+      while (!state.compare_exchange_weak(enabled, !enabled,
+                                          std::memory_order_relaxed)) {
+      }
     }
   }
 }
@@ -65,22 +76,22 @@ void enable_logs(const std::string &arg) {
   // Yes... this is extremely crude
   if (arg == "rdApp.debug" || arg == "rdApp.*") {
     if (rdDebugLog) {
-      rdDebugLog->df_enabled = true;
+      enabledState(rdDebugLog).store(true, std::memory_order_relaxed);
     }
   }
   if (arg == "rdApp.info" || arg == "rdApp.*") {
     if (rdInfoLog) {
-      rdInfoLog->df_enabled = true;
+      enabledState(rdInfoLog).store(true, std::memory_order_relaxed);
     }
   }
   if (arg == "rdApp.warning" || arg == "rdApp.*") {
     if (rdWarningLog) {
-      rdWarningLog->df_enabled = true;
+      enabledState(rdWarningLog).store(true, std::memory_order_relaxed);
     }
   }
   if (arg == "rdApp.error" || arg == "rdApp.*") {
     if (rdErrorLog) {
-      rdErrorLog->df_enabled = true;
+      enabledState(rdErrorLog).store(true, std::memory_order_relaxed);
     }
   }
 };
@@ -89,32 +100,34 @@ void disable_logs(const std::string &arg) {
   // Yes... this is extremely crude
   if (arg == "rdApp.debug" || arg == "rdApp.*") {
     if (rdDebugLog) {
-      rdDebugLog->df_enabled = false;
+      enabledState(rdDebugLog).store(false, std::memory_order_relaxed);
     }
   }
   if (arg == "rdApp.info" || arg == "rdApp.*") {
     if (rdInfoLog) {
-      rdInfoLog->df_enabled = false;
+      enabledState(rdInfoLog).store(false, std::memory_order_relaxed);
     }
   }
   if (arg == "rdApp.warning" || arg == "rdApp.*") {
     if (rdWarningLog) {
-      rdWarningLog->df_enabled = false;
+      enabledState(rdWarningLog).store(false, std::memory_order_relaxed);
     }
   }
   if (arg == "rdApp.error" || arg == "rdApp.*") {
     if (rdErrorLog) {
-      rdErrorLog->df_enabled = false;
+      enabledState(rdErrorLog).store(false, std::memory_order_relaxed);
     }
   }
 };
 
-bool is_log_enabled(RDLogger log) { return log && log->df_enabled; }
+bool is_log_enabled(RDLogger log) {
+  return log && enabledState(log).load(std::memory_order_relaxed);
+}
 
 void get_log_status(std::ostream &ss, const std::string &name, RDLogger log) {
   ss << name << ":";
   if (log) {
-    if (log->df_enabled) {
+    if (enabledState(log).load(std::memory_order_relaxed)) {
       ss << "enabled";
     } else {
       ss << "disabled";
@@ -142,9 +155,9 @@ std::string log_status() {
 namespace RDLog {
 void InitLogs() {
   rdDebugLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
-  rdDebugLog->df_enabled = false;
+  enabledState(rdDebugLog).store(false, std::memory_order_relaxed);
   rdInfoLog = std::make_shared<boost::logging::rdLogger>(&std::cout);
-  rdInfoLog->df_enabled = false;
+  enabledState(rdInfoLog).store(false, std::memory_order_relaxed);
   rdWarningLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
   rdErrorLog = std::make_shared<boost::logging::rdLogger>(&std::cerr);
 }
@@ -153,8 +166,8 @@ CaptureLog::CaptureLog(RDLogger log) : d_log(std::move(log)) {
   if (!d_log) {
     return;
   }
-  d_logWasEnabled = d_log->df_enabled;
-  d_log->df_enabled = true;
+  d_logWasEnabled = enabledState(d_log).load(std::memory_order_relaxed);
+  enabledState(d_log).store(true, std::memory_order_relaxed);
   d_savedDest = d_log->dp_dest;
   d_log->dp_dest = &d_messages;
   d_savedTeestream = d_log->teestream;
@@ -167,7 +180,7 @@ CaptureLog::~CaptureLog() {
   }
   d_log->dp_dest = d_savedDest;
   d_log->teestream = d_savedTeestream;
-  d_log->df_enabled = d_logWasEnabled;
+  enabledState(d_log).store(d_logWasEnabled, std::memory_order_relaxed);
 }
 
 std::string CaptureLog::messages() const { return d_messages.str(); }

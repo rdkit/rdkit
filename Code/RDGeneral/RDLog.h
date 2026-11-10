@@ -16,6 +16,7 @@
 #include <boost/iostreams/tee.hpp>
 #include <boost/iostreams/stream.hpp>
 #include "BoostEndInclude.h"
+#include <atomic>
 #include <fstream>
 #include <sstream>
 #include <ostream>
@@ -24,6 +25,10 @@
 
 namespace boost {
 namespace logging {
+
+// df_enabled is a public bool at its existing ABI offset. Atomic references
+// must therefore work at ordinary bool alignment, without changing its layout.
+static_assert(std::atomic_ref<bool>::required_alignment <= alignof(bool));
 
 using RDTee = boost::iostreams::tee_device<std::ostream, std::ostream>;
 using RDTeeStream = boost::iostreams::stream<RDTee>;
@@ -107,9 +112,11 @@ RDKIT_RDGENERAL_EXPORT std::string log_status();
 namespace RDLog {
 RDKIT_RDGENERAL_EXPORT std::ostream &toStream(std::ostream &);
 }
-#define BOOST_LOG(__arg__)                                      \
-  if ((__arg__) && (__arg__->dp_dest) && (__arg__->df_enabled)) \
-  RDLog::toStream((__arg__->teestream) ? *(__arg__->teestream)  \
+#define BOOST_LOG(__arg__)                                     \
+  if ((__arg__) && (__arg__->dp_dest) &&                       \
+      std::atomic_ref<bool>(__arg__->df_enabled)               \
+          .load(std::memory_order_relaxed))                    \
+  RDLog::toStream((__arg__->teestream) ? *(__arg__->teestream) \
                                        : *(__arg__->dp_dest))
 
 using RDLogger = std::shared_ptr<boost::logging::rdLogger>;

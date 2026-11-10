@@ -12,6 +12,9 @@
 #include <sstream>
 #include <catch2/catch_all.hpp>
 #include "RDLog.h"
+#ifdef RDK_BUILD_THREADSAFE_SSS
+#include <thread>
+#endif
 
 TEST_CASE("LogStateSetter") {
   RDLog::RDLoggerList allLogs({rdErrorLog, rdWarningLog, rdInfoLog});
@@ -218,3 +221,31 @@ TEST_CASE("Tee to file") {
   CHECK(std::getline(istrm, txt));
   CHECK(txt.find("should") != std::string::npos);
 }
+
+#ifdef RDK_BUILD_THREADSAFE_SSS
+namespace {
+void changeLogStateConcurrently(std::atomic<bool> &start) {
+  while (!start.load(std::memory_order_acquire)) {
+    std::this_thread::yield();
+  }
+  for (unsigned int i = 0; i < 200; ++i) {
+    RDLog::LogStateSetter disabler;
+    (void)boost::logging::log_status();
+  }
+}
+}  // namespace
+
+TEST_CASE("Concurrent LogStateSetter scopes preserve enabled flags") {
+  const auto originalState = boost::logging::log_status();
+  std::atomic<bool> start{false};
+  std::vector<std::thread> workers;
+  for (unsigned int i = 0; i < 8; ++i) {
+    workers.emplace_back(changeLogStateConcurrently, std::ref(start));
+  }
+  start.store(true, std::memory_order_release);
+  for (auto &worker : workers) {
+    worker.join();
+  }
+  CHECK(boost::logging::log_status() == originalState);
+}
+#endif
