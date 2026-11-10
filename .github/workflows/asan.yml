@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/asan.yml
+      - .github/workflows/asan/**
   workflow_dispatch:
   schedule:
     # Sunday at 04:23 UTC.
@@ -67,35 +68,26 @@ jobs:
 
       - name: Test
         env:
-          ASAN_OPTIONS: detect_leaks=0:halt_on_error=1
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
           MPLBACKEND: Agg
           LD_LIBRARY_PATH: ${{ github.workspace }}/lib
-          PYTHONPATH: ${{ github.workspace }}
+          # Let LSan follow references held by live Python objects.
+          PYTHONMALLOC: malloc
+          # Check Python leaks before interpreter teardown via sitecustomize.
+          PYTHONPATH: ${{ github.workspace }}/.github/workflows/asan:${{ github.workspace }}
           RDBASE: ${{ github.workspace }}
         run: |
           asan_runtime=$("$CXX" --print-file-name=libclang_rt.asan-x86_64.so)
           test -f "$asan_runtime"
           # Python is not instrumented; load ASan before importing RDKit modules.
           export LD_PRELOAD="$asan_runtime"
-          test_status=0
-          ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 \
           ctest --test-dir build/asan \
-            --label-exclude '^python$' \
             --parallel 2 \
             --timeout 600 \
             --no-tests=error \
             --output-on-failure \
-            --output-log "$GITHUB_WORKSPACE/build/asan-cpp.log" \
-            --output-junit "$GITHUB_WORKSPACE/build/asan-cpp-results.xml" || test_status=1
-          ctest --test-dir build/asan \
-            --label-regex '^python$' \
-            --parallel 2 \
-            --timeout 600 \
-            --no-tests=error \
-            --output-on-failure \
-            --output-log "$GITHUB_WORKSPACE/build/asan-python.log" \
-            --output-junit "$GITHUB_WORKSPACE/build/asan-python-results.xml" || test_status=1
-          exit "$test_status"
+            --output-log "$GITHUB_WORKSPACE/build/asan-tests.log" \
+            --output-junit "$GITHUB_WORKSPACE/build/asan-results.xml"
 
       - name: Upload test results
         if: always()
@@ -105,10 +97,8 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
           path: |
-            build/asan-cpp-results.xml
-            build/asan-python-results.xml
-            build/asan-cpp.log
-            build/asan-python.log
+            build/asan-results.xml
+            build/asan-tests.log
             build/asan/Testing/Temporary/LastTest.log
             build/asan/Testing/Temporary/LastTestsFailed.log
             build/asan/CMakeCache.txt
