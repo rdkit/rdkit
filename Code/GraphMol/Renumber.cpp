@@ -96,7 +96,7 @@ ROMol *renumberAtoms(const ROMol &mol,
   if (oRings && oRings->isInitialized()) {
     RingInfo *nRings = res->getRingInfo();
     nRings->reset();
-    nRings->initialize();
+    nRings->initialize(oRings->getRingType());
     VECT_INT_VECT newAtomRings;
     VECT_INT_VECT newBondRings;
     newAtomRings.reserve(oRings->numRings());
