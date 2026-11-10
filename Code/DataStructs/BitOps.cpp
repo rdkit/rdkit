@@ -930,6 +930,8 @@ static int byte_popcounts[] = {
     4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8};
 
 #ifdef RDK_OPTIMIZE_POPCNT
+// Bitmap buffers need only byte alignment. Copy into an aligned word instead
+// of dereferencing a potentially unaligned native-word pointer.
 BUILTIN_POPCOUNT_TYPE loadPopcountWord(const unsigned char *data,
                                        unsigned int word) {
   BUILTIN_POPCOUNT_TYPE result;

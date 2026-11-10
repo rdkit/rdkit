@@ -2068,6 +2068,8 @@ void testCompareNonExistent() {
     mols.emplace_back(m);
   }
   {
+    // Every representable AtomComparator value has a name. Casting 99 to this
+    // non-fixed enum is itself undefined, so test all valid mappings instead.
     const std::pair<AtomComparator, MCSAtomCompareFunction> comparators[] = {
         {AtomCompareAny, MCSAtomCompareAny},
         {AtomCompareElements, MCSAtomCompareElements},
