@@ -17,8 +17,8 @@ using std::uniform_real_distribution;
 namespace GarethUtil {
 
 namespace {
-// Parallel GA runs share the singleton engine and distribution. Protect seed
-// and draw operations together while preserving the existing global stream.
+// Parallel GA runs share the singleton engine and distribution. Use the same
+// mutex for seeding and draws.
 std::mutex randomMutex;
 }
 

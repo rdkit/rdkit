@@ -15,6 +15,7 @@
 #include <DataStructs/ExplicitBitVect.h>
 #include <cstdint>
 #include <cstring>
+#include <memory>
 #include <DataStructs/BitOps.h>
 
 #include <RDGeneral/Invariant.h>
@@ -209,22 +210,24 @@ RDKIT_DATASTRUCTS_EXPORT boost::dynamic_bitset<> *bytesToBitset(
   unsigned int nBytes = nBits / 8;
   if (!(nBytes % sizeof(boost::dynamic_bitset<>::block_type))) {
     unsigned int nBlocks = nBytes / sizeof(boost::dynamic_bitset<>::block_type);
-    // The serialized bytes need not satisfy the native block alignment.
+    // FPB byte buffers can be unaligned. Copy into aligned native blocks.
     std::vector<boost::dynamic_bitset<>::block_type> fpBlocks(nBlocks);
     if (nBytes) {
       std::memcpy(fpBlocks.data(), fpData, nBytes);
     }
-    return new boost::dynamic_bitset<>(fpBlocks.begin(), fpBlocks.end());
+    auto result = std::make_unique<boost::dynamic_bitset<>>(fpBlocks.begin(),
+                                                            fpBlocks.end());
+    return result.release();
   } else {
     // Keep the declared block type: dynamic_bitset<uint8_t> has a different
     // representation and cannot be returned as dynamic_bitset<>.
-    auto *result = new boost::dynamic_bitset<>(nBits);
+    auto result = std::make_unique<boost::dynamic_bitset<>>(nBits);
     for (std::uint32_t bit = 0; bit < nBits; ++bit) {
       if (fpData[bit / 8] & (1u << (bit % 8))) {
         result->set(bit);
       }
     }
-    return result;
+    return result.release();
   }
 }
 
@@ -234,15 +237,15 @@ RDKIT_DATASTRUCTS_EXPORT std::uint8_t *bitsetToBytes(
   unsigned int nBits = bitset.size();
   unsigned int nBytes = nBits / 8;
 
-  auto *res = new std::uint8_t[nBytes];
   // to_block_range writes complete native blocks, including padding in the
-  // last block. A short fingerprint's serialized buffer can be smaller.
+  // last block. Copy only the serialized bytes into the output buffer.
   std::vector<boost::dynamic_bitset<>::block_type> blocks(bitset.num_blocks());
   boost::to_block_range(bitset, blocks.begin());
+  auto res = std::make_unique<std::uint8_t[]>(nBytes);
   if (nBytes) {
-    std::memcpy(res, blocks.data(), nBytes);
+    std::memcpy(res.get(), blocks.data(), nBytes);
   }
-  return res;
+  return res.release();
 }
 
 // the caller is responsible for delete'ing this

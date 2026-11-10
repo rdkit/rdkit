@@ -68,8 +68,8 @@ int parseIntAttribVal(std::string attribName, std::string attribVal,
   return iVal;
 }
 
-// The query callback returns int; casting the unsigned-returning function
-// pointer would not perform the return-value conversion and makes calls UB.
+// Queries require an int-returning callback. Convert the unsigned result in an
+// adapter instead of calling through an incompatible function pointer.
 int queryAtomAllBondProductAsInt(Atom const *atom) {
   return static_cast<int>(queryAtomAllBondProduct(atom));
 }
