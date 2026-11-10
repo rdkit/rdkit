@@ -367,6 +367,52 @@ class TestCase(unittest.TestCase):
     del params, volume
     self.assertEqual(saved_volume.NumAtoms, mol.GetNumAtoms())
 
+  def testExcludedVolumeReplacementDuringSearch(self):
+    synthonspace = rdSynthonSpaceSearch.SynthonSpace()
+    synthonspace.ReadDBFile(self.sssDir / "amide_space_shapes.spc")
+    query = Chem.AddHs(Chem.MolFromSmiles("O=C(c1ccccc1)N1CCCC1"))
+    self.assertEqual(rdDistGeom.EmbedMolecule(query, randomSeed=0xdac), 0)
+    query = Chem.RemoveHs(query)
+    volume = rdGaussianShape.ShapeInput(query, -1, rdGaussianShape.ShapeInputOptions(),
+                                      rdGaussianShape.ShapeOverlayOptions())
+    params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+    params.excludedVolume = volume
+    params.numThreads = 1
+    params.numConformers = 1
+    params.randomSeed = 0xdac
+    params.bestHit = True
+    params.similarityCutoff = 0.0
+    params.fragSimilarityAdjuster = 1.0
+    params.approxSimilarityAdjuster = 1.0
+    replacements = 0
+
+    def replaceVolumeAndMakeConformers(smiles, numConfs):
+      nonlocal replacements
+      params.excludedVolume = volume
+      replacements += 1
+      mol = Chem.AddHs(Chem.MolFromSmiles(smiles))
+      rdDistGeom.EmbedMultipleConfs(mol, numConfs, randomSeed=0xdac)
+      return Chem.RemoveHs(mol)
+
+    with tempfile.TemporaryDirectory() as directory:
+      params.possibleHitsFile = str(Path(directory) / "possible_hits.txt")
+      params.writePossibleHitsAndStop = True
+      synthonspace.ShapeSearch(query, params)
+      params.writePossibleHitsAndStop = False
+      params.setUserConformerGenerator(replaceVolumeAndMakeConformers)
+      try:
+        for ranged in (False, True):
+          with self.subTest(ranged=ranged):
+            replacements = 0
+            if ranged:
+              hits = synthonspace.ShapeSearch(query, params, 0, 100000)
+            else:
+              hits = synthonspace.ShapeSearch(query, params)
+            self.assertGreater(replacements, 0)
+            self.assertGreater(len(hits.GetHitMolecules()), 0)
+      finally:
+        params.setUserConformerGenerator(None)
+
   # this test seems to have particular problems with differences between platforms,
   # so we disable it for non-linux. The underlying functionality is tested from C++
   # and that the test itself works is tested on other platforms

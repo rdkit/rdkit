@@ -357,9 +357,14 @@ SynthonSpaceSearch::SearchResults shapeSearch_helper(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
     const python::object &py_params) {
   SynthonSpaceSearch::SynthonSpaceSearchParams params;
+  boost::shared_ptr<GaussianShape::ShapeInput> excludedVolumeOwner;
   if (!py_params.is_none()) {
-    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
-        py_params);
+    const auto &sourceParams =
+        python::extract<const SynthonSpaceSearch::SynthonSpaceSearchParams &>(
+            py_params)();
+    params = sourceParams;
+    // Python may replace its volume while the search uses this snapshot.
+    excludedVolumeOwner = get_excludedVolume(sourceParams);
   }
   SynthonSpaceSearch::SearchResults results;
   {
@@ -377,9 +382,13 @@ SynthonSpaceSearch::SearchResults shapeSearch_helper_3(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
     const python::object &py_params, int startLine, int finishLine) {
   SynthonSpaceSearch::SynthonSpaceSearchParams params;
+  boost::shared_ptr<GaussianShape::ShapeInput> excludedVolumeOwner;
   if (!py_params.is_none()) {
-    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
-        py_params);
+    const auto &sourceParams =
+        python::extract<const SynthonSpaceSearch::SynthonSpaceSearchParams &>(
+            py_params)();
+    params = sourceParams;
+    excludedVolumeOwner = get_excludedVolume(sourceParams);
   }
   SynthonSpaceSearch::SearchResults results;
   {
