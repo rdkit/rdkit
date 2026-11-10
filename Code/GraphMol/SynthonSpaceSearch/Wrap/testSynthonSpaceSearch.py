@@ -353,6 +353,20 @@ class TestCase(unittest.TestCase):
     self.assertEqual(synthonspace2.GetNumReactions(), 1)
     self.assertEqual(synthonspace2.GetNumProducts(), 12)
 
+  def testExcludedVolumeOwnership(self):
+    mol = Chem.MolFromSmiles("CCO")
+    mol.AddConformer(Chem.Conformer(mol.GetNumAtoms()))
+    volume = rdGaussianShape.ShapeInput(mol, -1, rdGaussianShape.ShapeInputOptions(),
+                                        rdGaussianShape.ShapeOverlayOptions())
+    params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+    self.assertIsNone(params.excludedVolume)
+    params.excludedVolume = volume
+    saved_volume = params.excludedVolume
+    for _ in range(5):
+      params.excludedVolume = volume
+    del params, volume
+    self.assertEqual(saved_volume.NumAtoms, mol.GetNumAtoms())
+
   # this test seems to have particular problems with differences between platforms,
   # so we disable it for non-linux. The underlying functionality is tested from C++
   # and that the test itself works is tested on other platforms

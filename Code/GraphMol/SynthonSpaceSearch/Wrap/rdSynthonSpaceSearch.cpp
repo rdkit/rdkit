@@ -39,15 +39,30 @@ boost::shared_ptr<ROMol> bestHitMolecule_helper(
   return boost::shared_ptr<ROMol>();
 }
 
-python::object get_excludedVolume(
+namespace {
+// Python instances own the copied volume; public C++ parameters only borrow it.
+// All Python construction uses this factory, and shared_ptr preserves the
+// private owner when converted to the public type.
+struct PythonSearchParams : SynthonSpaceSearch::SynthonSpaceSearchParams {
+  boost::shared_ptr<GaussianShape::ShapeInput> excludedVolumeOwner;
+};
+
+boost::shared_ptr<SynthonSpaceSearch::SynthonSpaceSearchParams> makeSearchParams() {
+  return boost::make_shared<PythonSearchParams>();
+}
+}  // namespace
+
+boost::shared_ptr<GaussianShape::ShapeInput> get_excludedVolume(
     const SynthonSpaceSearch::SynthonSpaceSearchParams &params) {
-  return python::object(params.excludedVolume);
+  return static_cast<const PythonSearchParams &>(params).excludedVolumeOwner;
 }
 
 void set_excludedVolume(SynthonSpaceSearch::SynthonSpaceSearchParams &params,
                         const python::object &pyExcVol) {
-  params.excludedVolume = new GaussianShape::ShapeInput(
-      python::extract<GaussianShape::ShapeInput>(pyExcVol));
+  auto volume = boost::make_shared<GaussianShape::ShapeInput>(
+      python::extract<const GaussianShape::ShapeInput &>(pyExcVol)());
+  static_cast<PythonSearchParams &>(params).excludedVolumeOwner = volume;
+  params.excludedVolume = volume.get();
 }
 
 struct SearchResults_wrapper {
@@ -475,11 +490,14 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
       " and/or results may change in future releases.";
 
   helpers::SearchResults_wrapper::wrap();
+  python::register_ptr_to_python<boost::shared_ptr<GaussianShape::ShapeInput>>();
 
   std::string docString = "SynthonSpaceSearch parameters.";
   python::class_<SynthonSpaceSearch::SynthonSpaceSearchParams,
+                 boost::shared_ptr<SynthonSpaceSearch::SynthonSpaceSearchParams>,
                  boost::noncopyable>("SynthonSpaceSearchParams",
-                                     docString.c_str())
+                                     docString.c_str(), python::no_init)
+      .def("__init__", python::make_constructor(&helpers::makeSearchParams))
       .def_readwrite("maxHits",
                      &SynthonSpaceSearch::SynthonSpaceSearchParams::maxHits,
                      "The maximum number of hits to return.  Default=1000."
