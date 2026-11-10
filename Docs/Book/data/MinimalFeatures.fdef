@@ -1,6 +1,6 @@
 AtomType NDonor [N&!H0&v3,N&!H0&+1&v4,n&H1&+0]
 AtomType ChalcDonor [O,S;H1;+0]
-DefineFeature SingleAtomDonor [{NDonor},{ChalcDonor},!$([D1]-[C;D3]=[O,S,N])]
+DefineFeature SingleAtomDonor [{NDonor},{ChalcDonor};!$([D1]-[C;D3]=[O,S,N])]
   Family Donor
   Weights 1
 EndFeature
