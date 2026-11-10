@@ -529,9 +529,9 @@ TEST_CASE("testRecursiveSerialNumbers", "[substruct][recursive]") {
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/BoostEndInclude.h>
 namespace {
-void runblock(const std::vector<std::unique_ptr<ROMol>> *mols,
-              const ROMol *query, const boost::dynamic_bitset<> &hits,
-              unsigned int count, unsigned int idx) {
+std::string runblock(const std::vector<std::unique_ptr<ROMol>> *mols,
+                     const ROMol *query, const boost::dynamic_bitset<> &hits,
+                     unsigned int count, unsigned int idx) {
   for (unsigned int j = 0; j < 100; j++) {
     for (unsigned int i = 0; i < mols->size(); ++i) {
       if (i % count != idx) {
@@ -541,9 +541,15 @@ void runblock(const std::vector<std::unique_ptr<ROMol>> *mols,
       MatchVectType matchV;
       bool found = SubstructMatch(*mol, *query, matchV);
 
-      CHECK(found == hits[i]);
+      // Catch2 assertions are not thread safe; report a mismatch to the
+      // calling thread after it joins this worker.
+      if (found != hits[i]) {
+        return "Substructure mismatch for molecule " + std::to_string(i) +
+               " at iteration " + std::to_string(j);
+      }
     }
   }
+  return {};
 }
 }  // namespace
 TEST_CASE("testMultiThread", "[substruct][multithread]") {
@@ -563,7 +569,7 @@ TEST_CASE("testMultiThread", "[substruct][multithread]") {
     }
     mols.emplace_back(mol);
   }
-  std::vector<std::future<void>> tg;
+  std::vector<std::future<std::string>> tg;
   auto query = v2::SmilesParse::MolFromSmarts("[#6;$([#6]([#6])[!#6])]");
   boost::dynamic_bitset<> hits(mols.size());
   for (unsigned int i = 0; i < mols.size(); ++i) {
@@ -576,7 +582,9 @@ TEST_CASE("testMultiThread", "[substruct][multithread]") {
                                hits, count, i));
   }
   for (auto &fut : tg) {
-    fut.get();
+    const auto error = fut.get();
+    INFO(error);
+    CHECK(error.empty());
   }
   tg.clear();
 
@@ -590,7 +598,9 @@ TEST_CASE("testMultiThread", "[substruct][multithread]") {
                                hits, count, i));
   }
   for (auto &fut : tg) {
-    fut.get();
+    const auto error = fut.get();
+    INFO(error);
+    CHECK(error.empty());
   }
   tg.clear();
 
@@ -604,7 +614,9 @@ TEST_CASE("testMultiThread", "[substruct][multithread]") {
                                hits, count, i));
   }
   for (auto &fut : tg) {
-    fut.get();
+    const auto error = fut.get();
+    INFO(error);
+    CHECK(error.empty());
   }
 }
 #else
