@@ -45,6 +45,19 @@ static const bool NO_FREETYPE = true;
 
 namespace {
 
+#ifdef RDK_BUILD_CAIRO_SUPPORT
+class CairoStaticDataCleanup : public Catch::EventListenerBase {
+ public:
+  using Catch::EventListenerBase::EventListenerBase;
+
+  void testRunEnded(const Catch::TestRunStats &) override {
+    cairo_debug_reset_static_data();
+  }
+};
+
+CATCH_REGISTER_LISTENER(CairoStaticDataCleanup)
+#endif
+
 // if the generated SVG hashes to the value we're expecting, delete
 // the file.  That way, only the files that need inspection will be
 // left at the end of the run.
