@@ -10,6 +10,7 @@
 #include <catch2/catch_all.hpp>
 
 #include <RDGeneral/test.h>
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
@@ -1283,6 +1284,11 @@ TEST_CASE("test14BitVectConcatenation") {
 }
 
 TEST_CASE("test15BitmapOps") {
+  {
+    alignas(std::uint64_t) const unsigned char storage[9] = {
+        0x0, 0xff, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
+    REQUIRE(CalcBitmapPopcount(storage + 1, 8) == 8);
+  }
   {
     const unsigned char bv1[5] = {0x1, 0x1, 0x1, 0x1, 0x1};
     REQUIRE(CalcBitmapPopcount(bv1, 5) == 5);
