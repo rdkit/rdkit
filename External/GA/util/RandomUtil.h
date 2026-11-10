@@ -13,6 +13,7 @@
 
 #include <cstdint>
 #include <random>
+#include <mutex>
 #include "export.h"
 
 namespace GarethUtil {
@@ -53,6 +54,7 @@ class GA_EXPORT RandomUtil {
 
   std::mt19937 rng;
   std::uniform_real_distribution<double> realDistribution;
+  std::mutex rngMutex;
 };
 
 }  // namespace GarethUtil
