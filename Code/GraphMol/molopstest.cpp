@@ -8182,3 +8182,14 @@ TEST_CASE("GitHub Issue #9064: Incorrect SMARTS matching") {
       MolOps::symmetrizeSSSR(*m, MolOps::SymmetrizeSSSRAlgorithm::LEGACY);
   REQUIRE(nrings == 5);
 }
+
+TEST_CASE("GitHub Issue #9629: CalcNumAtomStereoCenters changes after identity RenumberAtoms") {
+  const auto m = "C1CCN2CCCC2C1"_smiles;
+  REQUIRE(m);
+  std::vector<unsigned int> newOrder(m->getNumAtoms());
+  std::iota(newOrder.begin(), newOrder.end(), 0);
+  std::unique_ptr<ROMol> renumbered(MolOps::renumberAtoms(*m, newOrder));
+  REQUIRE(renumbered);
+  CHECK(renumbered->getRingInfo()->getRingType() == m->getRingInfo()->getRingType());
+}
+
