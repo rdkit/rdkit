@@ -209,12 +209,15 @@ RDKIT_DATASTRUCTS_EXPORT boost::dynamic_bitset<> *bytesToBitset(
   unsigned int nBytes = nBits / 8;
   if (!(nBytes % sizeof(boost::dynamic_bitset<>::block_type))) {
     unsigned int nBlocks = nBytes / sizeof(boost::dynamic_bitset<>::block_type);
+    // The serialized bytes need not satisfy the native block alignment.
     std::vector<boost::dynamic_bitset<>::block_type> fpBlocks(nBlocks);
     if (nBytes) {
       std::memcpy(fpBlocks.data(), fpData, nBytes);
     }
     return new boost::dynamic_bitset<>(fpBlocks.begin(), fpBlocks.end());
   } else {
+    // Keep the declared block type: dynamic_bitset<uint8_t> has a different
+    // representation and cannot be returned as dynamic_bitset<>.
     auto *result = new boost::dynamic_bitset<>(nBits);
     for (std::uint32_t bit = 0; bit < nBits; ++bit) {
       if (fpData[bit / 8] & (1u << (bit % 8))) {
@@ -232,6 +235,8 @@ RDKIT_DATASTRUCTS_EXPORT std::uint8_t *bitsetToBytes(
   unsigned int nBytes = nBits / 8;
 
   auto *res = new std::uint8_t[nBytes];
+  // to_block_range writes complete native blocks, including padding in the
+  // last block. A short fingerprint's serialized buffer can be smaller.
   std::vector<boost::dynamic_bitset<>::block_type> blocks(bitset.num_blocks());
   boost::to_block_range(bitset, blocks.begin());
   if (nBytes) {
