@@ -69,12 +69,12 @@ jobs:
       - name: Test
         env:
           ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          LSAN_OPTIONS: suppressions=${{ github.workspace }}/.github/workflows/asan/lsan.supp:print_suppressions=1
           MPLBACKEND: Agg
           LD_LIBRARY_PATH: ${{ github.workspace }}/lib
           # Let LSan follow references held by live Python objects.
           PYTHONMALLOC: malloc
-          # Check Python leaks before interpreter teardown via sitecustomize.
-          PYTHONPATH: ${{ github.workspace }}/.github/workflows/asan:${{ github.workspace }}
+          PYTHONPATH: ${{ github.workspace }}
           RDBASE: ${{ github.workspace }}
         run: |
           asan_runtime=$("$CXX" --print-file-name=libclang_rt.asan-x86_64.so)
