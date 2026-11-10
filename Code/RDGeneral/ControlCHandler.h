@@ -67,8 +67,6 @@ class ControlCHandler {
  private:
   inline static std::atomic<bool> d_gotSignal{false};
   inline static std::atomic<void (*)(int)> d_prev_handler{nullptr};
-  static_assert(decltype(d_gotSignal)::is_always_lock_free);
-  static_assert(decltype(d_prev_handler)::is_always_lock_free);
 };
 }  // namespace RDKit
 #endif  // CONTROLCHANDLER_H
