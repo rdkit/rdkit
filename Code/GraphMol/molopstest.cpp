@@ -8105,14 +8105,13 @@ TEST_CASE("Query hydrogen inspection does not disable another thread's logs") {
   std::thread worker(inspectQueryHydrogens, std::cref(*mol), std::ref(start),
                      std::ref(done), std::ref(correct));
   start.store(true);
-  bool warningsStayedEnabled = true;
+  bool loggingStayedUnchanged = true;
   while (!done.load()) {
-    warningsStayedEnabled &=
-        std::atomic_ref<bool>(rdWarningLog->df_enabled).load();
+    loggingStayedUnchanged &= boost::logging::log_status() == originalState;
   }
   worker.join();
   CHECK(correct.load());
-  CHECK(warningsStayedEnabled);
+  CHECK(loggingStayedUnchanged);
   CHECK(boost::logging::log_status() == originalState);
 }
 #endif
