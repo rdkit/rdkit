@@ -40,6 +40,7 @@ struct FPBReader_impl {
   std::uint32_t num4ByteElements, num8ByteElements;  // for finding ids
   const std::uint8_t *dp_idOffsets;                  // do not free this
   boost::scoped_array<std::uint8_t> dp_idChunk;
+  std::uint64_t dp_idChunkSize{0};  // number of bytes in dp_idChunk
   bool df_lazy;  // read the fp data lazily. In this case we use fpDataOffset
                  // and seek instead of using dp_fpData
   std::streampos fpDataOffset;   // file offset from tellg
@@ -329,6 +330,12 @@ uint64)
 uint64)
   id = bytes[start:end-1]
  */
+// size in bytes of the offset table that sits at the end of an FPID chunk
+std::uint64_t idOffsetTableSize(const FPBReader_impl *dp_impl) {
+  return (static_cast<std::uint64_t>(dp_impl->num4ByteElements) + 1) * 4 +
+         static_cast<std::uint64_t>(dp_impl->num8ByteElements) * 8;
+}
+
 void extractIdsDetails(FPBReader_impl *dp_impl, std::uint64_t sz) {
   PRECONDITION(dp_impl, "bad pointer");
   std::streampos start = dp_impl->istrm->tellg();
@@ -336,9 +343,12 @@ void extractIdsDetails(FPBReader_impl *dp_impl, std::uint64_t sz) {
   streamRead(*dp_impl->istrm, dp_impl->num4ByteElements);
   streamRead(*dp_impl->istrm, dp_impl->num8ByteElements);
 
+  if (idOffsetTableSize(dp_impl) > sz) {
+    throw BadFileException("FPID chunk too small for its offset table");
+  }
+  dp_impl->dp_idChunkSize = sz;
   dp_impl->idDataOffset = static_cast<std::uint64_t>(start) + sz -
-                          (dp_impl->num4ByteElements + 1) * 4 -
-                          dp_impl->num8ByteElements * 8;
+                          idOffsetTableSize(dp_impl);
   dp_impl->istrm->seekg(start + static_cast<std::streampos>(sz),
                         std::ios_base::beg);
 };
@@ -350,9 +360,12 @@ void extractIds(FPBReader_impl *dp_impl, std::uint64_t sz,
   chunk += sizeof(std::uint32_t);
   dp_impl->num8ByteElements = *reinterpret_cast<const std::uint32_t *>(chunk);
   chunk += sizeof(std::uint32_t);
-  dp_impl->dp_idOffsets = dp_impl->dp_idChunk.get() + sz -
-                          (dp_impl->num4ByteElements + 1) * 4 -
-                          dp_impl->num8ByteElements * 8;
+  if (idOffsetTableSize(dp_impl) > sz) {
+    throw BadFileException("FPID chunk too small for its offset table");
+  }
+  dp_impl->dp_idChunkSize = sz;
+  dp_impl->dp_idOffsets =
+      dp_impl->dp_idChunk.get() + sz - idOffsetTableSize(dp_impl);
 };
 
 std::string extractId(const FPBReader_impl *dp_impl, unsigned int which) {
@@ -407,6 +420,9 @@ std::string extractId(const FPBReader_impl *dp_impl, unsigned int which) {
       dp_impl->istrm->read(reinterpret_cast<char *>(&offset), 8);
       dp_impl->istrm->read(reinterpret_cast<char *>(&len), 8);
     }
+  }
+  if (offset > len || len > dp_impl->dp_idChunkSize) {
+    throw BadFileException("FPID offset out of range");
   }
   len -= offset;
 
