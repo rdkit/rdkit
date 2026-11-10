@@ -7,8 +7,86 @@
 #include <sstream>
 
 #include "ConcurrentQueue.h"
+#include "ControlCHandler.h"
 
 using namespace RDKit;
+
+namespace {
+volatile std::sig_atomic_t previousSigIntCount = 0;
+
+void countPreviousSigInt(int signalNumber) {
+  if (signalNumber == SIGINT) {
+    previousSigIntCount = previousSigIntCount + 1;
+  }
+}
+
+void exerciseControlCHandler(std::atomic<bool> &start) {
+  while (!start.load(std::memory_order_acquire)) {
+    std::this_thread::yield();
+  }
+  for (unsigned int i = 0; i < 100; ++i) {
+    ControlCHandler handler;
+    (void)ControlCHandler::getGotSignal();
+  }
+}
+}  // namespace
+
+TEST_CASE("ControlCHandler preserves nested signal handlers") {
+  previousSigIntCount = 0;
+  const auto previousHandler = std::signal(SIGINT, countPreviousSigInt);
+  REQUIRE(previousHandler != SIG_ERR);
+  {
+    ControlCHandler outer;
+    {
+      ControlCHandler inner;
+      std::raise(SIGINT);
+      CHECK(ControlCHandler::getGotSignal());
+      std::raise(SIGINT);
+      CHECK(previousSigIntCount == 1);
+      ControlCHandler::reset();
+      CHECK_FALSE(ControlCHandler::getGotSignal());
+      std::raise(SIGINT);
+      CHECK(ControlCHandler::getGotSignal());
+    }
+    CHECK(ControlCHandler::getGotSignal());
+    ControlCHandler::reset();
+    std::raise(SIGINT);
+    CHECK(ControlCHandler::getGotSignal());
+  }
+  const auto restoredHandler = std::signal(SIGINT, previousHandler);
+  CHECK(restoredHandler == countPreviousSigInt);
+  CHECK_FALSE(ControlCHandler::getGotSignal());
+}
+
+TEST_CASE("ControlCHandler reset before a scope retains the original handler") {
+  previousSigIntCount = 0;
+  const auto previousHandler = std::signal(SIGINT, countPreviousSigInt);
+  REQUIRE(previousHandler != SIG_ERR);
+  ControlCHandler::reset();
+  ControlCHandler::reset();
+  {
+    ControlCHandler handler;
+    std::raise(SIGINT);
+    CHECK(ControlCHandler::getGotSignal());
+    std::raise(SIGINT);
+    CHECK(previousSigIntCount == 1);
+  }
+  const auto restoredHandler = std::signal(SIGINT, previousHandler);
+  CHECK(restoredHandler == countPreviousSigInt);
+}
+
+TEST_CASE("ControlCHandler supports concurrent lifetimes") {
+  std::atomic<bool> start{false};
+  std::vector<std::thread> workers;
+  for (unsigned int i = 0; i < 8; ++i) {
+    workers.emplace_back(exerciseControlCHandler, std::ref(start));
+  }
+  start.store(true, std::memory_order_release);
+  for (auto &worker : workers) {
+    worker.join();
+  }
+  CHECK_FALSE(ControlCHandler::getGotSignal());
+}
 
 TEST_CASE("testPushAndPop") {
   ConcurrentQueue<int> *q = new ConcurrentQueue<int>(4);
