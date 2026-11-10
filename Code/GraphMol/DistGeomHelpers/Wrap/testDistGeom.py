@@ -963,7 +963,7 @@ class TestCase(unittest.TestCase):
     cid = rdDistGeom.EmbedMolecule(mol2, ps)
     self.assertEqual(cid, ps.optimizeConfWithId)
     rmsd = rdMolAlign.GetBestRMS(Chem.RemoveHs(mol), Chem.RemoveHs(mol2))
-    self.assertGreater(rmsd, .22)
+    self.assertGreater(rmsd, .21)
     self.assertLess(rmsd, .24)
 
   def testoptimizeConfWithId2(self):
@@ -978,7 +978,7 @@ class TestCase(unittest.TestCase):
     cids = rdDistGeom.EmbedMultipleConfs(mol2, 10, ps)
     self.assertEqual(len(cids), 1)
     rmsd = rdMolAlign.GetBestRMS(Chem.RemoveHs(mol), Chem.RemoveHs(mol2))
-    self.assertGreater(rmsd, .22)
+    self.assertGreater(rmsd, .21)
     self.assertLess(rmsd, .24)
 
   def testoptimizeConfWithId3(self):

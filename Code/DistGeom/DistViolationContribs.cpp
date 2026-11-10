@@ -36,13 +36,17 @@ inline double distance(const unsigned int idx1, const unsigned int idx2,
   return sqrt(distance2(idx1, idx2, pos, dim));
 }
 
-double DistViolationContribs::getEnergy(double *pos) const {
-  PRECONDITION(dp_forceField, "no owner");
-  PRECONDITION(pos, "bad vector");
-
+namespace {
+// When FixedDim is nonzero, the dimension is a compile-time constant, which
+// allows the distance calculations to be fully unrolled for the common 3D and
+// 4D cases. FixedDim == 0 means the dimension is taken from runtimeDim.
+template <unsigned int FixedDim, typename Params>
+double calcEnergy(const std::vector<Params> &contribs, const double *pos,
+                  unsigned int runtimeDim) {
+  const unsigned int dim = FixedDim ? FixedDim : runtimeDim;
   double accum = 0.0;
-  auto contrib = [&](const auto &c) {
-    double d2 = distance2(c.idx1, c.idx2, pos, dp_forceField->dimension());
+  for (const auto &c : contribs) {
+    double d2 = distance2(c.idx1, c.idx2, pos, dim);
     double val = 0.0;
     if (d2 > c.ub2) {
       val = (d2 / (c.ub2)) - 1.0;
@@ -52,21 +56,16 @@ double DistViolationContribs::getEnergy(double *pos) const {
     if (val > 0.0) {
       accum += c.weight * val * val;
     }
-  };
-  for (const auto &c : d_contribs) {
-    contrib(c);
   }
   return accum;
 }
 
-void DistViolationContribs::getGrad(double *pos, double *grad) const {
-  PRECONDITION(dp_forceField, "no owner");
-  PRECONDITION(pos, "bad vector");
-  PRECONDITION(grad, "bad vector");
-  const unsigned int dim = this->dp_forceField->dimension();
-
-  auto contrib = [&](const auto &c) {
-    double d2 = distance2(c.idx1, c.idx2, pos, dp_forceField->dimension());
+template <unsigned int FixedDim, typename Params>
+void calcGrad(const std::vector<Params> &contribs, const double *pos,
+              double *grad, unsigned int runtimeDim) {
+  const unsigned int dim = FixedDim ? FixedDim : runtimeDim;
+  for (const auto &c : contribs) {
+    double d2 = distance2(c.idx1, c.idx2, pos, dim);
     double d;
     double preFactor = 0.0;
     if (d2 > c.ub2) {
@@ -77,7 +76,7 @@ void DistViolationContribs::getGrad(double *pos, double *grad) const {
       double l2d2 = d2 + c.lb2;
       preFactor = 8. * c.lb2 * d * (1. - 2 * c.lb2 / l2d2) / (l2d2 * l2d2);
     } else {
-      return;
+      continue;
     }
 
     for (unsigned int i = 0; i < dim; i++) {
@@ -93,9 +92,40 @@ void DistViolationContribs::getGrad(double *pos, double *grad) const {
       grad[p1] += dGrad;
       grad[p2] -= dGrad;
     }
-  };
-  for (const auto &c : d_contribs) {
-    contrib(c);
+  }
+}
+}  // namespace
+
+double DistViolationContribs::getEnergy(double *pos) const {
+  PRECONDITION(dp_forceField, "no owner");
+  PRECONDITION(pos, "bad vector");
+
+  const unsigned int dim = dp_forceField->dimension();
+  switch (dim) {
+    case 3:
+      return calcEnergy<3>(d_contribs, pos, dim);
+    case 4:
+      return calcEnergy<4>(d_contribs, pos, dim);
+    default:
+      return calcEnergy<0>(d_contribs, pos, dim);
+  }
+}
+
+void DistViolationContribs::getGrad(double *pos, double *grad) const {
+  PRECONDITION(dp_forceField, "no owner");
+  PRECONDITION(pos, "bad vector");
+  PRECONDITION(grad, "bad vector");
+
+  const unsigned int dim = dp_forceField->dimension();
+  switch (dim) {
+    case 3:
+      calcGrad<3>(d_contribs, pos, grad, dim);
+      break;
+    case 4:
+      calcGrad<4>(d_contribs, pos, grad, dim);
+      break;
+    default:
+      calcGrad<0>(d_contribs, pos, grad, dim);
   }
 }
 }  // namespace DistGeom
