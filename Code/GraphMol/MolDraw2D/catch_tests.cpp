@@ -38,6 +38,9 @@
 #include <cairo.h>
 #include "MolDraw2DCairo.h"
 #endif
+#ifdef RDK_TEST_FONTCONFIG
+#include <fontconfig/fontconfig.h>
+#endif
 
 // a lot of the tests check <text> flags in the SVG.  That doesn't
 // happen with the Freetype versions
@@ -52,6 +55,9 @@ class CairoStaticDataCleanup : public Catch::EventListenerBase {
 
   void testRunEnded(const Catch::TestRunStats &) override {
     cairo_debug_reset_static_data();
+#ifdef RDK_TEST_FONTCONFIG
+    FcFini();
+#endif
   }
 };
 
