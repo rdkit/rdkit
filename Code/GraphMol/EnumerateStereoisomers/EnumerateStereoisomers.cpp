@@ -184,7 +184,9 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::generateRandomIsomer() {
 
 bool StereoisomerEnumerator::embeddable(ROMol &isomer) {
   std::unique_ptr<ROMol> isomerWithHs(MolOps::addHs(isomer));
-  auto cid = DGeomHelpers::EmbedMolecule(*isomerWithHs);
+  auto params = DGeomHelpers::EmbedParameters();
+  params.randomSeed = d_options.randomSeed >= 0 ? d_options.randomSeed : 0xf00d;
+  auto cid = DGeomHelpers::EmbedMolecule(*isomerWithHs, params);
   if (cid >= 0) {
     Conformer *conf = new Conformer(isomer.getNumAtoms());
     for (unsigned int i = 0; i < isomer.getNumAtoms(); i++) {
