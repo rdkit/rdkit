@@ -7,6 +7,10 @@ leak:^PyFloat_FromDouble$
 # Boost.Python caches demangled type names without freeing the cached strings.
 # https://github.com/boostorg/python/blob/boost-1.90.0/src/converter/type_id.cpp
 leak:^d_growable_string_callback_adapter$
+leak:^boost::python::detail::gcc_demangle(char const*)$
+
+# NumPy retains module-initialization objects at Python 3.14 shutdown.
+leak:^PyInit__multiarray_umath$
 
 # Matplotlib's pybind11 function-record wrappers are not freed at shutdown.
 # Fast allocation stacks stop at this Python allocator before its caller.
