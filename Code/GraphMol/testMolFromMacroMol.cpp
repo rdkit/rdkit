@@ -35,8 +35,7 @@ constexpr int rootedAtAtom = 0;
 constexpr bool canonical = false;
 
 std::unique_ptr<MacroMolTemplate> makeAlanineTemplate() {
-  v2::SmilesParse::SmilesParserParams params;
-  params.removeHs = false;
+  const v2::SmilesParse::SmilesParserParams params{.removeHs = false};
   const std::string smiles = "C[C@H](N[H])C(=O)O";
   auto alanine = v2::SmilesParse::MolFromSmiles(smiles, params);
   MacroMolTemplateBuilder builder(*alanine, MonomerClass::AminoAcid, "ALA", "A",
@@ -48,8 +47,7 @@ std::unique_ptr<MacroMolTemplate> makeAlanineTemplate() {
 }
 
 std::unique_ptr<MacroMolTemplate> makeGlycineTemplate() {
-  v2::SmilesParse::SmilesParserParams params;
-  params.removeHs = false;
+  const v2::SmilesParse::SmilesParserParams params{.removeHs = false};
   const std::string smiles = "O=C(CN[H])O";
   auto glycine = v2::SmilesParse::MolFromSmiles(smiles, params);
   MacroMolTemplateBuilder builder(*glycine, MonomerClass::AminoAcid, "GLY", "G",
@@ -349,8 +347,7 @@ TEST_CASE("MolFromMacroMol preserves double bond stereo", "[MolFromMacroMol]") {
 TEST_CASE("MolFromMacroMol works with the built-in templates",
           "[MolFromMacroMol]") {
   const auto &templates = getGlobalMacroMolTemplateLibrary();
-  v2::SmilesParse::SmilesParserParams params;
-  params.removeHs = false;
+  const v2::SmilesParse::SmilesParserParams params{.removeHs = false};
 
   MacroMol macroMol;
   const auto ala = macroMol.addMacroAtom("A", MonomerClass::AminoAcid);
@@ -510,8 +507,7 @@ TEST_CASE("MolFromMacroMol prefers the local template library",
   templates.addTemplate(makeGlycineTemplate());
 
   // A local template with alanine's symbol but a different name
-  v2::SmilesParse::SmilesParserParams params;
-  params.removeHs = false;
+  const v2::SmilesParse::SmilesParserParams params{.removeHs = false};
   const std::string smiles = "CC[H]";
   auto parsed = v2::SmilesParse::MolFromSmiles(smiles, params);
   MacroMolTemplateBuilder builder(*parsed, MonomerClass::AminoAcid, "LOCALA",

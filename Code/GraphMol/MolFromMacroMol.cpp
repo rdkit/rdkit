@@ -18,6 +18,8 @@
 #include <GraphMol/SubstanceGroup.h>
 #include <RDGeneral/Exceptions.h>
 
+#include <boost/dynamic_bitset.hpp>
+
 #include <algorithm>
 #include <functional>
 #include <map>
@@ -128,14 +130,15 @@ std::set<int> findUsedAttachPoints(const MacroMol &macroMol,
   return usedAttachPoints;
 }
 
-std::set<unsigned int> findLeavingAtomsToSkip(
+boost::dynamic_bitset<> findLeavingAtomsToSkip(
     const MacroMolTemplate &templ, const std::set<int> &usedAttachPoints) {
-  std::set<unsigned int> atomsToSkip;
+  boost::dynamic_bitset<> atomsToSkip(templ.getMol().getNumAtoms());
   for (const auto &leavingGroup : templ.getLeavingGroups()) {
     if (usedAttachPoints.find(leavingGroup.attachPoint) !=
         usedAttachPoints.end()) {
-      atomsToSkip.insert(leavingGroup.atomIdxs.begin(),
-                         leavingGroup.atomIdxs.end());
+      for (const auto atomIdx : leavingGroup.atomIdxs) {
+        atomsToSkip.set(atomIdx);
+      }
     }
   }
   return atomsToSkip;
@@ -153,9 +156,9 @@ void rememberTemplateAttachPoints(ExpandedMacroAtom &expanded,
 
 void copyTemplateAtoms(BuildState &state, ExpandedMacroAtom &expanded,
                        const MacroMolTemplate &templ,
-                       const std::set<unsigned int> &atomsToSkip) {
+                       const boost::dynamic_bitset<> &atomsToSkip) {
   for (const auto *oldAtom : templ.getMol().atoms()) {
-    if (atomsToSkip.find(oldAtom->getIdx()) != atomsToSkip.end()) {
+    if (atomsToSkip[oldAtom->getIdx()]) {
       continue;
     }
 
