@@ -697,8 +697,8 @@ RWMOL_SPTR RGroupDecomposition::outputCoreMolecule(
             << std::endl;
 #endif
   if (data->params.removeHydrogensPostMatch) {
-    RDLog::LogStateSetter blocker;
-    const MolOps::RemoveHsParameters rhp;
+    MolOps::RemoveHsParameters rhp;
+    rhp.showWarnings = false;
     constexpr bool sanitize = false;
     MolOps::removeHs(*coreWithMatches, rhp, sanitize);
     coreWithMatches->updatePropertyCache(false);
