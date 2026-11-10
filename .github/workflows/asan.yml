@@ -77,12 +77,25 @@ jobs:
           test -f "$asan_runtime"
           # Python is not instrumented; load ASan before importing RDKit modules.
           export LD_PRELOAD="$asan_runtime"
+          test_status=0
+          ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 \
           ctest --test-dir build/asan \
+            --label-exclude '^python$' \
             --parallel 2 \
             --timeout 600 \
             --no-tests=error \
             --output-on-failure \
-            --output-junit "$GITHUB_WORKSPACE/build/asan-results.xml"
+            --output-log "$GITHUB_WORKSPACE/build/asan-cpp.log" \
+            --output-junit "$GITHUB_WORKSPACE/build/asan-cpp-results.xml" || test_status=1
+          ctest --test-dir build/asan \
+            --label-regex '^python$' \
+            --parallel 2 \
+            --timeout 600 \
+            --no-tests=error \
+            --output-on-failure \
+            --output-log "$GITHUB_WORKSPACE/build/asan-python.log" \
+            --output-junit "$GITHUB_WORKSPACE/build/asan-python-results.xml" || test_status=1
+          exit "$test_status"
 
       - name: Upload test results
         if: always()
@@ -92,7 +105,10 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
           path: |
-            build/asan-results.xml
+            build/asan-cpp-results.xml
+            build/asan-python-results.xml
+            build/asan-cpp.log
+            build/asan-python.log
             build/asan/Testing/Temporary/LastTest.log
             build/asan/Testing/Temporary/LastTestsFailed.log
             build/asan/CMakeCache.txt

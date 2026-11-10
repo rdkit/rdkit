@@ -301,7 +301,7 @@ TEST_CASE("Multi mol best conformer rmsd") {
     const std::vector<double> expected = {0.1947, 0.8673, 0.8710, 0.3535,
                                           0.3539};
     RDKit::SDMolSupplier supplier(basePath + "butane_ref.sdf");
-    const auto ref = std::make_unique<RDKit::ROMol>(*supplier.next());
+    const auto ref = std::unique_ptr<RDKit::ROMol>(supplier.next());
     const auto prb = loadMultiConformerSDF(basePath + "butane_prb.sdf");
     runTest(expected, *prb, *ref);
   }
