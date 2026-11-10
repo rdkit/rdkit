@@ -68,10 +68,10 @@ void addNeighborsToStack(const unsigned int atomIdx,
   }
 
   const auto &references = zmat.getReferences(atomIdx);
+  const auto rInfo = mol.getRingInfo();
+  const Bond *mostConstrained = nullptr;
 
   if (references.angleRef && !bonds.empty()) {
-    // if torsions are given, we want to add the most constraint one at last to
-    // the stack
     const auto bondIdx1 =
         mol.getBondBetweenAtoms(*references.angleRef, precursorIdx)->getIdx();
 
@@ -84,34 +84,45 @@ void addNeighborsToStack(const unsigned int atomIdx,
           getUnifiedId(bondIdx1, bondIdx2, bond->getIdx(), mol.getNumBonds()));
     };
 
-    const auto first =
-        std::ranges::min_element(bonds, DistGeom::less, bondToTorsion);
+    // Prefer the most constrained torsion, breaking ties by non-rings first and
+    // then rings in their ascending ring order.
+    const auto compare = [&](const Bond *a, const Bond *b) {
+      const auto &ta = bondToTorsion(a);
+      const auto &tb = bondToTorsion(b);
 
-    const auto &torsion = bondToTorsion(*first);
-
-    const auto next = std::next(
-        first);  // it should be handelt first => adding it as last to the stack
-    std::ranges::rotate(bonds, next == bonds.end() ? bonds.begin() : next);
-
-    if (std::holds_alternative<DistGeom::TorsionRange>(torsion)) {
-      DistGeom::TorsionRange range = std::get<DistGeom::TorsionRange>(torsion);
-      if (range.upper - range.lower >= M_PI * 2.0 - 1e-6) {
-        // all unconstraint => order by ring size s.t., non-rings are handled
-        // first
-        const auto rInfo = mol.getRingInfo();
-        std::ranges::sort(bonds, std::ranges::greater(),
-                          [&rInfo](const auto *bnd) {
-                            return rInfo->minBondRingSize(bnd->getIdx());
-                          });
+      if (DistGeom::less(ta, tb)) {
+        return true;
       }
-    }
+      if (DistGeom::less(tb, ta)) {
+        return false;
+      }
+
+      auto rSizeA = rInfo->minBondRingSize(a->getIdx()),
+           rSizeB = rInfo->minBondRingSize(b->getIdx());
+      return rSizeA < rSizeB;
+    };
+
+    const auto first = std::ranges::min_element(bonds, compare);
+
+    mostConstrained = *first;
+    bonds.erase(first);
   }
+
+  // Descending ring size because the stack is LIFO.
+  std::ranges::sort(bonds, std::ranges::greater{}, [&rInfo](const Bond *bnd) {
+    return rInfo->minBondRingSize(bnd->getIdx());
+  });
 
   for (const auto *bond : bonds) {
     stack.emplace_back(bond->getOtherAtomIdx(atomIdx), atomIdx);
   }
 
-  // ring closures should be handles first
+  // Process the most constrained torsion before the other bonds.
+  if (mostConstrained) {
+    stack.emplace_back(mostConstrained->getOtherAtomIdx(atomIdx), atomIdx);
+  }
+
+  // Ring closures are processed first.
   for (const auto nbrIdx : ringClosures) {
     stack.emplace_back(nbrIdx, atomIdx);
   }
