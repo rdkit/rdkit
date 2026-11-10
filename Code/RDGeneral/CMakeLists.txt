@@ -64,10 +64,6 @@ rdkit_catch_test(testRDValue testRDValue.cpp LINK_LIBRARIES RDGeneral)
 
 if (RDK_BUILD_THREADSAFE_SSS)
     rdkit_catch_test(testConcurrentQueue testConcurrentQueue.cpp LINK_LIBRARIES RDGeneral)
-    if (RDK_BUILD_CPP_TESTS AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
-        target_link_options(testConcurrentQueue PRIVATE "-Wl,--wrap=signal")
-        target_compile_definitions(testConcurrentQueue PRIVATE RDK_TEST_WRAPPED_SIGNAL)
-    endif ()
 endif (RDK_BUILD_THREADSAFE_SSS)
 
 if (RDK_BUILD_CPP_TESTS)
