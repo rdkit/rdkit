@@ -1232,8 +1232,7 @@ class LoggerState {
     // store original logger stream
     d_prevDest = d_logger->dp_dest;
     // store whether the logger was originally enabled
-    d_enabled = std::atomic_ref<bool>(d_logger->df_enabled)
-                    .load(std::memory_order_relaxed);
+    d_enabled = RDLog::detail::EnabledFlag(d_logger->df_enabled).load();
   }
   LoggerState(const LoggerState &) = delete;
   LoggerState &operator=(const LoggerState &) = delete;

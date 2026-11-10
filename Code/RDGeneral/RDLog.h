@@ -16,7 +16,9 @@
 #include <boost/iostreams/tee.hpp>
 #include <boost/iostreams/stream.hpp>
 #include "BoostEndInclude.h"
-#include <atomic>
+#if defined(_MSC_VER) && !defined(__clang__)
+#include <intrin.h>
+#endif
 #include <fstream>
 #include <sstream>
 #include <ostream>
@@ -25,10 +27,6 @@
 
 namespace boost {
 namespace logging {
-
-// df_enabled is a public bool at its existing ABI offset. Atomic references
-// must therefore work at ordinary bool alignment, without changing its layout.
-static_assert(std::atomic_ref<bool>::required_alignment <= alignof(bool));
 
 using RDTee = boost::iostreams::tee_device<std::ostream, std::ostream>;
 using RDTeeStream = boost::iostreams::stream<RDTee>;
@@ -111,11 +109,62 @@ RDKIT_RDGENERAL_EXPORT std::string log_status();
 }  // namespace boost
 namespace RDLog {
 RDKIT_RDGENERAL_EXPORT std::ostream &toStream(std::ostream &);
+namespace detail {
+// Synchronize library-owned accesses without changing the public bool field.
+class EnabledFlag {
+ public:
+  explicit EnabledFlag(bool &flag) : dp_flag(&flag) {}
+
+  bool load() const {
+#if defined(_MSC_VER) && !defined(__clang__)
+    return _InterlockedCompareExchange8(byteFlag(), 0, 0) != 0;
+#else
+    return __atomic_load_n(dp_flag, __ATOMIC_RELAXED);
+#endif
+  }
+
+  void store(bool enabled) const {
+#if defined(_MSC_VER) && !defined(__clang__)
+    _InterlockedExchange8(byteFlag(), static_cast<char>(enabled));
+#else
+    __atomic_store_n(dp_flag, enabled, __ATOMIC_RELAXED);
+#endif
+  }
+
+  bool exchange(bool enabled) const {
+#if defined(_MSC_VER) && !defined(__clang__)
+    return _InterlockedExchange8(byteFlag(), static_cast<char>(enabled)) != 0;
+#else
+    return __atomic_exchange_n(dp_flag, enabled, __ATOMIC_RELAXED);
+#endif
+  }
+
+  bool compareExchange(bool &expected, bool desired) const {
+#if defined(_MSC_VER) && !defined(__clang__)
+    const auto previous = _InterlockedCompareExchange8(
+        byteFlag(), static_cast<char>(desired), static_cast<char>(expected));
+    const bool matched = previous == static_cast<char>(expected);
+    expected = previous != 0;
+    return matched;
+#else
+    return __atomic_compare_exchange_n(dp_flag, &expected, desired, true,
+                                       __ATOMIC_RELAXED, __ATOMIC_RELAXED);
+#endif
+  }
+
+ private:
+  bool *dp_flag;
+#if defined(_MSC_VER) && !defined(__clang__)
+  volatile char *byteFlag() const {
+    return reinterpret_cast<volatile char *>(dp_flag);
+  }
+#endif
+};
+}  // namespace detail
 }
 #define BOOST_LOG(__arg__)                                     \
   if ((__arg__) && (__arg__->dp_dest) &&                       \
-      std::atomic_ref<bool>(__arg__->df_enabled)               \
-          .load(std::memory_order_relaxed))                    \
+      RDLog::detail::EnabledFlag(__arg__->df_enabled).load())   \
   RDLog::toStream((__arg__->teestream) ? *(__arg__->teestream) \
                                        : *(__arg__->dp_dest))
 

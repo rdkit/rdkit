@@ -13,6 +13,7 @@
 #include <catch2/catch_all.hpp>
 #include "RDLog.h"
 #ifdef RDK_BUILD_THREADSAFE_SSS
+#include <atomic>
 #include <thread>
 #endif
 
