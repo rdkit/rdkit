@@ -227,7 +227,7 @@ namespace detail {
 namespace cf = ForceFields::CrystalFF;
 
 struct EmbedArgs {
-  boost::dynamic_bitset<> *confsOk;
+  std::vector<unsigned char> *confsOk;
   bool fourD;
   INT_VECT *fragMapping;
   std::vector<std::unique_ptr<Conformer>> *confs;
@@ -1855,8 +1855,9 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     }
   }
 
-  boost::dynamic_bitset<> confsOk(numConfs);
-  confsOk.set();
+  // Each worker owns different conformers. Byte flags give those writes
+  // separate memory locations; packed bits would share read-modify-write words.
+  std::vector<unsigned char> confsOk(numConfs, 1);
 
   boost::dynamic_bitset<> constrainedAtoms(mol.getNumAtoms());
   if (coordMap) {

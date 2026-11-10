@@ -1955,3 +1955,25 @@ TEST_CASE("ETKDGv4-Benzamide") {
     run(params, 157.0, 26.0);
   }
 }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+TEST_CASE("Parallel embedding failures keep independent conformer flags") {
+  constexpr unsigned int numConfs = 32;
+  const bool legacy = GENERATE(true, false);
+  auto mol =
+      "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  auto params = DGeomHelpers::ETKDGv3;
+  params.useLegacyImplementation = legacy;
+  params.randomSeed = 42;
+  params.maxIterations = 1;
+  params.trackFailures = true;
+  const auto serialIds = DGeomHelpers::EmbedMultipleConfs(*mol, numConfs, params);
+  const auto serialFailures = params.failures;
+  REQUIRE(serialIds.size() < numConfs);
+  params.numThreads = 4;
+  const auto parallelIds = DGeomHelpers::EmbedMultipleConfs(*mol, numConfs, params);
+  CHECK(parallelIds == serialIds);
+  CHECK(params.failures == serialFailures);
+}
+#endif
