@@ -15,7 +15,6 @@
 #include <DataStructs/ExplicitBitVect.h>
 #include <cstdint>
 #include <cstring>
-#include <memory>
 #include <DataStructs/BitOps.h>
 
 #include <RDGeneral/Invariant.h>
@@ -215,33 +214,26 @@ RDKIT_DATASTRUCTS_EXPORT boost::dynamic_bitset<> *bytesToBitset(
         reinterpret_cast<const boost::dynamic_bitset<>::block_type *>(fpData);
     return new boost::dynamic_bitset<>(fpBlocks, fpBlocks + nBlocks);
   } else {
-    // Keep the declared block type: dynamic_bitset<uint8_t> has a different
-    // representation and cannot be returned as dynamic_bitset<>.
-    auto result = std::make_unique<boost::dynamic_bitset<>>(nBits);
-    for (std::uint32_t bit = 0; bit < nBits; ++bit) {
-      if (fpData[bit / 8] & (1u << (bit % 8))) {
-        result->set(bit);
-      }
-    }
-    return result.release();
+    // pad the bytes out to whole blocks, then trim the bitset back to nBits
+    constexpr auto blockSize = sizeof(boost::dynamic_bitset<>::block_type);
+    std::vector<boost::dynamic_bitset<>::block_type> blocks(
+        (nBytes + blockSize - 1) / blockSize);
+    std::memcpy(blocks.data(), fpData, nBytes);
+    auto *res = new boost::dynamic_bitset<>(blocks.begin(), blocks.end());
+    res->resize(nBits);
+    return res;
   }
 }
 
 // caller is responsible for delete []'ing the result
 RDKIT_DATASTRUCTS_EXPORT std::uint8_t *bitsetToBytes(
     const boost::dynamic_bitset<> &bitset) {
-  unsigned int nBits = bitset.size();
-  unsigned int nBytes = nBits / 8;
-
-  // to_block_range writes complete native blocks, including padding in the
-  // last block. Copy only the serialized bytes into the output buffer.
-  std::vector<boost::dynamic_bitset<>::block_type> blocks(bitset.num_blocks());
-  boost::to_block_range(bitset, blocks.begin());
-  auto res = std::make_unique<std::uint8_t[]>(nBytes);
-  if (nBytes) {
-    std::memcpy(res.get(), blocks.data(), nBytes);
-  }
-  return res.release();
+  // to_block_range writes whole blocks, so size the buffer in blocks
+  auto *res = new std::uint8_t[bitset.num_blocks() *
+                               sizeof(boost::dynamic_bitset<>::block_type)];
+  boost::to_block_range(
+      bitset, reinterpret_cast<boost::dynamic_bitset<>::block_type *>(res));
+  return res;
 }
 
 // the caller is responsible for delete'ing this
