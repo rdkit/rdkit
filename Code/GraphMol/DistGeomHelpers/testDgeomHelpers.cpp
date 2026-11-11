@@ -1955,3 +1955,23 @@ TEST_CASE("ETKDGv4-Benzamide") {
     run(params, 157.0, 26.0);
   }
 }
+#ifdef RDK_BUILD_THREADSAFE_SSS
+TEST_CASE("First parallel embedding resolves shared defaults") {
+  const bool legacy = GENERATE(true, false);
+  const bool randomCoords = GENERATE(false, true);
+  auto mol = "CCCCCCO"_smiles;
+  MolOps::addHs(*mol);
+  auto params = DGeomHelpers::ETKDGv3;
+  params.useLegacyImplementation = legacy;
+  params.useRandomCoords = randomCoords;
+  params.numThreads = 2;
+  params.randomSeed = 42;
+  REQUIRE(params.maxIterations == 0);
+  const auto ids = DGeomHelpers::EmbedMultipleConfs(*mol, 8, params);
+  CHECK(ids.size() == 8);
+  CHECK(params.maxIterations == 10 * mol->getNumAtoms());
+  if (randomCoords) {
+    CHECK(params.basinThresh == 1e8);
+  }
+}
+#endif
