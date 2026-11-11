@@ -196,6 +196,9 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::generateRandomIsomer() {
     }
     if (d_seen.insert(nextConfig).second) {
       auto isomer = buildIsomer(nextConfig);
+      if (d_options.useRingSystemFilter && !passesRingPatternsCheck(*isomer)) {
+        continue;
+      }
       if (d_options.unique) {
         auto smi =
             MolToCXSmiles(*isomer, SmilesWriteParams(),
@@ -255,9 +258,6 @@ bool StereoisomerEnumerator::ensureIsomer(std::uint64_t position) {
     auto isomer = generateRandomIsomer();
     if (!isomer) {
       return false;
-    }
-    if (d_options.useRingSystemFilter && !passesRingPatternsCheck(*isomer)) {
-      continue;
     }
     d_isomers.push_back(std::move(isomer));
   }
