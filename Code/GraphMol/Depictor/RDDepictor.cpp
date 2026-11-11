@@ -33,6 +33,7 @@
 #include "DepictUtils.h"
 #include <boost/dynamic_bitset.hpp>
 #include <algorithm>
+#include <limits>
 
 namespace RDDepict {
 
@@ -45,7 +46,7 @@ constexpr auto SQRT3_2 = 0.866025;
 
 std::vector<const RDKit::Atom *> getRankedAtomNeighbors(
     const RDKit::ROMol &mol, const RDKit::Atom *atom,
-    const std::vector<int> &atomRanks) {
+    const std::vector<std::uint64_t> &atomRanks) {
   std::vector<const RDKit::Atom *> nbrs;
   for (auto nbr : mol.atomNeighbors(atom)) {
     nbrs.push_back(nbr);
@@ -59,7 +60,7 @@ std::vector<const RDKit::Atom *> getRankedAtomNeighbors(
 
 void embedSquarePlanar(const RDKit::ROMol &mol, const RDKit::Atom *atom,
                        std::list<EmbeddedFrag> &efrags,
-                       const std::vector<int> &atomRanks) {
+                       const std::vector<std::uint64_t> &atomRanks) {
   static const RDGeom::Point2D idealPoints[] = {
       RDGeom::Point2D(ISQRT2 * BOND_LEN, ISQRT2 * BOND_LEN),
       RDGeom::Point2D(ISQRT2 * BOND_LEN, -ISQRT2 * BOND_LEN),
@@ -97,7 +98,7 @@ void embedSquarePlanar(const RDKit::ROMol &mol, const RDKit::Atom *atom,
 
 void embedTBP(const RDKit::ROMol &mol, const RDKit::Atom *atom,
               std::list<EmbeddedFrag> &efrags,
-              const std::vector<int> &atomRanks) {
+              const std::vector<std::uint64_t> &atomRanks) {
   static const RDGeom::Point2D idealPoints[] = {
       RDGeom::Point2D(0, BOND_LEN),                        // axial
       RDGeom::Point2D(0, -BOND_LEN),                       // axial
@@ -135,7 +136,7 @@ void embedTBP(const RDKit::ROMol &mol, const RDKit::Atom *atom,
 
 void embedOctahedral(const RDKit::ROMol &mol, const RDKit::Atom *atom,
                      std::list<EmbeddedFrag> &efrags,
-                     const std::vector<int> &atomRanks) {
+                     const std::vector<std::uint64_t> &atomRanks) {
   static const RDGeom::Point2D idealPoints[] = {
       RDGeom::Point2D(0, BOND_LEN),                         // axial
       RDGeom::Point2D(0, -BOND_LEN),                        // axial
@@ -212,7 +213,7 @@ void embedOctahedral(const RDKit::ROMol &mol, const RDKit::Atom *atom,
 
 void embedNontetrahedralStereo(const RDKit::ROMol &mol,
                                std::list<EmbeddedFrag> &efrags,
-                               const std::vector<int> &atomRanks) {
+                               const std::vector<std::uint64_t> &atomRanks) {
   boost::dynamic_bitset<> consider(mol.getNumAtoms());
   for (const auto atm : mol.atoms()) {
     if (RDKit::Chirality::hasNonTetrahedralStereo(atm)) {
@@ -412,7 +413,7 @@ void computeInitialCoords(RDKit::ROMol &mol,
                           const RDGeom::INT_POINT2D_MAP *coordMap,
                           std::list<EmbeddedFrag> &efrags,
                           bool useRingTemplates) {
-  std::vector<int> atomRanks;
+  std::vector<std::uint64_t> atomRanks;
   atomRanks.resize(mol.getNumAtoms());
   for (auto i = 0u; i < mol.getNumAtoms(); ++i) {
     atomRanks[i] = getAtomDepictRank(mol.getAtomWithIdx(i));
@@ -466,7 +467,7 @@ void computeInitialCoords(RDKit::ROMol &mol,
     if (mri == efrags.end()) {
       // we are out of embedded fragments, if there are any
       // non embedded atoms use them to start a fragment
-      auto mrank = RDKit::MAX_INT;
+      auto mrank = std::numeric_limits<std::uint64_t>::max();
       auto mnri = nratms.end();
       for (auto nri = nratms.begin(); nri != nratms.end(); ++nri) {
         auto rank = atomRanks.at(*nri);
