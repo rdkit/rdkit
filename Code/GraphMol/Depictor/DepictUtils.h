@@ -52,6 +52,11 @@ typedef std::priority_queue<PAIR_I_I, VECT_PII, gtIIPair> PR_QUEUE;
 typedef std::pair<double, PAIR_I_I> PAIR_D_I_I;
 typedef std::list<PAIR_D_I_I> LIST_PAIR_DII;
 
+//! Directed edge used to look up the branch reached from a central atom.
+typedef std::pair<unsigned int, unsigned int> ATOM_NBR_PAIR;
+//! Longest acyclic distance reachable through each directed atom-neighbor edge.
+typedef std::map<ATOM_NBR_PAIR, unsigned int> BRANCH_DEPTH_MAP;
+
 //! Some utility functions used in generating 2D coordinates
 
 //! Embed a ring as a convex polygon in 2D
@@ -145,6 +150,12 @@ RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT setNbrOrder(unsigned int aid,
                                                   const RDKit::INT_VECT &nbrs,
                                                   const RDKit::ROMol &mol);
 
+//! Order degree-4 neighbors by the size of the branch reached through each one.
+/// Atom rank remains the stable tie-break. The returned order uses the same
+/// opposite/side slot convention as setNbrOrder().
+RDKIT_DEPICTOR_EXPORT RDKit::INT_VECT setNbrOrderByBranchSize(
+    unsigned int aid, const RDKit::INT_VECT &nbrs, const RDKit::ROMol &mol);
+
 //! \brief From a given set of fused rings find the "core" rings, i.e. the rings
 //! that are left after iteratively removing rings that are fused with only one
 //! other ring by one or two atoms
@@ -194,6 +205,21 @@ template <class T>
 RDKIT_DEPICTOR_EXPORT T rankAtomsByRank(const RDKit::ROMol &mol,
                                         const T &commAtms,
                                         bool ascending = true);
+
+//! Compute directed acyclic branch depths for every atom-neighbor pair.
+/*!
+  A score answers: "starting at atomIdx and leaving through neighborIdx, how
+  many non-ring atoms can the longest outward path contain?" The traversal
+  cannot return through atomIdx and terminates at ring atoms. This makes the
+  score useful for choosing the main zig-zag chain during initial embedding
+  without treating an already embedded ring system as part of that chain.
+
+  \param mol  molecule of interest
+
+  \return map from the directed pair (atomIdx, neighborIdx) to path depth
+*/
+RDKIT_DEPICTOR_EXPORT BRANCH_DEPTH_MAP computeBranchDepths(
+    const RDKit::ROMol &mol);
 
 //! computes a subangle for an atom of given hybridization and degree
 /*!
