@@ -2068,18 +2068,15 @@ void testCompareNonExistent() {
     mols.emplace_back(m);
   }
   {
-    // AtomComparator covers the entire representable range of this enum.
-    // Casting 99 is undefined behavior; check the valid mappings instead.
-    const std::pair<AtomComparator, MCSAtomCompareFunction> comparators[] = {
-        {AtomCompareAny, MCSAtomCompareAny},
-        {AtomCompareElements, MCSAtomCompareElements},
-        {AtomCompareIsotopes, MCSAtomCompareIsotopes},
-        {AtomCompareAnyHeavyAtom, MCSAtomCompareAnyHeavyAtom}};
-    for (const auto &[comparator, atomTyper] : comparators) {
-      MCSParameters p;
-      p.setMCSAtomTyperFromEnum(comparator);
-      TEST_ASSERT(p.AtomTyper == atomTyper);
+    MCSParameters p;
+    bool hasThrown = false;
+    try {
+      p.setMCSAtomTyperFromEnum(static_cast<AtomComparator>(99));
+    } catch (const std::runtime_error &e) {
+      BOOST_LOG(rdInfoLog) << e.what() << std::endl;
+      hasThrown = true;
     }
+    TEST_ASSERT(hasThrown);
   }
   {
     MCSParameters p;
@@ -2096,8 +2093,7 @@ void testCompareNonExistent() {
     MCSParameters p;
     bool hasThrown = false;
     try {
-      // 3 is representable by BondComparator but is not a supported comparator.
-      p.setMCSBondTyperFromEnum(static_cast<BondComparator>(3));
+      p.setMCSBondTyperFromEnum(static_cast<BondComparator>(99));
     } catch (const std::runtime_error &e) {
       BOOST_LOG(rdInfoLog) << e.what() << std::endl;
       hasThrown = true;
