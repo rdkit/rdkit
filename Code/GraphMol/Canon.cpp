@@ -348,16 +348,10 @@ bool chiralAtomNeedsTagInversion(const RDKit::ROMol &mol,
                                  const RDKit::Atom *atom, bool isAtomFirst,
                                  size_t numClosures) {
   PRECONDITION(atom, "bad atom");
-  unsigned int numHs = atom->getNumExplicitHs();
-  if (!atom->needsUpdatePropertyCache()) {
-    // implicit valence is only available once the property cache has been
-    // calculated; SMARTS query atoms never reach that point
-    numHs += atom->getNumImplicitHs();
-  }
-  return atom->getDegree() == 3 &&
-         ((isAtomFirst && numHs == 1) ||
-          (!details::atomHasFourthValence(atom) && numClosures == 1 &&
-           !details::isUnsaturated(atom, mol)));
+  bool hasFourthValence = details::atomHasFourthValence(atom);
+  return atom->getDegree() == 3 && ((isAtomFirst && hasFourthValence) ||
+                                    (!hasFourthValence && numClosures == 1 &&
+                                     !details::isUnsaturated(atom, mol)));
 }
 
 auto _possibleCompare = [](const PossibleType &arg1, const PossibleType &arg2) {

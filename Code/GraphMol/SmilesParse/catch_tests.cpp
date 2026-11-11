@@ -3493,6 +3493,7 @@ TEST_CASE(
     ps.canonical = false;
     ps.rootedAtAtom = 0;
     auto smi = MolToSmiles(mol, ps);
+    CHECK(smi == "[C@@H](F)(Cl)Br");
     auto mol2 = v2::SmilesParse::MolFromSmiles(smi);
     REQUIRE(mol2);
     MolOps::assignStereochemistry(*mol2);
@@ -3534,6 +3535,7 @@ TEST_CASE(
     ps.canonical = false;
     ps.rootedAtAtom = 2;
     auto smi = MolToSmiles(mol, ps);
+    CHECK(smi == "[C@H]12C=C[C@H](O1)[C@@H2][C@H2]2");
     auto mol2 = v2::SmilesParse::MolFromSmiles(smi);
     REQUIRE(mol2);
     MolOps::assignStereochemistry(*mol2);
