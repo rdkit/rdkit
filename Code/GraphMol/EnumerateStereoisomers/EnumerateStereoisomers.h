@@ -70,7 +70,7 @@ struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoEnumerationOptions {
 // it can produce.
 class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
  public:
-  class iterator {
+  class RDKIT_ENUMERATESTEREOISOMERS_EXPORT iterator {
    public:
     using iterator_category = std::forward_iterator_tag;
     using value_type = ROMol;
