@@ -39,30 +39,21 @@ boost::shared_ptr<ROMol> bestHitMolecule_helper(
   return boost::shared_ptr<ROMol>();
 }
 
-namespace {
-// Python instances own the copied volume; public C++ parameters only borrow it.
-// All Python construction uses this factory, and shared_ptr preserves the
-// private owner when converted to the public type.
-struct PythonSearchParams : SynthonSpaceSearch::SynthonSpaceSearchParams {
-  boost::shared_ptr<GaussianShape::ShapeInput> excludedVolumeOwner;
-};
-
-boost::shared_ptr<SynthonSpaceSearch::SynthonSpaceSearchParams> makeSearchParams() {
-  return boost::make_shared<PythonSearchParams>();
-}
-}  // namespace
-
-boost::shared_ptr<GaussianShape::ShapeInput> get_excludedVolume(
+GaussianShape::ShapeInput *get_excludedVolume(
     const SynthonSpaceSearch::SynthonSpaceSearchParams &params) {
-  return static_cast<const PythonSearchParams &>(params).excludedVolumeOwner;
+  return params.excludedVolume;
 }
 
+// The params borrow the Python-owned ShapeInput, which the property setter
+// keeps alive for the lifetime of the params (as the nanobind wrapper does).
 void set_excludedVolume(SynthonSpaceSearch::SynthonSpaceSearchParams &params,
                         const python::object &pyExcVol) {
-  auto volume = boost::make_shared<GaussianShape::ShapeInput>(
-      python::extract<const GaussianShape::ShapeInput &>(pyExcVol)());
-  static_cast<PythonSearchParams &>(params).excludedVolumeOwner = volume;
-  params.excludedVolume = volume.get();
+  if (pyExcVol.is_none()) {
+    params.excludedVolume = nullptr;
+    return;
+  }
+  params.excludedVolume =
+      &python::extract<GaussianShape::ShapeInput &>(pyExcVol)();
 }
 
 struct SearchResults_wrapper {
@@ -357,14 +348,9 @@ SynthonSpaceSearch::SearchResults shapeSearch_helper(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
     const python::object &py_params) {
   SynthonSpaceSearch::SynthonSpaceSearchParams params;
-  boost::shared_ptr<GaussianShape::ShapeInput> excludedVolumeOwner;
   if (!py_params.is_none()) {
-    const auto &sourceParams =
-        python::extract<const SynthonSpaceSearch::SynthonSpaceSearchParams &>(
-            py_params)();
-    params = sourceParams;
-    // Python may replace its volume while the search uses this snapshot.
-    excludedVolumeOwner = get_excludedVolume(sourceParams);
+    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
+        py_params);
   }
   SynthonSpaceSearch::SearchResults results;
   {
@@ -382,13 +368,9 @@ SynthonSpaceSearch::SearchResults shapeSearch_helper_3(
     SynthonSpaceSearch::SynthonSpace &self, const ROMol &query,
     const python::object &py_params, int startLine, int finishLine) {
   SynthonSpaceSearch::SynthonSpaceSearchParams params;
-  boost::shared_ptr<GaussianShape::ShapeInput> excludedVolumeOwner;
   if (!py_params.is_none()) {
-    const auto &sourceParams =
-        python::extract<const SynthonSpaceSearch::SynthonSpaceSearchParams &>(
-            py_params)();
-    params = sourceParams;
-    excludedVolumeOwner = get_excludedVolume(sourceParams);
+    params = python::extract<SynthonSpaceSearch::SynthonSpaceSearchParams>(
+        py_params);
   }
   SynthonSpaceSearch::SearchResults results;
   {
@@ -499,14 +481,11 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
       " and/or results may change in future releases.";
 
   helpers::SearchResults_wrapper::wrap();
-  python::register_ptr_to_python<boost::shared_ptr<GaussianShape::ShapeInput>>();
 
   std::string docString = "SynthonSpaceSearch parameters.";
   python::class_<SynthonSpaceSearch::SynthonSpaceSearchParams,
-                 boost::shared_ptr<SynthonSpaceSearch::SynthonSpaceSearchParams>,
                  boost::noncopyable>("SynthonSpaceSearchParams",
-                                     docString.c_str(), python::no_init)
-      .def("__init__", python::make_constructor(&helpers::makeSearchParams))
+                                     docString.c_str())
       .def_readwrite("maxHits",
                      &SynthonSpaceSearch::SynthonSpaceSearchParams::maxHits,
                      "The maximum number of hits to return.  Default=1000."
@@ -643,8 +622,11 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           " be about another 35 characters or so depending on the size of the"
           " job.  Default=0 means no bar.")
       .add_property(
-          "excludedVolume", &helpers::get_excludedVolume,
-          &helpers::set_excludedVolume,
+          "excludedVolume",
+          python::make_function(&helpers::get_excludedVolume,
+                                python::return_internal_reference<1>()),
+          python::make_function(&helpers::set_excludedVolume,
+                                python::with_custodian_and_ward<1, 2>()),
           "  Add an excluded volume to use in the shape search.  The volume"
           " overlap and mean overlap over clashing atoms will be reported.")
       .def_readwrite(
