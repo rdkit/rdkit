@@ -1651,8 +1651,12 @@ void embedHelper_(int threadId, int numThreads, EmbedArgs *eargs,
       if (params->enableSequentialRandomSeeds) {
         new_seed += ci + 1;
       } else {
-        if (!multiplication_overflows_(rdcast<int>(ci + 1),
-                                       params->randomSeed)) {
+        if (params->randomSeed == 0) {
+          // multiplying by zero would give every conformer the same seed;
+          // note that boost's minstd_rand maps a seed of 0 to 1, so start at 1
+          new_seed = rdcast<int>(ci + 1);
+        } else if (!multiplication_overflows_(rdcast<int>(ci + 1),
+                                              params->randomSeed)) {
           // old method of computing a new seed
           new_seed = (ci + 1) * params->randomSeed;
         } else {

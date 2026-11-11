@@ -34,6 +34,7 @@
 #include "catch2/catch_test_macros.hpp"
 #include <tuple>
 #include <map>
+#include <cmath>
 #include <limits>
 #include <numbers>
 #include <boost/algorithm/string.hpp>
@@ -3378,4 +3379,30 @@ TEST_CASE("highly strained chiral centers") {
     MolOps::addHs(*mol);
     CHECK(DGeomHelpers::EmbedMolecule(*mol, ps) == result);
   }
+}
+
+TEST_CASE("github #9738: randomSeed 0 gives distinct conformers") {
+  auto mol = "CCCCCCO"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  DGeomHelpers::EmbedParameters params;
+  params.randomSeed = 0;
+  params.numThreads = 1;
+  auto cids = DGeomHelpers::EmbedMultipleConfs(*mol, 5, params);
+  REQUIRE(cids.size() == 5);
+  const auto &ref = mol->getConformer(cids[0]).getPositions();
+  size_t nSame = 0;
+  for (size_t i = 1; i < cids.size(); ++i) {
+    const auto &pos = mol->getConformer(cids[i]).getPositions();
+    double maxDiff = 0.0;
+    for (size_t j = 0; j < ref.size(); ++j) {
+      maxDiff = std::max(maxDiff, std::fabs(ref[j].x - pos[j].x));
+      maxDiff = std::max(maxDiff, std::fabs(ref[j].y - pos[j].y));
+      maxDiff = std::max(maxDiff, std::fabs(ref[j].z - pos[j].z));
+    }
+    if (maxDiff < 1e-6) {
+      ++nSame;
+    }
+  }
+  CHECK(nSame == 0);
 }
