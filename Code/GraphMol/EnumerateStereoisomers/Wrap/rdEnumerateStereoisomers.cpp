@@ -45,6 +45,16 @@ class LocalStereoEnumerator {
     return boost::shared_ptr<RDKit::ROMol>(iso.release());
   }
 
+  boost::shared_ptr<RDKit::ROMol> nextForIter() {
+    auto iso = next();
+    if (!iso) {
+      PyErr_SetString(PyExc_StopIteration,
+                      "Stereoisomer enumeration exhausted");
+      boost::python::throw_error_already_set();
+    }
+    return iso;
+  }
+
   unsigned int GetStereoisomerCount() {
     return dp_enumerator->getStereoisomerCount();
   }
@@ -115,6 +125,12 @@ BOOST_PYTHON_MODULE(rdEnumerateStereoisomers) {
       .def(python::init<python::object &, python::object &, bool>(
           (python::arg("options") = python::object(),
            python::arg("verbose") = true)))
+      .def(
+          "__iter__", +[](python::object const &self) { return self; },
+          python::args("self"))
+      .def(
+          "__next__", &LocalStereoEnumerator::nextForIter,
+          "Get the next isomer in the sequence. Raises StopIteration at the end.")
       .def("next", &LocalStereoEnumerator::next,
            "Get next isomer in the sequence, or None if at the end.")
       .def("GetStereoisomerCount", &LocalStereoEnumerator::GetStereoisomerCount,
