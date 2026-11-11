@@ -11,6 +11,9 @@
 #include <RDGeneral/utils.h>
 #include <DataStructs/ExplicitBitVect.h>
 #include <DataStructs/FPBReader.h>
+#include <cstdint>
+#include <memory>
+#include <vector>
 
 using namespace RDKit;
 
@@ -372,6 +375,32 @@ TEST_CASE("Bitset Details") {
       delete dbs;
       delete[] newBytes;
     }
+  }
+}
+
+TEST_CASE("Bitset conversions with a non-multiple of 64 bits") {
+  // MACCS-sized fingerprints have 21 bytes, which is not a whole number of
+  // 64-bit blocks.
+  const std::uint32_t nBits = 168;
+  std::uint8_t bytes[nBits / 8] = {};
+  const std::vector<unsigned int> onBits = {0, 7, 63, 64, 127, 128, 160, 167};
+  for (auto bit : onBits) {
+    bytes[bit / 8] |= 1u << (bit % 8);
+  }
+
+  std::unique_ptr<boost::dynamic_bitset<>> dbs(
+      RDKit::detail::bytesToBitset(bytes, nBits));
+  REQUIRE(dbs);
+  CHECK(dbs->size() == nBits);
+  CHECK(dbs->count() == onBits.size());
+  for (auto bit : onBits) {
+    CHECK((*dbs)[bit]);
+  }
+
+  std::unique_ptr<std::uint8_t[]> roundTrip(
+      RDKit::detail::bitsetToBytes(*dbs));
+  for (unsigned int i = 0; i < nBits / 8; ++i) {
+    CHECK(roundTrip[i] == bytes[i]);
   }
 }
 

@@ -14,6 +14,8 @@
 
 #include <DataStructs/ExplicitBitVect.h>
 #include <cstdint>
+#include <cstring>
+#include <memory>
 #include <DataStructs/BitOps.h>
 
 #include <RDGeneral/Invariant.h>
@@ -213,8 +215,15 @@ RDKIT_DATASTRUCTS_EXPORT boost::dynamic_bitset<> *bytesToBitset(
         reinterpret_cast<const boost::dynamic_bitset<>::block_type *>(fpData);
     return new boost::dynamic_bitset<>(fpBlocks, fpBlocks + nBlocks);
   } else {
-    return reinterpret_cast<boost::dynamic_bitset<> *>(
-        new boost::dynamic_bitset<std::uint8_t>(fpData, fpData + nBytes));
+    // Keep the declared block type: dynamic_bitset<uint8_t> has a different
+    // representation and cannot be returned as dynamic_bitset<>.
+    auto result = std::make_unique<boost::dynamic_bitset<>>(nBits);
+    for (std::uint32_t bit = 0; bit < nBits; ++bit) {
+      if (fpData[bit / 8] & (1u << (bit % 8))) {
+        result->set(bit);
+      }
+    }
+    return result.release();
   }
 }
 
@@ -224,10 +233,15 @@ RDKIT_DATASTRUCTS_EXPORT std::uint8_t *bitsetToBytes(
   unsigned int nBits = bitset.size();
   unsigned int nBytes = nBits / 8;
 
-  auto *res = new std::uint8_t[nBytes];
-  boost::to_block_range(
-      bitset, reinterpret_cast<boost::dynamic_bitset<>::block_type *>(res));
-  return res;
+  // to_block_range writes complete native blocks, including padding in the
+  // last block. Copy only the serialized bytes into the output buffer.
+  std::vector<boost::dynamic_bitset<>::block_type> blocks(bitset.num_blocks());
+  boost::to_block_range(bitset, blocks.begin());
+  auto res = std::make_unique<std::uint8_t[]>(nBytes);
+  if (nBytes) {
+    std::memcpy(res.get(), blocks.data(), nBytes);
+  }
+  return res.release();
 }
 
 // the caller is responsible for delete'ing this
