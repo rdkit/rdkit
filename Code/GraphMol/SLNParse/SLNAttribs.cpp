@@ -67,6 +67,12 @@ int parseIntAttribVal(std::string attribName, std::string attribVal,
   }
   return iVal;
 }
+
+// Queries require an int-returning callback. Convert the unsigned result in an
+// adapter instead of calling through an incompatible function pointer.
+int queryAtomAllBondProductAsInt(Atom const *atom) {
+  return static_cast<int>(queryAtomAllBondProduct(atom));
+}
 }  // end of anonymous namespace
 
 QueryAtom::QUERYATOM_QUERY *makeQueryFromOp(const std::string &op, int val,
@@ -248,9 +254,8 @@ void parseAtomAttribs(Atom *atom, AttribListType attribs, bool doingQuery) {
         if (fTag == "") {
           val = parseIntAttribVal(attribName, attribVal);
         }
-        query = makeQueryFromOp(
-            "=", val, (int (*)(const RDKit::Atom *))(queryAtomAllBondProduct),
-            fTag + "AtomBondEnvironment");
+        query = makeQueryFromOp("=", val, queryAtomAllBondProductAsInt,
+                                fTag + "AtomBondEnvironment");
       } else {
         // anything we don't know how to deal with we'll just store in raw form:
         atom->setProp(attribName, attribVal);

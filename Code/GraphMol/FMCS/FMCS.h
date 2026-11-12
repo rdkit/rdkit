@@ -19,14 +19,14 @@ namespace RDKit {
 
 struct MCSParameters;
 
-typedef enum {
+typedef enum : int {
   AtomCompareAny,
   AtomCompareElements,
   AtomCompareIsotopes,
   AtomCompareAnyHeavyAtom
 } AtomComparator;
 
-typedef enum {
+typedef enum : int {
   BondCompareAny,
   BondCompareOrder,
   BondCompareOrderExact
