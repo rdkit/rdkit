@@ -13,6 +13,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/operators.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
 
@@ -23,13 +24,13 @@ using namespace nb::literals;
 
 using EBV = ExplicitBitVect;
 
-void SetBitsFromList(EBV *bv, const nb::iterable &onBitList) {
+void SetBitsFromList(EBV *bv, const PyIterableOf<unsigned int> &onBitList) {
   for (auto item : onBitList) {
     bv->setBit(nb::cast<unsigned int>(item));
   }
 }
 
-void UnSetBitsFromList(EBV *bv, const nb::iterable &offBitList) {
+void UnSetBitsFromList(EBV *bv, const PyIterableOf<unsigned int> &offBitList) {
   for (auto item : offBitList) {
     bv->unsetBit(nb::cast<unsigned int>(item));
   }
@@ -70,7 +71,8 @@ nb::bytes BVToBinary(const EBV &bv) {
   return nb::bytes(res.c_str(), res.length());
 }
 
-void InitFromBase64(EBV &self, const std::string &inD) {
+void InitFromBase64(EBV &self, const StringOrBytes &text) {
+  const auto inD = pyObjectToString(text);
   self.initFromText(inD.c_str(), inD.length(), true);
 }
 
@@ -82,10 +84,10 @@ std::string ToBase64(EBV &self) {
   return res;
 }
 
-nb::list ExplicitToList(const ExplicitBitVect &sv) {
+PyListOf<int> ExplicitToList(const ExplicitBitVect &sv) {
   nb::list l;
   if (!sv.dp_bits) {
-    return l;
+    return PyListOf<int>(l);
   }
 
   auto count = sv.getNumBits();
@@ -99,7 +101,7 @@ nb::list ExplicitToList(const ExplicitBitVect &sv) {
       pos = sv.dp_bits->find_next(pos);
     }
   }
-  return l;
+  return PyListOf<int>(l);
 }
 
 std::string ebvClassDoc =

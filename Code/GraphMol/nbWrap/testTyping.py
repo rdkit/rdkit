@@ -1,0 +1,211 @@
+#  Copyright (C) 2026  Steven Kearnes and other RDKit contributors
+#         All Rights Reserved
+"""Tests the signatures of the nanobind wrappers."""
+
+import ast
+import json
+import re
+import subprocess
+import sys
+import unittest
+
+from rdkit import Chem, DataStructs, rdBase
+from rdkit.Chem import (rdChemReactions, rdDepictor, rdDistGeom, rdEnumerateStereoisomers,
+                        rdFMCS, rdGaussianShape, rdMHFPFingerprint, rdMolAlign,
+                        rdMolChemicalFeatures, rdMolDescriptors, rdMolProcessing,
+                        rdRGroupDecomposition, rdShapeHelpers, rdSubstructLibrary)
+from rdkit.Chem.MolStandardize import rdMolStandardize
+from rdkit.ML.Data import cQuantize
+from rdkit.Numerics import rdAlignment
+
+# Built only with RDK_BUILD_THREADSAFE_SSS.
+try:
+  from rdkit.Chem import rdSynthonSpaceSearch
+except ImportError:
+  rdSynthonSpaceSearch = None
+
+# Not built on big-endian systems.
+try:
+  from rdkit.ML.Cluster import Clustering
+except ImportError:
+  Clustering = None
+
+
+def signature_annotations(signature):
+  """Returns a {parameter: annotation} dict for one nanobind signature string."""
+  args = parse_signature(signature).args
+  return {arg.arg: ast.unparse(arg.annotation)
+          for arg in args.args + args.kwonlyargs if arg.annotation}
+
+
+def parameter_annotations(func):
+  """Returns a {parameter: annotation} dict for each overload of a nanobind function."""
+  return [signature_annotations(signature) for signature, _, _ in func.__nb_signature__]
+
+
+def return_annotations(func):
+  """Returns the return annotation of each overload of a nanobind function."""
+  return [ast.unparse(parse_signature(signature).returns)
+          for signature, _, _ in func.__nb_signature__]
+
+
+def parse_signature(signature):
+  """Returns the ast.FunctionDef for one nanobind signature string.
+
+  A numpy.ndarray annotation loses its bracketed dtype and shape.
+  """
+  # nanobind writes each default value as a \N placeholder and each numpy.ndarray with keyword
+  # arguments inside its brackets, neither of which is valid Python, and leaves the name out of a
+  # property's getter and setter.
+  signature = re.sub(r'^def \(', 'def property(', signature)
+  signature = re.sub(r'\\\d+', '...', re.sub(r'numpy\.ndarray\[[^\]]*\]', 'numpy.ndarray',
+                                             signature))
+  return ast.parse(signature + ': ...').body[0]
+
+
+class TestSignatures(unittest.TestCase):
+
+  def testParameterAnnotations(self):
+    cases = [
+      (Chem.MolFromSmiles, 0, 'SMILES', 'str | bytes'),
+      (Chem.MolFromMolBlock, 0, 'molBlock', 'str | bytes'),
+      (Chem.MolFromMolFile, 0, 'molFileName', 'str | os.PathLike'),
+      (Chem.AtomFromSmiles, 0, 'SMILES', 'str | bytes'),
+      (Chem.MolToMolFile, 0, 'filename', 'str | os.PathLike'),
+      (rdChemReactions.ReactionFromRxnFile, 0, 'filename', 'str | os.PathLike'),
+      (Chem.rdchem.CreateStereoGroup, 0, 'atomIds', 'collections.abc.Iterable[int]'),
+      (Chem.SubstructMatchParameters.setExtraAtomCheckFunc, 0, 'func',
+       'collections.abc.Callable[[rdkit.Chem.rdchem.Atom, rdkit.Chem.rdchem.Atom], bool]'),
+      (DataStructs.BulkTanimotoSimilarity, 1, 'bvList',
+       'collections.abc.Iterable[rdkit.DataStructs.cDataStructs.ExplicitBitVect]'),
+      (Chem.MolAddRecursiveQueries, 0, 'queries', 'dict[str, rdkit.Chem.rdchem.Mol]'),
+      (rdMolStandardize.TautomerEnumerator.Canonicalize, 1, 'scoreFunc',
+       'collections.abc.Callable[[rdkit.Chem.rdchem.Mol], int]'),
+      (rdMolStandardize.CleanupInPlace, 1, 'mols',
+       'collections.abc.Iterable[rdkit.Chem.rdchem.Mol]'),
+      (Chem.SetDoubleBondNeighborDirections, 0, 'conf', 'rdkit.Chem.rdchem.Conformer | None'),
+      (rdChemReactions.EnumerateLibrary.__init__, 1, 'reagents',
+       'collections.abc.Iterable[collections.abc.Iterable[rdkit.Chem.rdchem.Mol]]'),
+      # A list the wrapper fills by index has Any elements, so a caller can preallocate it with
+      # placeholders of any type.
+      (rdMolDescriptors.CalcHallKierAlpha, 0, 'atomContribs', 'list[typing.Any] | None'),
+      (rdMolDescriptors._CalcCrippenContribs, 0, 'atomTypeLabels', 'list[typing.Any] | None'),
+      (rdMolDescriptors.Properties.ComputeProperties, 1, 'mols',
+       'collections.abc.Iterable[rdkit.Chem.rdchem.Mol | None]'),
+      (cQuantize._RecurseOnBounds, 0, 'vals', 'collections.abc.Sequence[float]'),
+      (cQuantize._RecurseOnBounds, 0, 'pyCuts', 'collections.abc.Sequence[int]'),
+      (cQuantize._FindStartPoints, 0, 'results', 'collections.abc.Sequence[int]'),
+    ]
+    # The PNG functions are built only with RDK_USE_BOOST_IOSTREAMS.
+    if hasattr(Chem, 'MolFromPNGFile'):
+      cases.append((Chem.AddMetadataToPNGString, 0, 'metadata', 'dict[str, str]'))
+    if rdSynthonSpaceSearch is not None:
+      cases += [
+        (rdSynthonSpaceSearch.SynthonSpace.SubstructureSearchIncremental, 0, 'callback',
+         'collections.abc.Callable[[list[rdkit.Chem.rdchem.Mol]], bool | None]'),
+        (rdSynthonSpaceSearch.ShapeBuildParams.setUserConformerGenerator, 0, 'func',
+         'collections.abc.Callable[[str, int], rdkit.Chem.rdchem.Mol | None]'),
+      ]
+    for func, overload, parameter, expected in cases:
+      with self.subTest(func=func.__name__, parameter=parameter):
+        self.assertEqual(parameter_annotations(func)[overload][parameter], expected)
+
+  def testNullableReturnAnnotations(self):
+    mol = 'rdkit.Chem.rdchem.Mol'
+    cases = [
+      (Chem.MolFromSmiles, mol + ' | None'),
+      (Chem.MolFromMolBlock, mol + ' | None'),
+      (Chem.AtomFromSmarts, 'rdkit.Chem.rdchem.Atom | None'),
+      (Chem.SDMolSupplier.__next__, mol + ' | None'),
+      (Chem.Mol.GetBondBetweenAtoms, 'rdkit.Chem.rdchem.Bond | None'),
+      (Chem.ReplaceCore, mol + ' | None'),
+      (rdChemReactions.ReactionFromRxnFile,
+       'rdkit.Chem.rdChemReactions.ChemicalReaction | None'),
+      (rdFMCS.MCSResult.queryMol.fget, mol + ' | None'),
+      (rdSubstructLibrary.SubstructLibrary.GetMol, mol + ' | None'),
+      (rdEnumerateStereoisomers.StereoisomerEnumerator.next, mol + ' | None'),
+      # A function that never returns None keeps a plain annotation.
+      (Chem.AddHs, mol),
+    ]
+    for func, expected in cases:
+      with self.subTest(func=func.__qualname__):
+        self.assertEqual(set(return_annotations(func)), {expected})
+
+  def testReturnAnnotations(self):
+    mol = 'rdkit.Chem.rdchem.Mol'
+    point = 'rdkit.Geometry.rdGeometry.Point3D'
+    cases = [
+      (Chem.Mol.GetPropsAsDict, 'dict[str, typing.Any]'),
+      (rdChemReactions.EnumerateLibrary.GetReagents, f'list[list[{mol}]]'),
+      (rdChemReactions.EnumerateLibrary.__next__, f'tuple[tuple[{mol}, ...], ...]'),
+      (rdDistGeom.GetExperimentalTorsions, 'tuple[dict[str, typing.Any], ...]'),
+      (rdDistGeom.EmbedParameters.GetFailureCounts, 'tuple[int, ...]'),
+      (rdDistGeom.OrderedEmbedFailureCauses,
+       'list[tuple[rdkit.Chem.rdDistGeom.EmbedFailureCauses, int]]'),
+      (rdFMCS.MCSResult.degenerateSmartsQueryMolDict.fget, f'dict[str, {mol}]'),
+      (rdGaussianShape.ScoreShape, 'tuple[float, float, float, float, float]'),
+      (rdGaussianShape.ShapeInputOptions.atomRadii.fget, 'tuple[tuple[int, float], ...]'),
+      (rdMHFPFingerprint.MHFPEncoder.EncodeSmilesBulk, 'tuple[list[int], ...]'),
+      (rdMHFPFingerprint.MHFPEncoder.EncodeSECFPMolsBulk,
+       'tuple[rdkit.DataStructs.cDataStructs.ExplicitBitVect, ...]'),
+      (rdMolAlign.BestAlignmentParams.map.fget, 'tuple[list[tuple[int, int]], ...]'),
+      (rdMolChemicalFeatures.GetAtomMatch, 'list[list[int]]'),
+      (rdMolProcessing.GetFingerprintsForMolsInFile,
+       'tuple[rdkit.DataStructs.cDataStructs.ExplicitBitVect | None, ...]'),
+      (rdRGroupDecomposition.RGroupDecomposition.GetRGroupsAsRows,
+       f'list[dict[str, {mol} | str]]'),
+      (rdShapeHelpers.ComputeConfBox, f'tuple[{point}, {point}]'),
+      (rdSubstructLibrary.SubstructLibrary.GetSearchOrder, 'tuple[int, ...]'),
+      # parse_signature drops a numpy.ndarray's dtype and shape.
+      (rdAlignment.GetAlignmentTransform, 'tuple[float, numpy.ndarray]'),
+      (cQuantize._RecurseOnBounds, 'tuple[float, list[int]]'),
+      (cQuantize._FindStartPoints, 'list[int]'),
+    ]
+    if Clustering is not None:
+      cases.append(
+        (Clustering.MurtaghCluster, 'tuple[numpy.ndarray, numpy.ndarray, numpy.ndarray]'))
+    for func, expected in cases:
+      # A property getter's __qualname__ is None, so expected tells those subtests apart.
+      with self.subTest(func=func.__qualname__, expected=expected):
+        self.assertEqual(set(return_annotations(func)), {expected})
+    with self.subTest(func='GenerateDepictionMatching2DStructure'):
+      # The overloads taking an atomMap return None.
+      self.assertIn('tuple[tuple[int, int], ...]',
+                    return_annotations(rdDepictor.GenerateDepictionMatching2DStructure))
+
+  def testNullableReturnsReturnNone(self):
+    with rdBase.BlockLogs():
+      self.assertIsNone(Chem.MolFromSmiles('C1CC'))
+      self.assertIsNone(Chem.AtomFromSmarts('['))
+    mol = Chem.MolFromSmiles('CCO')
+    self.assertIsNone(mol.GetBondBetweenAtoms(0, 2))
+    self.assertIsNone(Chem.ReplaceCore(mol, Chem.MolFromSmiles('c1ccccc1')))
+    self.assertIsNone(rdFMCS.FindMCS([Chem.MolFromSmiles('C'), Chem.MolFromSmiles('N')]).queryMol)
+
+  def testSignaturesNameTypesFromOtherModules(self):
+    cases = [('rdMolProcessing', 'GetFingerprintsForMolsInFile', 1, 'generator',
+              'rdkit.Chem.rdFingerprintGenerator.FingerprintGenerator64 | None')]
+    if rdSynthonSpaceSearch is not None:
+      cases += [
+        ('rdSynthonSpaceSearch', 'SynthonSpace.FingerprintSearch', 0, 'fingerprintGenerator',
+         'rdkit.Chem.rdFingerprintGenerator.FingerprintGenerator64'),
+        ('rdSynthonSpaceSearch', 'SynthonSpace.RascalSearch', 0, 'rascalOptions',
+         'rdkit.Chem.rdRascalMCES.RascalOptions'),
+      ]
+    for module, func, overload, parameter, expected in cases:
+      with self.subTest(func=func):
+        # A fresh interpreter loads only the modules this one imports itself.
+        code = ('import json\n'
+                f'from rdkit.Chem import {module}\n'
+                f'print(json.dumps([sig for sig, _, _ in {module}.{func}.__nb_signature__]))\n')
+        output = subprocess.run([sys.executable, '-c', code], capture_output=True, text=True,
+                                check=True).stdout
+        signatures = json.loads(output)
+        for signature in signatures:
+          # An unregistered type is rendered as its C++ name, such as
+          # RDKit::RascalMCES::RascalOptions.
+          self.assertNotIn('::', signature)
+        self.assertEqual(signature_annotations(signatures[overload])[parameter], expected)
+
+if __name__ == '__main__':
+  unittest.main()

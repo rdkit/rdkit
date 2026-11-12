@@ -11,6 +11,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/pair.h>
@@ -169,10 +170,12 @@ Tautomeric forms
       .def(nb::new_([](std::string pkl) { return new TautomerQuery(pkl); }),
            "pickle"_a, "Construct a TautomerQuery from a pickle string.")
       .def(nb::new_(
-               [](const ROMol &mol, const std::string &tautomerTransformFile) {
-                 return TautomerQuery::fromMol(mol, tautomerTransformFile);
+               [](const ROMol &mol,
+                  const std::filesystem::path &tautomerTransformFile) {
+                 return TautomerQuery::fromMol(mol,
+                                               tautomerTransformFile.string());
                }),
-           "mol"_a, "tautomerTransformFile"_a = std::string(),
+           "mol"_a, "tautomerTransformFile"_a = "",
            "Construct a TautomerQuery from a molecule.")
       .def(
           "IsSubstructOf", tautomerIsSubstructOf, "target"_a,

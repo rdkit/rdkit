@@ -10,6 +10,7 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/vector.h>
 #include <nanobind/stl/unique_ptr.h>
 
@@ -96,7 +97,12 @@ NB_MODULE(rdGeneralizedSubstruct, m) {
           "data"_a,
           R"DOC(constructor from binary data returned by ToBinary().)DOC")
       .def("InitFromBinary", &ExtendedQueryMol::initFromBinary, "pkl"_a)
-      .def("InitFromJSON", &ExtendedQueryMol::initFromJSON, "text"_a)
+      .def(
+          "InitFromJSON",
+          [](ExtendedQueryMol &self, const StringOrBytes &text) {
+            self.initFromJSON(pyObjectToString(text));
+          },
+          "text"_a)
       .def("ToBinary", XQMolToBinary)
       .def("ToJSON", &ExtendedQueryMol::toJSON)
       .def("PatternFingerprintQuery",

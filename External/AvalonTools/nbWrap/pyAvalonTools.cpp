@@ -57,6 +57,9 @@ enum StruChkResult {
 }  // namespace
 
 NB_MODULE(pyAvalonTools, m) {
+  nb::module_::import_("rdkit.Chem.rdchem");
+  nb::module_::import_("rdkit.DataStructs.cDataStructs");
+
   m.doc() = R"DOC(Module containing functionality from the Avalon toolkit.
 
 The functions currently exposed are:

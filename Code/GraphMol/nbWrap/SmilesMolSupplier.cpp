@@ -11,12 +11,14 @@
 #include <string>
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/string.h>
 
 // ours
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/RDKitBase.h>
 #include <RDGeneral/FileParseException.h>
+#include <RDBoost/Wrap_nb.h>
 #include "ContextManagers.h"
 
 namespace nb = nanobind;
@@ -32,7 +34,7 @@ T *MolSupplIter(T *suppl) {
 }
 
 template <typename T>
-ROMol *MolSupplNext(T *suppl) {
+Nullable<ROMol *> MolSupplNext(T *suppl) {
   ROMol *res = nullptr;
   if (!suppl->atEnd()) {
     try {
@@ -50,7 +52,7 @@ ROMol *MolSupplNext(T *suppl) {
 }
 
 template <typename T>
-ROMol *MolSupplGetItem(T *suppl, int idx) {
+Nullable<ROMol *> MolSupplGetItem(T *suppl, int idx) {
   ROMol *res = nullptr;
   if (idx < 0) {
     idx = static_cast<int>(suppl->length()) + idx;
@@ -73,10 +75,12 @@ ROMol *MolSupplGetItem(T *suppl, int idx) {
 }  // namespace
 
 SmilesMolSupplier *SmilesSupplierFromText(
-    std::string text, std::string delimiter = " ", int smilesColumn = 0,
-    int nameColumn = 1, bool titleLine = true, bool sanitize = true) {
+    const StringOrBytes &text, std::string delimiter = " ",
+    int smilesColumn = 0, int nameColumn = 1, bool titleLine = true,
+    bool sanitize = true) {
   auto *res = new SmilesMolSupplier();
-  res->setData(text, delimiter, smilesColumn, nameColumn, titleLine, sanitize);
+  res->setData(pyObjectToString(text), delimiter, smilesColumn, nameColumn,
+               titleLine, sanitize);
   return res;
 }
 
@@ -139,23 +143,19 @@ struct smimolsup_wrap {
   static void wrap(nb::module_ &m) {
     nb::class_<SmilesMolSupplier>(m, "SmilesMolSupplier",
                                   smilesMolSupplierClassDoc.c_str())
-        .def(nb::init<std::string, std::string, int, int, bool, bool>(),
-             "data"_a, "delimiter"_a = " ", "smilesColumn"_a = 0,
-             "nameColumn"_a = 1, "titleLine"_a = true, "sanitize"_a = true,
-             smsDocStr.c_str())
         .def(nb::init<>())
         .def(
             "__init__",
-            [](SmilesMolSupplier *self, nb::object fn, std::string delimiter,
-               int smilesColumn, int nameColumn, bool titleLine,
-               bool sanitize) {
-              nb::str fnStr(fn);
-              new (self) SmilesMolSupplier(fnStr.c_str(), delimiter.c_str(),
-                                           smilesColumn, nameColumn, titleLine,
-                                           sanitize);
+            [](SmilesMolSupplier *self, const std::filesystem::path &data,
+               const std::string &delimiter, int smilesColumn, int nameColumn,
+               bool titleLine, bool sanitize) {
+              new (self)
+                  SmilesMolSupplier(data.string(), delimiter, smilesColumn,
+                                    nameColumn, titleLine, sanitize);
             },
-            "fileName"_a, "delimiter"_a = " ", "smilesColumn"_a = 0,
-            "nameColumn"_a = 1, "titleLine"_a = true, "sanitize"_a = true)
+            "data"_a, "delimiter"_a = " ", "smilesColumn"_a = 0,
+            "nameColumn"_a = 1, "titleLine"_a = true, "sanitize"_a = true,
+            smsDocStr.c_str())
         .def("__enter__", &MolIOEnter<SmilesMolSupplier>,
              nb::rv_policy::reference_internal)
         .def("__exit__", &MolIOExit<SmilesMolSupplier>,
@@ -174,9 +174,16 @@ struct smimolsup_wrap {
              R"DOC(Resets our position in the file to the beginning.
 )DOC")
         .def("__len__", &SmilesMolSupplier::length)
-        .def("SetData", &SmilesMolSupplier::setData, "data"_a,
-             "delimiter"_a = " ", "smilesColumn"_a = 0, "nameColumn"_a = 1,
-             "titleLine"_a = true, "sanitize"_a = true,
+        .def(
+            "SetData",
+            [](SmilesMolSupplier &self, const StringOrBytes &data,
+               const std::string &delimiter, int smilesColumn, int nameColumn,
+               bool titleLine, bool sanitize) {
+              self.setData(pyObjectToString(data), delimiter, smilesColumn,
+                           nameColumn, titleLine, sanitize);
+            },
+            "data"_a, "delimiter"_a = " ", "smilesColumn"_a = 0,
+            "nameColumn"_a = 1, "titleLine"_a = true, "sanitize"_a = true,
              R"DOC(Sets the text to be parsed.)DOC")
         .def("GetItemText", &SmilesMolSupplier::getItemText, "index"_a,
              R"DOC(Returns the text for an item.)DOC");

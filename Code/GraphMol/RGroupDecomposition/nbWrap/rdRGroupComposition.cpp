@@ -31,9 +31,11 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/pair.h>
+#include <nanobind/stl/variant.h>
 #include <chrono>
 #include <utility>
 
@@ -48,6 +50,9 @@ namespace nb = nanobind;
 using namespace nb::literals;
 
 namespace RDKit {
+
+// a core or side chain, as a molecule or, with asSmiles, as SMILES
+using MolOrSmiles = std::variant<ROMol *, std::string>;
 
 class RGroupDecompositionHelper {
   std::unique_ptr<RGroupDecomposition> decomp;
@@ -78,20 +83,24 @@ class RGroupDecompositionHelper {
     return decomp->add(mol);
   }
 
-  int GetMatchingCoreIdx(const ROMol &mol, nb::object matches) {
+  int GetMatchingCoreIdx(
+      const ROMol &mol,
+      const std::optional<PyListOf<PyTupleOf<nb::typed<nb::tuple, int, int>>>>
+          &matches) {
     std::vector<MatchVectType> matchVect;
     int coreIdx;
     {
       NOGIL gil;
       coreIdx = decomp->getMatchingCoreIdx(mol, &matchVect);
     }
-    if (!matches.is_none() && nb::isinstance<nb::list>(matches)) {
+    if (matches) {
+      nb::list matchList = *matches;
       for (const auto &match : matchVect) {
         nb::list atomMap;
         for (const auto &pair : match) {
           atomMap.append(nb::make_tuple(pair.first, pair.second));
         }
-        matches.attr("append")(nb::tuple(atomMap));
+        matchList.append(nb::tuple(atomMap));
       }
     }
     return coreIdx;
@@ -108,7 +117,7 @@ class RGroupDecompositionHelper {
     return {result.success, result.score};
   }
 
-  nb::list GetRGroupLabels() {
+  PyListOf<std::string> GetRGroupLabels() {
     nb::list result;
     std::vector<std::string> labels = decomp->getRGroupLabels();
     for (const auto &label : labels) {
@@ -117,7 +126,8 @@ class RGroupDecompositionHelper {
     return result;
   }
 
-  nb::list GetRGroupsAsRows(bool asSmiles = false) {
+  PyListOf<PyDictOf<std::string, MolOrSmiles>> GetRGroupsAsRows(
+      bool asSmiles = false) {
     const RGroupRows &groups = decomp->getRGroupsAsRows();
     nb::list result;
 
@@ -135,7 +145,8 @@ class RGroupDecompositionHelper {
     return result;
   }
 
-  nb::dict GetRGroupsAsColumns(bool asSmiles = false) {
+  PyDictOf<std::string, PyListOf<MolOrSmiles>> GetRGroupsAsColumns(
+      bool asSmiles = false) {
     nb::dict result;
 
     RGroupColumns groups = decomp->getRGroupsAsColumns();
@@ -157,7 +168,7 @@ class RGroupDecompositionHelper {
   }
 };
 
-nb::object RGroupDecomp(nb::object cores, nb::object mols,
+nb::object RGroupDecomp(nb::object cores, const PyIterableOf<ROMol> &mols,
                         bool asSmiles = false, bool asRows = true,
                         const RGroupDecompositionParameters &options =
                             RGroupDecompositionParameters()) {
@@ -337,7 +348,8 @@ once in the same molecule if the sets of matched atoms are not equal
               &RDKit::RGroupDecompositionParameters::substructmatchParams)
       .def_rw("includeTargetMolInResults",
               &RDKit::RGroupDecompositionParameters::includeTargetMolInResults)
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   nb::class_<RDKit::RGroupDecompositionHelper>(m, "RGroupDecomposition")
       .def(nb::init<nb::object>(), "cores"_a,

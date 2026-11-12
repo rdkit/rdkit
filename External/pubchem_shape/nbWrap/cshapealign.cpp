@@ -25,6 +25,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ***********************************************************************/
 
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/stl/vector.h>
@@ -40,6 +41,15 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 namespace nb = nanobind;
 using namespace nb::literals;
 
+namespace {
+// (shape_score, color_score), and for AlignShapes the transformation matrix
+using ScorePair = nb::typed<nb::tuple, double, double>;
+using ScorePairAndMatrix =
+    nb::typed<nb::tuple, double, double, PyListOf<float>>;
+// (feature type, position, radius)
+using CustomFeatureTuple = nb::typed<nb::tuple, int, RDGeom::Point3D, double>;
+}  // namespace
+
 NB_MODULE(rdShapeAlign, m) {
   m.doc() = "Module containing PubChem shape alignment functionality.";
 
@@ -48,9 +58,8 @@ NB_MODULE(rdShapeAlign, m) {
       .def_rw(
           "useColors", &ShapeInputOptions::useColors,
           "Whether to use colors (pharmacophore features) in the score.  Default=True.")
-      .def_rw(
-          "includeDummies", &ShapeInputOptions::includeDummies,
-          "Whether to use dummy atoms in the alignment. Default=False.")
+      .def_rw("includeDummies", &ShapeInputOptions::includeDummies,
+              "Whether to use dummy atoms in the alignment. Default=False.")
       .def_rw(
           "dummyRadius", &ShapeInputOptions::dummyRadius,
           R"DOC(If using dummy atoms in the alignment, what radius to use for them.
@@ -62,9 +71,10 @@ NB_MODULE(rdShapeAlign, m) {
             for (const auto &val : opts.atomSubset) {
               py_list.append(val);
             }
-            return nb::tuple(py_list);
+            return PyTupleOf<unsigned int>(nb::tuple(py_list));
           },
-          [](ShapeInputOptions &opts, nb::object as) {
+          [](ShapeInputOptions &opts,
+             const std::optional<PyIterableOf<unsigned int>> &as) {
             pythonObjectToVect<unsigned int>(as, opts.atomSubset);
           },
           "If not empty, use just these atoms in the molecule to form the ShapeInput object.")
@@ -75,9 +85,10 @@ NB_MODULE(rdShapeAlign, m) {
             for (const auto &val : opts.notColorAtoms) {
               py_list.append(val);
             }
-            return nb::tuple(py_list);
+            return PyTupleOf<unsigned int>(nb::tuple(py_list));
           },
-          [](ShapeInputOptions &opts, nb::object nca) {
+          [](ShapeInputOptions &opts,
+             const std::optional<PyIterableOf<unsigned int>> &nca) {
             pythonObjectToVect<unsigned int>(nca, opts.notColorAtoms);
           },
           "Any atoms mentioned here by index should not be used in a color feature.")
@@ -88,9 +99,12 @@ NB_MODULE(rdShapeAlign, m) {
             for (const auto &val : opts.atomRadii) {
               py_list.append(nb::make_tuple(static_cast<int>(val.first), val.second));
             }
-            return nb::tuple(py_list);
+            return PyTupleOf<nb::typed<nb::tuple, int, double>>(
+                nb::tuple(py_list));
           },
-          [](ShapeInputOptions &opts, nb::object ar) {
+          [](ShapeInputOptions &opts,
+             const PySequenceOf<nb::typed<nb::tuple, unsigned int, double>>
+                 &ar) {
             int len = nb::len(ar);
             opts.atomRadii.resize(len);
             for (int i = 0; i < len; i++) {
@@ -112,7 +126,7 @@ NB_MODULE(rdShapeAlign, m) {
               elem.append(std::get<2>(val));
               py_list.append(nb::tuple(elem));
             }
-            return nb::tuple(py_list);
+            return PyTupleOf<CustomFeatureTuple>(nb::tuple(py_list));
           },
           [](ShapeInputOptions &shp, nb::object s) {
             shp.customFeatures.clear();
@@ -130,7 +144,8 @@ NB_MODULE(rdShapeAlign, m) {
       .def_rw("normalize", &ShapeInputOptions::normalize,
               R"DOC(Whether to normalise the shape by putting into
 its inertial frame.  Default=True.)DOC")
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   nb::class_<ShapeInput>(m, "ShapeInput")
       .def_rw("coord", &ShapeInput::coord)
@@ -144,9 +159,9 @@ its inertial frame.  Default=True.)DOC")
             for (const auto &val : shp.shift) {
               py_list.append(val);
             }
-            return py_list;
+            return PyListOf<double>(py_list);
           },
-          [](ShapeInput &shp, nb::object s) {
+          [](ShapeInput &shp, const std::optional<PyIterableOf<double>> &s) {
             pythonObjectToVect<double>(s, shp.shift);
           },
           "Translation of centre of shape coordinates to origin.")
@@ -157,7 +172,7 @@ its inertial frame.  Default=True.)DOC")
             for (const auto &val : shp.inertialRot) {
               py_list.append(val);
             }
-            return py_list;
+            return PyListOf<double>(py_list);
           },
           "Rotation applied to put the shape into its principal axes frame of reference.")
       .def_rw("sov", &ShapeInput::sov)
@@ -172,7 +187,7 @@ its inertial frame.  Default=True.)DOC")
         auto [nbr_st, nbr_ct] =
             AlignMolecule(ref, probe, matrix, refConfId, probeConfId, useColors,
                           opt_param, max_preiters, max_postiters);
-        return nb::make_tuple(nbr_st, nbr_ct);
+        return ScorePair(nb::make_tuple(nbr_st, nbr_ct));
       },
       "ref"_a, "probe"_a, "refConfId"_a = -1, "probeConfId"_a = -1,
       "useColors"_a = true, "opt_param"_a = 1.0, "max_preiters"_a = 10,
@@ -220,7 +235,7 @@ Returns
             AlignMolecule(ref, probe, matrix, refShapeOpts, probeShapeOpts,
                           refConfId, probeConfId, opt_param, max_preiters,
                           max_postiters);
-        return nb::make_tuple(nbr_st, nbr_ct);
+        return ScorePair(nb::make_tuple(nbr_st, nbr_ct));
       },
       "ref"_a, "probe"_a, "refShapeOpts"_a, "probeShapeOpts"_a,
       "refConfId"_a = -1, "probeConfId"_a = -1, "opt_param"_a = 1.0,
@@ -267,7 +282,7 @@ Returns
         auto [nbr_st, nbr_ct] =
             AlignMolecule(refShape, probe, matrix, probeConfId, useColors,
                           opt_param, max_preiters, max_postiters, applyRefShift);
-        return nb::make_tuple(nbr_st, nbr_ct);
+        return ScorePair(nb::make_tuple(nbr_st, nbr_ct));
       },
       "refShape"_a, "probe"_a, "probeConfId"_a = -1, "useColors"_a = true,
       "opt_param"_a = 1.0, "max_preiters"_a = 10, "max_postiters"_a = 30,
@@ -316,7 +331,7 @@ Returns
         for (auto v : matrix) {
           pyMatrix.append(v);
         }
-        return nb::make_tuple(nbr_st, nbr_ct, pyMatrix);
+        return ScorePairAndMatrix(nb::make_tuple(nbr_st, nbr_ct, pyMatrix));
       },
       "refShape"_a, "probeShape"_a, "opt_param"_a = 1.0,
       "max_preiters"_a = 10, "max_postiters"_a = 30,
@@ -347,8 +362,10 @@ Returns
 
   m.def(
       "TransformConformer",
-      [](nb::object pyFinalTrans, nb::object pyFinalRot, nb::object pyMatrix,
-         ShapeInput probeShape, RDKit::Conformer &probeConf) {
+      [](const PyIterableOf<double> &pyFinalTrans,
+         const PyIterableOf<double> &pyFinalRot,
+         const PyIterableOf<float> &pyMatrix, ShapeInput probeShape,
+         RDKit::Conformer &probeConf) {
         std::vector<float> matrix;
         pythonObjectToVect<float>(pyMatrix, matrix);
         if (matrix.size() != 12) {
@@ -375,7 +392,8 @@ Returns
         }
         TransformConformer(finalTrans, finalRot, matrix, probeShape, probeConf);
       },
-      "finalTrans"_a, "finalRot"_a, "matrix"_a, "probeShape"_a, "probeConformer"_a,
+      "finalTrans"_a, "finalRot"_a, "matrix"_a, "probeShape"_a,
+      "probeConformer"_a,
       R"DOC(Assuming that probeShape has been overlaid onto refShape to give
 the supplied transformation matrix, applies that transformation to the
  given conformer.
@@ -394,11 +412,9 @@ probeConformer : Conformer
 
   m.def(
       "PrepareConformer",
-      [](const RDKit::ROMol &mol, int confId, nb::object py_opts) {
-        ShapeInputOptions opts;
-        if (!py_opts.is_none()) {
-          opts = nb::cast<ShapeInputOptions>(py_opts);
-        }
+      [](const RDKit::ROMol &mol, int confId,
+         const std::optional<ShapeInputOptions> &py_opts) {
+        auto opts = py_opts.value_or(ShapeInputOptions());
         return new ShapeInput(PrepareConformer(mol, confId, opts));
       },
       "mol"_a, "confId"_a = -1, "opts"_a = nb::none(),
@@ -426,7 +442,7 @@ Returns
          int mol2ConfId) {
         auto [nbr_st, nbr_ct] = ScoreMolecule(mol1, mol2, mol1ShapeOpts,
                                               mol2ShapeOpts, mol1ConfId, mol2ConfId);
-        return nb::make_tuple(nbr_st, nbr_ct);
+        return ScorePair(nb::make_tuple(nbr_st, nbr_ct));
       },
       "mol1"_a, "mol2"_a, "mol1ShapeOpts"_a, "mol2ShapeOpts"_a,
       "mol1ConfId"_a = -1, "mol2ConfId"_a = -1,
@@ -461,7 +477,7 @@ shape options)DOC");
          const ShapeInputOptions &molShapeOpts, int molConfId) {
         auto [nbr_st, nbr_ct] =
             ScoreMolecule(shape, mol, molShapeOpts, molConfId);
-        return nb::make_tuple(nbr_st, nbr_ct);
+        return ScorePair(nb::make_tuple(nbr_st, nbr_ct));
       },
       "shape"_a, "mol"_a, "molShapeOpts"_a, "molConfId"_a = -1,
       R"DOC(Calculate the scores between 2 molecules without moving them.
@@ -487,7 +503,7 @@ Returns
       "ScoreShape",
       [](const ShapeInput &shape1, ShapeInput &shape2, bool useColors) {
         auto [nbr_st, nbr_ct] = ScoreShape(shape1, shape2, useColors);
-        return nb::make_tuple(nbr_st, nbr_ct);
+        return ScorePair(nb::make_tuple(nbr_st, nbr_ct));
       },
       "shape1"_a, "shape2"_a, "useColors"_a = false,
       R"DOC(Calculate the scores between 2 shapes without moving them.

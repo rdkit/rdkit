@@ -9,6 +9,7 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/ndarray.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/tuple.h>
 
 #include <GraphMol/ROMol.h>
@@ -28,10 +29,15 @@ using namespace RDKit;
 
 namespace {
 
-static void copyTransform(
-    const nb::ndarray<nb::numpy, const double, nb::ndim<2>, nb::c_contig>
-        &transMat,
-    RDGeom::Transform3D &trans) {
+//! A 4x4 transformation matrix.
+using TransformMatrix =
+    nb::ndarray<nb::numpy, const double, nb::ndim<2>, nb::c_contig>;
+
+//! A box's two corners, or its dimensions and offset.
+using PointPair = nb::typed<nb::tuple, RDGeom::Point3D, RDGeom::Point3D>;
+
+static void copyTransform(const TransformMatrix &transMat,
+                          RDGeom::Transform3D &trans) {
   unsigned int nrows = transMat.shape(0);
   unsigned int ncols = transMat.shape(1);
   if ((nrows != 4) || (ncols != 4)) {
@@ -53,14 +59,11 @@ NB_MODULE(rdShapeHelpers, m) {
   m.def(
       "EncodeShape",
       [](const ROMol &mol, RDGeom::UniformGrid3D &grid, int confId,
-         nb::object trans, double vdwScale, double stepSize, int maxLayers,
-         bool ignoreHs) {
-        if (!trans.is_none()) {
-          auto transMat = nb::cast<
-              nb::ndarray<nb::numpy, const double, nb::ndim<2>, nb::c_contig>>(
-              trans);
+         const std::optional<TransformMatrix> &trans, double vdwScale,
+         double stepSize, int maxLayers, bool ignoreHs) {
+        if (trans) {
           RDGeom::Transform3D ctrans;
-          copyTransform(transMat, ctrans);
+          copyTransform(*trans, ctrans);
           MolShapes::EncodeShape(mol, grid, confId, &ctrans, vdwScale, stepSize,
                                  maxLayers, ignoreHs);
         } else {
@@ -181,21 +184,19 @@ ARGUMENTS:
 
   m.def(
       "ComputeConfDimsAndOffset",
-      [](const Conformer &conf, nb::object trans, double padding) {
+      [](const Conformer &conf, const std::optional<TransformMatrix> &trans,
+         double padding) {
         RDGeom::Point3D dims, offSet;
-        if (!trans.is_none()) {
-          auto transMat = nb::cast<
-              nb::ndarray<nb::numpy, const double, nb::ndim<2>, nb::c_contig>>(
-              trans);
+        if (trans) {
           RDGeom::Transform3D ctrans;
-          copyTransform(transMat, ctrans);
+          copyTransform(*trans, ctrans);
           MolShapes::computeConfDimsAndOffset(conf, dims, offSet, &ctrans,
                                               padding);
         } else {
           MolShapes::computeConfDimsAndOffset(conf, dims, offSet, nullptr,
                                               padding);
         }
-        return nb::make_tuple(dims, offSet);
+        return PointPair(nb::make_tuple(dims, offSet));
       },
       "conf"_a, "trans"_a = nb::none(), "padding"_a = 2.0,
       R"DOC(Compute the size of the box that can fit the conformations, and offset
@@ -203,29 +204,28 @@ of the box from the origin)DOC");
 
   m.def(
       "ComputeConfBox",
-      [](const Conformer &conf, nb::object trans, double padding) {
+      [](const Conformer &conf, const std::optional<TransformMatrix> &trans,
+         double padding) {
         RDGeom::Point3D lowerCorner, upperCorner;
-        if (!trans.is_none()) {
-          auto transMat = nb::cast<
-              nb::ndarray<nb::numpy, const double, nb::ndim<2>, nb::c_contig>>(
-              trans);
+        if (trans) {
           RDGeom::Transform3D ctrans;
-          copyTransform(transMat, ctrans);
+          copyTransform(*trans, ctrans);
           MolShapes::computeConfBox(conf, lowerCorner, upperCorner, &ctrans,
                                     padding);
         } else {
           MolShapes::computeConfBox(conf, lowerCorner, upperCorner, nullptr,
                                     padding);
         }
-        return nb::make_tuple(lowerCorner, upperCorner);
+        return PointPair(nb::make_tuple(lowerCorner, upperCorner));
       },
       "conf"_a, "trans"_a = nb::none(), "padding"_a = 2.0,
       "Compute the lower and upper corners of a cuboid that will fit the conformer");
 
   m.def(
       "ComputeUnionBox",
-      [](nb::tuple box1, nb::tuple box2) {
-        if (nb::len(box1) != 2 || nb::len(box2) != 2) {
+      [](const nb::typed<nb::tuple, RDGeom::Point3D, RDGeom::Point3D> &box1,
+         const nb::typed<nb::tuple, RDGeom::Point3D, RDGeom::Point3D> &box2) {
+        if (box1.size() != 2 || box2.size() != 2) {
           throw nb::value_error(
               "In correct format for one of the box: expecting a tuple of two "
               "Point3D");
@@ -237,7 +237,7 @@ of the box from the origin)DOC");
         RDGeom::Point3D lowerCorner, upperCorner;
         MolShapes::computeUnionBox(lC1, uC1, lC2, uC2, lowerCorner,
                                    upperCorner);
-        return nb::make_tuple(lowerCorner, upperCorner);
+        return PointPair(nb::make_tuple(lowerCorner, upperCorner));
       },
       "box1"_a, "box2"_a,
       R"DOC(Compute the union of two boxes, so that all the points in both boxes are

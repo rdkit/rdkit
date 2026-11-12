@@ -9,9 +9,12 @@
 //  of the RDKit source tree.
 //
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>
+#include <nanobind/stl/map.h>
+#include <nanobind/stl/optional.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
-#include <nanobind/stl/wstring.h>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/tuple.h>
 
 #include <GraphMol/MolPickler.h>
@@ -42,13 +45,17 @@ void wrap_enumeration(nb::module_ &m);
 
 namespace RDKit {
 
-std::string pyObjectToString(nb::object input) {
-  if (nb::isinstance<nb::str>(input)) {
-    return nb::cast<std::string>(input);
-  }
-  std::wstring ws = nb::cast<std::wstring>(input);
-  return std::string(ws.begin(), ws.end());
-}
+using TupleOfMolTuples = PyTupleOf<PyTupleOf<ROMol *>>;
+using TupleOfReactions = PyTupleOf<ChemicalReaction *>;
+using TupleOfIntTuples = PyTupleOf<PyTupleOf<int>>;
+using TupleOfLabelTuples = nb::typed<
+    nb::tuple,
+    nb::typed<nb::tuple, nb::typed<nb::tuple, unsigned int, std::string>,
+              nb::ellipsis>,
+    nb::ellipsis>;
+using PreprocessResult =
+    nb::typed<nb::tuple, unsigned int, unsigned int, unsigned int, unsigned int,
+              TupleOfLabelTuples>;
 
 nb::bytes ReactionToBinaryWithProps(const ChemicalReaction &self,
                                     unsigned int props) {
@@ -68,8 +75,9 @@ std::string ReactionToBinaryString(const ChemicalReaction &self) {
   return res;
 }
 
-nb::tuple RunReactants(ChemicalReaction *self, nb::object reactants,
-                       unsigned int maxProducts) {
+TupleOfMolTuples RunReactants(ChemicalReaction *self,
+                              const PySequenceOf<ROMol> &reactants,
+                              unsigned int maxProducts) {
   if (!self->isInitialized()) {
     NOGIL gil;
     self->initReactantMatchers();
@@ -97,11 +105,11 @@ nb::tuple RunReactants(ChemicalReaction *self, nb::object reactants,
     }
     res.append(nb::tuple(inner));
   }
-  return nb::tuple(res);
+  return TupleOfMolTuples(nb::tuple(res));
 }
 
-nb::tuple RunReactant(ChemicalReaction *self, ROMol &reactant,
-                      unsigned int reactionIdx) {
+TupleOfMolTuples RunReactant(ChemicalReaction *self, ROMol &reactant,
+                             unsigned int reactionIdx) {
   ROMOL_SPTR react(&reactant, [](ROMol *) {});
   std::vector<MOL_SPTR_VECT> mols;
   {
@@ -119,7 +127,7 @@ nb::tuple RunReactant(ChemicalReaction *self, ROMol &reactant,
     }
     res.append(nb::tuple(inner));
   }
-  return nb::tuple(res);
+  return TupleOfMolTuples(nb::tuple(res));
 }
 
 bool RunReactantInPlace(ChemicalReaction *self, ROMol &reactant,
@@ -170,49 +178,50 @@ ROMol *GetAgentTemplate(const ChemicalReaction *self, unsigned int which) {
   return const_cast<ROMol *>(iter->get());
 }
 
-void RemoveUnmappedReactantTemplates(ChemicalReaction *self,
-                                     double thresholdUnmappedAtoms,
-                                     bool moveToAgentTemplates,
-                                     nb::object targetList) {
-  if (targetList.is_none()) {
+void RemoveUnmappedReactantTemplates(
+    ChemicalReaction *self, double thresholdUnmappedAtoms,
+    bool moveToAgentTemplates,
+    const std::optional<PyListOf<ROMol>> &targetList) {
+  if (!targetList) {
     self->removeUnmappedReactantTemplates(thresholdUnmappedAtoms,
                                           moveToAgentTemplates);
   } else {
     MOL_SPTR_VECT tmp;
     self->removeUnmappedReactantTemplates(thresholdUnmappedAtoms,
                                           moveToAgentTemplates, &tmp);
-    nb::list molList = nb::cast<nb::list>(targetList);
+    nb::list molList = *targetList;
     for (auto &mol : tmp) {
       molList.append(toStd(mol));
     }
   }
 }
 
-void RemoveUnmappedProductTemplates(ChemicalReaction *self,
-                                    double thresholdUnmappedAtoms,
-                                    bool moveToAgentTemplates,
-                                    nb::object targetList) {
-  if (targetList.is_none()) {
+void RemoveUnmappedProductTemplates(
+    ChemicalReaction *self, double thresholdUnmappedAtoms,
+    bool moveToAgentTemplates,
+    const std::optional<PyListOf<ROMol>> &targetList) {
+  if (!targetList) {
     self->removeUnmappedProductTemplates(thresholdUnmappedAtoms,
                                          moveToAgentTemplates);
   } else {
     MOL_SPTR_VECT tmp;
     self->removeUnmappedProductTemplates(thresholdUnmappedAtoms,
                                          moveToAgentTemplates, &tmp);
-    nb::list molList = nb::cast<nb::list>(targetList);
+    nb::list molList = *targetList;
     for (auto &mol : tmp) {
       molList.append(toStd(mol));
     }
   }
 }
 
-void RemoveAgentTemplates(ChemicalReaction &self, nb::object targetList) {
-  if (targetList.is_none()) {
+void RemoveAgentTemplates(ChemicalReaction &self,
+                          const std::optional<PyListOf<ROMol>> &targetList) {
+  if (!targetList) {
     self.removeAgentTemplates();
   } else {
     MOL_SPTR_VECT tmp;
     self.removeAgentTemplates(&tmp);
-    nb::list molList = nb::cast<nb::list>(targetList);
+    nb::list molList = *targetList;
     for (auto &mol : tmp) {
       molList.append(toStd(mol));
     }
@@ -255,22 +264,20 @@ bool IsMoleculeAgentOfReaction(const ChemicalReaction &rxn, const ROMol &mol) {
   return isMoleculeAgentOfReaction(rxn, mol, which);
 }
 
-ChemicalReaction *ReactionFromSmarts(const char *smarts, nb::dict replDict,
-                                     bool useSmiles) {
+ChemicalReaction *ReactionFromSmarts(
+    const char *smarts, std::map<std::string, std::string> replDict,
+    bool useSmiles) {
   PRECONDITION(smarts, "null SMARTS string");
-  std::map<std::string, std::string> replacements;
-  for (auto [k, v] : replDict) {
-    replacements[nb::cast<std::string>(k)] = nb::cast<std::string>(v);
-  }
-  return RxnSmartsToChemicalReaction(smarts, &replacements, useSmiles);
+  return RxnSmartsToChemicalReaction(smarts, &replDict, useSmiles);
 }
 
-ChemicalReaction *ReactionFromSmiles(const char *smiles, nb::dict replDict) {
-  return ReactionFromSmarts(smiles, replDict, true);
+ChemicalReaction *ReactionFromSmiles(
+    const char *smiles, std::map<std::string, std::string> replDict) {
+  return ReactionFromSmarts(smiles, std::move(replDict), true);
 }
 
-ChemicalReaction *ReactionFromMrvFile(const char *rxnFilename, bool sanitize,
-                                      bool removeHs) {
+Nullable<ChemicalReaction *> ReactionFromMrvFile(const char *rxnFilename,
+                                                 bool sanitize, bool removeHs) {
   ChemicalReaction *newR = nullptr;
   try {
     newR = MrvFileToChemicalReaction(rxnFilename, sanitize, removeHs);
@@ -284,8 +291,8 @@ ChemicalReaction *ReactionFromMrvFile(const char *rxnFilename, bool sanitize,
   return newR;
 }
 
-ChemicalReaction *ReactionFromMrvBlock(nb::object imolBlock, bool sanitize,
-                                       bool removeHs) {
+Nullable<ChemicalReaction *> ReactionFromMrvBlock(
+    const StringOrBytes &imolBlock, bool sanitize, bool removeHs) {
   std::istringstream inStream(pyObjectToString(imolBlock));
   ChemicalReaction *newR = nullptr;
   try {
@@ -297,8 +304,8 @@ ChemicalReaction *ReactionFromMrvBlock(nb::object imolBlock, bool sanitize,
   return newR;
 }
 
-nb::tuple ReactionsFromCDXMLFile(const char *filename, bool sanitize,
-                                 bool removeHs) {
+TupleOfReactions ReactionsFromCDXMLFile(const char *filename, bool sanitize,
+                                        bool removeHs) {
   std::vector<std::unique_ptr<ChemicalReaction>> rxns;
   try {
     rxns = CDXMLFileToChemicalReactions(filename, sanitize, removeHs);
@@ -313,11 +320,11 @@ nb::tuple ReactionsFromCDXMLFile(const char *filename, bool sanitize,
   for (auto &rxn : rxns) {
     res.append(nb::cast(rxn.release(), nb::rv_policy::take_ownership));
   }
-  return nb::tuple(res);
+  return TupleOfReactions(nb::tuple(res));
 }
 
-nb::tuple ReactionsFromCDXMLBlock(nb::object imolBlock, bool sanitize,
-                                  bool removeHs) {
+TupleOfReactions ReactionsFromCDXMLBlock(const StringOrBytes &imolBlock,
+                                         bool sanitize, bool removeHs) {
   std::istringstream inStream(pyObjectToString(imolBlock));
   std::vector<std::unique_ptr<ChemicalReaction>> rxns;
   try {
@@ -330,10 +337,11 @@ nb::tuple ReactionsFromCDXMLBlock(nb::object imolBlock, bool sanitize,
   for (auto &rxn : rxns) {
     res.append(nb::cast(rxn.release(), nb::rv_policy::take_ownership));
   }
-  return nb::tuple(res);
+  return TupleOfReactions(nb::tuple(res));
 }
 
-nb::tuple GetReactingAtoms(const ChemicalReaction &self, bool mappedAtomsOnly) {
+TupleOfIntTuples GetReactingAtoms(const ChemicalReaction &self,
+                                  bool mappedAtomsOnly) {
   nb::list res;
   VECT_INT_VECT rAs = getReactingAtoms(self, mappedAtomsOnly);
   for (auto &rA : rAs) {
@@ -343,12 +351,12 @@ nb::tuple GetReactingAtoms(const ChemicalReaction &self, bool mappedAtomsOnly) {
     }
     res.append(nb::tuple(inner));
   }
-  return nb::tuple(res);
+  return TupleOfIntTuples(nb::tuple(res));
 }
 
-nb::object AddRecursiveQueriesToReaction(ChemicalReaction &self,
-                                         nb::dict queryDict,
-                                         std::string propName, bool getLabels) {
+nb::object AddRecursiveQueriesToReaction(
+    ChemicalReaction &self, const PyDictOf<std::string, ROMol> &queryDict,
+    std::string propName, bool getLabels) {
   std::map<std::string, ROMOL_SPTR> queries;
   for (auto [k, v] : queryDict) {
     ROMol *m = nb::cast<ROMol *>(v);
@@ -378,10 +386,11 @@ nb::object AddRecursiveQueriesToReaction(ChemicalReaction &self,
   }
 }
 
-nb::object PreprocessReaction(ChemicalReaction &reaction, nb::dict queryDict,
-                              std::string propName) {
+PreprocessResult PreprocessReaction(
+    ChemicalReaction &reaction, const PyDictOf<std::string, ROMol> &queryDict,
+    std::string propName) {
   std::map<std::string, ROMOL_SPTR> queries;
-  unsigned int size = nb::len(queryDict);
+  unsigned int size = queryDict.size();
   if (!size) {
     const bool normalized = true;
     queries = GetFlattenedFunctionalGroupHierarchy(normalized);
@@ -414,8 +423,8 @@ nb::object PreprocessReaction(ChemicalReaction &reaction, nb::dict queryDict,
     }
     reactantLabels.append(nb::tuple(tmpLabels));
   }
-  return nb::make_tuple(nWarn, nError, nReactants, nProducts,
-                        nb::tuple(reactantLabels));
+  return PreprocessResult(nb::make_tuple(nWarn, nError, nReactants, nProducts,
+                                         nb::tuple(reactantLabels)));
 }
 
 RxnOps::SanitizeRxnFlags sanitizeReaction(
@@ -443,12 +452,12 @@ nb::bytes addReactionToPNGStringHelper(const ChemicalReaction &rxn,
 }
 
 nb::bytes addReactionToPNGFileHelper(const ChemicalReaction &rxn,
-                                     nb::object fname, bool includePkl,
-                                     bool includeSmiles, bool includeSmarts,
-                                     bool includeRxn) {
-  std::string cstr = nb::cast<std::string>(fname);
-  auto res = addChemicalReactionToPNGFile(rxn, cstr, includePkl, includeSmiles,
-                                          includeSmarts, includeRxn);
+                                     const std::filesystem::path &fname,
+                                     bool includePkl, bool includeSmiles,
+                                     bool includeSmarts, bool includeRxn) {
+  auto res = addChemicalReactionToPNGFile(rxn, fname.string(), includePkl,
+                                          includeSmiles, includeSmarts,
+                                          includeRxn);
   return nb::bytes(res.c_str(), res.length());
 }
 
@@ -488,7 +497,8 @@ fingerprints of chemical reactions.)DOC")
               &RDKit::ReactionFingerprintParams::nonAgentWeight)
       .def_rw("agentWeight", &RDKit::ReactionFingerprintParams::agentWeight)
       .def_rw("includeAgents", &RDKit::ReactionFingerprintParams::includeAgents)
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   nb::class_<RDKit::ChemicalReaction>(
       m, "ChemicalReaction", nb::dynamic_attr(),
@@ -645,7 +655,7 @@ single product reactions.)DOC")
       .def(
           "GetReactants",
           [](const RDKit::ChemicalReaction &rxn) {
-            nb::list res;
+            PyListOf<RDKit::ROMol *> res;
             for (const auto &mol : rxn.getReactants()) {
               res.append(toStd(mol));
             }
@@ -655,7 +665,7 @@ single product reactions.)DOC")
       .def(
           "GetProducts",
           [](const RDKit::ChemicalReaction &rxn) {
-            nb::list res;
+            PyListOf<RDKit::ROMol *> res;
             for (const auto &mol : rxn.getProducts()) {
               res.append(toStd(mol));
             }
@@ -665,7 +675,7 @@ single product reactions.)DOC")
       .def(
           "GetAgents",
           [](const RDKit::ChemicalReaction &rxn) {
-            nb::list res;
+            PyListOf<RDKit::ROMol *> res;
             for (const auto &mol : rxn.getAgents()) {
               res.append(toStd(mol));
             }
@@ -892,15 +902,30 @@ of the replacements argument.)DOC",
         "flags"_a = RDKit::SmilesWrite::CXSmilesFields::CX_ALL,
         "construct a reaction CXSMILES string for a ChemicalReaction");
 
-  m.def("ReactionFromRxnFile", RDKit::RxnFileToChemicalReaction, "filename"_a,
-        "sanitize"_a = false, "removeHs"_a = false, "strictParsing"_a = true,
-        "construct a ChemicalReaction from an MDL rxn file",
-        nb::rv_policy::take_ownership);
+  m.def(
+      "ReactionFromRxnFile",
+      [](const std::filesystem::path &filename, bool sanitize, bool removeHs,
+         bool strictParsing) -> Nullable<RDKit::ChemicalReaction *> {
+        return RDKit::RxnFileToChemicalReaction(filename.string(), sanitize,
+                                                removeHs, strictParsing);
+      },
+      "filename"_a, "sanitize"_a = false, "removeHs"_a = false,
+      "strictParsing"_a = true,
+      "construct a ChemicalReaction from an MDL rxn file",
+      nb::rv_policy::take_ownership);
 
-  m.def("ReactionFromRxnBlock", RDKit::RxnBlockToChemicalReaction, "rxnblock"_a,
-        "sanitize"_a = false, "removeHs"_a = false, "strictParsing"_a = true,
-        "construct a ChemicalReaction from a string in MDL rxn format",
-        nb::rv_policy::take_ownership);
+  m.def(
+      "ReactionFromRxnBlock",
+      [](const StringOrBytes &rxnblock, bool sanitize, bool removeHs,
+         bool strictParsing) {
+        return RDKit::RxnBlockToChemicalReaction(pyObjectToString(rxnblock),
+                                                 sanitize, removeHs,
+                                                 strictParsing);
+      },
+      "rxnblock"_a, "sanitize"_a = false, "removeHs"_a = false,
+      "strictParsing"_a = true,
+      "construct a ChemicalReaction from a string in MDL rxn format",
+      nb::rv_policy::take_ownership);
 
   m.def("ReactionFromMrvFile", RDKit::ReactionFromMrvFile, "filename"_a,
         "sanitize"_a = false, "removeHs"_a = false,
@@ -912,11 +937,21 @@ of the replacements argument.)DOC",
         "construct a ChemicalReaction from a string in Marvin (mrv) format",
         nb::rv_policy::take_ownership);
 
-  m.def("MrvFileIsReaction", RDKit::MrvFileIsReaction, "filename"_a,
-        "returns whether or not an MRV file contains reaction data");
+  m.def(
+      "MrvFileIsReaction",
+      [](const std::filesystem::path &filename) {
+        return RDKit::MrvFileIsReaction(filename.string());
+      },
+      "filename"_a,
+      "returns whether or not an MRV file contains reaction data");
 
-  m.def("MrvBlockIsReaction", RDKit::MrvBlockIsReaction, "mrvData"_a,
-        "returns whether or not an MRV block contains reaction data");
+  m.def(
+      "MrvBlockIsReaction",
+      [](const StringOrBytes &mrvData) {
+        return RDKit::MrvBlockIsReaction(pyObjectToString(mrvData));
+      },
+      "mrvData"_a,
+      "returns whether or not an MRV block contains reaction data");
 
   m.def("ReactionsFromCDXMLFile", RDKit::ReactionsFromCDXMLFile, "filename"_a,
         "sanitize"_a = false, "removeHs"_a = false,
@@ -934,18 +969,28 @@ of the replacements argument.)DOC",
         "prettyPrint"_a = false,
         "construct a string in Marvin (MRV) rxn format for a ChemicalReaction");
 
-  m.def("ReactionToMrvFile", RDKit::ChemicalReactionToMrvFile, "reaction"_a,
-        "filename"_a, "prettyPrint"_a = false,
-        "write a Marvin (MRV) rxn file for a ChemicalReaction");
+  m.def(
+      "ReactionToMrvFile",
+      [](const RDKit::ChemicalReaction &reaction,
+         const std::filesystem::path &filename, bool prettyPrint) {
+        RDKit::ChemicalReactionToMrvFile(reaction, filename.string(),
+                                         prettyPrint);
+      },
+      "reaction"_a, "filename"_a, "prettyPrint"_a = false,
+      "write a Marvin (MRV) rxn file for a ChemicalReaction");
 
   m.def("ReactionToV3KRxnBlock", RDKit::ChemicalReactionToV3KRxnBlock,
         "reaction"_a, "separateAgents"_a = false,
         "construct a string in MDL v3000 rxn format for a ChemicalReaction");
 
 #ifdef RDK_USE_BOOST_IOSTREAMS
-  m.def("ReactionFromPNGFile", RDKit::PNGFileToChemicalReaction, "fname"_a,
-        "construct a ChemicalReaction from metadata in a PNG file",
-        nb::rv_policy::take_ownership);
+  m.def(
+      "ReactionFromPNGFile",
+      [](const std::filesystem::path &fname) {
+        return RDKit::PNGFileToChemicalReaction(fname.string());
+      },
+      "fname"_a, "construct a ChemicalReaction from metadata in a PNG file",
+      nb::rv_policy::take_ownership);
   m.def(
       "ReactionFromPNGString",
       [](nb::bytes data) {
@@ -1191,15 +1236,11 @@ One unrecognized group type in a comma-separated list makes the whole thing fail
   m.def(
       "SanitizeRxn",
       [](RDKit::ChemicalReaction &rxn, unsigned int sanitizeOps,
-         nb::object params, bool catchErrors) {
-        if (params.is_none()) {
-          return RDKit::sanitizeReaction(
-              rxn, sanitizeOps, RDKit::RxnOps::DefaultRxnAdjustParams(),
-              catchErrors);
-        }
+         const std::optional<RDKit::MolOps::AdjustQueryParameters> &params,
+         bool catchErrors) {
         return RDKit::sanitizeReaction(
             rxn, sanitizeOps,
-            nb::cast<const RDKit::MolOps::AdjustQueryParameters &>(params),
+            params.value_or(RDKit::RxnOps::DefaultRxnAdjustParams()),
             catchErrors);
       },
       "rxn"_a,

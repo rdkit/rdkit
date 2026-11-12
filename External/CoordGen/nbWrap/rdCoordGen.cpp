@@ -10,6 +10,7 @@
 
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/optional.h>
 
 #include <GraphMol/RDKitBase.h>
@@ -23,7 +24,8 @@ namespace RDKit {
 
 namespace {
 
-void SetCoordMap(CoordGen::CoordGenParams *self, nb::dict coordMap) {
+void SetCoordMap(CoordGen::CoordGenParams *self,
+                 const PyDictOf<unsigned int, RDGeom::Point2D> &coordMap) {
   self->coordMap.clear();
   for (auto item : coordMap) {
     unsigned int id = nb::cast<unsigned int>(item.first);
@@ -41,8 +43,8 @@ void SetTemplateMol(CoordGen::CoordGenParams *self, const ROMol *templ) {
   self->templateMol = templ;
 }
 
-void SetDefaultTemplateFileDir(const std::string &dir) {
-  CoordGen::defaultParams.templateFileDir = dir;
+void SetDefaultTemplateFileDir(const std::filesystem::path &dir) {
+  CoordGen::defaultParams.templateFileDir = dir.string();
 }
 
 }  // end of anonymous namespace
@@ -90,7 +92,8 @@ coordinates most of the time, this is the default setting for the RDKit)DOC")
       .def_rw("treatNonterminalBondsToMetalAsZOBs",
               &RDKit::CoordGen::CoordGenParams::
                   treatNonterminalBondsToMetalAsZeroOrder)
-      .def("__setattr__", &safeSetattr);
+      .def("__setattr__", &safeSetattr, nb::arg("name"),
+           nb::arg("value").none());
 
   m.def("SetDefaultTemplateFileDir", &RDKit::SetDefaultTemplateFileDir,
         "dir"_a);

@@ -35,7 +35,7 @@ T *MolSupplIter(T *suppl) {
 }
 
 template <typename T>
-ROMol *MolSupplNext(T *suppl) {
+Nullable<ROMol *> MolSupplNext(T *suppl) {
   ROMol *res = nullptr;
   if (!suppl->atEnd()) {
     try {
@@ -52,7 +52,7 @@ ROMol *MolSupplNext(T *suppl) {
 }
 
 template <typename T>
-ROMol *MolSupplGetItem(T *suppl, int idx) {
+Nullable<ROMol *> MolSupplGetItem(T *suppl, int idx) {
   ROMol *res = nullptr;
   if (idx < 0) {
     idx = static_cast<int>(suppl->length()) + idx;
@@ -278,12 +278,14 @@ struct resmolsup_wrap {
             (ResonanceMolSupplier * (*)(ResonanceMolSupplier *)) & MolSupplIter,
             nb::rv_policy::reference_internal)
         .def(
-            "__next__", (ROMol * (*)(ResonanceMolSupplier *)) & MolSupplNext,
+            "__next__",
+            (Nullable<ROMol *>(*)(ResonanceMolSupplier *)) & MolSupplNext,
             nb::rv_policy::take_ownership,
             R"DOC(Returns the next resonance structure in the supplier. Raises _StopIteration_ on end.
 )DOC")
         .def("__getitem__",
-             (ROMol * (*)(ResonanceMolSupplier *, int)) & MolSupplGetItem,
+             (Nullable<ROMol *>(*)(ResonanceMolSupplier *, int)) &
+                 MolSupplGetItem,
              nb::rv_policy::take_ownership, "idx"_a)
         .def(
             "reset", &ResonanceMolSupplier::reset,

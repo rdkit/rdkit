@@ -9,6 +9,8 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <RDBoost/Wrap_nb.h>
+#include <nanobind/stl/variant.h>
 #include <nanobind/stl/unique_ptr.h>
 #include <nanobind/stl/vector.h>
 
@@ -32,9 +34,18 @@ protecting groups from molecules.)DOC";
  deprotectdata.full_name - full name for the protecting group
 
 )DOC")
-      .def(nb::init<std::string, std::string, std::string, std::string>(),
-           "deprotection_class"_a, "reaction_smarts"_a, "abbreviation"_a,
-           "full_name"_a,
+      .def(
+          "__init__",
+          [](Deprotect::DeprotectData *self,
+             const std::string &deprotection_class,
+             const StringOrBytes &reaction_smarts,
+             const std::string &abbreviation, const std::string &full_name) {
+            new (self) Deprotect::DeprotectData(
+                deprotection_class, pyObjectToString(reaction_smarts),
+                abbreviation, full_name);
+          },
+          "deprotection_class"_a, "reaction_smarts"_a, "abbreviation"_a,
+          "full_name"_a,
            R"DOC(Construct a new DeprotectData instance.
   >>> reaction_class = "amine"
   >>> reaction_smarts = "[C;R0][C;R0]([C;R0])([O;R0][C;R0](=[O;R0])[NX3;H0,H1:1])C>>[N:1]"

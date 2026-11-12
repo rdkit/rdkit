@@ -10,6 +10,7 @@
 
 #define NO_IMPORT_ARRAY
 #include <nanobind/nanobind.h>
+#include <nanobind/stl/filesystem.h>
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 #include <string>
@@ -32,7 +33,8 @@ class LocalSDWriter : public SDWriter {
   LocalSDWriter(nb::object fileObj)
       : SDWriter(new streambuf::ostream(new streambuf(fileObj, 't')), true) {}
 
-  LocalSDWriter(std::string fileName) : SDWriter(fileName) {}
+  LocalSDWriter(const std::filesystem::path &fileName)
+      : SDWriter(fileName.string()) {}
 };
 }  // namespace
 
@@ -71,7 +73,7 @@ struct sdwriter_wrap {
        >>> writer.SetProps(['prop1','prop2'])
 
 )DOC")
-        .def(nb::init<std::string>(), "fileName"_a,
+        .def(nb::init<std::filesystem::path>(), "fileName"_a,
              R"DOC(Constructor.
 
 If a string argument is provided, it will be treated as the name of the
@@ -82,11 +84,10 @@ output file. If a file-like object is provided, output will be sent there.
             "__init__",
             [](LocalSDWriter *self, nb::object fileObj) {
               if (!nb::hasattr(fileObj, "write")) {
-                nb::str fnStr(fileObj);
-                new (self) LocalSDWriter(fnStr.c_str());
-              } else {
-                new (self) LocalSDWriter(fileObj);
+                throw nb::type_error(
+                    "expected a filename or an object with a write() method");
               }
+              new (self) LocalSDWriter(fileObj);
             },
             "fileObj"_a)
         .def("__enter__", &MolIOEnter<LocalSDWriter>,

@@ -42,7 +42,8 @@ class TestCase(unittest.TestCase):
       self.assertEqual(len(sgs), 6)
 
     # check defaults:
-    for mol in (Chem.MolFromSCSRBlock(scsrBlock), Chem.MolFromSCSRFile(ofile)):
+    for mol in (Chem.MolFromSCSRBlock(scsrBlock), Chem.MolFromSCSRBlock(scsrBlock.encode()),
+                Chem.MolFromSCSRFile(ofile)):
       self.assertTrue(mol.GetNumAtoms() == 30)
       sgs = Chem.GetMolSubstanceGroups(mol)
       self.assertEqual(len(sgs), 6)

@@ -10,6 +10,7 @@
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
+#include <RDBoost/Wrap_nb.h>
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolChemicalFeatures/MolChemicalFeature.h>
@@ -20,7 +21,7 @@ using namespace nb::literals;
 using namespace RDKit;
 
 namespace {
-nb::tuple getFeatAtomIds(const MolChemicalFeature &feat) {
+PyTupleOf<unsigned int> getFeatAtomIds(const MolChemicalFeature &feat) {
   nb::list res;
   for (const auto *atom : feat.getAtoms()) {
     res.append(atom->getIdx());

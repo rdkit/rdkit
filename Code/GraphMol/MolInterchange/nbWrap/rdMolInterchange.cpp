@@ -9,6 +9,7 @@
 //
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/string.h>
+#include <RDBoost/Wrap_nb.h>
 #include <RDBoost/boost_shared_ptr.h>
 
 #include <GraphMol/GraphMol.h>
@@ -66,7 +67,7 @@ RETURNS:
 
   m.def(
       "MolsToJSON",
-      [](nb::object mols_obj,
+      [](const PyIterableOf<RDKit::ROMol> &mols_obj,
          const RDKit::MolInterchange::JSONWriteParameters &params) {
         std::vector<const RDKit::ROMol *> mols;
         for (nb::handle h : nb::iter(mols_obj)) {
@@ -85,14 +86,15 @@ RETURNS:
 
   m.def(
       "JSONToMols",
-      [](const std::string &jsonBlock,
+      [](const StringOrBytes &jsonBlock,
          const RDKit::MolInterchange::JSONParseParameters &params) {
-        auto mols = RDKit::MolInterchange::JSONDataToMols(jsonBlock, params);
+        auto mols = RDKit::MolInterchange::JSONDataToMols(
+            pyObjectToString(jsonBlock), params);
         nb::list result;
         for (auto &mol : mols) {
           result.append(mol);
         }
-        return nb::tuple(result);
+        return PyTupleOf<RDKit::ROMol *>(nb::tuple(result));
       },
       "jsonBlock"_a,
       "params"_a = RDKit::MolInterchange::defaultJSONParseParameters,
