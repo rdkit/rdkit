@@ -577,14 +577,13 @@ bool SynthonSpaceSearcher::quickVerify(
 
 void SynthonSpaceSearcher::updateBestHitSoFar(const ROMol &possBest,
                                               const double sim) {
+  // Readers and the comparison must use the same mutex as the update. A
+  // preliminary unlocked comparison races with other search workers.
+  std::lock_guard lock{d_bestHitsMutex};
   if (sim > d_bestSimilarity) {
-    std::unique_lock lock1{d_bestHitsMutex};
-    // In case another thread changed it in the meantime.
-    if (sim > d_bestSimilarity) {
-      d_bestSimilarity = sim;
-      d_bestHitFound.reset(new ROMol(possBest));
-      d_bestHitFound->setProp<double>("Similarity", sim);
-    }
+    d_bestSimilarity = sim;
+    d_bestHitFound.reset(new ROMol(possBest));
+    d_bestHitFound->setProp<double>("Similarity", sim);
   }
 }
 

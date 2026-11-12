@@ -949,9 +949,9 @@ TEST_CASE("testIssue3483968") {
 
 #ifdef RDK_TEST_MULTITHREADED
 namespace {
-void runblock(const std::vector<std::shared_ptr<RWMol>> &mols,
-              const std::vector<double> &energies, unsigned int count,
-              unsigned int idx, const bool legacyETKDG) {
+std::string runblock(const std::vector<std::shared_ptr<RWMol>> &mols,
+                     const std::vector<double> &energies, unsigned int count,
+                     unsigned int idx, const bool legacyETKDG) {
   for (std::size_t j = 0; j < 100; j++) {
     for (std::size_t i = 0; i < mols.size(); ++i) {
       if (i % count != idx) {
@@ -964,19 +964,26 @@ void runblock(const std::vector<std::shared_ptr<RWMol>> &mols,
           .useLegacyImplementation = legacyETKDG};
       std::vector<int> cids =
           DGeomHelpers::EmbedMultipleConfs(*mol, 10, params);
-      REQUIRE(cids.size() == 10);
+      // Catch2 assertion reporting is shared state: return failures to the
+      // calling thread instead of making assertions from these workers.
+      if (cids.size() != 10) {
+        return "Incorrect conformer count for molecule " + std::to_string(i);
+      }
       std::unique_ptr<ForceFields::ForceField> field(
           UFF::constructForceField(*mol, 100, cids[0]));
-      REQUIRE(field);
+      if (!field) {
+        return "Missing force field for molecule " + std::to_string(i);
+      }
       field->initialize();
       double eng = field->calcEnergy();
       if (!feq(eng, energies[i])) {
-        std::cerr << i << " iter " << j << " " << energies[i] << " != " << eng
-                  << std::endl;
+        return "Energy mismatch for molecule " + std::to_string(i) +
+               " at iteration " + std::to_string(j) + ": " +
+               std::to_string(energies[i]) + " != " + std::to_string(eng);
       }
-      CHECK(feq(eng, energies[i]));
     }
   }
+  return {};
 }
 }  // namespace
 
@@ -1031,7 +1038,7 @@ TEST_CASE("testMultiThread") {
     CHECK(feq(eng, energies[i]));
   }
 
-  std::vector<std::future<void>> tg;
+  std::vector<std::future<std::string>> tg;
   std::cerr << "processing" << std::endl;
   unsigned int count = 4;
   for (unsigned int i = 0; i < count; ++i) {
@@ -1041,7 +1048,9 @@ TEST_CASE("testMultiThread") {
                                count, i, legacyETKDG));
   }
   for (auto &fut : tg) {
-    fut.get();
+    const auto error = fut.get();
+    INFO(error);
+    CHECK(error.empty());
   }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
@@ -1968,6 +1977,7 @@ TEST_CASE("Parallel embedding failures keep independent conformer flags") {
   params.randomSeed = 42;
   params.maxIterations = 1;
   params.trackFailures = true;
+  params.numThreads = 1;
   const auto serialIds = DGeomHelpers::EmbedMultipleConfs(*mol, numConfs, params);
   const auto serialFailures = params.failures;
   REQUIRE(serialIds.size() < numConfs);
@@ -1975,5 +1985,24 @@ TEST_CASE("Parallel embedding failures keep independent conformer flags") {
   const auto parallelIds = DGeomHelpers::EmbedMultipleConfs(*mol, numConfs, params);
   CHECK(parallelIds == serialIds);
   CHECK(params.failures == serialFailures);
+}
+
+TEST_CASE("First parallel embedding resolves shared defaults") {
+  const bool legacy = GENERATE(true, false);
+  const bool randomCoords = GENERATE(false, true);
+  auto mol = "CCCCCCO"_smiles;
+  MolOps::addHs(*mol);
+  auto params = DGeomHelpers::ETKDGv3;
+  params.useLegacyImplementation = legacy;
+  params.useRandomCoords = randomCoords;
+  params.numThreads = 2;
+  params.randomSeed = 42;
+  REQUIRE(params.maxIterations == 0);
+  const auto ids = DGeomHelpers::EmbedMultipleConfs(*mol, 8, params);
+  CHECK(ids.size() == 8);
+  CHECK(params.maxIterations == 10 * mol->getNumAtoms());
+  if (randomCoords) {
+    CHECK(params.basinThresh == 1e8);
+  }
 }
 #endif
