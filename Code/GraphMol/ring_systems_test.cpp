@@ -204,3 +204,97 @@ TEST_CASE("bulk performance") {
             << " seconds." << std::endl;
 }
 #endif
+
+TEST_CASE("max number of relevant cycles") {
+  SECTION("clipping") {
+    std::string unit = "-C1CCC(CC1)";
+    std::string smiles = "C12CCC(CC1)";
+    for (auto i = 0; i < 20; ++i) {
+      smiles += unit;
+    }
+    smiles += "-C1CCC2(CC1)";
+    v2::SmilesParse::SmilesParserParams params;
+    params.sanitize = false;
+    auto m = v2::SmilesParse::MolFromSmiles(smiles, params);
+    REQUIRE(m);
+    MolOps::findRingFamilies(*m);
+    auto ri = m->getRingInfo();
+    CHECK(ri->numRingFamilies() == 23);
+    CHECK(ri->numRelevantCycles() == 4194326);
+    std::vector<std::vector<int>> rings;
+    auto nExpected = MAX_SYMMETRIZED_RINGS + ri->numRingFamilies();
+    CHECK(MolOps::symmetrizeSSSR(*m, rings,
+                                 MolOps::SymmetrizeSSSRAlgorithm::RDL) ==
+          static_cast<int>(nExpected));
+    CHECK(rings.size() == nExpected);
+  }
+  SECTION("max-out") {
+    std::string unit = "-C1CCC(CC1)";
+    std::string smiles = "C12CCC(CC1)";
+    for (auto i = 0; i < 31; ++i) {
+      smiles += unit;
+    }
+    smiles += "-C1CCC2(CC1)";
+    v2::SmilesParse::SmilesParserParams params;
+    params.sanitize = false;
+    auto m = v2::SmilesParse::MolFromSmiles(smiles, params);
+    REQUIRE(m);
+    MolOps::findRingFamilies(*m);
+    auto ri = m->getRingInfo();
+    CHECK(ri->numRingFamilies() == 34);
+    CHECK_THROWS_AS(ri->numRelevantCycles(), ValueErrorException);
+    std::vector<std::vector<int>> rings;
+    auto nExpected = MAX_SYMMETRIZED_RINGS + ri->numRingFamilies();
+    CHECK(MolOps::symmetrizeSSSR(*m, rings,
+                                 MolOps::SymmetrizeSSSRAlgorithm::RDL) ==
+          static_cast<int>(nExpected));
+    CHECK(rings.size() == nExpected);
+  }
+  SECTION("many individual rings") {
+    std::string unit = "C1CC1.";
+    std::string smiles = "";
+    unsigned int nRings = MAX_SYMMETRIZED_RINGS + 1;
+    for (auto i = 0u; i < nRings; ++i) {
+      smiles += unit;
+    }
+    smiles += "C1CC1";
+    v2::SmilesParse::SmilesParserParams params;
+    params.sanitize = false;
+    auto m = v2::SmilesParse::MolFromSmiles(smiles, params);
+    REQUIRE(m);
+    MolOps::findRingFamilies(*m);
+    auto ri = m->getRingInfo();
+    CHECK(ri->numRingFamilies() == nRings + 1);
+    CHECK(ri->numRelevantCycles() == ri->numRingFamilies());
+    std::vector<std::vector<int>> rings;
+    CHECK(MolOps::symmetrizeSSSR(*m, rings,
+                                 MolOps::SymmetrizeSSSRAlgorithm::RDL) ==
+          static_cast<int>(nRings + 1));
+    CHECK(rings.size() == nRings + 1);
+  }
+  SECTION("many individual rings + symmetry") {
+    std::string unit = "C1CC1.";
+    std::string smiles = "";
+    unsigned int nRings = MAX_SYMMETRIZED_RINGS + 1;
+    for (auto i = 0u; i < nRings; ++i) {
+      smiles += unit;
+    }
+    smiles += "C1CC1";
+    smiles += ".C12CCC(CC1)-C1CCC(CC1)-C1CCC2(CC1)";
+    size_t nExtraRings = 4;
+    size_t nExtraSymmetric = 7;
+    v2::SmilesParse::SmilesParserParams params;
+    params.sanitize = false;
+    auto m = v2::SmilesParse::MolFromSmiles(smiles, params);
+    REQUIRE(m);
+    MolOps::findRingFamilies(*m);
+    auto ri = m->getRingInfo();
+    CHECK(ri->numRingFamilies() == nRings + 1 + nExtraRings);
+    CHECK(ri->numRelevantCycles() == ri->numRingFamilies() + nExtraSymmetric);
+    std::vector<std::vector<int>> rings;
+    CHECK(MolOps::symmetrizeSSSR(*m, rings,
+                                 MolOps::SymmetrizeSSSRAlgorithm::RDL) ==
+          static_cast<int>(nRings + 1 + nExtraRings + nExtraSymmetric));
+    CHECK(rings.size() == nRings + 1 + nExtraRings + nExtraSymmetric);
+  }
+}
