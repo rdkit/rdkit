@@ -159,6 +159,10 @@ mtrojanowski-beit, Xavier M
   - Consolidate duplicated Deadline handling in conformer generator
  (github pull #9775 from scal444)
 
+## Deprecated code (to be removed in a future release):
+- The C++ functions `RingUtils::makeRingNeighborMap()` and
+  `RingUtils::pickFusedRings()` have been deprecated, please use
+  `RingUtils::findFusedRingSystems()` instead.
 
 
 # Release_2026.09.1
