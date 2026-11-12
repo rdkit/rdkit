@@ -10,6 +10,7 @@
 #include "Rings.h"
 #include "RingInfo.h"
 #include <RDGeneral/Invariant.h>
+#include <RDGeneral/Exceptions.h>
 #include <algorithm>
 
 namespace RDKit {
@@ -276,7 +277,13 @@ unsigned int RingInfo::numRingFamilies() const {
 unsigned int RingInfo::numRelevantCycles() const {
   PRECONDITION(df_init, "RingInfo not initialized");
   PRECONDITION(dp_urfData, "Ring families not initialized");
-  return rdcast<unsigned int>(RDL_getNofRC(dp_urfData.get()));
+  auto nURF = RDL_getNofURF(dp_urfData.get());
+  auto nRC = rdcast<unsigned int>(RDL_getNofRC(dp_urfData.get()));
+  if (nRC < nURF || nRC == std::numeric_limits<unsigned int>::max()) {
+    throw ValueErrorException(
+        "Problems in RDL: Number of relevant cycles is invalid");
+  }
+  return nRC;
 };
 
 unsigned int RingInfo::addRingFamily(const INT_VECT &atomIndices,
@@ -324,10 +331,19 @@ std::vector<std::vector<int>> RingInfo::atomRelevantCycles() const {
   PRECONDITION(dp_urfData, "Ring families not initialized");
   std::vector<std::vector<int>> res;
   if (dp_urfData) {
-    res.reserve(RDL_getNofRC(dp_urfData.get()));
+    size_t nURF = RDL_getNofURF(dp_urfData.get());
+    auto nRC = RDL_getNofRC(dp_urfData.get());
+    auto maxAllowed = MAX_SYMMETRIZED_RINGS + nURF;
+    if (nRC > maxAllowed) {
+      BOOST_LOG(rdWarningLog)
+          << "Number of relevant cycles truncated to " << maxAllowed
+          << ". Symmetric rings will not be correct." << std::endl;
+      nRC = maxAllowed;
+    }
+    res.reserve(nRC);
 
     RDL_cycleIterator *it = RDL_getRCyclesIterator(dp_urfData.get());
-    while (!RDL_cycleIteratorAtEnd(it)) {
+    while (!RDL_cycleIteratorAtEnd(it) && res.size() < nRC) {
       auto cycle = RDL_cycleIteratorGetCycle(it);
       res.push_back(RingUtils::rdlCycleToAtomRing(cycle));
       RDL_deleteCycle(cycle);
