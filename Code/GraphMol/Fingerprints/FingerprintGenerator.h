@@ -508,6 +508,11 @@ class RDKIT_FINGERPRINTS_EXPORT UnimplementedFPException
 
 // convenience functions, fingerprint generation with default values
 
+//! returns the generator, with default values, that the convenience functions
+//! below use for \c fPType
+RDKIT_FINGERPRINTS_EXPORT std::unique_ptr<FingerprintGenerator<std::uint64_t>>
+makeFPGenerator(FPType fPType);
+
 RDKIT_FINGERPRINTS_EXPORT SparseIntVect<std::uint64_t> *getSparseCountFP(
     const ROMol &mol, FPType fPType);
 

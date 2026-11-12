@@ -18,6 +18,14 @@ GitHub)
   `std::span<const int>` instead of `const INT_VECT &`. These views are
   invalidated when the `RingInfo` is modified. `RingInfo::addRing()` now takes
   `std::span<const int>` arguments. The Python, Java, and C# APIs are unchanged.
+- `calcSASA()` (`rdFreeSASA.CalcSASA()` from Python) now requires `radii` to
+  have exactly one entry per atom. A shorter vector was read past its end,
+  returning `nan` or crashing, and the extra entries of a longer one were
+  ignored.
+- `DoubleCubicLatticeVolume` now requires `radii` to be empty, which asks for
+  the van der Waals radii, or to have one entry per atom. A vector of any other
+  length was read past its end, and the areas and volumes that came back looked
+  plausible.
 
 ## Code removed in this release:
 

@@ -516,6 +516,8 @@ unsigned int SmilesMolSupplier::length() {
     return d_len;
   } else {
     std::streampos oPos = dp_inStream->tellg();
+    // reading to the end of the stream below sets df_end
+    bool endHolder = df_end;
     if (d_molpos.size()) {
       // we've already read some molecules, go to the last
       // one and read it in to initialize our location:
@@ -535,7 +537,9 @@ unsigned int SmilesMolSupplier::length() {
       pos = this->skipComments();
     }
     // now remember to set the stream to its original position:
+    dp_inStream->clear();
     dp_inStream->seekg(oPos);
+    df_end = endHolder;
     d_len = d_molpos.size();
     return d_len;
   }

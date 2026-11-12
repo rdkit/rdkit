@@ -1011,6 +1011,18 @@ M  END
     d2d.drawOptions().stereoGroupAbsLabel = "_AbS_"
     d2d.drawOptions().addStereoGroupAnnotation = False
 
+  def testDrawMoleculesFromGenerator(self):
+    smiles = ['c1ccccc1O', 'c1ccccc1N', 'CCOC(=O)C']
+    d2d = rdMolDraw2D.MolDraw2DSVG(600, 200, 200, 200)
+    d2d.DrawMolecules([Chem.MolFromSmiles(smi) for smi in smiles])
+    d2d.FinishDrawing()
+    expected = d2d.GetDrawingText()
+    d2d = rdMolDraw2D.MolDraw2DSVG(600, 200, 200, 200)
+    # Each molecule is referenced only by the generator that yields it.
+    d2d.DrawMolecules(Chem.MolFromSmiles(smi) for smi in smiles)
+    d2d.FinishDrawing()
+    self.assertEqual(d2d.GetDrawingText(), expected)
+
 
 if __name__ == "__main__":
   unittest.main()

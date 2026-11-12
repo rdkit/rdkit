@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <RDBoost/python.h>
+#include <RDBoost/Wrap.h>
 
 #include <DataStructs/BitVects.h>
 #include <DataStructs/BitOps.h>
@@ -44,14 +45,21 @@ template <typename T>
 python::list NeighborWrapper(python::object queries, python::object bvs,
                              double (*metric)(const T &, const T &)) {
   python::list res;
-  unsigned int nbvs = python::len(bvs);
-  unsigned int nqs = python::len(queries);
-  for (unsigned int i = 0; i < nqs; ++i) {
-    const T *bv1 = python::extract<const T *>(queries[i])();
+  // Every query is compared with every item, so bvItems holds them all: a
+  // generator can be read only once, and a supplier builds a new object each
+  // time it is indexed.
+  python::list bvItems(bvs);
+  unsigned int nbvs = python::len(bvItems);
+  for (python::stl_input_iterator<python::object> it(pythonIterator(queries)),
+       end;
+       it != end; ++it) {
+    // A generator may hold no other reference to the query.
+    python::object query = *it;
+    const T *bv1 = &python::extract<const T &>(query)();
     double closest = -1;
-    unsigned nbr;
+    unsigned nbr = 0;
     for (unsigned int j = 0; j < nbvs; ++j) {
-      const T *bv2 = python::extract<const T *>(bvs[j])();
+      const T *bv2 = &python::extract<const T &>(bvItems[j])();
       auto sim = metric(*bv1, *bv2);
       if (sim > closest) {
         closest = sim;
@@ -68,9 +76,11 @@ python::list BulkWrapper(const T *bv1, python::object bvs,
                          double (*metric)(const T &, const T &),
                          bool returnDistance) {
   python::list res;
-  unsigned int nbvs = python::len(bvs);
-  for (unsigned int i = 0; i < nbvs; ++i) {
-    const T *bv2 = python::extract<const T *>(bvs[i])();
+  for (python::stl_input_iterator<python::object> it(pythonIterator(bvs)), end;
+       it != end; ++it) {
+    // A generator may hold no other reference to the vector.
+    python::object item = *it;
+    const T *bv2 = &python::extract<const T &>(item)();
     auto sim = metric(*bv1, *bv2);
     if (returnDistance) {
       sim = 1.0 - sim;
@@ -85,9 +95,11 @@ python::list BulkWrapper(const T *bv1, python::object bvs, double a, double b,
                          double (*metric)(const T &, const T &, double, double),
                          bool returnDistance) {
   python::list res;
-  unsigned int nbvs = python::len(bvs);
-  for (unsigned int i = 0; i < nbvs; ++i) {
-    const T *bv2 = python::extract<T *>(bvs[i])();
+  for (python::stl_input_iterator<python::object> it(pythonIterator(bvs)), end;
+       it != end; ++it) {
+    // A generator may hold no other reference to the vector.
+    python::object item = *it;
+    const T *bv2 = &python::extract<const T &>(item)();
     auto sim = metric(*bv1, *bv2, a, b);
     if (returnDistance) {
       sim = 1.0 - sim;
