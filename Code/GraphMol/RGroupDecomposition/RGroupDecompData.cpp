@@ -497,8 +497,8 @@ void RGroupDecompData::relabelRGroup(RGroupData &rgroup,
   addAtoms(mol, atomsToAdd);
 
   if (params.removeHydrogensPostMatch) {
-    RDLog::LogStateSetter blocker;
     MolOps::RemoveHsParameters rhp;
+    rhp.showWarnings = false;
     bool sanitize = false;
     MolOps::removeHs(mol, rhp, sanitize);
   }
