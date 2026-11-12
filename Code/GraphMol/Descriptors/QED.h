@@ -29,6 +29,8 @@ class ROMol;
 namespace Descriptors {
 
 //! the properties used by QED (also used to hold the weights)
+//!  this is why integer properties are recorded as doubles
+//!  here.
 struct RDKIT_DESCRIPTORS_EXPORT QEDProperties {
   double MW = 0.0;
   double ALOGP = 0.0;
