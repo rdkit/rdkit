@@ -1313,6 +1313,7 @@ struct molops_wrapper {
          python::arg("algorithm") = MolOps::SymmetrizeSSSRAlgorithm::DEFAULT,
          python::arg("recalcSSSR") = true),
         docString.c_str());
+    python::scope().attr("MAX_SYMMETRIZED_RINGS") = MAX_SYMMETRIZED_RINGS;
 
     // ------------------------------------------------------------------------
     docString =
