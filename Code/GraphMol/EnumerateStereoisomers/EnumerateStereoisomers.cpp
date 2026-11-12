@@ -82,37 +82,42 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::next() {
   if (d_numReturned == d_numToReturn) {
     return std::unique_ptr<ROMol>();
   }
-  if (!ensureIsomer(d_numReturned)) {
+  auto isomer = generateRandomIsomer();
+  if (!isomer) {
+    d_numReturned = d_numToReturn;
     return std::unique_ptr<ROMol>();
   }
-  return std::make_unique<ROMol>(*d_isomers[d_numReturned++]);
+  ++d_numReturned;
+  return isomer;
 }
 
 StereoisomerEnumerator::iterator StereoisomerEnumerator::begin() {
-  auto result = iterator(this, 0);
-  if (!ensureIsomer(0)) {
-    result.d_position = d_numToReturn;
-  }
-  return result;
+  const auto position = d_numReturned;
+  return iterator(this, position, next());
 }
 
 StereoisomerEnumerator::iterator StereoisomerEnumerator::end() {
-  return iterator(this, d_numToReturn);
+  return iterator(this, d_numToReturn, nullptr);
 }
 
 StereoisomerEnumerator::iterator::reference
 StereoisomerEnumerator::iterator::operator*() const {
-  if (!d_owner || !d_owner->ensureIsomer(d_position)) {
+  if (!d_owner || !d_current) {
     throw std::out_of_range("dereferencing the end stereoisomer iterator");
   }
-  return *d_owner->d_isomers[d_position];
+  return *d_current;
 }
 
 StereoisomerEnumerator::iterator &
 StereoisomerEnumerator::iterator::operator++() {
-  ++d_position;
-  if (d_owner && !d_owner->ensureIsomer(d_position)) {
-    d_position = d_owner->d_numToReturn;
+  if (d_owner && d_current) {
+    auto nextValue = d_owner->next();
+    if (nextValue) {
+      d_position = d_owner->d_numReturned - 1;
+    } else {
+      d_position = d_owner->d_numToReturn;
+    }
+    d_current = std::move(nextValue);
   }
   return *this;
 }
@@ -126,7 +131,13 @@ StereoisomerEnumerator::iterator StereoisomerEnumerator::iterator::operator++(
 
 bool StereoisomerEnumerator::iterator::operator==(
     const StereoisomerEnumerator::iterator &other) const {
-  return d_owner == other.d_owner && d_position == other.d_position;
+  if (d_owner != other.d_owner) {
+    return false;
+  }
+  if (!d_current || !other.d_current) {
+    return !d_current && !other.d_current;
+  }
+  return d_position == other.d_position;
 }
 
 void StereoisomerEnumerator::buildFlippers() {
@@ -248,20 +259,6 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::buildIsomer(
     isomer->getBondWithIdx(bondIdx)->setStereo(stereo);
   }
   return isomer;
-}
-
-bool StereoisomerEnumerator::ensureIsomer(std::uint64_t position) {
-  if (position >= d_numToReturn) {
-    return false;
-  }
-  while (d_isomers.size() <= position) {
-    auto isomer = generateRandomIsomer();
-    if (!isomer) {
-      return false;
-    }
-    d_isomers.push_back(std::move(isomer));
-  }
-  return true;
 }
 
 bool StereoisomerEnumerator::embeddable(ROMol &isomer) {

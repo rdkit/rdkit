@@ -18,6 +18,7 @@
 #include <GraphMol/EnumerateStereoisomers/Flippers.h>
 
 #include <iterator>
+#include <memory>
 #include <random>
 #include <set>
 #include <unordered_set>
@@ -72,7 +73,8 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
  public:
   class RDKIT_ENUMERATESTEREOISOMERS_EXPORT iterator {
    public:
-    using iterator_category = std::forward_iterator_tag;
+    using iterator_category = std::input_iterator_tag;
+    using iterator_concept = std::input_iterator_tag;
     using value_type = ROMol;
     using difference_type = std::ptrdiff_t;
     using reference = const ROMol &;
@@ -88,10 +90,12 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
 
    private:
     friend class StereoisomerEnumerator;
-    iterator(StereoisomerEnumerator *owner, std::uint64_t position)
-        : d_owner(owner), d_position(position) {}
+    iterator(StereoisomerEnumerator *owner, std::uint64_t position,
+             std::unique_ptr<ROMol> value)
+        : d_owner(owner), d_position(position), d_current(std::move(value)) {}
     StereoisomerEnumerator *d_owner{nullptr};
     std::uint64_t d_position{0};
+    std::shared_ptr<ROMol> d_current;
   };
 
   StereoisomerEnumerator() = delete;
@@ -142,7 +146,6 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
 
   // The stereo orientations we've already made
   std::unordered_set<boost::dynamic_bitset<>> d_seen;
-  std::vector<std::unique_ptr<ROMol>> d_isomers;
 
   // For the ring systems patterns. We check if pairs of parities
   // are same/opposite instead of individual CW/CCW because the
@@ -153,7 +156,6 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
   void buildFlippers();
   std::unique_ptr<ROMol> generateRandomIsomer();
   std::unique_ptr<ROMol> buildIsomer(const boost::dynamic_bitset<> &config);
-  bool ensureIsomer(std::uint64_t position);
   bool embeddable(ROMol &isomer);
 };
 }  // namespace EnumerateStereoisomers

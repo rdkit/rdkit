@@ -130,8 +130,8 @@ TEST_CASE("Base tests") {
   }
 }
 
-TEST_CASE("StereoisomerEnumerator is a forward range") {
-  STATIC_REQUIRE(std::ranges::forward_range<StereoisomerEnumerator>);
+TEST_CASE("StereoisomerEnumerator is an input range") {
+  STATIC_REQUIRE(std::ranges::input_range<StereoisomerEnumerator>);
 
   auto mol = "BrC=CC1OC(C2)(F)C2(Cl)C1"_smiles;
   REQUIRE(mol);
