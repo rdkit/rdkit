@@ -8,11 +8,17 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/test.h>
+#include <algorithm>
 #include <cmath>
+#include <vector>
 #include <RDGeneral/Invariant.h>
 #include <catch2/catch_all.hpp>
 
 #include "BFGSOpt.h"
+
+#ifdef RDK_USE_HIGHWAY
+#include <hwy/targets.h>
+#endif
 
 double circ_0_0(double *v) {
   double dx = v[0];
@@ -192,4 +198,86 @@ TEST_CASE("testBFGSOptimizationNegativeEnergy") {
   REQUIRE_THAT(nVal, Catch::Matchers::WithinAbs(-100.0, 1e-4));
   REQUIRE_THAT(oLoc[0], Catch::Matchers::WithinAbs(3.0, 1e-3));
   REQUIRE_THAT(oLoc[1], Catch::Matchers::WithinAbs(-1.0, 1e-3));
+}
+
+namespace {
+// Compares the BFGS kernels against straightforward reference
+// implementations. The dimensions cover the tail handling of every vector
+// width the kernels might be compiled for.
+void checkBFGSKernels() {
+  for (unsigned int dim : {1u, 2u, 3u, 5u, 8u, 13u, 64u, 131u}) {
+    INFO("dim = " << dim);
+    std::vector<double> a(dim), b(dim), c(dim), sym(dim * dim);
+    for (unsigned int i = 0; i < dim; ++i) {
+      a[i] = std::sin(1.0 + i);
+      b[i] = std::cos(0.5 * i) + 0.1;
+      c[i] = 0.3 * i - 1.0;
+      for (unsigned int j = 0; j <= i; ++j) {
+        sym[i * dim + j] = sym[j * dim + i] = 1.0 / (1.0 + i + j);
+      }
+    }
+    auto dot = [dim](const double *x, const double *y) {
+      double res = 0.0;
+      for (unsigned int i = 0; i < dim; ++i) {
+        res += x[i] * y[i];
+      }
+      return res;
+    };
+    // summation order differs between implementations
+    auto near = [](double expected) {
+      return Catch::Matchers::WithinAbs(
+          expected, 1e-12 * std::max(1.0, std::fabs(expected)));
+    };
+
+    std::vector<double> xi(dim);
+    double sum =
+        BFGSOpt::detail::initDirection(dim, a.data(), xi.data(), b.data());
+    CHECK_THAT(sum, near(dot(b.data(), b.data())));
+    for (unsigned int i = 0; i < dim; ++i) {
+      CHECK(xi[i] == -a[i]);
+    }
+
+    std::vector<double> hd(dim);
+    auto dots = BFGSOpt::detail::hessianTimesDGrad(dim, sym.data(), a.data(),
+                                                   b.data(), hd.data());
+    for (unsigned int i = 0; i < dim; ++i) {
+      CHECK_THAT(hd[i], near(dot(&sym[i * dim], a.data())));
+    }
+    CHECK_THAT(dots.fac, near(dot(a.data(), b.data())));
+    CHECK_THAT(dots.fae, near(dot(a.data(), hd.data())));
+    CHECK_THAT(dots.sumDGrad, near(dot(a.data(), a.data())));
+    CHECK_THAT(dots.sumXi, near(dot(b.data(), b.data())));
+
+    const double fac = 0.7, fad = 0.2, fae = 1.3;
+    auto updated = sym;
+    BFGSOpt::detail::updateInverseHessian(dim, updated.data(), a.data(),
+                                          b.data(), c.data(), fac, fad, fae);
+    for (unsigned int i = 0; i < dim; ++i) {
+      for (unsigned int j = 0; j < dim; ++j) {
+        double expected = sym[i * dim + j] + fac * a[i] * a[j] -
+                          fad * b[i] * b[j] + fae * c[i] * c[j];
+        CHECK_THAT(updated[i * dim + j], near(expected));
+        CHECK(updated[i * dim + j] == updated[j * dim + i]);
+      }
+    }
+
+    BFGSOpt::detail::newDirection(dim, sym.data(), c.data(), xi.data());
+    for (unsigned int i = 0; i < dim; ++i) {
+      CHECK_THAT(xi[i], near(-dot(&sym[i * dim], c.data())));
+    }
+  }
+}
+}  // namespace
+
+TEST_CASE("BFGS kernels match reference implementations") {
+#ifdef RDK_USE_HIGHWAY
+  for (int64_t target : hwy::SupportedAndGeneratedTargets()) {
+    INFO("Highway target " << hwy::TargetName(target));
+    hwy::SetSupportedTargetsForTest(target);
+    checkBFGSKernels();
+  }
+  hwy::SetSupportedTargetsForTest(0);
+#else
+  checkBFGSKernels();
+#endif
 }

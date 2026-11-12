@@ -62,6 +62,7 @@ option(RDK_USE_BOOST_SERIALIZATION "Use the boost serialization library if avail
 option(RDK_USE_BOOST_STACKTRACE "use boost::stacktrace to do more verbose invariant output (linux only)" ON)
 option(RDK_BUILD_TEST_GZIP "Build the gzip'd stream test" OFF)
 option(RDK_OPTIMIZE_POPCNT "Use SSE4.2 popcount instruction while compiling." ON)
+option(RDK_USE_HIGHWAY "Use Google Highway for runtime-dispatched SIMD kernels (results may differ in the last bits between CPUs)" OFF)
 option(RDK_USE_STRICT_ROTOR_DEFINITION "Use the most strict rotatable bond definition" ON)
 option(RDK_BUILD_DESCRIPTORS3D "Build the 3D descriptors calculators, requires Eigen3 to be installed" ON)
 option(RDK_BUILD_CHEMDRAW_SUPPORT "build support for the Revvity ChemDraw document format" ON )
@@ -554,6 +555,10 @@ if(RDK_BUILD_DESCRIPTORS3D)
   #  target_compile_definitions(rdkit_base INTERFACE "-DRDK_BUILD_DESCRIPTORS3D")
   #endif()
   
+endif()
+
+if(RDK_USE_HIGHWAY)
+  find_package(hwy 1.1 CONFIG REQUIRED)
 endif()
 
 if(TARGET Eigen3::Eigen)

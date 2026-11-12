@@ -1,21 +1,31 @@
-add_executable(bench EXCLUDE_FROM_ALL bench_common.cpp
-  descriptors.cpp
-  fingerprint.cpp
-  meta.cpp
-  mol.cpp
-  molops.cpp
-  pickle.cpp
-  ringinfo.cpp
-  smiles.cpp
-  stereo.cpp
-  substruct_match.cpp
-)
-target_link_libraries(bench rdkitCatch
-  CIPLabeler
-  Descriptors
-  Fingerprints
-  SmilesParse
-)
+# Catch2 is only available when the C++ tests are built
+if(RDK_BUILD_CPP_TESTS)
+  add_executable(bench EXCLUDE_FROM_ALL bench_main.cpp
+    bench_common.cpp
+    descriptors.cpp
+    distgeom.cpp
+    fingerprint.cpp
+    forcefield.cpp
+    meta.cpp
+    mol.cpp
+    molops.cpp
+    pickle.cpp
+    ringinfo.cpp
+    shape.cpp
+    smiles.cpp
+    stereo.cpp
+    substruct_match.cpp
+  )
+  target_link_libraries(bench Catch2::Catch2 rdkit_base
+    CIPLabeler
+    Descriptors
+    DistGeomHelpers
+    Fingerprints
+    ForceFieldHelpers
+    GaussianShape
+    SmilesParse
+  )
+endif()
 
 add_executable(ringinfo_memory_bench EXCLUDE_FROM_ALL
   ringinfo_memory_bench.cpp
@@ -27,10 +37,10 @@ add_executable(smiles_pipeline_bench EXCLUDE_FROM_ALL
 )
 target_link_libraries(smiles_pipeline_bench SmilesParse)
 
-if(RDK_BUILD_INCHI_SUPPORT)
+if(RDK_BUILD_CPP_TESTS AND RDK_BUILD_INCHI_SUPPORT)
   target_link_libraries(bench RDInchiLib)
   target_sources(bench PRIVATE inchi.cpp)
-endif(RDK_BUILD_INCHI_SUPPORT)
+endif()
 
 if(RDK_BUILD_CPP_TESTS)
   # add a fast version of the benchmarks to the default unit tests

@@ -17,7 +17,7 @@
 #include <cstring>
 #include <vector>
 #include <algorithm>
-#include "BFGSOpt_SVE.h"
+#include "BFGSKernels.h"
 
 namespace BFGSOpt {
 RDKIT_OPTIMIZER_EXPORT extern int HEAD_ONLY_LIBRARY;
@@ -201,28 +201,12 @@ int minimize(unsigned int dim, double *pos, double gradTol,
   double fp = func(pos);
   gradFunc(pos, grad.data());
 
-  double sum = 0.0;
-#ifdef RDK_SVE_AVAILABLE
-  if (cpuHasSVE()) {
-    // SVE path: initialise xi = -grad and compute ||pos||^2 in a single
-    // vectorised pass.  The identity inverse Hessian is initialised separately
-    // (scalar, O(dim)) since it is a simple diagonal write and does not benefit
-    // from vectorisation over rows.
-    sveInitXiAndSum(dim, grad.data(), xi.data(), pos, &sum);
-    for (unsigned int i = 0; i < dim; i++) invHessian[i * dim + i] = 1.0;
-  } else
-#endif
-  {
-    // Scalar path: initialise the inverse Hessian to the identity matrix,
-    // set the initial search direction xi = -grad (steepest descent step),
-    // and accumulate ||pos||^2 to set an appropriate maximum step size.
-    for (unsigned int i = 0; i < dim; i++) {
-      unsigned int itab = i * dim;
-      invHessian[itab + i] = 1.0;
-      xi[i] = -grad[i];
-      sum += pos[i] * pos[i];
-    }
+  // start from the identity inverse Hessian and a steepest-descent step;
+  // ||pos||^2 sets an appropriate maximum step size
+  for (unsigned int i = 0; i < dim; i++) {
+    invHessian[i * dim + i] = 1.0;
   }
+  double sum = detail::initDirection(dim, grad.data(), xi.data(), pos);
   double maxStep = MAXSTEP * std::max(sqrt(sum), static_cast<double>(dim));
 
   for (unsigned int iter = 1; iter <= maxIts; ++iter) {
@@ -279,34 +263,8 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     }
 
     // BFGS inverse Hessian update.
-    double fac = 0, fae = 0, sumDGrad = 0, sumXi = 0;
-#ifdef RDK_SVE_AVAILABLE
-    if (cpuHasSVE()) {
-      // SVE path: matrix-vector multiply and all four dot products computed in
-      // one vectorised pass, saving two additional O(dim) traversals compared
-      // to separate scalar dot-product calls.
-      sveHessianVecMul(dim, invHessian.data(), dGrad.data(), hessDGrad.data(),
-                       xi.data(), &fac, &fae, &sumDGrad, &sumXi);
-    } else
-#endif
-    {
-      // Scalar path: fused matrix-vector multiply and dot-product accumulation.
-      // Pointer arithmetic (++ivh, ++dgj) avoids repeated index computations
-      // and helps the compiler generate efficient load sequences.
-      for (unsigned int i = 0; i < dim; i++) {
-        double *ivh = &(invHessian[i * dim]);
-        double &hdgradi = hessDGrad[i];
-        double *dgj = dGrad.data();
-        hdgradi = 0.0;
-        for (unsigned int j = 0; j < dim; ++j, ++ivh, ++dgj) {
-          hdgradi += *ivh * *dgj;
-        }
-        fac += dGrad[i] * xi[i];
-        fae += dGrad[i] * hessDGrad[i];
-        sumDGrad += dGrad[i] * dGrad[i];
-        sumXi += xi[i] * xi[i];
-      }
-    }
+    auto [fac, fae, sumDGrad, sumXi] = detail::hessianTimesDGrad(
+        dim, invHessian.data(), dGrad.data(), xi.data(), hessDGrad.data());
     if (fac > sqrt(EPS * sumDGrad * sumXi)) {
       fac = 1.0 / fac;
       double fad = 1.0 / fae;
@@ -314,48 +272,12 @@ int minimize(unsigned int dim, double *pos, double gradTol,
         dGrad[i] = fac * xi[i] - fad * hessDGrad[i];
       }
 
-#ifdef RDK_SVE_AVAILABLE
-      if (cpuHasSVE()) {
-        // SVE path: symmetric rank-1 update with FMA, exploiting symmetry to
-        // halve memory writes and FLOPs versus a full-matrix update
-        sveHessianRank1Update(dim, invHessian.data(), xi.data(),
-                              hessDGrad.data(), dGrad.data(), fac, fad, fae);
-      } else
-#endif
-      {
-        // Scalar path: upper-triangle-only update (j >= i) followed by
-        // explicit symmetrisation. This halves the number of Hessian writes
-        // at the cost of one additional pass over a row to mirror elements.
-        for (unsigned int i = 0; i < dim; i++) {
-          unsigned int itab = i * dim;
-          double pxi = fac * xi[i], hdgi = fad * hessDGrad[i],
-                 dgi = fae * dGrad[i];
-          double *pxj = &(xi[i]), *hdgj = &(hessDGrad[i]), *dgj = &(dGrad[i]);
-          for (unsigned int j = i; j < dim; ++j, ++pxj, ++hdgj, ++dgj) {
-            invHessian[itab + j] += pxi * *pxj - hdgi * *hdgj + dgi * *dgj;
-            invHessian[j * dim + i] = invHessian[itab + j];
-          }
-        }
-      }
+      detail::updateInverseHessian(dim, invHessian.data(), xi.data(),
+                                   hessDGrad.data(), dGrad.data(), fac, fad,
+                                   fae);
     }
 
-#ifdef RDK_SVE_AVAILABLE
-    if (cpuHasSVE()) {
-      sveHessianVecMulNeg(dim, invHessian.data(), grad.data(), xi.data());
-    } else
-#endif
-    {
-      for (unsigned int i = 0; i < dim; i++) {
-        unsigned int itab = i * dim;
-        xi[i] = 0.0;
-        double &pxi = xi[i];
-        double *ivh = &(invHessian[itab]);
-        double *gj = grad.data();
-        for (unsigned int j = 0; j < dim; ++j, ++ivh, ++gj) {
-          pxi -= *ivh * *gj;
-        }
-      }
-    }
+    detail::newDirection(dim, invHessian.data(), grad.data(), xi.data());
     if (snapshotVect && snapshotFreq && !(iter % snapshotFreq)) {
       RDKit::Snapshot s(boost::shared_array<double>(newPos.release()), fp);
       snapshotVect->push_back(s);

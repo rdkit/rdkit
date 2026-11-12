@@ -36,14 +36,12 @@ const char *dataset_name(Dataset dataset) {
 
 namespace {
 
-std::vector<std::string> load_dataset_file(Dataset dataset) {
-  const auto *rdbase = std::getenv("RDBASE");
-  if (!rdbase) {
-    throw std::runtime_error(
-        "RDBASE is required to locate Code/Bench/data/*.smi");
-  }
-  auto path = std::filesystem::path(rdbase) / "Code" / "Bench" / "data" /
-              (std::string(dataset_name(dataset)) + ".smi");
+std::filesystem::path &smiles_file() {
+  static std::filesystem::path path;
+  return path;
+}
+
+std::vector<std::string> read_smiles_file(const std::filesystem::path &path) {
   std::ifstream input(path);
   if (!input) {
     throw std::runtime_error("could not open dataset: " + path.string());
@@ -63,13 +61,28 @@ std::vector<std::string> load_dataset_file(Dataset dataset) {
   return result;
 }
 
+std::vector<std::string> load_dataset_file(Dataset dataset) {
+  const auto *rdbase = std::getenv("RDBASE");
+  if (!rdbase) {
+    throw std::runtime_error(
+        "RDBASE is required to locate Code/Bench/data/*.smi");
+  }
+  return read_smiles_file(std::filesystem::path(rdbase) / "Code" / "Bench" /
+                          "data" /
+                          (std::string(dataset_name(dataset)) + ".smi"));
+}
+
 const std::vector<std::string> &canonical_smiles() {
-  static const std::vector<std::string> result(std::begin(SAMPLES),
-                                               std::end(SAMPLES));
+  static const std::vector<std::string> result =
+      smiles_file().empty()
+          ? std::vector<std::string>(std::begin(SAMPLES), std::end(SAMPLES))
+          : read_smiles_file(smiles_file());
   return result;
 }
 
 }  // namespace
+
+void set_smiles_file(const std::string &path) { smiles_file() = path; }
 
 const std::vector<std::string> &dataset_smiles(Dataset dataset) {
   if (dataset == Dataset::Canonical) {
@@ -99,7 +112,14 @@ std::vector<RDKit::ROMol> load_samples(Dataset dataset, bool sanitize) {
   const auto &smiles = dataset_smiles(dataset);
   ret.reserve(smiles.size());
   for (const auto &text : smiles) {
-    auto mol = RDKit::v2::SmilesParse::MolFromSmiles(text, params);
+    std::unique_ptr<RDKit::RWMol> mol;
+    try {
+      mol = RDKit::v2::SmilesParse::MolFromSmiles(text, params);
+    } catch (const std::exception &) {
+    }
+    if (!mol && dataset == Dataset::Canonical && !smiles_file().empty()) {
+      continue;  // tolerate bad lines in user-supplied files
+    }
     REQUIRE(mol);
     ret.push_back(std::move(*mol));
   }
