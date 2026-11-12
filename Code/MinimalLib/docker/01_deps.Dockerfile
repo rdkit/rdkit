@@ -54,8 +54,7 @@ RUN apt-get update && apt-get upgrade -y && apt install -y \
   libeigen3-dev \
   git \
   jq \
-  xz-utils \
-  nodejs
+  xz-utils
 
 # If you are in an organization, put your organization certs inside
 # the certs directory otherwise HTTPS might not work
@@ -80,9 +79,10 @@ WORKDIR /opt/emsdk
 RUN ./emsdk install ${EMSDK_VERSION} && \
   ./emsdk activate ${EMSDK_VERSION}
 
-#RUN source ./emsdk_env.sh
-
-RUN echo "source /opt/emsdk/emsdk_env.sh > /dev/null 2>&1" >> ~/.bashrc
+# Make emsdk's node/npm/emcc the default for all bash RUN steps.
+# profile.d: login shells (bash -l). BASH_ENV: non-interactive bash.
+RUN echo "source /opt/emsdk/emsdk_env.sh > /dev/null 2>&1" > /etc/profile.d/emsdk.sh
+ENV BASH_ENV=/etc/profile.d/emsdk.sh
 
 WORKDIR /src
 RUN wget -q https://github.com/freetype/freetype/archive/refs/tags/VER-${FREETYPE_VERSION}.tar.gz && \
@@ -103,7 +103,9 @@ RUN wget -q https://github.com/madler/zlib/releases/download/v${ZLIB_VERSION}/zl
 WORKDIR /src/zlib-${ZLIB_VERSION}
 RUN mkdir build
 WORKDIR /src/zlib-${ZLIB_VERSION}/build
-RUN emcmake cmake -DCMAKE_BUILD_TYPE=Release -DZLIB_BUILD_EXAMPLES=OFF \
+RUN emcmake cmake \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DZLIB_BUILD_TESTING=OFF -DZLIB_BUILD_SHARED=OFF \
   -DCMAKE_C_FLAGS="${EXCEPTION_HANDLING}" -DCMAKE_EXE_LINKER_FLAGS="${EXCEPTION_HANDLING}" \
   -DCMAKE_INSTALL_PREFIX=/opt/zlib ..
 RUN make && make install

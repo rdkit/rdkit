@@ -31,6 +31,16 @@ foreach(file_name IN ITEMS "${URFLIB_DIR}/RDLcycleFams.c" "${URFLIB_DIR}/RDLdima
     endif()
 endforeach()
 
+# temporary fix for #9777: fix the potential integer overflow in the allocation of *URFrel[i]
+file(READ "${URFLIB_DIR}/RDLinfo.c" file_data)
+if (NOT "${file_data}" MATCHES [[malloc\(\(size_t\)numOfProtos\[i\] \* numOfProtos\[i\] \* sizeof\(\*\*URFrel\[i\]\)\);]])
+    string(REGEX REPLACE
+        [[malloc\(numOfProtos\[i\] \* numOfProtos\[i\] \* sizeof\(\*\*URFrel\[i\]\)\);]]
+        "malloc((size_t)numOfProtos[i] * numOfProtos[i] * sizeof(**URFrel[i]));"
+        file_data "${file_data}")
+    file(WRITE "${URFLIB_DIR}/RDLinfo.c" "${file_data}")
+endif()
+
 set(urflib_INCLUDE_DIRS ${URFLIB_DIR}
     CACHE STRING "RingDecomposerLib Include Dir" FORCE)
 file(GLOB URFSOURCES "${URFLIB_DIR}/*.c" "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")

@@ -1111,7 +1111,8 @@ void cleanMolStereo(ROMol &mol, const boost::dynamic_bitset<> &fixedAtoms,
 
 void findChiralAtomSpecialCases(ROMol &mol,
                                 boost::dynamic_bitset<> &possibleSpecialCases,
-                                const std::vector<unsigned int> &atomRanks);
+                                const std::vector<unsigned int> &atomRanks,
+                                bool allowPartialGroups);
 
 std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
                                    bool cleanIt) {
@@ -1262,7 +1263,8 @@ std::vector<StereoInfo> runCleanup(ROMol &mol, bool flagPossible,
   }
 
   boost::dynamic_bitset<> possibleSpecialCases(mol.getNumAtoms());
-  findChiralAtomSpecialCases(mol, possibleSpecialCases, aranks);
+  findChiralAtomSpecialCases(mol, possibleSpecialCases, aranks,
+                             false /* allowPartialGroups */);
 
   for (const auto atom : mol.atoms()) {
     atom->setProp<unsigned int>(common_properties::_ChiralAtomRank,

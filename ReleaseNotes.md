@@ -22,6 +22,9 @@ GitHub)
 ## Code removed in this release:
 
 ## Deprecated code (to be removed in a future release):
+- The C++ functions `RingUtils::makeRingNeighborMap()` and
+  `RingUtils::pickFusedRings()` have been deprecated, please use
+  `RingUtils::findFusedRingSystems()` instead.
 
 
 # Release_2026.09.1

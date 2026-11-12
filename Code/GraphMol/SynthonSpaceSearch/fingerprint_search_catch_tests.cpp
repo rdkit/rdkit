@@ -145,6 +145,7 @@ TEST_CASE("FP Binary File") {
   SearchResults results;
   auto queryMol = "O=C(Nc1c(CNC=O)cc[s]1)c1nccnc1"_smiles;
   SynthonSpaceSearchParams params;
+  double referenceBestSimilarity = -1.0;
   for (auto numThreads : std::vector<int>{1, 2, -1}) {
     synthonspace.readDBFile(libName, numThreads);
     params.numThreads = numThreads;
@@ -152,6 +153,17 @@ TEST_CASE("FP Binary File") {
         results = synthonspace.fingerprintSearch(*queryMol, *fpGen, params));
     CHECK(results.getHitMolecules().size() == 4);
     CHECK(results.getMaxNumResults() == 420);
+    REQUIRE(results.getBestHit());
+    const auto bestSimilarity =
+        results.getBestHit()->getProp<double>("Similarity");
+    if (numThreads == 1) {
+      referenceBestSimilarity = bestSimilarity;
+    } else {
+      CHECK(bestSimilarity == referenceBestSimilarity);
+    }
+    for (const auto &hit : results.getHitMolecules()) {
+      CHECK(hit->getProp<double>("Similarity") <= bestSimilarity);
+    }
   }
 
   // Make sure it rejects the wrong sort of fingerprint.

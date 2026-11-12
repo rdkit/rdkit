@@ -108,7 +108,10 @@ class SynthonSpaceSearcher {
   // If the similarity found is greater than d_bestSimilarity, replace
   // d_bestHitFound with a copy of possBest and update d_bestSimilarity.
   void updateBestHitSoFar(const ROMol &possBest, double sim);
-  double getBestSimilaritySoFar() const { return d_bestSimilarity; }
+  double getBestSimilaritySoFar() const {
+    std::lock_guard lock{d_bestHitsMutex};
+    return d_bestSimilarity;
+  }
 
   void makeHitsFromToTry(
       const std::vector<
@@ -131,7 +134,7 @@ class SynthonSpaceSearcher {
   double d_bestSimilarity{0.0};
 
   // This for updating d_bestHitFound and d_bestSimilarity
-  std::mutex d_bestHitsMutex;
+  mutable std::mutex d_bestHitsMutex;
 
   // Generally, the search needs the query fragmented into no more than
   // the largest number synthon sets in any reaction.  Substructure search

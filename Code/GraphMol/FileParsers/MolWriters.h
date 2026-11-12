@@ -17,9 +17,15 @@
 #include <memory>
 #include <string>
 
-
 #ifdef RDK_BUILD_MAEPARSER_SUPPORT
-#include <maeparser/Writer.hpp>
+// Do not replace this with #include <maeparser/Writer.hpp> :
+// on static builds with locally-built maeparser the header
+// won't be installed, breaking 3rd party code using this.
+namespace schrodinger {
+namespace mae {
+class Writer;
+}  // namespace mae
+}  // namespace schrodinger
 #endif  // RDK_BUILD_MAEPARSER_SUPPORT
 
 #include <GraphMol/ROMol.h>

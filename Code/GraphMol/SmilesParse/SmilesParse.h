@@ -50,7 +50,7 @@ struct RDKIT_SMILESPARSE_EXPORT SmilesParserParams {
   bool skipCleanup = false; /**<  skip the final cleanup stage */
   bool debugParse = false;  /**< enable debugging in the SMILES parser*/
   std::map<std::string, std::string>
-      replacements; /**< allows SMILES "macros" */
+      replacements{}; /**< allows SMILES "macros" */
 };
 
 struct RDKIT_SMILESPARSE_EXPORT SmartsParserParams {
@@ -63,7 +63,7 @@ struct RDKIT_SMILESPARSE_EXPORT SmartsParserParams {
   bool skipCleanup = false; /**<  skip the final cleanup stage */
   bool debugParse = false;  /**< enable debugging in the SMARTS parser*/
   std::map<std::string, std::string>
-      replacements; /**< allows SMARTS "macros" */
+      replacements{}; /**< allows SMARTS "macros" */
 };
 
 RDKIT_SMILESPARSE_EXPORT std::unique_ptr<RDKit::RWMol> MolFromSmiles(

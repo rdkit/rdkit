@@ -96,7 +96,7 @@ ROMol *renumberAtoms(const ROMol &mol,
   if (oRings && oRings->isInitialized()) {
     RingInfo *nRings = res->getRingInfo();
     nRings->reset();
-    nRings->initialize();
+    nRings->initialize(oRings->getRingType());
     VECT_INT_VECT newAtomRings;
     VECT_INT_VECT newBondRings;
     newAtomRings.reserve(oRings->numRings());
@@ -111,6 +111,26 @@ ROMol *renumberAtoms(const ROMol &mol,
       newBondRings.emplace_back(oldBondRing.begin(), oldBondRing.end());
     }
     nRings->addRings(newAtomRings, newBondRings);
+    // the ring families were computed from the original indexing, so
+    // recompute them on the renumbered graph rather than copying;
+    // stereo perception needs them for fused/bridged systems
+    // (github #9629)
+    if (oRings->areRingFamiliesInitialized()) {
+      // recover the bond selection the original families were computed
+      // with: a dative or hydrogen bond inside a family can only be there
+      // if that bond type was included; if none is present, excluding it
+      // gives identical families
+      bool includeDativeBonds = false;
+      bool includeHydrogenBonds = false;
+      for (const auto &fam : oRings->bondRingFamilies()) {
+        for (auto bidx : fam) {
+          const auto bt = mol.getBondWithIdx(bidx)->getBondType();
+          includeDativeBonds = includeDativeBonds || isDative(bt);
+          includeHydrogenBonds = includeHydrogenBonds || bt == Bond::HYDROGEN;
+        }
+      }
+      findRingFamilies(*res, includeDativeBonds, includeHydrogenBonds);
+    }
   }
 
   if (mol.getStereoGroups().size()) {

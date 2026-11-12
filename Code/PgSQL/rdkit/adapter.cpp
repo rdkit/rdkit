@@ -837,18 +837,19 @@ extern "C" CROMol MolAdjustQueryProperties(CROMol i, const char *params) {
     std::string pstring(params);
     try {
       MolOps::parseAdjustQueryParametersFromJSON(p, pstring);
+      // read_json throws on malformed input; it must stay inside the try
+      std::istringstream ss;
+      ss.str(params);
+
+      boost::property_tree::ptree pt;
+      boost::property_tree::read_json(ss, pt);
+      includeGenericGroups = pt.get("setGenericQueryFromProperties", false);
     } catch (const ValueErrorException &e) {
       elog(ERROR, "MolAdjustQueryProperties: %s", e.what());
     } catch (...) {
       elog(WARNING,
            "adjustQueryProperties: Invalid argument \'params\' ignored");
     }
-    std::istringstream ss;
-    ss.str(params);
-
-    boost::property_tree::ptree pt;
-    boost::property_tree::read_json(ss, pt);
-    includeGenericGroups = pt.get("setGenericQueryFromProperties", false);
   }
 
   ROMol *mol = nullptr;

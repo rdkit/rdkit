@@ -84,29 +84,6 @@ void pickFusedRings(int curr, const INT_INT_VECT_MAP &neighMap, INT_VECT &res,
   }
 }
 
-bool checkFused(const INT_VECT &rids, INT_INT_VECT_MAP &ringNeighs) {
-  auto nrings = rdcast<int>(ringNeighs.size());
-  boost::dynamic_bitset<> done(nrings);
-  int rid;
-  INT_VECT fused;
-
-  // mark all rings in the system other than those in rids as done
-  for (const auto &nci : ringNeighs) {
-    rid = nci.first;
-    if (std::find(rids.begin(), rids.end(), rid) == rids.end()) {
-      done[rid] = 1;
-    }
-  }
-
-  // then pick a fused system from the remaining (i.e. rids)
-  // If the rings in rids are fused we should get back all of them
-  // in fused if we get a smaller number in fused then rids are not fused
-  pickFusedRings(rids.front(), ringNeighs, fused, done);
-
-  CHECK_INVARIANT(fused.size() <= rids.size(), "");
-  return (fused.size() == rids.size());
-}
-
 void makeRingNeighborMap(const VECT_INT_VECT &brings,
                          INT_INT_VECT_MAP &neighMap, unsigned int maxSize,
                          unsigned int maxOverlapSize) {
@@ -134,6 +111,51 @@ void makeRingNeighborMap(const VECT_INT_VECT &brings,
       }
     }
   }
+}
+
+VECT_INT_VECT findFusedRingSystems(const VECT_INT_VECT &rings) {
+  const auto nRings = rdcast<int>(rings.size());
+
+  // Union-find over ring indices. Each set is labeled by its lowest ring
+  // index, so systems come out ordered by their first ring.
+  INT_VECT parent(nRings);
+  std::iota(parent.begin(), parent.end(), 0);
+  auto findRoot = [&parent](int ringIdx) {
+    while (parent[ringIdx] != ringIdx) {
+      parent[ringIdx] = parent[parent[ringIdx]];
+      ringIdx = parent[ringIdx];
+    }
+    return ringIdx;
+  };
+
+  // for each atom/bond, the first ring containing it
+  INT_VECT firstRingWith;
+  for (int ringIdx = 0; ringIdx < nRings; ++ringIdx) {
+    for (auto idx : rings[ringIdx]) {
+      if (idx >= rdcast<int>(firstRingWith.size())) {
+        firstRingWith.resize(idx + 1, -1);
+      }
+      if (firstRingWith[idx] < 0) {
+        firstRingWith[idx] = ringIdx;
+      } else {
+        const auto root1 = findRoot(ringIdx);
+        const auto root2 = findRoot(firstRingWith[idx]);
+        parent[std::max(root1, root2)] = std::min(root1, root2);
+      }
+    }
+  }
+
+  VECT_INT_VECT res;
+  INT_VECT systemIdx(nRings, -1);
+  for (int ringIdx = 0; ringIdx < nRings; ++ringIdx) {
+    auto &sysIdx = systemIdx[findRoot(ringIdx)];
+    if (sysIdx < 0) {
+      sysIdx = rdcast<int>(res.size());
+      res.emplace_back();
+    }
+    res[sysIdx].push_back(ringIdx);
+  }
+  return res;
 }
 
 }  // end of namespace RingUtils
@@ -180,10 +202,57 @@ static void applyHuckelToFused(
     const VECT_INT_VECT &brings,  // list of all rings as bond ids
     const INT_VECT &fused,       // list of ring ids in the current fused system
     const VECT_EDON_TYPE &edon,  // electron donor state for each atom
-    INT_INT_VECT_MAP &ringNeighs,
-    int &narom,  // number of aromatic ring so far
+    int &narom,                  // number of aromatic ring so far
     unsigned int maxNumFusedRings, const std::vector<Bond *> &bondsByIdx,
     unsigned int minRingSize = 0);
+
+// Returns whether the rings in ringIds are connected to each other. For
+// aromaticity, two rings only count as fused if they share exactly one bond.
+bool areRingsFused(const VECT_INT_VECT &brings, const INT_VECT &ringIds) {
+  INT_VECT reached{ringIds.front()};
+  for (size_t i = 0; i < reached.size(); ++i) {
+    for (auto ringIdx : ringIds) {
+      if (std::ranges::find(reached, ringIdx) != reached.end()) {
+        continue;
+      }
+      INT_VECT shared;
+      Intersect(brings[reached[i]], brings[ringIdx], shared);
+      if (shared.size() == 1) {
+        reached.push_back(ringIdx);
+      }
+    }
+  }
+  return reached.size() == ringIds.size();
+}
+
+// Fused ring systems as used for aromaticity: rings are fused as defined by
+// areRingsFused(). Rings larger than maxFusedAromaticRingSize are never fused;
+// without this, macrocycles would merge everything around them into one huge
+// system and the Huckel subset search would explode.
+VECT_INT_VECT findAromaticFusedSystems(const VECT_INT_VECT &brings) {
+  // give each pair of fused rings a shared id, then group the rings by them
+  VECT_INT_VECT ringsWithBond;
+  VECT_INT_VECT links(brings.size());
+  int nLinks = 0;
+  for (int ringIdx = 0; ringIdx < rdcast<int>(brings.size()); ++ringIdx) {
+    if (brings[ringIdx].size() > maxFusedAromaticRingSize) {
+      continue;
+    }
+    for (auto bondIdx : brings[ringIdx]) {
+      if (bondIdx >= rdcast<int>(ringsWithBond.size())) {
+        ringsWithBond.resize(bondIdx + 1);
+      }
+      for (auto other : ringsWithBond[bondIdx]) {
+        if (areRingsFused(brings, {ringIdx, other})) {
+          links[ringIdx].push_back(nLinks);
+          links[other].push_back(nLinks++);
+        }
+      }
+      ringsWithBond[bondIdx].push_back(ringIdx);
+    }
+  }
+  return RingUtils::findFusedRingSystems(links);
+}
 
 void markAtomsBondsArom(const VECT_INT_VECT &brings, const INT_VECT &ringIds,
                         std::set<unsigned int> &doneBonds,
@@ -330,8 +399,7 @@ void applyHuckelToFused(
     const VECT_INT_VECT &brings,  // list of all rings as bond ids
     const INT_VECT &fused,       // list of ring ids in the current fused system
     const VECT_EDON_TYPE &edon,  // electron donor state for each atom
-    INT_INT_VECT_MAP &ringNeighs,  // list of neighbors for each candidate ring
-    int &narom,                    // number of aromatic ring so far
+    int &narom,                  // number of aromatic ring so far
     unsigned int maxNumFusedRings, const std::vector<Bond *> &bondsByIdx,
     unsigned int minRingSize) {
   // this function check huckel rule on a fused system it starts
@@ -400,7 +468,7 @@ void applyHuckelToFused(
                    [&fused](const int i) { return fused[i]; });
 
     // check if the picked subsystem is fused
-    if (ringNeighs.size() && !RingUtils::checkFused(curRs, ringNeighs)) {
+    if (!areRingsFused(brings, curRs)) {
       continue;
     }
 
@@ -744,45 +812,17 @@ int mdlAromaticityHelper(RWMol &mol, const RingInfo::RingsView &srings) {
   VECT_INT_VECT brings;
   RingUtils::convertToBonds(cRings, brings, mol);
 
-  // make the neighbor map for the rings
-  // i.e. a ring is a neighbor a another candidate ring if
-  // shares at least one bond
-  // useful to figure out fused systems
-  INT_INT_VECT_MAP neighMap;
-  RingUtils::makeRingNeighborMap(brings, neighMap, maxFusedAromaticRingSize, 1);
-
-  // now loop over all the candidate rings and check the
-  // huckel rule - of course paying attention to fused systems.
-  INT_VECT doneRs;
-  int curr = 0;
-  auto cnrs = rdcast<int>(cRings.size());
-  boost::dynamic_bitset<> fusDone(cnrs);
-  INT_VECT fused;
-
   std::vector<Bond *> bondsByIdx;
   bondsByIdx.reserve(mol.getNumBonds());
   for (const auto b : mol.bonds()) {
     bondsByIdx.push_back(b);
   }
 
-  while (curr < cnrs) {
-    fused.clear();
-    RingUtils::pickFusedRings(curr, neighMap, fused, fusDone);
+  for (const auto &fused : findAromaticFusedSystems(brings)) {
     const unsigned int maxFused = 6;
     const unsigned int minRingSize = 6;
-    applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom,
-                       maxFused, bondsByIdx, minRingSize);
-
-    int rix;
-    for (rix = 0; rix < cnrs; ++rix) {
-      if (!fusDone[rix]) {
-        curr = rix;
-        break;
-      }
-    }
-    if (rix == cnrs) {
-      break;
-    }
+    applyHuckelToFused(mol, cRings, brings, fused, edon, narom, maxFused,
+                       bondsByIdx, minRingSize);
   }
 
   mol.setProp(common_properties::numArom, narom, true);
@@ -911,47 +951,20 @@ int aromaticityHelper(RWMol &mol, const RingInfo::RingsView &srings,
   if (!includeFused) {
     // now loop over all the candidate rings and check the
     // huckel rule - skipping fused systems
-    INT_INT_VECT_MAP neighMap;
     for (size_t ri = 0; ri < cRings.size(); ++ri) {
       INT_VECT fused;
       fused.push_back(ri);
       const unsigned int maxFused = 6;
       const unsigned int minRingSize = 0;
-      applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom,
-                         maxFused, bondsByIdx, minRingSize);
+      applyHuckelToFused(mol, cRings, brings, fused, edon, narom, maxFused,
+                         bondsByIdx, minRingSize);
     }
   } else {
-    // make the neighbor map for the rings
-    // i.e. a ring is a neighbor a another candidate ring if
-    // shares at least one bond
-    // useful to figure out fused systems
-    INT_INT_VECT_MAP neighMap;
-    RingUtils::makeRingNeighborMap(brings, neighMap, maxFusedAromaticRingSize,
-                                   1);
-
     // now loop over all the candidate rings and check the
     // huckel rule - of course paying attention to fused systems.
-    INT_VECT doneRs;
-    int curr = 0;
-    auto cnrs = rdcast<int>(cRings.size());
-    boost::dynamic_bitset<> fusDone(cnrs);
-    INT_VECT fused;
-    while (curr < cnrs) {
-      fused.clear();
-      RingUtils::pickFusedRings(curr, neighMap, fused, fusDone);
-      applyHuckelToFused(mol, cRings, brings, fused, edon, neighMap, narom, 6,
+    for (const auto &fused : findAromaticFusedSystems(brings)) {
+      applyHuckelToFused(mol, cRings, brings, fused, edon, narom, 6,
                          bondsByIdx);
-
-      int rix;
-      for (rix = 0; rix < cnrs; ++rix) {
-        if (!fusDone[rix]) {
-          curr = rix;
-          break;
-        }
-      }
-      if (rix == cnrs) {
-        break;
-      }
     }
   }
 
