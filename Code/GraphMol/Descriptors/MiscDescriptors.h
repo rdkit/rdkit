@@ -39,10 +39,10 @@ const std::string NumRadicalElectronsVersion = "1.1.0";
 
 struct PartialCharges {
   std::vector<double> charges;
-  double maxPartialCharge;
-  double minPartialCharge;
-  double maxAbsPartialCharge;
-  double minAbsPartialCharge;
+  double maxPartialCharge{0.0};
+  double minPartialCharge{0.0};
+  double maxAbsPartialCharge{0.0};
+  double minAbsPartialCharge{0.0};
 };
 
 //! The largest Gasteiger partial charge in the molecule
