@@ -13,6 +13,7 @@
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/versions.h>
 #include <GraphMol/RDKitBase.h>
+#include <atomic>
 #include <string>
 #include <algorithm>
 #include <map>
@@ -620,8 +621,9 @@ TEST_CASE("testIssue355") {
   }
 
   SECTION("2") {
-    // If the central carbon is not bonded to another carbon, it's no longer considered
-    // to be an aminde. Thus cases 2 and 3 are no longer forced to be trans
+    // If the central carbon is not bonded to another carbon, it's no longer
+    // considered to be an aminde. Thus cases 2 and 3 are no longer forced to be
+    // trans
     const std::string smi = "CNC(=O)NC";
     const auto bm = _getBoundsMatrix(smi);
     CHECK(bm->getLowerBound(0, 3) < 3.0);
@@ -1964,3 +1966,118 @@ TEST_CASE("ETKDGv4-Benzamide") {
     run(params, 157.0, 26.0);
   }
 }
+
+#ifdef RDK_BUILD_THREADSAFE_SSS
+TEST_CASE("Parallel default-seed embedding uses the global source safely") {
+  const bool legacy = GENERATE(true, false);
+  const auto mode = GENERATE(
+      DGeomHelpers::InitialEmbeddingMode::DG_EMBEDDING,
+      DGeomHelpers::InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING,
+      DGeomHelpers::InitialEmbeddingMode::RANDOM_COORDINATE_EMBEDDING);
+  auto mol = "C[C@H](O)CCCO"_smiles;
+  MolOps::addHs(*mol);
+  auto params = DGeomHelpers::ETKDGv3;
+  params.useLegacyImplementation = legacy;
+  params.initialEmbeddingMode = mode;
+  params.numThreads = 2;
+  params.randomSeed = -1;
+  params.maxIterations = 100;
+  getRandomGenerator(104729);
+  const auto ids = DGeomHelpers::EmbedMultipleConfs(*mol, 8, params);
+  CHECK(ids.size() == 8);
+}
+#endif
+
+TEST_CASE(
+    "Serial default-seed embedding preserves global RNG reproducibility") {
+  const bool legacy = GENERATE(true, false);
+  const auto mode = GENERATE(
+      DGeomHelpers::InitialEmbeddingMode::DG_EMBEDDING,
+      DGeomHelpers::InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING,
+      DGeomHelpers::InitialEmbeddingMode::RANDOM_COORDINATE_EMBEDDING);
+  const auto smiles = GENERATE("C[C@H](O)CCCO", "CCO.CCCCCCO");
+  auto first = std::unique_ptr<RWMol>(SmilesToMol(smiles));
+  MolOps::addHs(*first);
+  auto second = std::make_unique<RWMol>(*first);
+  auto params = DGeomHelpers::ETKDGv3;
+  params.useLegacyImplementation = legacy;
+  params.initialEmbeddingMode = mode;
+  params.randomSeed = -1;
+  getRandomGenerator(104729);
+  auto firstParams = params;
+  const auto firstIds =
+      DGeomHelpers::EmbedMultipleConfs(*first, 3, firstParams);
+  const auto nextValue = getRandomGenerator()();
+  getRandomGenerator(104729);
+  auto secondParams = params;
+  const auto secondIds =
+      DGeomHelpers::EmbedMultipleConfs(*second, 3, secondParams);
+  REQUIRE(firstIds.size() == 3);
+  REQUIRE(secondIds.size() == firstIds.size());
+  CHECK(getRandomGenerator()() == nextValue);
+  CHECK(secondParams.maxIterations == firstParams.maxIterations);
+  for (unsigned int i = 0; i < firstIds.size(); ++i) {
+    const auto &firstPositions =
+        first->getConformer(firstIds[i]).getPositions();
+    const auto &secondPositions =
+        second->getConformer(secondIds[i]).getPositions();
+    for (unsigned int j = 0; j < firstPositions.size(); ++j) {
+      CHECK(firstPositions[j].x == secondPositions[j].x);
+      CHECK(firstPositions[j].y == secondPositions[j].y);
+      CHECK(firstPositions[j].z == secondPositions[j].z);
+    }
+  }
+}
+
+#ifdef RDK_BUILD_THREADSAFE_SSS
+namespace {
+std::atomic<unsigned int> nestedEmbeddingCalls{0};
+std::atomic<bool> nestedEmbeddingSucceeded{false};
+
+void embedFromProgressCallback(unsigned int) {
+  if (nestedEmbeddingCalls.fetch_add(1) != 0) {
+    return;
+  }
+  auto mol = "CCO"_smiles;
+  MolOps::addHs(*mol);
+  auto params = DGeomHelpers::ETKDGv3;
+  nestedEmbeddingSucceeded.store(DGeomHelpers::EmbedMolecule(*mol, params) ==
+                                 0);
+}
+}  // namespace
+
+TEST_CASE("Embedding progress callbacks can reenter default-seed embedding") {
+  auto mol = "CCCCCCO"_smiles;
+  MolOps::addHs(*mol);
+  auto params = DGeomHelpers::ETKDGv3;
+  params.numThreads = 2;
+  // Keep this RNG-lock regression independent of shared-default resolution.
+  params.maxIterations = 100;
+  params.callback = embedFromProgressCallback;
+  nestedEmbeddingCalls.store(0);
+  nestedEmbeddingSucceeded.store(false);
+  const auto ids = DGeomHelpers::EmbedMultipleConfs(*mol, 8, params);
+  CHECK(ids.size() == 8);
+  CHECK(nestedEmbeddingCalls.load() >= 1);
+  CHECK(nestedEmbeddingSucceeded.load());
+}
+
+TEST_CASE("First parallel embedding resolves shared defaults") {
+  const bool legacy = GENERATE(true, false);
+  const bool randomCoords = GENERATE(false, true);
+  auto mol = "CCCCCCO"_smiles;
+  MolOps::addHs(*mol);
+  auto params = DGeomHelpers::ETKDGv3;
+  params.useLegacyImplementation = legacy;
+  params.useRandomCoords = randomCoords;
+  params.numThreads = 2;
+  params.randomSeed = 42;
+  REQUIRE(params.maxIterations == 0);
+  const auto ids = DGeomHelpers::EmbedMultipleConfs(*mol, 8, params);
+  CHECK(ids.size() == 8);
+  CHECK(params.maxIterations == 10 * mol->getNumAtoms());
+  if (randomCoords) {
+    CHECK(params.basinThresh == 1e8);
+  }
+}
+#endif
