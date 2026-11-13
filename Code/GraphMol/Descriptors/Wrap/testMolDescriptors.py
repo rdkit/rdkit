@@ -461,6 +461,15 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(sa), 2)
     self.assertEqual(sorted(sa), [2, 5])
 
+  def testSAScore(self):
+    aspirin = Chem.MolFromSmiles('CC(=O)Oc1ccccc1C(=O)O')
+    self.assertAlmostEqual(rdMD.CalcSAScore(aspirin), 1.580040, 4)
+    # the new stereo perception finds a third, dependent, stereocenter here
+    trimethylcyclohexane = Chem.MolFromSmiles('C1CC(C)C(C)C(C)C1')
+    self.assertAlmostEqual(rdMD.CalcSAScore(trimethylcyclohexane), 3.031471, 4)
+    with self.assertRaises(ValueError):
+      rdMD.CalcSAScore(Chem.Mol())
+
     m = Chem.MolFromSmiles("C1CCC2(C1)CC1CCC2CC1")
     self.assertEqual(rdMD.CalcNumSpiroAtoms(m), 1)
     sa = []
