@@ -111,3 +111,39 @@ TEST_CASE("Test AngleConstraintContribs") {
     CHECK(feq(get_angle(*mol, 1, 2, 3), 160.0));
   }
 }
+
+TEST_CASE("Force field copies preserve fixed points") {
+  auto mol = "CCC |(0,0,0;2,0,0;4,0,0)|"_smiles;
+  REQUIRE(mol);
+  auto forceField = ForceFieldsHelper::createEmptyForceFieldForMol(*mol);
+  forceField->initialize();
+  auto contribs = std::make_unique<ForceFields::DistanceConstraintContribs>(
+      forceField.get());
+  contribs->addContrib(0, 1, 1.0, 1.0, 10.0);
+  forceField->contribs().push_back(std::move(contribs));
+  forceField->fixedPoints() = {0, 2};
+
+  ForceFields::ForceField copied(*forceField);
+  CHECK(copied.dimension() == forceField->dimension());
+  CHECK(copied.numPoints() == forceField->numPoints());
+  CHECK(copied.positions().empty());
+  CHECK(copied.fixedPoints() == forceField->fixedPoints());
+  REQUIRE(copied.contribs().size() == forceField->contribs().size());
+  CHECK(copied.contribs()[0].get() != forceField->contribs()[0].get());
+
+  // The fixed-point list belongs to the copy, while positions are rebound to
+  // a separate conformer before initialization.
+  forceField->fixedPoints().clear();
+  CHECK(copied.fixedPoints() == ForceFields::INT_VECT{0, 2});
+  ROMol other(*mol);
+  for (auto &position : other.getConformer().getPositions()) {
+    copied.positions().push_back(&position);
+  }
+  copied.initialize();
+  CHECK(copied.calcEnergy() == forceField->calcEnergy());
+  CHECK(copied.minimize() == 0);
+  CHECK(other.getConformer().getAtomPos(0).x == 0.0);
+  CHECK(other.getConformer().getAtomPos(2).x == 4.0);
+  CHECK(feq(other.getConformer().getAtomPos(1).x, 1.0));
+  CHECK(mol->getConformer().getAtomPos(1).x == 2.0);
+}
