@@ -139,18 +139,27 @@ TEST_CASE("StereoisomerEnumerator is an input range") {
   StereoEnumerationOptions options;
   options.onlyUnassigned = false;
   options.randomSeed = 23;
-  StereoisomerEnumerator iterated(*mol, options);
-  StereoisomerEnumerator consumed(*mol, options);
 
   std::vector<std::string> expected;
+  StereoisomerEnumerator consumed(*mol, options);
   while (auto isomer = consumed.next()) {
     expected.push_back(MolToSmiles(*isomer));
   }
 
+  // Iterate using a range-based for loop
   std::vector<std::string> got;
+  StereoisomerEnumerator iterated(*mol, options);
   for (const auto &isomer : iterated) {
     got.push_back(MolToSmiles(isomer));
   }
+  CHECK(got == expected);
+
+  // Same, but using std::ranges::transform instead of a for loop
+  got.clear();
+  StereoisomerEnumerator rangeIterated(*mol, options);
+  std::ranges::transform(
+      rangeIterated, std::back_inserter(got),
+      [](const auto &isomer) { return MolToSmiles(isomer); });
   CHECK(got == expected);
 }
 
