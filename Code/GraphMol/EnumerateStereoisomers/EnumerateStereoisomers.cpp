@@ -74,6 +74,8 @@ StereoisomerEnumerator::StereoisomerEnumerator(
   }
 }
 
+StereoisomerEnumerator::~StereoisomerEnumerator() = default;
+
 std::uint64_t StereoisomerEnumerator::getStereoisomerCount() const {
   return d_totalPoss;
 }

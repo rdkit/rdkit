@@ -15,8 +15,6 @@
 #ifndef RD_ENUMERATESTEREOISOMERS_H
 #define RD_ENUMERATESTEREOISOMERS_H
 
-#include <GraphMol/EnumerateStereoisomers/Flippers.h>
-
 #include <iterator>
 #include <memory>
 #include <random>
@@ -31,6 +29,9 @@
 
 namespace RDKit {
 namespace EnumerateStereoisomers {
+namespace details {
+struct Flipper;
+}  // namespace details
 
 struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoEnumerationOptions {
   bool tryEmbedding{false};   // If true, the process attempts to generate
@@ -105,7 +106,7 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
       bool verbose = false);
   StereoisomerEnumerator(const StereoisomerEnumerator &other) = delete;
   StereoisomerEnumerator(StereoisomerEnumerator &&other) = delete;
-  ~StereoisomerEnumerator() = default;
+  ~StereoisomerEnumerator();
   StereoisomerEnumerator &operator=(const StereoisomerEnumerator &other) =
       delete;
   StereoisomerEnumerator &operator=(StereoisomerEnumerator &&other) = delete;
