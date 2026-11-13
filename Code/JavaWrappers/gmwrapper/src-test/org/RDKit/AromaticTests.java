@@ -71,6 +71,10 @@ public class AromaticTests extends GraphMolTest {
 						aroms.add(atoms.get(i));
 					}
 				if (test.numAromatics != count) {
+					System.out.println("   Expected aromatics: " + test.numAromatics + ", found: " + count);
+					System.out.println("       Test line: " + test.lineNo);
+					System.out.println("       SMILES: " + test.smi1);
+					System.out.println("       filePath: " + filePath);
 					nFailed++;
 				}
 			}
