@@ -14,6 +14,7 @@
 
 #include <DataStructs/ExplicitBitVect.h>
 #include <cstdint>
+#include <cstring>
 #include <DataStructs/BitOps.h>
 
 #include <RDGeneral/Invariant.h>
@@ -213,18 +214,23 @@ RDKIT_DATASTRUCTS_EXPORT boost::dynamic_bitset<> *bytesToBitset(
         reinterpret_cast<const boost::dynamic_bitset<>::block_type *>(fpData);
     return new boost::dynamic_bitset<>(fpBlocks, fpBlocks + nBlocks);
   } else {
-    return reinterpret_cast<boost::dynamic_bitset<> *>(
-        new boost::dynamic_bitset<std::uint8_t>(fpData, fpData + nBytes));
+    // pad the bytes out to whole blocks, then trim the bitset back to nBits
+    constexpr auto blockSize = sizeof(boost::dynamic_bitset<>::block_type);
+    std::vector<boost::dynamic_bitset<>::block_type> blocks(
+        (nBytes + blockSize - 1) / blockSize);
+    std::memcpy(blocks.data(), fpData, nBytes);
+    auto *res = new boost::dynamic_bitset<>(blocks.begin(), blocks.end());
+    res->resize(nBits);
+    return res;
   }
 }
 
 // caller is responsible for delete []'ing the result
 RDKIT_DATASTRUCTS_EXPORT std::uint8_t *bitsetToBytes(
     const boost::dynamic_bitset<> &bitset) {
-  unsigned int nBits = bitset.size();
-  unsigned int nBytes = nBits / 8;
-
-  auto *res = new std::uint8_t[nBytes];
+  // to_block_range writes whole blocks, so size the buffer in blocks
+  auto *res = new std::uint8_t[bitset.num_blocks() *
+                               sizeof(boost::dynamic_bitset<>::block_type)];
   boost::to_block_range(
       bitset, reinterpret_cast<boost::dynamic_bitset<>::block_type *>(res));
   return res;
