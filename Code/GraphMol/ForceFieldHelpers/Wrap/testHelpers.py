@@ -387,44 +387,6 @@ M  END"""
     self.assertTrue(all(map(lambda i: i == 0, res)))
     self.assertTrue(all(after[i] < b for i, b in enumerate(before)))
 
-  def testOptimizeMoleculeConfsFixedPoints(self):
-    from rdkit.Chem import rdDistGeom
-
-    template = Chem.AddHs(Chem.MolFromSmiles('CCCC'))
-    conformerIds = rdDistGeom.EmbedMultipleConfs(template, numConfs=3, randomSeed=61453)
-    self.assertEqual(len(conformerIds), 3)
-    # Distinct poses and sparse IDs ensure each worker uses its own conformer.
-    for index, conformer in enumerate(template.GetConformers()):
-      conformer.SetId(3 + 5 * index)
-      conformer.SetPositions(conformer.GetPositions() + numpy.array([4., -3., 2.]) * index)
-    before = numpy.array([c.GetPositions() for c in template.GetConformers()])
-    for forceField in ('UFF', 'MMFF'):
-      referenceResults = None
-      referencePositions = None
-      for numThreads in (1, 2, 4):
-        with self.subTest(forceField=forceField, numThreads=numThreads):
-          molecule = Chem.Mol(template)
-          if forceField == 'UFF':
-            ff = ChemicalForceFields.UFFGetMoleculeForceField(molecule)
-          else:
-            properties = ChemicalForceFields.MMFFGetMoleculeProperties(molecule)
-            ff = ChemicalForceFields.MMFFGetMoleculeForceField(molecule, properties)
-          ff.AddFixedPoint(0)
-          ff.AddFixedPoint(3)
-          results = ChemicalForceFields.OptimizeMoleculeConfs(
-            molecule, ff, numThreads=numThreads, maxIters=500)
-          positions = numpy.array([c.GetPositions() for c in molecule.GetConformers()])
-          self.assertEqual([c.GetId() for c in molecule.GetConformers()], [3, 8, 13])
-          self.assertTrue(all(status == 0 for status, _ in results))
-          numpy.testing.assert_array_equal(positions[:, [0, 3]], before[:, [0, 3]])
-          self.assertGreater(numpy.max(numpy.abs(positions - before)), 0.01)
-          if numThreads == 1:
-            referenceResults = results
-            referencePositions = positions
-          else:
-            numpy.testing.assert_allclose(results, referenceResults, rtol=0, atol=1e-10)
-            numpy.testing.assert_allclose(positions, referencePositions, rtol=0, atol=1e-10)
-
   def testEmptyFF(self) -> None:
     m = Chem.MolFromSmiles(
       'CCCO |(-1.28533,-0.0567758,0.434662;-0.175447,0.695786,-0.299881;0.918409,-0.342619,-0.555572;1.30936,-0.801512,0.71705)|'

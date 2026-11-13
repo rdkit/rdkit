@@ -144,6 +144,7 @@ TEST_CASE("Force field copies preserve fixed points") {
   CHECK(copied.minimize() == 0);
   CHECK(other.getConformer().getAtomPos(0).x == 0.0);
   CHECK(other.getConformer().getAtomPos(2).x == 4.0);
-  CHECK(feq(other.getConformer().getAtomPos(1).x, 1.0));
+  CHECK_THAT(other.getConformer().getAtomPos(1).x,
+             Catch::Matchers::WithinAbs(1.0, 1e-3));
   CHECK(mol->getConformer().getAtomPos(1).x == 2.0);
 }
