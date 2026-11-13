@@ -182,18 +182,72 @@ class TestCase(unittest.TestCase):
       self.assertEqual(sssr, sssr2)
 
   def testWigglyBondsAndEnumerateStereoisomers(self):
-    from rdkit.Chem import EnumerateStereoisomers
-    m = Chem.MolFromSmiles('CC=CC |w:1.0|')
-    sms = [Chem.MolToSmiles(x) for x in EnumerateStereoisomers.EnumerateStereoisomers(m)]
-    self.assertEqual(len(sms), 2)
-    self.assertIn('C/C=C/C', sms)
-    self.assertIn('C/C=C\\C', sms)
-    from rdkit.Chem import EnumerateStereoisomers
-    m = Chem.MolFromSmiles('CC(F)(Cl)(Br) |w:1.0|')
-    sms = [Chem.MolToSmiles(x) for x in EnumerateStereoisomers.EnumerateStereoisomers(m)]
-    self.assertEqual(len(sms), 2)
-    self.assertIn('C[C@](F)(Cl)Br', sms)
-    self.assertIn('C[C@@](F)(Cl)Br', sms)
+    from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers
+
+    cases = [('CC=CC |w:1.0|', {'C/C=C/C', 'C/C=C\\C'}),
+             ('CC(F)(Cl)Br |w:1.0|', {'C[C@](F)(Cl)Br', 'C[C@@](F)(Cl)Br'})]
+    for smiles, expected in cases:
+      original = Chem.MolFromSmiles(smiles)
+      # Each isomer resolves the stereo the wiggly bond marked as unknown, so
+      # the wiggly bond must not be written out with it.
+      for source, mol in (('smiles', original),
+                          ('molblock', Chem.MolFromMolBlock(Chem.MolToMolBlock(original)))):
+        with self.subTest(smiles=smiles, source=source):
+          before = Chem.MolToMolBlock(mol)
+          isomers = list(EnumerateStereoisomers(mol))
+          self.assertEqual(len(isomers), 2)
+          self.assertEqual({Chem.MolToSmiles(isomer) for isomer in isomers}, expected)
+          # Let the writers generate coordinates for each enumerated E/Z state.
+          for isomer in isomers:
+            isomer.RemoveAllConformers()
+          for writer in (Chem.MolToMolBlock, Chem.MolToV3KMolBlock):
+            for isomer in isomers:
+              reread = Chem.MolFromMolBlock(writer(isomer))
+              self.assertIsNotNone(reread)
+              self.assertEqual(Chem.MolToSmiles(reread), Chem.MolToSmiles(isomer))
+          self.assertEqual(Chem.MolToMolBlock(mol), before)
+
+  def testEnumerationPreservesUnresolvedWigglyBonds(self):
+    from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers, StereoEnumerationOptions
+
+    # (smiles, options, index of the wiggly bond): stereo that is not enumerated
+    # stays unknown, so its wiggly bond has to survive
+    cases = [('CC(F)(Cl)Br |w:1.0|', StereoEnumerationOptions(onlyStereoGroups=True), 0),
+             ('CCO |w:1.1|', StereoEnumerationOptions(), 1)]
+    for smiles, options, wigglyIdx in cases:
+      original = Chem.MolFromSmiles(smiles)
+      # Exercise both a live direction and the property left by molfile parsing.
+      for source, mol in (('smiles', original),
+                          ('molblock', Chem.MolFromMolBlock(Chem.MolToMolBlock(original)))):
+        with self.subTest(smiles=smiles, source=source):
+          isomers = list(EnumerateStereoisomers(mol, options))
+          self.assertEqual(len(isomers), 1)
+          reread = Chem.MolFromMolBlock(Chem.MolToMolBlock(isomers[0]))
+          self.assertIsNotNone(reread)
+          self.assertEqual([b.GetIdx() for b in reread.GetBonds() if b.HasProp('_UnknownStereo')],
+                           [wigglyIdx])
+
+  def testEnumerationPreservesDefinedNeighborOfWigglyBond(self):
+    from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers, StereoEnumerationOptions
+
+    # The wiggly bond marks atom 1 as unknown, but stereo perception also reports
+    # the defined center at its other end, atom 3, as unknown. With
+    # onlyUnassigned, atom 3 must keep its configuration.
+    original = Chem.MolFromSmiles('CC(F)[C@H](Cl)Br')
+    original.GetBondBetweenAtoms(1, 3).SetBondDir(Chem.BondDir.UNKNOWN)
+    for source, mol in (('smiles', original),
+                        ('molblock', Chem.MolFromMolBlock(Chem.MolToMolBlock(original)))):
+      tag = mol.GetAtomWithIdx(3).GetChiralTag()
+      self.assertNotEqual(tag, Chem.ChiralType.CHI_UNSPECIFIED)
+      for onlyUnassigned in (True, False):
+        with self.subTest(source=source, onlyUnassigned=onlyUnassigned):
+          options = StereoEnumerationOptions(onlyUnassigned=onlyUnassigned)
+          isomers = list(EnumerateStereoisomers(mol, options))
+          # atom 1 is always enumerated; atom 3 only when assigned stereo is too
+          self.assertEqual(len(isomers), 2 if onlyUnassigned else 4)
+          if onlyUnassigned:
+            for isomer in isomers:
+              self.assertEqual(isomer.GetAtomWithIdx(3).GetChiralTag(), tag)
 
   def testMultiConfMolFromSDF(self):
     sdf = os.path.join(RDConfig.RDCodeDir, "Chem", "test_data", "cis.sdf")
