@@ -37,6 +37,10 @@ and in the [Docs](https://github.com/rdkit/rdkit/tree/master/Docs) folder on Git
 
 The [RDKit blog](https://greglandrum.github.io/rdkit-blog/) often has useful tips and tricks.
 
+## Contributing
+
+Before changing code, please read the [contribution guide](Docs/Book/GettingStartedWithContributing.md)
+
 ## Support and Community
 
 If you have questions, comments, or suggestions, the best places for those are:

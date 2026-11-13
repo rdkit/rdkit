@@ -8,6 +8,10 @@ This guide aims to serve a couple of purposes:
 - To act as a reminder for more established contributors, especially those who submit irregularly
 - Provide another weapon in the arsenal against Greg's "hit by a bus" problem, and hopefully make the maintainers lives easier by producing better first time submissions!
 
+For practical guidance on API compatibility, implementation idioms, testing, and
+source style, also read [RDKit contributor conventions](ContributorConventions.md).
+That guide links to the maintainer discussions behind the advice.
+
 ## Acknowledging the usage of AI tools
 
 If you make significant use of AI tools beyond auto-complete when creating your
