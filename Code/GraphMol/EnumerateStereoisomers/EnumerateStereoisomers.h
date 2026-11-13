@@ -15,8 +15,8 @@
 #ifndef RD_ENUMERATESTEREOISOMERS_H
 #define RD_ENUMERATESTEREOISOMERS_H
 
-#include <GraphMol/EnumerateStereoisomers/Flippers.h>
-
+#include <iterator>
+#include <memory>
 #include <random>
 #include <set>
 #include <unordered_set>
@@ -29,6 +29,9 @@
 
 namespace RDKit {
 namespace EnumerateStereoisomers {
+namespace details {
+struct Flipper;
+}  // namespace details
 
 struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoEnumerationOptions {
   bool tryEmbedding{false};   // If true, the process attempts to generate
@@ -69,6 +72,33 @@ struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoEnumerationOptions {
 // it can produce.
 class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
  public:
+  class RDKIT_ENUMERATESTEREOISOMERS_EXPORT iterator {
+   public:
+    using iterator_category = std::input_iterator_tag;
+    using iterator_concept = std::input_iterator_tag;
+    using value_type = ROMol;
+    using difference_type = std::ptrdiff_t;
+    using reference = const ROMol &;
+    using pointer = const ROMol *;
+
+    iterator() = default;
+    reference operator*() const;
+    pointer operator->() const { return &operator*(); }
+    iterator &operator++();
+    iterator operator++(int);
+    bool operator==(const iterator &other) const;
+    bool operator!=(const iterator &other) const { return !(*this == other); }
+
+   private:
+    friend class StereoisomerEnumerator;
+    iterator(StereoisomerEnumerator *owner, std::uint64_t position,
+             std::unique_ptr<ROMol> value)
+        : d_owner(owner), d_position(position), d_current(std::move(value)) {}
+    StereoisomerEnumerator *d_owner{nullptr};
+    std::uint64_t d_position{0};
+    std::shared_ptr<ROMol> d_current;
+  };
+
   StereoisomerEnumerator() = delete;
   StereoisomerEnumerator(
       const ROMol &mol,
@@ -76,7 +106,7 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
       bool verbose = false);
   StereoisomerEnumerator(const StereoisomerEnumerator &other) = delete;
   StereoisomerEnumerator(StereoisomerEnumerator &&other) = delete;
-  ~StereoisomerEnumerator() = default;
+  ~StereoisomerEnumerator();
   StereoisomerEnumerator &operator=(const StereoisomerEnumerator &other) =
       delete;
   StereoisomerEnumerator &operator=(StereoisomerEnumerator &&other) = delete;
@@ -86,10 +116,13 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
   // Return another stereoisomer, or an empty unique_ptr if we're done.
   std::unique_ptr<ROMol> next();
 
+  iterator begin();
+  iterator end();
+
  private:
   // Whether the generated stereoisomer is considered valid based
   // on the ring systems patterns
-  bool passesRingPatternsCheck() const;
+  bool passesRingPatternsCheck(const ROMol &mol) const;
 
   RWMol d_mol;
   const StereoEnumerationOptions d_options;
@@ -123,6 +156,7 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
 
   void buildFlippers();
   std::unique_ptr<ROMol> generateRandomIsomer();
+  std::unique_ptr<ROMol> buildIsomer(const boost::dynamic_bitset<> &config);
   bool embeddable(ROMol &isomer);
 };
 }  // namespace EnumerateStereoisomers

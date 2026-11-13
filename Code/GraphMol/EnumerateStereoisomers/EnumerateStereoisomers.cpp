@@ -10,6 +10,7 @@
 
 #include <cmath>
 #include <limits>
+#include <stdexcept>
 
 #include <boost/numeric/conversion/cast.hpp>
 
@@ -73,6 +74,8 @@ StereoisomerEnumerator::StereoisomerEnumerator(
   }
 }
 
+StereoisomerEnumerator::~StereoisomerEnumerator() = default;
+
 std::uint64_t StereoisomerEnumerator::getStereoisomerCount() const {
   return d_totalPoss;
 }
@@ -81,17 +84,62 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::next() {
   if (d_numReturned == d_numToReturn) {
     return std::unique_ptr<ROMol>();
   }
-  if (d_flippers.empty()) {
-    ++d_numReturned;
-    if (d_options.useRingSystemFilter && !passesRingPatternsCheck()) {
-      return std::unique_ptr<ROMol>();
-    }
-    return std::make_unique<ROMol>(d_mol);
-  } else {
-    auto isomer = generateRandomIsomer();
-    ++d_numReturned;
-    return isomer;
+  auto isomer = generateRandomIsomer();
+  if (!isomer) {
+    d_numReturned = d_numToReturn;
+    return std::unique_ptr<ROMol>();
   }
+  ++d_numReturned;
+  return isomer;
+}
+
+StereoisomerEnumerator::iterator StereoisomerEnumerator::begin() {
+  const auto position = d_numReturned;
+  return iterator(this, position, next());
+}
+
+StereoisomerEnumerator::iterator StereoisomerEnumerator::end() {
+  return iterator(this, d_numToReturn, nullptr);
+}
+
+StereoisomerEnumerator::iterator::reference
+StereoisomerEnumerator::iterator::operator*() const {
+  if (!d_owner || !d_current) {
+    throw std::out_of_range("dereferencing the end stereoisomer iterator");
+  }
+  return *d_current;
+}
+
+StereoisomerEnumerator::iterator &
+StereoisomerEnumerator::iterator::operator++() {
+  if (d_owner && d_current) {
+    auto nextValue = d_owner->next();
+    if (nextValue) {
+      d_position = d_owner->d_numReturned - 1;
+    } else {
+      d_position = d_owner->d_numToReturn;
+    }
+    d_current = std::move(nextValue);
+  }
+  return *this;
+}
+
+StereoisomerEnumerator::iterator StereoisomerEnumerator::iterator::operator++(
+    int) {
+  auto copy = *this;
+  ++*this;
+  return copy;
+}
+
+bool StereoisomerEnumerator::iterator::operator==(
+    const StereoisomerEnumerator::iterator &other) const {
+  if (d_owner != other.d_owner) {
+    return false;
+  }
+  if (!d_current || !other.d_current) {
+    return !d_current && !other.d_current;
+  }
+  return d_position == other.d_position;
 }
 
 void StereoisomerEnumerator::buildFlippers() {
@@ -103,17 +151,16 @@ void StereoisomerEnumerator::buildFlippers() {
       continue;
     }
     if (si.type == Chirality::StereoType::Atom_Tetrahedral) {
-      d_flippers.push_back(std::unique_ptr<details::Flipper>(
-          new details::AtomFlipper(d_mol, si)));
+      d_flippers.emplace_back(new details::AtomFlipper(si));
     } else if (si.type == Chirality::StereoType::Bond_Double) {
       std::unique_ptr<details::BondFlipper> newFlipper(
           new details::BondFlipper(d_mol, si));
-      if (newFlipper->dp_bond) {
+      if (newFlipper->isValid()) {
         d_flippers.push_back(std::move(newFlipper));
       }
     } else if (si.type == Chirality::StereoType::Bond_Atropisomer) {
       std::unique_ptr<details::AtropisomerFlipper> newFlipper(
-          new details::AtropisomerFlipper(d_mol, si));
+          new details::AtropisomerFlipper(si));
       d_flippers.push_back(std::move(newFlipper));
     }
   }
@@ -129,10 +176,10 @@ void StereoisomerEnumerator::buildFlippers() {
   }
 }
 
-bool StereoisomerEnumerator::passesRingPatternsCheck() const {
+bool StereoisomerEnumerator::passesRingPatternsCheck(const ROMol &mol) const {
   for (auto [i, j] : d_pattern_same_parity) {
-    auto atomIParity = d_mol.getAtomWithIdx(i)->getChiralTag();
-    auto atomJParity = d_mol.getAtomWithIdx(j)->getChiralTag();
+    auto atomIParity = mol.getAtomWithIdx(i)->getChiralTag();
+    auto atomJParity = mol.getAtomWithIdx(j)->getChiralTag();
     if ((atomIParity == Atom::CHI_TETRAHEDRAL_CW &&
          atomJParity == Atom::CHI_TETRAHEDRAL_CCW) ||
         (atomIParity == Atom::CHI_TETRAHEDRAL_CCW &&
@@ -141,8 +188,8 @@ bool StereoisomerEnumerator::passesRingPatternsCheck() const {
     }
   }
   for (auto [i, j] : d_pattern_opposite_parity) {
-    auto atomIParity = d_mol.getAtomWithIdx(i)->getChiralTag();
-    auto atomJParity = d_mol.getAtomWithIdx(j)->getChiralTag();
+    auto atomIParity = mol.getAtomWithIdx(i)->getChiralTag();
+    auto atomJParity = mol.getAtomWithIdx(j)->getChiralTag();
     if ((atomIParity == Atom::CHI_TETRAHEDRAL_CW &&
          atomJParity == Atom::CHI_TETRAHEDRAL_CW) ||
         (atomIParity == Atom::CHI_TETRAHEDRAL_CCW &&
@@ -156,45 +203,14 @@ bool StereoisomerEnumerator::passesRingPatternsCheck() const {
 std::unique_ptr<ROMol> StereoisomerEnumerator::generateRandomIsomer() {
   boost::dynamic_bitset<> nextConfig{d_flippers.size()};
   while (d_seen.size() < d_totalPoss) {
-    for (size_t i = 0; i < d_flippers.size(); i++) {
+    for (size_t i = 0; i < d_flippers.size(); ++i) {
       bool config = d_randDis(*d_randGen);
       nextConfig[i] = config;
     }
-    if (d_seen.find(nextConfig) == d_seen.end()) {
-      d_seen.insert(nextConfig);
-      for (size_t i = 0; i < d_flippers.size(); i++) {
-        d_flippers[i]->flip(nextConfig[i]);
-      }
-
-      // Check whether this isomer is valid, according to the patterns
-      // we're using
-      if (d_options.useRingSystemFilter && !passesRingPatternsCheck()) {
+    if (d_seen.insert(nextConfig).second) {
+      auto isomer = buildIsomer(nextConfig);
+      if (d_options.useRingSystemFilter && !passesRingPatternsCheck(*isomer)) {
         continue;
-      }
-
-      // We don't need StereoGroups any more so remove them.
-      std::unique_ptr<ROMol> isomer;
-      if (!d_mol.getStereoGroups().empty()) {
-        isomer.reset(new RWMol(d_mol));
-        isomer->setStereoGroups(std::vector<StereoGroup>());
-      } else {
-        isomer.reset(new ROMol(d_mol));
-      }
-      MolOps::setDoubleBondNeighborDirections(*isomer);
-      isomer->clearComputedProps(false);
-      std::vector<std::pair<unsigned int, Bond::BondStereo>> atropStereo;
-      for (const auto bond : isomer->bonds()) {
-        if (bond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
-            bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
-          atropStereo.emplace_back(bond->getIdx(), bond->getStereo());
-        }
-      }
-      MolOps::assignStereochemistry(*isomer, true, true, true);
-      // AtropisomerFlipper updates bond directions, but not an existing 2D
-      // conformer. Preserve the configuration selected by the flipper instead
-      // of allowing stale coordinates to overwrite it.
-      for (const auto &[bondIdx, stereo] : atropStereo) {
-        isomer->getBondWithIdx(bondIdx)->setStereo(stereo);
       }
       if (d_options.unique) {
         auto smi =
@@ -203,27 +219,48 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::generateRandomIsomer() {
                               SmilesWrite::CXSmilesFields::CX_ATOM_LABELS ^
                               SmilesWrite::CXSmilesFields::CX_MOLFILE_VALUES ^
                               SmilesWrite::CXSmilesFields::CX_ATOM_PROPS);
-
-        if (d_generatedIsomers.find(smi) != d_generatedIsomers.end()) {
+        if (!d_generatedIsomers.insert(smi).second) {
           continue;
         }
-        d_generatedIsomers.insert(smi);
       }
-
-      if (d_options.tryEmbedding) {
-        if (embeddable(*isomer)) {
-          return isomer;
-        }
+      if (d_options.tryEmbedding && !embeddable(*isomer)) {
         if (d_verbose) {
           BOOST_LOG(rdInfoLog)
               << MolToSmiles(*isomer) << "     failed to embed." << std::endl;
         }
-      } else {
-        return isomer;
+        continue;
       }
+      return isomer;
     }
   }
   return std::unique_ptr<ROMol>();
+}
+
+std::unique_ptr<ROMol> StereoisomerEnumerator::buildIsomer(
+    const boost::dynamic_bitset<> &config) {
+  auto isomer = std::make_unique<RWMol>(d_mol);
+  for (size_t i = 0; i < d_flippers.size(); i++) {
+    d_flippers[i]->flip(*isomer, config[i]);
+  }
+  // We don't need StereoGroups any more so remove them.
+  if (!isomer->getStereoGroups().empty()) {
+    isomer->setStereoGroups(std::vector<StereoGroup>());
+  }
+  MolOps::setDoubleBondNeighborDirections(*isomer);
+  isomer->clearComputedProps(false);
+  std::vector<std::pair<unsigned int, Bond::BondStereo>> atropStereo;
+  for (const auto bond : isomer->bonds()) {
+    if (bond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
+        bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
+      atropStereo.emplace_back(bond->getIdx(), bond->getStereo());
+    }
+  }
+  MolOps::assignStereochemistry(*isomer, true, true, true);
+  // Preserve atropisomer configurations selected by the flippers.
+  for (const auto &[bondIdx, stereo] : atropStereo) {
+    isomer->getBondWithIdx(bondIdx)->setStereo(stereo);
+  }
+  return isomer;
 }
 
 bool StereoisomerEnumerator::embeddable(ROMol &isomer) {

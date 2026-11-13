@@ -4,7 +4,7 @@ rdkit_library(EnumerateStereoisomers
         LINK_LIBRARIES SmilesParse FileParsers GraphMol CIPLabeler DistGeomHelpers DistGeometry)
 target_compile_definitions(EnumerateStereoisomers PRIVATE RDKIT_ENUMERATESTEREOISOMERS_BUILD)
 
-rdkit_headers(EnumerateStereoisomers.h Flippers.h DEST GraphMol/EnumerateStereoisomers)
+rdkit_headers(EnumerateStereoisomers.h DEST GraphMol/EnumerateStereoisomers)
 
 rdkit_catch_test(testEnumerateStereoisomers catchEnumerateStereoisomers.cpp RingSystemFilter.cpp
         LINK_LIBRARIES EnumerateStereoisomers)
