@@ -297,4 +297,54 @@ TEST_CASE("max number of relevant cycles") {
           static_cast<int>(nRings + 1 + nExtraRings + nExtraSymmetric));
     CHECK(rings.size() == nRings + 1 + nExtraRings + nExtraSymmetric);
   }
+  SECTION("SSSR rings are returned when clipping occurs") {
+    std::string unit = "-C1CCC(CC1)";
+    std::string smiles = "C12CCC(CC1)";
+    for (auto i = 0; i < 20; ++i) {
+      smiles += unit;
+    }
+    smiles += "-C1CCC2(CC1).C1CCCCCCC1";
+    v2::SmilesParse::SmilesParserParams params;
+    params.sanitize = false;
+    auto m = v2::SmilesParse::MolFromSmiles(smiles, params);
+    REQUIRE(m);
+    std::vector<std::vector<int>> rings;
+    CHECK(MolOps::findSSSR(*m, rings) == 24);
+    CHECK(rings.size() == 24);
+    for (auto i = 0; i < 22; ++i) {
+      CHECK(rings[i].size() == 6);
+    }
+    CHECK(rings[22].size() == 8);
+    MolOps::findRingFamilies(*m);
+    auto ri = m->getRingInfo();
+    auto nExpected = MAX_SYMMETRIZED_RINGS + ri->numRingFamilies();
+    CHECK(MolOps::symmetrizeSSSR(*m, rings,
+                                 MolOps::SymmetrizeSSSRAlgorithm::RDL) ==
+          static_cast<int>(nExpected));
+    CHECK(rings.size() == nExpected);
+    for (auto i = 0; i < 22; ++i) {
+      CHECK(rings[i].size() == 6);
+    }
+    CHECK(rings[22].size() == 8);
+  }
+}
+
+TEST_CASE("rings from molecules with fragments are also ordered") {
+  auto m = "C1CCCCC1.C1CC1.C1CCCC1.C1CCC1"_smiles;
+  REQUIRE(m);
+
+  auto checkit = [](const auto &rings) {
+    REQUIRE(rings.size() == 4);
+    CHECK(rings[0].size() == 3);
+    CHECK(rings[1].size() == 4);
+    CHECK(rings[2].size() == 5);
+    CHECK(rings[3].size() == 6);
+  };
+  std::vector<std::vector<int>> rings;
+  INFO("SSSR");
+  CHECK(MolOps::findSSSR(*m, rings) == 4);
+  checkit(rings);
+  INFO("Symmetrized SSSR");
+  CHECK(MolOps::symmetrizeSSSR(*m, rings) == 4);
+  checkit(rings);
 }
