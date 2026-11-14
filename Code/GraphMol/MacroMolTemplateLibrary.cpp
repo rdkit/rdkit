@@ -201,16 +201,8 @@ MacroMolLeavingGroup attachRGroup(RWMol &mol, unsigned int coreDummyIdx,
           "the attachment point of R-group " +
           rGroupLabel + " for monomer " + name);
     }
-    INT_LIST bondOrder;
-    for (const auto bond : rGroup.atomBonds(rGroupLeavingAtom)) {
-      const auto otherIdx =
-          mapIdx(bond->getOtherAtomIdx(rGroupLeavingAtom->getIdx()));
-      bondOrder.push_back(
-          mol.getBondBetweenAtoms(coreDummyIdx, otherIdx)->getIdx());
-    }
-    if (leavingAtom->getPerturbationOrder(bondOrder) % 2) {
-      leavingAtom->invertChirality();
-    }
+    Chirality::restoreTetrahedralParity(*rGroupLeavingAtom, *leavingAtom,
+                                        mapIdx);
   }
   return {std::move(atomIdxs), attachAtomIdx, static_cast<int>(coreDummyIdx),
           rGroupNumber};

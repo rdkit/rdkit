@@ -1,0 +1,62 @@
+//
+//  Copyright (C) 2026 Tad Hurst, Schrödinger and other RDKit contributors
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
+#ifndef RD_MOLFROMMACROMOL_H
+#define RD_MOLFROMMACROMOL_H
+
+#include <GraphMol/MacroMol.h>
+#include <GraphMol/MacroMolTemplate.h>
+#include <RDGeneral/export.h>
+
+#include <memory>
+
+namespace RDKit {
+
+//! Expands a MacroMol into an ordinary molecule.
+/*!
+  Each macro atom is replaced by a copy of its template, looked up by monomer
+  class and symbol, then by monomer class and name. If \c macroMol's local
+  template library is not empty, all templates are looked up there;
+  otherwise, they are all looked up in \c templates. The two libraries are
+  never combined: a macro atom missing from a non-empty local library is an
+  error, even if \c templates has it.
+
+  The leaving groups of the attachment points used by macro bonds are removed,
+  and each macro atom's main group is recorded as a SUP SGroup. The leaving
+  groups of unused attachment points remain, including any explicit hydrogen
+  atoms. Ordinary atoms and bonds are copied unchanged. The result is not
+  sanitized.
+
+  Only atoms, bonds, and their stereochemistry and properties are carried
+  over. In particular, the result has no conformers (generate coordinates
+  afterwards if needed), and the templates' leaving group SGroups, and the
+  SGroups, stereo groups and molecule properties of \c macroMol, are not
+  copied.
+
+  \param macroMol  the molecule to expand
+  \param templates the library used if \c macroMol's local template library
+                   is empty
+
+  \throws ValueErrorException if
+    - \c macroMol contains query atoms or bonds (templates cannot contain
+      them either),
+    - a macro atom has an empty symbol or no template,
+    - an attachment point is used by more than one macro bond,
+    - a macro bond uses an attachment point its template does not have, or
+    - a macro bond would change the valence of an attachment atom: its bond
+      type must match that of the bond to the leaving atom it replaces or, if
+      the attachment point has no leaving atom, be HYDROGEN or ZERO
+*/
+RDKIT_GRAPHMOL_EXPORT std::unique_ptr<RWMol> MolFromMacroMol(
+    const MacroMol &macroMol, const MacroMolTemplateLibrary &templates);
+
+}  // namespace RDKit
+
+#endif
