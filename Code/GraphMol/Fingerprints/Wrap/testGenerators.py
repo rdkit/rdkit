@@ -97,6 +97,36 @@ class TestCase(unittest.TestCase):
     self.assertEqual(g.GetSparseCountFingerprint(ms[0]), g2.GetSparseCountFingerprint(ms[0]))
     self.assertEqual(g.GetSparseCountFingerprint(ms[1]), g2.GetSparseCountFingerprint(ms[1]))
 
+  def testMorganFeatureAtomInvGenPatterns(self):
+    m = Chem.MolFromSmiles('OCCN')
+    default = rdFingerprintGenerator.GetMorganGenerator(
+      radius=2, atomInvariantsGenerator=rdFingerprintGenerator.GetMorganFeatureAtomInvGen())
+    pattern = Chem.MolFromSmarts('[OX2]')
+    for patterns in ([pattern], (pattern, ), (p for p in [pattern])):
+      with self.subTest(kind=type(patterns).__name__):
+        # The patterns replace the default feature definitions.
+        invGen = rdFingerprintGenerator.GetMorganFeatureAtomInvGen(patterns)
+        g = rdFingerprintGenerator.GetMorganGenerator(radius=2, atomInvariantsGenerator=invGen)
+        self.assertNotEqual(g.GetSparseCountFingerprint(m).GetNonzeroElements(),
+                            default.GetSparseCountFingerprint(m).GetNonzeroElements())
+
+  def testMorganFeatureAtomInvGenPatternLimit(self):
+    pattern = Chem.MolFromSmarts('[OX2]')
+    # Each pattern is one bit of a 32-bit atom invariant.
+    rdFingerprintGenerator.GetMorganFeatureAtomInvGen([pattern] * 32)
+    with self.assertRaisesRegex(ValueError, 'takes at most 32 patterns'):
+      rdFingerprintGenerator.GetMorganFeatureAtomInvGen([pattern] * 33)
+
+  def testMorganFeatureAtomInvGenNonePattern(self):
+    pattern = Chem.MolFromSmarts('[OX2]')
+    if rdBase._wrapperType == 'nanobind':
+      # nanobind casts None to a null pattern, which the generator rejects.
+      error, message = ValueError, 'null pattern'
+    else:
+      error, message = TypeError, 'NoneType'
+    with self.assertRaisesRegex(error, message):
+      rdFingerprintGenerator.GetMorganFeatureAtomInvGen([pattern, None])
+
   def testRDKitFPGenerator(self):
     m = Chem.MolFromSmiles('CCCCC')
     g = rdFingerprintGenerator.GetRDKitFPGenerator()
