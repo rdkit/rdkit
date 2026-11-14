@@ -32,6 +32,219 @@
 using namespace RDKit;
 using std::unique_ptr;
 
+TEST_CASE("Github #9691: double bond stereo and reactant order",
+          "[Reaction][stereo][bug]") {
+  struct StereoCase {
+    const char *name;
+    const char *acidTemplate;
+    const char *productTemplate;
+    bool preservesStereo;
+    bool setsStereo;
+  };
+  const StereoCase cases[] = {
+      {"explicit destruction", "[C:6][C:1]=[C:2][C:3](=O)[OH]",
+       "[C:6][C:1]=[C:2][C:3](=O)[N:4][#6:5]", false, false},
+      {"preservation", "[C:1]=[C:2][C:3](=O)[OH]",
+       "[C:1]=[C:2][C:3](=O)[N:4][#6:5]", true, false},
+      {"product stereo overrides reactant", "[C:6][C:1]=[C:2][C:3](=O)[OH]",
+       "[C:6]/[C:1]=[C:2]/[C:3](=O)[N:4][#6:5]", false, true},
+      {"new stereo neighbor", "[C][C:1]=[C:2][C:3](=O)[OH]",
+       "C[C:1]=[C:2][C:3](=O)[N:4][#6:5]", false, false},
+      {"new double bond endpoint", "[C:6][C:1]=[C:2][C:3](=O)[OH]",
+       "[C:6][C:1]=CC(=O)[N:4][#6:5]", false, false},
+      {"both double bond endpoints new", "[C:6][C:1]=[C:2][C:3](=O)[OH]",
+       "CC=CC(=O)[N:4][#6:5]", false, false}};
+  const auto caseIdx = GENERATE(0u, 1u, 2u, 3u, 4u, 5u);
+  const auto &testCase = cases[caseIdx];
+  const auto cis = GENERATE(false, true);
+  const auto acidFirst = GENERATE(false, true);
+  const auto stripDirections = GENERATE(false, true);
+  CAPTURE(testCase.name, cis, acidFirst, stripDirections);
+
+  ROMOL_SPTR acid(SmilesToMol(cis ? R"(C/C=C\C(=O)O)" : R"(C/C=C/C(=O)O)"));
+  ROMOL_SPTR amine(SmilesToMol("NC"));
+  REQUIRE(acid);
+  REQUIRE(amine);
+  REQUIRE(acid->getBondWithIdx(1)->getStereo() > Bond::STEREOANY);
+  if (stripDirections) {
+    for (auto bond : acid->bonds()) {
+      bond->setBondDir(Bond::NONE);
+    }
+  }
+  const std::string amineTemplate = "[NH2:4][#6:5]";
+  const std::string acidTemplate = testCase.acidTemplate;
+  const auto reactantTemplates = acidFirst ? acidTemplate + "." + amineTemplate
+                                           : amineTemplate + "." + acidTemplate;
+  unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      reactantTemplates + ">>" + testCase.productTemplate));
+  REQUIRE(rxn);
+  rxn->initReactantMatchers();
+  const MOL_SPTR_VECT reactants =
+      acidFirst ? MOL_SPTR_VECT{acid, amine} : MOL_SPTR_VECT{amine, acid};
+  const auto products = rxn->runReactants(reactants);
+  REQUIRE(products.size() == 1);
+  REQUIRE(products[0].size() == 1);
+  RWMol product(*products[0][0]);
+  bool foundAlkene = false;
+  for (auto bond : product.bonds()) {
+    CHECK_FALSE(bond->hasProp("_UnknownStereoRxnBond"));
+    if (bond->getBondType() == Bond::DOUBLE &&
+        bond->getBeginAtom()->getAtomicNum() == 6 &&
+        bond->getEndAtom()->getAtomicNum() == 6) {
+      foundAlkene = true;
+      if (testCase.preservesStereo || testCase.setsStereo) {
+        CHECK(bond->getStereo() > Bond::STEREOANY);
+      } else {
+        CHECK(bond->getStereo() == Bond::STEREONONE);
+      }
+    }
+  }
+  REQUIRE(foundAlkene);
+  MolOps::sanitizeMol(product);
+  // MolToSmiles may clean and re-perceive stereo from bond directions. When
+  // reactant directions were stripped, reconstruct them from the raw product
+  // stereo checked above before testing its serialized representation.
+  MolOps::setDoubleBondNeighborDirections(product);
+  const auto expectedSmiles =
+      testCase.setsStereo ? R"(C/C=C/C(=O)NC)"
+      : testCase.preservesStereo
+          ? (cis ? R"(C/C=C\C(=O)NC)" : R"(C/C=C/C(=O)NC)")
+          : "CC=CC(=O)NC";
+  unique_ptr<RWMol> expected(SmilesToMol(expectedSmiles));
+  REQUIRE(expected);
+  CHECK(MolToSmiles(product) == MolToSmiles(*expected));
+}
+
+TEST_CASE("Github #9691: single reactant destroys double bond stereo",
+          "[Reaction][stereo][bug]") {
+  const auto cis = GENERATE(false, true);
+  const auto stripDirections = GENERATE(false, true);
+  CAPTURE(cis, stripDirections);
+  ROMOL_SPTR acid(SmilesToMol(cis ? R"(C/C=C\C(=O)O)" : R"(C/C=C/C(=O)O)"));
+  REQUIRE(acid);
+  REQUIRE(acid->getBondWithIdx(1)->getStereo() > Bond::STEREOANY);
+  if (stripDirections) {
+    for (auto bond : acid->bonds()) {
+      bond->setBondDir(Bond::NONE);
+    }
+  }
+  unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      "[C:6][C:1]=[C:2][C:3](=O)[OH]>>[C:6][C:1]=[C:2][C:3](=O)NC"));
+  REQUIRE(rxn);
+  rxn->initReactantMatchers();
+  const auto products = rxn->runReactant(acid, 0);
+  REQUIRE(products.size() == 1);
+  REQUIRE(products[0].size() == 1);
+  RWMol product(*products[0][0]);
+  for (auto bond : product.bonds()) {
+    CHECK_FALSE(bond->hasProp("_UnknownStereoRxnBond"));
+    CHECK(bond->getStereo() == Bond::STEREONONE);
+  }
+  MolOps::sanitizeMol(product);
+  CHECK(MolToSmiles(product) == "CC=CC(=O)NC");
+}
+
+TEST_CASE("Github #9691: independent reactant double bond stereo",
+          "[Reaction][stereo][bug]") {
+  const auto acidCis = GENERATE(false, true);
+  const auto otherCis = GENERATE(false, true);
+  const auto acidFirst = GENERATE(false, true);
+  const auto stripDirections = GENERATE(false, true);
+  CAPTURE(acidCis, otherCis, acidFirst, stripDirections);
+  ROMOL_SPTR acid(SmilesToMol(acidCis ? R"(C/C=C\C(=O)O)" : R"(C/C=C/C(=O)O)"));
+  ROMOL_SPTR other(SmilesToMol(otherCis ? R"(C/C=C\Br)" : R"(C/C=C/Br)"));
+  REQUIRE(acid);
+  REQUIRE(other);
+  REQUIRE(acid->getBondWithIdx(1)->getStereo() > Bond::STEREOANY);
+  REQUIRE(other->getBondWithIdx(1)->getStereo() > Bond::STEREOANY);
+  if (stripDirections) {
+    for (auto mol : {acid, other}) {
+      for (auto bond : mol->bonds()) {
+        bond->setBondDir(Bond::NONE);
+      }
+    }
+  }
+  const std::string acidTemplate = "[C:6][C:1]=[C:2][C:3](=O)[OH]";
+  const std::string otherTemplate = "[C:7]=[C:8][Br:9]";
+  const auto reactantTemplates = acidFirst ? acidTemplate + "." + otherTemplate
+                                           : otherTemplate + "." + acidTemplate;
+  // Both double bonds are in the same product: destroy the acid's stereo,
+  // but preserve the other reactant's stereo and its unmatched methyl group.
+  unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      reactantTemplates + ">>([C:6][C:1]=[C:2][C:3](=O)NC.[C:7]=[C:8][Br:9])"));
+  REQUIRE(rxn);
+  rxn->initReactantMatchers();
+  const MOL_SPTR_VECT reactants =
+      acidFirst ? MOL_SPTR_VECT{acid, other} : MOL_SPTR_VECT{other, acid};
+  const auto products = rxn->runReactants(reactants);
+  REQUIRE(products.size() == 1);
+  REQUIRE(products[0].size() == 1);
+  RWMol product(*products[0][0]);
+  // Product-template atom order places the two alkenes at (1,2) and (7,8).
+  const auto destroyedBond = product.getBondBetweenAtoms(1, 2);
+  const auto preservedBond = product.getBondBetweenAtoms(7, 8);
+  REQUIRE(destroyedBond);
+  REQUIRE(preservedBond);
+  REQUIRE(destroyedBond->getBondType() == Bond::DOUBLE);
+  REQUIRE(preservedBond->getBondType() == Bond::DOUBLE);
+  CHECK(destroyedBond->getStereo() == Bond::STEREONONE);
+  CHECK(preservedBond->getStereo() > Bond::STEREOANY);
+  for (auto bond : product.bonds()) {
+    CHECK_FALSE(bond->hasProp("_UnknownStereoRxnBond"));
+  }
+  MolOps::sanitizeMol(product);
+  // Supply directions for writer re-perception after checking raw stereo.
+  MolOps::setDoubleBondNeighborDirections(product);
+  const std::string expectedSmiles =
+      std::string("CC=CC(=O)NC.") + (otherCis ? R"(C/C=C\Br)" : R"(C/C=C/Br)");
+  unique_ptr<RWMol> expected(SmilesToMol(expectedSmiles));
+  REQUIRE(expected);
+  CHECK(MolToSmiles(product) == MolToSmiles(*expected));
+}
+
+TEST_CASE("Github #9691: partial multi-reactant stereo destruction",
+          "[Reaction][stereo][bug]") {
+  const auto cis = GENERATE(false, true);
+  const auto acidFirst = GENERATE(false, true);
+  const auto acidProvided = GENERATE(false, true);
+  const auto stripDirections = GENERATE(false, true);
+  CAPTURE(cis, acidFirst, acidProvided, stripDirections);
+  ROMOL_SPTR acid(SmilesToMol(cis ? R"(C/C=C\C(=O)O)" : R"(C/C=C/C(=O)O)"));
+  ROMOL_SPTR amine(SmilesToMol("NC"));
+  REQUIRE(acid);
+  REQUIRE(amine);
+  REQUIRE(acid->getBondWithIdx(1)->getStereo() > Bond::STEREOANY);
+  if (stripDirections) {
+    for (auto bond : acid->bonds()) {
+      bond->setBondDir(Bond::NONE);
+    }
+  }
+  const std::string acidTemplate = "[C:6][C:1]=[C:2][C:3](=O)[OH]";
+  const std::string amineTemplate = "[NH2:4][#6:5]";
+  const auto reactantTemplates = acidFirst ? acidTemplate + "." + amineTemplate
+                                           : amineTemplate + "." + acidTemplate;
+  unique_ptr<ChemicalReaction> rxn(RxnSmartsToChemicalReaction(
+      reactantTemplates + ">>[C:6][C:1]=[C:2][C:3](=O)[N:4][#6:5]"));
+  REQUIRE(rxn);
+  rxn->initReactantMatchers();
+  // runReactant supplies empty molecules for the other template. Exercise
+  // both a supplied alkene and an alkene left entirely in the product template.
+  const unsigned int reactantIdx =
+      acidProvided ? (acidFirst ? 0 : 1) : (acidFirst ? 1 : 0);
+  const auto products =
+      rxn->runReactant(acidProvided ? acid : amine, reactantIdx);
+  REQUIRE(products.size() == 1);
+  REQUIRE(products[0].size() == 1);
+  const auto &product = *products[0][0];
+  const auto alkene = product.getBondBetweenAtoms(1, 2);
+  REQUIRE(alkene);
+  REQUIRE(alkene->getBondType() == Bond::DOUBLE);
+  CHECK(alkene->getStereo() == Bond::STEREONONE);
+  for (auto bond : product.bonds()) {
+    CHECK_FALSE(bond->hasProp("_UnknownStereoRxnBond"));
+  }
+}
+
 TEST_CASE("Github #1632", "[Reaction][PDB][bug]") {
   SECTION("basics") {
     bool sanitize = true;
