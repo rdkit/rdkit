@@ -65,8 +65,8 @@ class ControlCHandler {
   }
 
  private:
-  inline static bool d_gotSignal{false};
-  inline static void (*d_prev_handler)(int);
+  inline static std::atomic<bool> d_gotSignal{false};
+  inline static std::atomic<void (*)(int)> d_prev_handler{nullptr};
 };
 }  // namespace RDKit
 #endif  // CONTROLCHANDLER_H
