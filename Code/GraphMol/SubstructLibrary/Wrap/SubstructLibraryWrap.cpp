@@ -259,7 +259,8 @@ const char *CachedTrustedSmilesMolHolderDoc =
     "        use CachedSmilesMolHolder::addSmiles for cxsmiles support\n"
     "         or use MolHolder or CachedMolHolder.\n\n"
     "Consequences, both properties of the FORMAT rather than bugs:\n"
-    "  - radical counts are INFERRED from valence by assignRadicals()\n"
+    "  - radical counts are not correct use CachedSmilesMolHolder::addSmiles\n"
+    "     or the other MolHolders\n"
     "  - addMol() stores CANONICAL smiles, so atom ORDER is not preserved;\n"
     "    use addSmiles() to store smiles as input\n";
 
