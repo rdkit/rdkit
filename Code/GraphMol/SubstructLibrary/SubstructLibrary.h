@@ -161,6 +161,8 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedMolHolder : public MolHolderBase {
     reduced speed it should be used in conjunction with a pattern
     fingerprinter.
 
+    Note:  To use CXSmiles you must use addSmiles, not addMol
+             addMol stores non cxsmiles
     See RDKit::FPHolder
 */
 class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedSmilesMolHolder
@@ -211,6 +213,16 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedSmilesMolHolder
     cached binary or uncached implementation.  However, due to the
     reduced speed it should be used in conjunction with a pattern
     fingerprinter.
+
+    Note: TrustedSmiles currently does not support CXSmiles
+          use CachedSmilesMolHolder::addSmiles for cxsmiles support
+	  or use MolHolder or CachedMolHolder.
+	  
+    Consequences, both properties of the FORMAT rather than bugs:
+      - radical counts are not correct use CachedSmilesMolHolder::addSmiles
+         or the other MolHolders
+      - addMol() stores CANONICAL smiles, so atom ORDER is not preserved;
+        use addSmiles() to store smiles as input
 
     See RDKit::FPHolder
 */
@@ -514,6 +526,10 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT KeyFromPropHolder : public KeyHolderBase {
      auto key = lib.getKeys().getKey(idx);
      auto keys = lib.getKeys().getKeys(lib.GetMatch(query));
      \endcode
+
+     Note: to support CXSmiles, you must use MolHolder, CachedMolHolder
+     or CachedSmilesMolHolder with the addSmiles method
+     See the MolHolder docs for more details
 
 */
 class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {

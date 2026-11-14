@@ -229,6 +229,8 @@ const char *CachedMolHolderDoc =
 const char *CachedSmilesMolHolderDoc =
     "Holds molecules as smiles string\n"
     "This allows more molecules to be held in memory at a time\n"
+    "    Note:  To use CXSmiles you must use addSmiles, not addMol\n"
+    "         addMol stores non cxsmiles\n\n"
     "  AddMol(mol) -> adds a molecule to the molecule holder, returns index of "
     "molecule\n\n"
     "  AddSmiles(smiles) -> adds a smiles string to the molecule holder, "
@@ -252,7 +254,16 @@ const char *CachedTrustedSmilesMolHolderDoc =
     "for validity.\n"
     "  GetMol(idx,s) -> return the molecule at index idx, \n"
     "              note, only light sanitization is done here, for instance\n"
-    "              the molecules RingInfo is not initialized\n";
+    "              the molecules RingInfo is not initialized\n\n"
+    "  Note: TrustedSmiles currently does not include CXSmiles\n"
+    "        use CachedSmilesMolHolder::addSmiles for cxsmiles support\n"
+    "         or use MolHolder or CachedMolHolder.\n\n"
+    "Consequences, both properties of the FORMAT rather than bugs:\n"
+    "  - radical counts are not correct use CachedSmilesMolHolder::addSmiles\n"
+    "     or the other MolHolders\n"
+    "  - addMol() stores CANONICAL smiles, so atom ORDER is not preserved;\n"
+    "    use addSmiles() to store smiles as input\n";
+
 
 const char *PatternHolderDoc =
     "Holds fingerprints with optional, user-defined number of bits (default: "
@@ -371,6 +382,10 @@ const char *SubstructLibraryDoc =
     ">>> indices = library.GetMatches(m)\n"
     ">>> list(library.GetKeyHolder().GetKeys(indices))\n"
     "['Z11234']\n"
+    "\n"
+    "Note: to support CXSmiles, you must use MolHolder,CachedMolHolder\n"
+    " or CachedSmilesMolHolder with the addSmiles method\n"
+    "See the MolHolder docs for more details\n"
     "";
 
 python::object SubstructLibrary_Serialize(const SubstructLibraryWrap &cat) {
