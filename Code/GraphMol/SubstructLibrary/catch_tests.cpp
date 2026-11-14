@@ -418,7 +418,7 @@ TEST_CASE("CachedTrustedSmilesMolHolder should assign radicals") {
         }
       }
 
-      auto molHolder = boost::make_shared<CachedTrustedSmilesMolHolder>();
+      auto molHolder = boost::make_shared<CachedSmilesMolHolder>();
       SubstructLibrary lib(molHolder);
       for (const auto &smi : libSmiles) {
         molHolder->addSmiles(smi);
@@ -430,7 +430,7 @@ TEST_CASE("CachedTrustedSmilesMolHolder should assign radicals") {
   SECTION("per-atom radical counts survive the holder") {
     //  addSmiles() stores the string verbatim, so atom order is preserved and
     //  a per-atom comparison is meaningful.  addMol() would canonicalise.
-    auto molHolder = boost::make_shared<CachedTrustedSmilesMolHolder>();
+    auto molHolder = boost::make_shared<CachedSmilesMolHolder>();
     for (const auto &smi : libSmiles) {
       molHolder->addSmiles(smi);
     }
@@ -451,7 +451,7 @@ TEST_CASE("CachedTrustedSmilesMolHolder should assign radicals") {
   SECTION("addMol keeps the radical count") {
     //  addMol() stores MolToSmiles(), which reorders: the COUNT has to survive
     //  even where the index does not.
-    auto molHolder = boost::make_shared<CachedTrustedSmilesMolHolder>();
+    auto molHolder = boost::make_shared<CachedSmilesMolHolder>();
     SubstructLibrary lib(molHolder);
     for (const auto &smi : libSmiles) {
       std::unique_ptr<RWMol> mol(SmilesToMol(smi));
@@ -470,14 +470,14 @@ TEST_CASE("CachedTrustedSmilesMolHolder should assign radicals") {
 
   SECTION("radicals are inferred, not stored") {
     //  This will be reevaluated whenever we support trusted CXSmiles
-    //   For now use SmilesMolHolder
+    //   For now use CachedSmilesMolHolder
     const std::vector<std::pair<std::string, unsigned int>> inferred = {
         {"CC[CH2] |^1:2|", 1},  // agrees with the inference, survives
         {"CC[CH2] |^2:2|", 1},  // asked for 2, inference wins
         {"CC[CH3] |^1:2|", 0},  // asked for 1, inference wins
         {"[CH2] |^1:0|", 2},    // asked for 1, inference wins
     };
-    auto molHolder = boost::make_shared<CachedTrustedSmilesMolHolder>();
+    auto molHolder = boost::make_shared<CachedSmilesMolHolder>();
     for (const auto &[smi, expected] : inferred) {
       INFO(smi);
       auto idx = molHolder->addSmiles(smi);

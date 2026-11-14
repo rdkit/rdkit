@@ -215,11 +215,12 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedSmilesMolHolder
     fingerprinter.
 
     Note: TrustedSmiles currently does not support CXSmiles
-          use CachedSmilesHolder::addSmiles for cxsmiles support
+          use CachedSmilesMolHolder::addSmiles for cxsmiles support
 	  or use MolHolder or CachedMolHolder.
 	  
     Consequences, both properties of the FORMAT rather than bugs:
-      - radical counts are INFERRED from valence by assignRadicals()
+      - radical counts are not correct use CachedSmilesMolHolder::addSmiles
+         or the other MolHolders
       - addMol() stores CANONICAL smiles, so atom ORDER is not preserved;
         use addSmiles() to store smiles as input
 
@@ -253,8 +254,6 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedTrustedSmilesMolHolder
     RWMol *m = SmilesToMol(mols[idx], 0, false);
     if (m) {
       m->updatePropertyCache();
-      //  "light" sanitization does not assign radicals, add assignRadicals()
-      MolOps::assignRadicals(*m);
     }
     return boost::shared_ptr<ROMol>(m);
   }
@@ -528,7 +527,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT KeyFromPropHolder : public KeyHolderBase {
      auto keys = lib.getKeys().getKeys(lib.GetMatch(query));
      \endcode
 
-     Note: to support CXSmiles, you must use MolHolder,CachedMolHolder
+     Note: to support CXSmiles, you must use MolHolder, CachedMolHolder
      or CachedSmilesMolHolder with the addSmiles method
      See the MolHolder docs for more details
 
