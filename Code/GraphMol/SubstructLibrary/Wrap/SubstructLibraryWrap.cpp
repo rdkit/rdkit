@@ -256,7 +256,7 @@ const char *CachedTrustedSmilesMolHolderDoc =
     "              note, only light sanitization is done here, for instance\n"
     "              the molecules RingInfo is not initialized\n\n"
     "  Note: TrustedSmiles currently does not include CXSmiles\n"
-    "        use CachedSmilesHolder::addSmiles for cxsmiles support\n"
+    "        use CachedSmilesMolHolder::addSmiles for cxsmiles support\n"
     "         or use MolHolder or CachedMolHolder.\n\n"
     "Consequences, both properties of the FORMAT rather than bugs:\n"
     "  - radical counts are INFERRED from valence by assignRadicals()\n"
