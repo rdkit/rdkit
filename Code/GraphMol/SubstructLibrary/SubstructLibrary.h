@@ -161,6 +161,8 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedMolHolder : public MolHolderBase {
     reduced speed it should be used in conjunction with a pattern
     fingerprinter.
 
+    Note:  To use CXSmiles you must use addSmiles, not addMol
+             addMol stores non cxsmiles
     See RDKit::FPHolder
 */
 class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedSmilesMolHolder
@@ -212,6 +214,15 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedSmilesMolHolder
     reduced speed it should be used in conjunction with a pattern
     fingerprinter.
 
+    Note: TrustedSmiles currently does not support CXSmiles
+          use CachedSmilesHolder::addSmiles for cxsmiles support
+	  or use MolHolder or CachedMolHolder.
+	  
+    Consequences, both properties of the FORMAT rather than bugs:
+      - radical counts are INFERRED from valence by assignRadicals()
+      - addMol() stores CANONICAL smiles, so atom ORDER is not preserved;
+        use addSmiles() to store smiles as input
+
     See RDKit::FPHolder
 */
 class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedTrustedSmilesMolHolder
@@ -242,6 +253,8 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedTrustedSmilesMolHolder
     RWMol *m = SmilesToMol(mols[idx], 0, false);
     if (m) {
       m->updatePropertyCache();
+      //  "light" sanitization does not assign radicals, add assignRadicals()
+      MolOps::assignRadicals(*m);
     }
     return boost::shared_ptr<ROMol>(m);
   }
@@ -514,6 +527,10 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT KeyFromPropHolder : public KeyHolderBase {
      auto key = lib.getKeys().getKey(idx);
      auto keys = lib.getKeys().getKeys(lib.GetMatch(query));
      \endcode
+
+     Note: to support CXSmiles, you must use MolHolder,CachedMolHolder
+     or CachedSmilesMolHolder with the addSmiles method
+     See the MolHolder docs for more details
 
 */
 class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {
