@@ -125,6 +125,9 @@ class ReadWriteMol : public RWMol {
   ReadWriteMol() {};
   ReadWriteMol(const ROMol &m, bool quickCopy = false, int confId = -1)
       : RWMol(m, quickCopy, confId) {};
+  explicit ReadWriteMol(const std::string &binStr) : RWMol(binStr) {}
+  ReadWriteMol(const std::string &binStr, unsigned int propertyFlags)
+      : RWMol(binStr, propertyFlags) {}
 
   void RemoveAtom(unsigned int idx) { removeAtom(idx); };
   void RemoveBond(unsigned int idx1, unsigned int idx2) {
@@ -186,9 +189,6 @@ class ReadWriteMol : public RWMol {
     // so just return false;
     return false;
   }
-
- private:
-  std::shared_ptr<RWMol> dp_mol;
 };
 
 constexpr const char *molClassDoc = R"DOC(The Molecule class.

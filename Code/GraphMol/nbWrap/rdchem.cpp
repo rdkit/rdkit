@@ -115,7 +115,7 @@ class _BaseSanitException(ValueError):
         self._msg = msg
         super().__init__(msg)
     def GetType(self) -> str:
-        return self._msg
+        return getattr(self, "_type", type(self).__name__)
     def GetAtomIdx(self) -> int:
         return getattr(self, "_atom_idx", None)
     def GetAtomIndices(self) -> list[int]:
