@@ -4,7 +4,13 @@ get_filename_component(_prefix "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
 # Report other info
 set(RDKit_INCLUDE_DIRS "${_prefix}/@RDKit_HdrDir@")
 
-set(RDKit_HAS_PYTHON_WRAPPERS @RDK_BUILD_BOOST_PYTHON_WRAPPERS@)
+# rdkitpython is exported only with the Boost.Python wrappers and may be packaged
+# apart from this file, so look for it rather than recording the build option.
+if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/../rdkitpython/rdkitpython-config.cmake")
+  set(RDKit_HAS_PYTHON_WRAPPERS ON)
+else()
+  set(RDKit_HAS_PYTHON_WRAPPERS OFF)
+endif()
 set(RDKit_HAS_COMPRESSED_SUPPLIERS @RDK_BUILD_COMPRESSED_SUPPLIERS@)
 set(RDKit_HAS_CAIRO_SUPPORT @RDK_BUILD_CAIRO_SUPPORT@)
 set(RDKit_HAS_FREETYPE_SUPPORT @RDK_BUILD_FREETYPE_SUPPORT@)
@@ -19,6 +25,7 @@ set(RDKit_HAS_MAEPARSER_SUPPORT @RDK_BUILD_MAEPARSER_SUPPORT@)
 set(RDKit_HAS_MOLINTERCHANGE_SUPPORT @RDK_BUILD_MOLINTERCHANGE_SUPPORT@)
 set(RDKit_HAS_YAEHMOP_SUPPORT @RDK_BUILD_YAEHMOP_SUPPORT@)
 set(RDKit_HAS_STRUCTCHECKER_SUPPORT @RDK_BUILD_STRUCTCHECKER_SUPPORT@)
+set(RDKit_HAS_CHEMDRAW_SUPPORT @RDK_BUILD_CHEMDRAW_SUPPORT@)
 
 set(RDKit_USE_OPTIMIZED_POPCNT @RDK_OPTIMIZE_POPCNT@)
 set(RDKit_USE_STRICT_ROTOR_DEFINITION @RDK_USE_STRICT_ROTOR_DEFINITION@)
@@ -36,12 +43,36 @@ endif()
 # Find the RDKit dependencies
 include(CMakeFindDependencyMacro)
 
-find_dependency(Threads REQUIRED)
+find_dependency(Threads)
 
-find_dependency(Boost @Boost_VERSION_STRING@ COMPONENTS ${RDKit_USE_BOOST_COMPONENTS})
+find_dependency(Boost @Boost_VERSION_STRING@ CONFIG COMPONENTS ${RDKit_USE_BOOST_COMPONENTS})
 
 if(RDKit_HAS_DESCRIPTORS3D)
-    find_dependency(Eigen3 REQUIRED NO_MODULE)
+    find_dependency(Eigen3 NO_MODULE)
+endif()
+
+# The exported targets name these imported targets in their link interfaces.
+if(RDKit_HAS_FREETYPE_SUPPORT)
+    find_dependency(Freetype)
+endif()
+if(RDKit_HAS_CAIRO_SUPPORT)
+    # Search with the FindCairo.cmake installed beside this file, and restore the
+    # caller's module path before reporting whether Cairo was found.
+    set(_RDKit_module_path "${CMAKE_MODULE_PATH}")
+    list(PREPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
+    find_package(Cairo QUIET)
+    set(CMAKE_MODULE_PATH "${_RDKit_module_path}")
+    unset(_RDKit_module_path)
+    if(NOT Cairo_FOUND)
+        # find_package checks the result under the name the caller spelled,
+        # which may be rdkit as well as RDKit.
+        set(${CMAKE_FIND_PACKAGE_NAME}_NOT_FOUND_MESSAGE "RDKit was built with Cairo support, but Cairo was not found")
+        set(${CMAKE_FIND_PACKAGE_NAME}_FOUND FALSE)
+        return()
+    endif()
+endif()
+if(RDKit_HAS_CHEMDRAW_SUPPORT)
+    find_dependency(EXPAT)
 endif()
 
 # Import the targets

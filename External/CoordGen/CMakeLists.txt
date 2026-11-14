@@ -39,7 +39,6 @@ if(RDK_BUILD_MAEPARSER_SUPPORT OR RDK_BUILD_COORDGEN_SUPPORT)
         target_compile_options(maeparser_static PRIVATE -Wno-deprecated-copy)
       endif()
     endif()
-    install(TARGETS maeparser DESTINATION ${RDKit_LibDir})
     set(maeparser_LIBRARIES maeparser)
 
 
@@ -95,7 +94,6 @@ if(RDK_BUILD_COORDGEN_SUPPORT)
         target_compile_options(coordgen_static PUBLIC -Wno-unused-but-set-variable)
       endif()
     endif()
-    install(TARGETS coordgen DESTINATION ${RDKit_LibDir})
     set(RDK_COORDGEN_LIBS coordgen CACHE STRING "the external libraries" FORCE)
 
   elseif(coordgen_FOUND)
