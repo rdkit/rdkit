@@ -15,6 +15,8 @@
 #include <limits>
 #include <numeric>
 #include <utility>
+#include <unordered_set>
+#include <RDGeneral/hash/hash.hpp>
 
 namespace RDKit {
 namespace {
@@ -502,31 +504,89 @@ void RingInfo::preallocate(unsigned int numAtoms, unsigned int numBonds) {
   }
 }
 
+namespace {
+// first keep the SSSR rings, then add additional relevant cycles up to the
+// maximum allowed
+std::vector<std::vector<int>> truncatedRelevantCycles(
+    const RDL_data *urfData, const unsigned int maxAllowed) {
+  std::vector<std::vector<int>> res;
+
+  RDL_cycle **sssr = nullptr;
+  auto sssrSize = RDL_getSSSR(urfData, &sssr);
+  if (sssrSize == RDL_INVALID_RESULT) {
+    throw ValueErrorException("Failed finding a SSSR for the mol.");
+  }
+
+  auto vectHash = [](const std::vector<int> &v) {
+    std::hash_result_t seed = 1;
+    gboost::hash_range(seed, v.begin(), v.end());
+    return seed;
+  };
+  std::unordered_set<std::vector<int>, decltype(vectHash)> sssrRings(0,
+                                                                     vectHash);
+  // keep the SSSR rings first
+  res.reserve(sssrSize);
+  for (unsigned int i = 0; i < sssrSize; ++i) {
+    auto ring = RingUtils::rdlCycleToAtomRing(sssr[i]);
+    sssrRings.insert(ring);
+    res.push_back(std::move(ring));
+  }
+  RDL_deleteCycles(sssr, sssrSize);
+
+  // add additional relevant cycles up to the maximum allowed
+  RDL_cycleIterator *it = RDL_getRCyclesIterator(urfData);
+  while (!RDL_cycleIteratorAtEnd(it) && res.size() < maxAllowed) {
+    auto cycle = RDL_cycleIteratorGetCycle(it);
+    auto r = RingUtils::rdlCycleToAtomRing(cycle);
+    if (!sssrRings.count(r)) {
+      res.push_back(std::move(r));
+    }
+    RDL_deleteCycle(cycle);
+    RDL_cycleIteratorNext(it);
+  }
+  RDL_deleteCycleIterator(it);
+
+  // The RDL code gives rings ordered by size within each disconnected fragment
+  // of the molecule, but doesn't do the sort across fragments. We need to sort
+  // to make sure the rings go from smallest to largest size.
+  std::ranges::sort(
+      res, [](const auto &a, const auto &b) { return a.size() < b.size(); });
+
+  return res;
+}
+}  // namespace
+
 std::vector<std::vector<int>> RingInfo::atomRelevantCycles() const {
   PRECONDITION(df_init, "RingInfo not initialized");
   PRECONDITION(dp_urfData, "Ring families not initialized");
-  std::vector<std::vector<int>> res;
-  if (dp_urfData) {
-    size_t nURF = RDL_getNofURF(dp_urfData.get());
-    auto nRC = RDL_getNofRC(dp_urfData.get());
-    auto maxAllowed = MAX_SYMMETRIZED_RINGS + nURF;
-    if (nRC > maxAllowed) {
-      BOOST_LOG(rdWarningLog)
-          << "Number of relevant cycles truncated to " << maxAllowed
-          << ". Symmetric rings will not be correct." << std::endl;
-      nRC = maxAllowed;
-    }
-    res.reserve(nRC);
 
-    RDL_cycleIterator *it = RDL_getRCyclesIterator(dp_urfData.get());
-    while (!RDL_cycleIteratorAtEnd(it) && res.size() < nRC) {
-      auto cycle = RDL_cycleIteratorGetCycle(it);
-      res.push_back(RingUtils::rdlCycleToAtomRing(cycle));
-      RDL_deleteCycle(cycle);
-      RDL_cycleIteratorNext(it);
-    }
-    RDL_deleteCycleIterator(it);
+  size_t nURF = RDL_getNofURF(dp_urfData.get());
+  auto nRC = RDL_getNofRC(dp_urfData.get());
+  auto maxAllowed = MAX_SYMMETRIZED_RINGS + nURF;
+  if (nRC > maxAllowed) {
+    BOOST_LOG(rdWarningLog)
+        << "Number of relevant cycles truncated to " << maxAllowed
+        << ". Symmetric rings will not be correct." << std::endl;
+    return truncatedRelevantCycles(dp_urfData.get(), maxAllowed);
   }
+
+  std::vector<std::vector<int>> res;
+  res.reserve(nRC);
+  RDL_cycleIterator *it = RDL_getRCyclesIterator(dp_urfData.get());
+  while (!RDL_cycleIteratorAtEnd(it) && res.size() < nRC) {
+    auto cycle = RDL_cycleIteratorGetCycle(it);
+    res.push_back(RingUtils::rdlCycleToAtomRing(cycle));
+    RDL_deleteCycle(cycle);
+    RDL_cycleIteratorNext(it);
+  }
+  RDL_deleteCycleIterator(it);
+
+  // The RDL code gives rings ordered by size within each disconnected fragment
+  // of the molecule, but doesn't do the sort across fragments. We need to sort
+  // to make sure the rings go from smallest to largest size.
+  std::ranges::sort(
+      res, [](const auto &a, const auto &b) { return a.size() < b.size(); });
+
   return res;
 }
 
