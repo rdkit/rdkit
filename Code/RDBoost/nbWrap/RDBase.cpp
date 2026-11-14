@@ -42,8 +42,9 @@ struct PyErrStream : std::ostream, std::streambuf {
 
   void write(char c) {
     if (c == '\n') {
-      PyGILStateHolder h;
-      PySys_WriteStderr("%s\n", buffer.c_str());
+      if (nb::detail::cleanup_guard gil{}) {
+        PySys_WriteStderr("%s\n", buffer.c_str());
+      }
       buffer.clear();
     } else {
       buffer += c;
@@ -76,10 +77,9 @@ struct PyLogStream : std::ostream, std::streambuf {
   }
 
   ~PyLogStream() override {
-    if (!nb::is_alive()) {
-      return;
+    if (nb::detail::cleanup_guard gil{}) {
+      Py_XDECREF(logfn);
     }
-    Py_XDECREF(logfn);
   }
 
   int overflow(int c) override {
@@ -93,9 +93,10 @@ struct PyLogStream : std::ostream, std::streambuf {
     }
 
     if (c == '\n') {
-      PyGILStateHolder h;
-      PyObject *result = PyObject_CallFunction(logfn, "s", buffer.c_str());
-      Py_XDECREF(result);
+      if (nb::detail::cleanup_guard gil{}) {
+        PyObject *result = PyObject_CallFunction(logfn, "s", buffer.c_str());
+        Py_XDECREF(result);
+      }
       buffer.clear();
     } else {
       buffer += c;
