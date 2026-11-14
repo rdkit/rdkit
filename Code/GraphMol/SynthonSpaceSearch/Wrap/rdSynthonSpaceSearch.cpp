@@ -39,15 +39,21 @@ boost::shared_ptr<ROMol> bestHitMolecule_helper(
   return boost::shared_ptr<ROMol>();
 }
 
-python::object get_excludedVolume(
+GaussianShape::ShapeInput *get_excludedVolume(
     const SynthonSpaceSearch::SynthonSpaceSearchParams &params) {
-  return python::object(params.excludedVolume);
+  return params.excludedVolume;
 }
 
+// The params borrow the Python-owned ShapeInput, which the property setter
+// keeps alive for the lifetime of the params (as the nanobind wrapper does).
 void set_excludedVolume(SynthonSpaceSearch::SynthonSpaceSearchParams &params,
                         const python::object &pyExcVol) {
-  params.excludedVolume = new GaussianShape::ShapeInput(
-      python::extract<GaussianShape::ShapeInput>(pyExcVol));
+  if (pyExcVol.is_none()) {
+    params.excludedVolume = nullptr;
+    return;
+  }
+  params.excludedVolume =
+      &python::extract<GaussianShape::ShapeInput &>(pyExcVol)();
 }
 
 struct SearchResults_wrapper {
@@ -616,8 +622,11 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           " be about another 35 characters or so depending on the size of the"
           " job.  Default=0 means no bar.")
       .add_property(
-          "excludedVolume", &helpers::get_excludedVolume,
-          &helpers::set_excludedVolume,
+          "excludedVolume",
+          python::make_function(&helpers::get_excludedVolume,
+                                python::return_internal_reference<1>()),
+          python::make_function(&helpers::set_excludedVolume,
+                                python::with_custodian_and_ward<1, 2>()),
           "  Add an excluded volume to use in the shape search.  The volume"
           " overlap and mean overlap over clashing atoms will be reported.")
       .def_readwrite(

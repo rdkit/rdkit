@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/asan.yml
+      - .github/workflows/asan/**
   workflow_dispatch:
   schedule:
     # Sunday at 04:23 UTC.
@@ -67,9 +68,12 @@ jobs:
 
       - name: Test
         env:
-          ASAN_OPTIONS: detect_leaks=0:halt_on_error=1
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
+          LSAN_OPTIONS: suppressions=${{ github.workspace }}/.github/workflows/asan/lsan.supp:print_suppressions=1
           MPLBACKEND: Agg
           LD_LIBRARY_PATH: ${{ github.workspace }}/lib
+          # Let LSan follow references held by live Python objects.
+          PYTHONMALLOC: malloc
           PYTHONPATH: ${{ github.workspace }}
           RDBASE: ${{ github.workspace }}
         run: |
@@ -82,6 +86,7 @@ jobs:
             --timeout 600 \
             --no-tests=error \
             --output-on-failure \
+            --output-log "$GITHUB_WORKSPACE/build/asan-tests.log" \
             --output-junit "$GITHUB_WORKSPACE/build/asan-results.xml"
 
       - name: Upload test results
@@ -93,6 +98,7 @@ jobs:
           retention-days: 14
           path: |
             build/asan-results.xml
+            build/asan-tests.log
             build/asan/Testing/Temporary/LastTest.log
             build/asan/Testing/Temporary/LastTestsFailed.log
             build/asan/CMakeCache.txt

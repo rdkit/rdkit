@@ -98,6 +98,14 @@ rdkit_test(moldraw2DTest1 test1.cpp LINK_LIBRARIES
 rdkit_catch_test(moldraw2DTestCatch catch_tests.cpp LINK_LIBRARIES
         MolDraw2D CIPLabeler)
 
+if (TARGET moldraw2DTestCatch AND RDK_BUILD_CAIRO_SUPPORT)
+    find_package(Fontconfig QUIET)
+    if (Fontconfig_FOUND)
+        target_link_libraries(moldraw2DTestCatch PRIVATE Fontconfig::Fontconfig)
+        target_compile_definitions(moldraw2DTestCatch PRIVATE RDK_TEST_FONTCONFIG)
+    endif ()
+endif ()
+
 rdkit_test(moldraw2DRxnTest1 rxn_test1.cpp LINK_LIBRARIES
         MolDraw2D)
 

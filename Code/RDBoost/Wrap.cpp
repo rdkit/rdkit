@@ -18,7 +18,8 @@
 
 // A helper function for dealing with errors. Throw a Python IndexError
 void throw_index_error(int key) {
-  PyErr_SetObject(PyExc_IndexError, PyInt_FromLong(key));
+  python::object value(key);
+  PyErr_SetObject(PyExc_IndexError, value.ptr());
   python::throw_error_already_set();
 }
 

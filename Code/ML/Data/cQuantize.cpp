@@ -71,12 +71,14 @@ static python::tuple cQuantize_RecurseOnBounds(python::object vals,
   if (!contigVals) {
     throw_value_error("could not convert value argument");
   }
+  python::handle<> valuesOwner(reinterpret_cast<PyObject *>(contigVals));
 
   contigResults = reinterpret_cast<PyArrayObject *>(
       PyArray_ContiguousFromObject(results.ptr(), NPY_LONG, 1, 1));
   if (!contigResults) {
     throw_value_error("could not convert results argument");
   }
+  python::handle<> resultsOwner(reinterpret_cast<PyObject *>(contigResults));
 
   python::ssize_t nCuts = python::len(pyCuts);
   cuts = (long int *)calloc(nCuts, sizeof(long int));
@@ -130,6 +132,7 @@ static python::list cQuantize_FindStartPoints(python::object values,
   if (!contigVals) {
     throw_value_error("could not convert value argument");
   }
+  python::handle<> valuesOwner(reinterpret_cast<PyObject *>(contigVals));
 
   auto *vals = (double *)PyArray_DATA(contigVals);
 
@@ -138,6 +141,7 @@ static python::list cQuantize_FindStartPoints(python::object values,
   if (!contigResults) {
     throw_value_error("could not convert results argument");
   }
+  python::handle<> resultsOwner(reinterpret_cast<PyObject *>(contigResults));
 
   long *res = (long *)PyArray_DATA(contigResults);
 
