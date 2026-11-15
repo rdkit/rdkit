@@ -9,6 +9,7 @@
 //
 #include "Rings.h"
 #include "RingInfo.h"
+#include "MolOps.h"
 #include <RDGeneral/Invariant.h>
 #include <RDGeneral/Exceptions.h>
 #include <algorithm>
@@ -525,7 +526,7 @@ std::vector<std::vector<int>> truncatedRelevantCycles(
   std::unordered_set<std::vector<int>, decltype(vectHash)> sssrRings(0,
                                                                      vectHash);
   // keep the SSSR rings first
-  res.reserve(sssrSize);
+  res.reserve(maxAllowed);
   for (unsigned int i = 0; i < sssrSize; ++i) {
     auto ring = RingUtils::rdlCycleToAtomRing(sssr[i]);
     sssrRings.insert(ring);
@@ -549,9 +550,7 @@ std::vector<std::vector<int>> truncatedRelevantCycles(
   // The RDL code gives rings ordered by size within each disconnected fragment
   // of the molecule, but doesn't do the sort across fragments. We need to sort
   // to make sure the rings go from smallest to largest size.
-  std::ranges::sort(
-      res, [](const auto &a, const auto &b) { return a.size() < b.size(); });
-
+  std::ranges::sort(res, MolOps::details::ringComparer);
   return res;
 }
 }  // namespace
@@ -584,8 +583,7 @@ std::vector<std::vector<int>> RingInfo::atomRelevantCycles() const {
   // The RDL code gives rings ordered by size within each disconnected fragment
   // of the molecule, but doesn't do the sort across fragments. We need to sort
   // to make sure the rings go from smallest to largest size.
-  std::ranges::sort(
-      res, [](const auto &a, const auto &b) { return a.size() < b.size(); });
+  std::ranges::sort(res, MolOps::details::ringComparer);
 
   return res;
 }
