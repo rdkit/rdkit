@@ -2117,6 +2117,7 @@ size to the number of atoms in mol)DOC");
         R"DOC(Returns a 2D BCUT (eigen value high, eigen value low) given the
 molecule and the specified atom prop name
 atom_propname must exist on each atom and be convertible to a float)DOC");
+#endif
 
   m.def("CalcOxidationNumbers", RDKit::Descriptors::calcOxidationNumbers,
         "mol"_a,
@@ -2124,5 +2125,4 @@ atom_propname must exist on each atom and be convertible to a float)DOC");
         " property OxidationNumber on each atom.  Use Pauling"
         " electronegativities."
         "  This is experimental code, still under development.");
-#endif
 }

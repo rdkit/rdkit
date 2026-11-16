@@ -991,7 +991,8 @@ class TestCase(unittest.TestCase):
     self.assertAlmostEqual(rdMD.CalcChi1(Chem.MolFromSmiles('CC')), 1.0)
     self.assertGreater(rdMD.CalcBalabanJ(m), 0)
     self.assertGreater(rdMD.CalcBertzCT(m), rdMD.CalcBertzCT(m, cutoff=1) - 1e-8)
-    self.assertAlmostEqual(rdMD.CalcIpc(m, avg=True), rdMD.CalcAvgIpc(m))
+    if HAVE_IPC:
+      self.assertAlmostEqual(rdMD.CalcIpc(m, avg=True), rdMD.CalcAvgIpc(m))
 
     self.assertAlmostEqual(rdMD.CalcHeavyAtomMolWt(Chem.MolFromSmiles('CC')), 24.022, places=3)
     self.assertEqual(rdMD.CalcNumValenceElectrons(Chem.MolFromSmiles('CC')), 14)

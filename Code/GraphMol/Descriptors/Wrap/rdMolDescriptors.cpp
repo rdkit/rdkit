@@ -2424,7 +2424,8 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
   python::def("BCUT2D", BCUT_atomprops,
               (python::arg("mol"), python::arg("atom_propname")),
               docString.c_str());
-
+#endif
+  
   docString =
       "Adds the oxidation number/state to the atoms of a molecule as"
       " property OxidationNumber on each atom.  Use Pauling"
@@ -2432,5 +2433,5 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
       "  This is experimental code, still under development.";
   python::def("CalcOxidationNumbers", RDKit::Descriptors::calcOxidationNumbers,
               (python::arg("mol")), docString.c_str());
-#endif
+
 }
