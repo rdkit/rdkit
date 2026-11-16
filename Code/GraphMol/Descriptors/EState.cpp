@@ -91,25 +91,17 @@ EStates calcEStates(const ROMol &mol) {
   auto estates = calcEStateIndices(mol);
 
   if(estates.empty()) {
-    return {{}, 0.0, 0.0, 0.0, 0.0};
+    return {};
   }
 
   EStates res { estates, estates[0], estates[0], std::fabs(estates[0]), std::fabs(estates[0]) };
   
   for(auto estate : estates) {
-    if(res.maxEState < estate) {
-      res.maxEState = estate;
-    }
-    if(res.minEState > estate) {
-      res.minEState = estate;
-    }
+    res.maxEState = std::max(res.maxEState, estate);
+    res.minEState = std::min(res.minEState, estate);
     estate = std::fabs(estate);
-    if(res.maxAbsEState < estate) {
-      res.maxAbsEState = estate;
-    }
-    if(res.minAbsEState > estate) {
-      res.minAbsEState = estate;
-    }
+    res.maxAbsEState = std::max(res.maxAbsEState, estate);
+    res.minAbsEState = std::min(res.minAbsEState, estate);
   }
   return res;
 }

@@ -35,7 +35,13 @@ const QEDProperties QEDWeightsNone = {1.00, 1.00, 1.00, 1.00,
 
 namespace {
 struct ADSParameter {
-  double A, B, C, D, E, F, DMAX;
+  double A{0.0};
+  double B{0.0};
+  double C{0.0};
+  double D{0.0};
+  double E{0.0};
+  double F{0.0};
+  double DMAX{0.0};
 };
 
 const ADSParameter adsMW = {2.817065973, 392.5754953, 290.7489764, 2.419764353,

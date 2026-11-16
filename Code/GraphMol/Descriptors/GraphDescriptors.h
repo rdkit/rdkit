@@ -67,6 +67,7 @@ RDKIT_DESCRIPTORS_EXPORT double calcBertzCT(const ROMol &mol,
                                             const double *distMat = nullptr);
 const std::string bertzCTVersion = "2.0.0";
 
+#ifdef RDK_HAS_EIGEN3  
 //! Information content of the coefficients of the characteristic polynomial
 //! of the adjacency matrix of a hydrogen-suppressed graph of a molecule.
 /*!
@@ -92,6 +93,7 @@ const std::string ipcVersion = "1.0.0";
 RDKIT_DESCRIPTORS_EXPORT double calcAvgIpc(const ROMol &mol,
                                            const double *distMat = nullptr);
 const std::string avgIpcVersion = "1.0.0";
+#endif
 
 }  // namespace Descriptors
 }  // namespace RDKit

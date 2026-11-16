@@ -1940,6 +1940,7 @@ query.Match( mol ))DOC",
       "matrix used to assign the symmetry classes instead of the bond-order "
       "weighted one");
   m.attr("_CalcBertzCT_version") = RDKit::Descriptors::bertzCTVersion;
+#ifdef RDK_HAS_EIGEN3
   m.def(
       "CalcIpc",
       [](const RDKit::ROMol &mol, bool avg,
@@ -1963,7 +1964,8 @@ query.Match( mol ))DOC",
       "Returns the average information content (Eq 7 of Bonchev & "
       "Trinajstic). dMat is as for CalcIpc");
   m.attr("_CalcAvgIpc_version") = RDKit::Descriptors::avgIpcVersion;
-
+#ifdef RDK_HAS_EIGEN3
+  
   m.def("CalcHeavyAtomMolWt", RDKit::Descriptors::calcHeavyAtomMolWt, "mol"_a,
         "Returns the average molecular weight ignoring hydrogens");
   m.attr("_CalcHeavyAtomMolWt_version") =

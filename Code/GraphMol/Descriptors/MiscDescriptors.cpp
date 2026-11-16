@@ -42,9 +42,6 @@ unsigned int calcNumRadicalElectrons(const ROMol &mol) {
   return res;
 }
 
-// The comparisons here mirror python's builtin
-// min()/max() so that NaN charges are handled the same way as
-// as the original descriptor calculations    
 PartialCharges calcPartialCharges(const ROMol &mol) {
   if(mol.getNumAtoms() == 0) {
     return {{}, -500, 500, 500, 500};
@@ -55,8 +52,13 @@ PartialCharges calcPartialCharges(const ROMol &mol) {
   computeGasteigerCharges(mol, chgs);
 
   for (auto chg : chgs) {
-    charges.minPartialCharge = (charges.minPartialCharge < chg) ? charges.minPartialCharge : chg;
-    charges.maxPartialCharge = (charges.maxPartialCharge > chg) ? charges.maxPartialCharge : chg;
+    if(!std::isnan(chg)) { // retain nans
+      charges.minPartialCharge = std::min(charges.minPartialCharge, chg);
+      charges.maxPartialCharge = std::max(charges.maxPartialCharge, chg); 
+    } else {
+      charges.minPartialCharge = chg;
+      charges.maxPartialCharge = chg;
+    }
   }
   
   charges.charges.swap(chgs);

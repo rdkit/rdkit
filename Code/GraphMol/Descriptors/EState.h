@@ -37,10 +37,10 @@ const std::string EStateIndicesVersion = "1.0.0";
 //! Holds the maximum and minimum EState and absolute EState index across all atoms  
 struct EStates {
   std::vector<double> estates;
-  double maxEState;
-  double minEState;
-  double maxAbsEState;
-  double minAbsEState;
+  double maxEState{0.0};
+  double minEState{0.0};
+  double maxAbsEState{0.0};
+  double minAbsEState{0.0};
 };
   
 //! returns the maximum and minimum EState and absolute EState index across all atoms
