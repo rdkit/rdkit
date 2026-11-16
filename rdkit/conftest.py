@@ -17,6 +17,11 @@ if not inchi.INCHI_AVAILABLE:
   collect_ignore_glob.extend(['**Chem/MolKey/*.py'])
 
 try:
+  from rdkit.Chem import rdDASHTree
+except ImportError:  # not built
+  collect_ignore.append('Chem/DASHTree')
+
+try:
   import IPython
 except ImportError:
   collect_ignore.extend([

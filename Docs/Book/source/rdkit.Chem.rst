@@ -75,6 +75,7 @@ Submodules
    rdkit.Chem.rdchem
    rdkit.Chem.rdCIPLabeler
    rdkit.Chem.rdCoordGen
+   rdkit.Chem.rdDASHTree
    rdkit.Chem.rdDepictor
    rdkit.Chem.rdDeprotect
    rdkit.Chem.rdDetermineBonds
