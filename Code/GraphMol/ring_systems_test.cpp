@@ -348,3 +348,11 @@ TEST_CASE("rings from molecules with fragments are also ordered") {
   CHECK(MolOps::symmetrizeSSSR(*m, rings) == 4);
   checkit(rings);
 }
+
+TEST_CASE("rings are ordered lexicographically") {
+  auto m = "c1ccccc1c1ccccc1"_smiles;
+  REQUIRE(m);
+  std::vector<std::vector<int>> rings;
+  CHECK(MolOps::findSSSR(*m, rings) == 2);
+  CHECK(rings[0] < rings[1]);
+}

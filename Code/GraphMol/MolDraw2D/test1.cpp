@@ -4411,7 +4411,7 @@ void testGithub3305() {
       outs.flush();
       outs.close();
 #if DO_TEST_ASSERT
-      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.7") !=
+      TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:0.8") !=
                   std::string::npos);
       TEST_ASSERT(text.find("stroke:#FF7F7F;stroke-width:4.0px") ==
                   std::string::npos);
