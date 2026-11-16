@@ -206,33 +206,37 @@ std::uint8_t *copyBytes(const FPBReader_impl *dp_impl, unsigned int which) {
 // caller is responsible for delete'ing the result
 RDKIT_DATASTRUCTS_EXPORT boost::dynamic_bitset<> *bytesToBitset(
     const std::uint8_t *fpData, std::uint32_t nBits) {
-  unsigned int nBytes = nBits / 8;
-  if (!(nBytes % sizeof(boost::dynamic_bitset<>::block_type))) {
-    // I believe this could be faster (needs to be verified of course)
-    unsigned int nBlocks = nBytes / sizeof(boost::dynamic_bitset<>::block_type);
-    const auto *fpBlocks =
-        reinterpret_cast<const boost::dynamic_bitset<>::block_type *>(fpData);
-    return new boost::dynamic_bitset<>(fpBlocks, fpBlocks + nBlocks);
-  } else {
-    // pad the bytes out to whole blocks, then trim the bitset back to nBits
-    constexpr auto blockSize = sizeof(boost::dynamic_bitset<>::block_type);
-    std::vector<boost::dynamic_bitset<>::block_type> blocks(
-        (nBytes + blockSize - 1) / blockSize);
-    std::memcpy(blocks.data(), fpData, nBytes);
-    auto *res = new boost::dynamic_bitset<>(blocks.begin(), blocks.end());
-    res->resize(nBits);
-    return res;
+  using block_type = boost::dynamic_bitset<>::block_type;
+  constexpr unsigned int bytesPerBlock = sizeof(block_type);
+  const unsigned int nBytes = nBits / 8;
+  // FPB stores bit i in byte i/8 at position i%8. Assemble the blocks with
+  // shifts so this doesn't depend on the host's byte order, padding the last
+  // block and then trimming the bitset back to nBits.
+  std::vector<block_type> blocks((nBytes + bytesPerBlock - 1) / bytesPerBlock);
+  for (unsigned int i = 0; i < nBytes; ++i) {
+    blocks[i / bytesPerBlock] |= static_cast<block_type>(fpData[i])
+                                 << (8 * (i % bytesPerBlock));
   }
+  auto *res = new boost::dynamic_bitset<>(blocks.begin(), blocks.end());
+  res->resize(nBits);
+  return res;
 }
 
 // caller is responsible for delete []'ing the result
 RDKIT_DATASTRUCTS_EXPORT std::uint8_t *bitsetToBytes(
     const boost::dynamic_bitset<> &bitset) {
-  // to_block_range writes whole blocks, so size the buffer in blocks
-  auto *res = new std::uint8_t[bitset.num_blocks() *
-                               sizeof(boost::dynamic_bitset<>::block_type)];
-  boost::to_block_range(
-      bitset, reinterpret_cast<boost::dynamic_bitset<>::block_type *>(res));
+  using block_type = boost::dynamic_bitset<>::block_type;
+  constexpr unsigned int bytesPerBlock = sizeof(block_type);
+  std::vector<block_type> blocks(bitset.num_blocks());
+  boost::to_block_range(bitset, blocks.begin());
+  // the result is sized in whole blocks; split each block into bytes with
+  // shifts so the layout doesn't depend on the host's byte order
+  const auto nBytes = blocks.size() * bytesPerBlock;
+  auto *res = new std::uint8_t[nBytes];
+  for (size_t i = 0; i < nBytes; ++i) {
+    res[i] = static_cast<std::uint8_t>(blocks[i / bytesPerBlock] >>
+                                       (8 * (i % bytesPerBlock)));
+  }
   return res;
 }
 
