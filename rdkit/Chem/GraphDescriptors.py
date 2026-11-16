@@ -184,7 +184,7 @@ def BertzCT(mol, cutoff=100, dMat=None, forceDMat=1):
         old implementation, these two SMILES:
            CC2=CN=C1C3=C(C(C)=C(C=N3)C)C=CC1=C2C
            CC3=CN=C2C1=NC=C(C)C(C)=C1C=CC2=C3C
-        which correspond to differentk kekule forms, yield different
+        which correspond to different kekule forms, yield different
         values.
        The new implementation uses consistent (aromatic) bond orders
         for aromatic bonds.

@@ -520,7 +520,13 @@ class TestCase_regression(unittest.TestCase):
 
   def testDistanceMatrixArguments(self):
     # passing the matrices the C++ code uses by default gives the same values
-    for smi in ('CCCCC(=O)O', 'c1ccccc1CC(N)C(=O)O', 'C1CC2CCC1C2', 'CC.O', 'C'):
+    for smi in (
+        'CCCCC(=O)O',
+        'c1ccccc1CC(N)C(=O)O',
+        'C1CC2CCC1C2',
+        'CC.O',
+        'C'
+    ):
       m = Chem.MolFromSmiles(smi)
       topoMat = Chem.GetDistanceMatrix(m, useBO=False, useAtomWts=False, force=True)
       balabanMat = Chem.GetDistanceMatrix(m, useBO=True, useAtomWts=False, force=True)
@@ -534,6 +540,17 @@ class TestCase_regression(unittest.TestCase):
       # forceDMat ignores the matrix that was passed in
       self.assertAlmostEqual(GraphDescriptors.BalabanJ(m, dMat=topoMat * 2, forceDMat=1),
                              GraphDescriptors.BalabanJ(m))
+      
+      if m.GetNumAtoms() > 3:
+        for i, r in enumerate(balabanMat):
+          for j in range(len(r)):
+            balabanMat[i,j] = 100.0
+          
+        # make sure we actually use the distance mat if forceDMat is False
+        a = GraphDescriptors.BertzCT(m, dMat=balabanMat, forceDMat=False)
+        b = GraphDescriptors.BertzCT(m)
+        self.assertNotEqual(a,b)
+        
     m = Chem.MolFromSmiles('CCO')
     with self.assertRaises(ValueError):
       GraphDescriptors.BalabanJ(m, dMat=numpy.zeros((2, 2)))

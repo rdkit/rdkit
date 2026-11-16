@@ -314,6 +314,10 @@ TEST_CASE("graph descriptors with a user-supplied distance matrix") {
     CHECK(calcAvgIpc(*m, topoMat.data()) == calcAvgIpc(*m));
     CHECK(calcBalabanJ(*m, balMat.data()) == calcBalabanJ(*m));
     CHECK(calcBertzCT(*m, 100, balMat.data()) == calcBertzCT(*m));
+    if(n>3) {
+      std::vector<double> balMatZeroed(n * n, 100.0);
+      CHECK(calcBertzCT(*m, 100, balMatZeroed.data()) != calcBertzCT(*m));
+    }
   }
   SECTION("the matrix is used") {
     std::unique_ptr<RWMol> m(SmilesToMol("CCC(=O)O"));
