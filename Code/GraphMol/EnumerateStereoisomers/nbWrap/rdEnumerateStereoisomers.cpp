@@ -76,6 +76,17 @@ results (and execution time) it's important to keep an eye on this.)DOC")
             new (self) StereoisomerEnumerator(mol, options, verbose);
           },
           "mol"_a, "options"_a, "verbose"_a = false)
+      .def("__iter__", [](nb::object self) { return self; })
+      .def(
+          "__next__",
+          [](StereoisomerEnumerator &self) {
+            auto isomer = self.next();
+            if (!isomer) {
+              throw nb::stop_iteration();
+            }
+            return isomer;
+          },
+          "Get the next isomer in the sequence. Raises StopIteration at the end.")
       .def("next", &StereoisomerEnumerator::next,
            "Get next isomer in the sequence, or None if at the end.")
       .def("GetStereoisomerCount",

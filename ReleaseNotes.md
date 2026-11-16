@@ -1,3 +1,21 @@
+# Release_2026.09.3
+(Changes relative to Release_2026.09.2)
+
+## Acknowledgements
+(Note: I'm no longer attempting to manually curate names. If you would like to
+see your contribution acknowledged with your name, please set your name in
+GitHub)
+
+## Backwards incompatible changes:
+- `Flippers.h` has been removed from the installed headers.
+
+## Deprecated code (to be removed in a future release):
+- The C++ functions `RingUtils::makeRingNeighborMap()` and
+  `RingUtils::pickFusedRings()` have been deprecated, please use
+  `RingUtils::findFusedRingSystems()` instead.
+
+
+
 # Release_2026.09.2
 (Changes relative to Release_2026.09.1)
 
@@ -159,10 +177,6 @@ mtrojanowski-beit, Xavier M
   - Consolidate duplicated Deadline handling in conformer generator
  (github pull #9775 from scal444)
 
-## Deprecated code (to be removed in a future release):
-- The C++ functions `RingUtils::makeRingNeighborMap()` and
-  `RingUtils::pickFusedRings()` have been deprecated, please use
-  `RingUtils::findFusedRingSystems()` instead.
 
 
 # Release_2026.09.1

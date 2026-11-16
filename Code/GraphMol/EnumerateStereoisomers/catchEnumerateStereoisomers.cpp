@@ -130,6 +130,39 @@ TEST_CASE("Base tests") {
   }
 }
 
+TEST_CASE("StereoisomerEnumerator is an input range") {
+  STATIC_REQUIRE(std::ranges::input_range<StereoisomerEnumerator>);
+
+  auto mol = "BrC=CC1OC(C2)(F)C2(Cl)C1"_smiles;
+  REQUIRE(mol);
+
+  StereoEnumerationOptions options;
+  options.onlyUnassigned = false;
+  options.randomSeed = 23;
+
+  std::vector<std::string> expected;
+  StereoisomerEnumerator consumed(*mol, options);
+  while (auto isomer = consumed.next()) {
+    expected.push_back(MolToSmiles(*isomer));
+  }
+
+  // Iterate using a range-based for loop
+  std::vector<std::string> got;
+  StereoisomerEnumerator iterated(*mol, options);
+  for (const auto &isomer : iterated) {
+    got.push_back(MolToSmiles(isomer));
+  }
+  CHECK(got == expected);
+
+  // Same, but using std::ranges::transform instead of a for loop
+  got.clear();
+  StereoisomerEnumerator rangeIterated(*mol, options);
+  std::ranges::transform(
+      rangeIterated, std::back_inserter(got),
+      [](const auto &isomer) { return MolToSmiles(isomer); });
+  CHECK(got == expected);
+}
+
 TEST_CASE("Unique") {
   auto m1 = "FC(Cl)C=CC=CC(F)Cl"_smiles;
   REQUIRE(m1);
@@ -749,7 +782,8 @@ TEST_CASE("Ring system patterns") {
   }
 
   SECTION("321-bicyclooctane") {
-    checkResults(patterns[3].first, "C1CC2CCC(C1)C2", "C1C[C@@H]2CC[C@H](C1)C2");
+    checkResults(patterns[3].first, "C1CC2CCC(C1)C2",
+                 "C1C[C@@H]2CC[C@H](C1)C2");
   }
 
   SECTION("14-bicyclohept-1,4-dione") {
@@ -762,7 +796,8 @@ TEST_CASE("Ring system patterns") {
   }
 
   SECTION("2,2,3-bicyclononane") {
-    checkResults(patterns[6].first, "C1CC2CCC(C1)CC2", "C1C[C@H]2CC[C@@H](C1)CC2");
+    checkResults(patterns[6].first, "C1CC2CCC(C1)CC2",
+                 "C1C[C@H]2CC[C@@H](C1)CC2");
   }
 
   SECTION("1,1,3-bicycloheptane") {
