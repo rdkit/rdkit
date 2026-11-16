@@ -18,6 +18,7 @@ GitHub)
   `std::span<const int>` instead of `const INT_VECT &`. These views are
   invalidated when the `RingInfo` is modified. `RingInfo::addRing()` now takes
   `std::span<const int>` arguments. The Python, Java, and C# APIs are unchanged.
+- `Flippers.h` has been removed from the installed headers.
 
 ## Code removed in this release:
 

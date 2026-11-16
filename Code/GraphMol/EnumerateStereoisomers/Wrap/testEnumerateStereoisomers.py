@@ -51,6 +51,14 @@ class TestCase(unittest.TestCase):
         smiles.add(Chem.MolToSmiles(iso))
     self.assertEqual(len(smiles), 4)
 
+    # Now do the same again, but iterating over the StereoisomerEnumerator
+    enum2 = rdEnumerateStereoisomers.StereoisomerEnumerator(mol, opts)
+    smiles2 = {Chem.MolToSmiles(iso) for iso in enum2}
+
+    self.assertEqual(len(smiles2), 4)
+    self.assertEqual(smiles, smiles2)
+
+
   def testEnumerateStereoisomersEmbeddingNotRejectingInput(self):
     mol = Chem.MolFromSmiles('C1C/C=C/CCC[C@H]1C(=O)Nc2ccc(cc2)C[C@@H](C(=O)[O-])[NH3+]')
     canon_smiles = Chem.MolToSmiles(mol, isomericSmiles=True)
