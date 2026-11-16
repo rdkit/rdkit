@@ -1964,7 +1964,7 @@ query.Match( mol ))DOC",
       "Returns the average information content (Eq 7 of Bonchev & "
       "Trinajstic). dMat is as for CalcIpc");
   m.attr("_CalcAvgIpc_version") = RDKit::Descriptors::avgIpcVersion;
-#ifdef RDK_HAS_EIGEN3
+#endif
   
   m.def("CalcHeavyAtomMolWt", RDKit::Descriptors::calcHeavyAtomMolWt, "mol"_a,
         "Returns the average molecular weight ignoring hydrogens");
