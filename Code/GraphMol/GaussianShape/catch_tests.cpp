@@ -15,6 +15,7 @@
 #include <random>
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <vector>
 #include <execution>
 
@@ -122,9 +123,9 @@ TEST_CASE("basic alignment") {
     ROMol cp(*probe);
     const auto scores = GaussianShape::AlignMolecule(
         *ref, cp, shapeOpts, shapeOpts, nullptr, overlayOpts);
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.477, 0.005));
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.512, 0.005));
     CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.747, 0.005));
-    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.207, 0.005));
+    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.278, 0.005));
     const auto rescores = GaussianShape::ScoreMolecule(*ref, cp, shapeOpts,
                                                        shapeOpts, overlayOpts);
     CHECK_THAT(rescores[0], Catch::Matchers::WithinAbs(scores[0], 0.005));
@@ -1095,5 +1096,44 @@ TEST_CASE("color gradients use their own converters") {
   for (unsigned int g = 1; g < atStart.size(); ++g) {
     CHECK(atStart[g] != 0.0);
     CHECK(afterShape[g] == atStart[g]);
+  }
+}
+TEST_CASE("color gradients are mixed into the matching components") {
+  // One atom and one color feature in each of ref and fit.
+  const std::vector<double> ref{0.0, 0.0, 0.0, 0.2, -0.4, 0.1};
+  const std::vector<double> fit{1.0, 0.5, -0.3, -0.6, 0.8, 0.7};
+  const std::vector<double> alphas{0.8, 1.0};
+  const int types[2] = {0, 1};
+  const double mixingParam = 0.5;
+  GaussianShape::SingleConformerAlignment sca(
+      ref, alphas, types, nullptr, 1, 1, 1.0, 1.0, fit, alphas, types, nullptr,
+      1, 1, 1.0, 1.0, {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+      GaussianShape::OptimMode::SHAPE_PLUS_COLOR, 1.0, 0.0, mixingParam, false,
+      0.0, 0.001, 100);
+  const std::array<double, 7> quatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  double shapeVol, colorVol;
+  std::array<double, 7> mixed{};
+  sca.calcVolumeAndGradients(quatTrans, shapeVol, colorVol, mixed);
+
+  // The same thing computed piecewise.
+  std::vector<double> gradConverters(24, 0.0);
+  std::array<double, 7> shapeGrads{}, colorGrads{};
+  GaussianShape::calcVolAndGrads(
+      ref.data(), alphas.data(), 1, nullptr, fit.data(), alphas.data(), 1,
+      nullptr, gradConverters, false, 0.0, quatTrans.data(), shapeGrads.data());
+  GaussianShape::calcVolAndGrads(ref.data() + 3, alphas.data() + 1, 1,
+                                 types + 1, fit.data() + 3, alphas.data() + 1,
+                                 1, types + 1, 1, gradConverters, false, 0.0,
+                                 quatTrans.data(), colorGrads.data());
+  double shapeSum = 0.0, colorSum = 0.0;
+  for (unsigned int g = 1; g < 7; ++g) {
+    shapeSum += shapeGrads[g] * shapeGrads[g];
+    colorSum += colorGrads[g] * colorGrads[g];
+  }
+  const auto ratio = std::sqrt(shapeSum / colorSum);
+  for (unsigned int g = 1; g < 7; ++g) {
+    const auto expected =
+        shapeGrads[g] * (1 - mixingParam) + colorGrads[g] * ratio * mixingParam;
+    CHECK_THAT(mixed[g], Catch::Matchers::WithinAbs(expected, 1.0e-10));
   }
 }

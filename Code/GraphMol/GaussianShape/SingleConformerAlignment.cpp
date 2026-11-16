@@ -367,7 +367,7 @@ void SingleConformerAlignment::calcVolumeAndGradients(
         [](const auto init, const auto g) -> double { return init + g * g; }));
     const auto ratio = shapeSum / colorSum;
     std::transform(
-        gradients.begin() + 1, gradients.end(), colorGrads.begin(),
+        gradients.begin() + 1, gradients.end(), colorGrads.begin() + 1,
         gradients.begin() + 1, [&](const auto g1, const auto g2) -> double {
           return g1 * (1 - d_mixingParam) + g2 * ratio * d_mixingParam;
         });
