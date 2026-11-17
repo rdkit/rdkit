@@ -386,6 +386,33 @@ class TestWriteSDF(unittest.TestCase):
     self.assertIn("8\n\n", s)
     self.assertIn("8.0\n\n", s)
 
+  def test_float_properties_preserve_precision(self):
+    values = [1e-9, -1e-9, 1.2345678912345, numpy.float32(1e-8),
+              numpy.nextafter(0.0, 1.0), numpy.finfo(float).max, 7.0, 0.0, -0.0]
+    for value in values:
+      with self.subTest(value=value):
+        df = PandasTools.pd.DataFrame({'ROMol': [Chem.MolFromSmiles('C')], 'value': [value]})
+        sio = StringIO()
+        PandasTools.WriteSDF(df, sio, properties=['value'])
+        mol = next(Chem.ForwardSDMolSupplier(getStreamIO(sio.getvalue())))
+        self.assertIsNotNone(mol)
+        text = mol.GetProp('value')
+        self.assertNotIn('e', text.lower())
+        self.assertEqual(type(value)(text), value)
+        if value == 0:
+          self.assertEqual(numpy.signbit(float(text)), numpy.signbit(value))
+
+  def test_nonfinite_float_properties(self):
+    for value, expected in [(float('nan'), 'nan'), (float('inf'), 'inf'),
+                            (float('-inf'), '-inf')]:
+      with self.subTest(value=value):
+        df = PandasTools.pd.DataFrame({'ROMol': [Chem.MolFromSmiles('C')], 'value': [value]})
+        sio = StringIO()
+        PandasTools.WriteSDF(df, sio, properties=['value'])
+        mol = next(Chem.ForwardSDMolSupplier(getStreamIO(sio.getvalue())))
+        self.assertIsNotNone(mol)
+        self.assertEqual(mol.GetProp('value'), expected)
+
   def test_write_to_sdf(self):
     dirname = tempfile.mkdtemp()
     try:
