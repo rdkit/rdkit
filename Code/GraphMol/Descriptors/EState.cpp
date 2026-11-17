@@ -69,7 +69,10 @@ std::vector<double> calcEStateIndices(const ROMol &mol) {
       Is[at->getIdx()] = (4. / (N * N) * dv + 1) / d;
     }
   }
-  const double *dists = MolOps::getDistanceMat(mol, false, false, true);
+  const bool useBO = false;
+  const bool useAtomWts = false;
+  const bool force = true;
+  const double *dists = MolOps::getDistanceMat(mol, useBO, useAtomWts, force);
   std::vector<double> accum(nAtoms, 0.0);
   for (unsigned int i = 0; i < nAtoms; ++i) {
     for (unsigned int j = i + 1; j < nAtoms; ++j) {
