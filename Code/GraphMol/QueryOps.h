@@ -710,6 +710,27 @@ RDKIT_GRAPHMOL_EXPORT ATOM_EQUALS_QUERY *makeAtomIsBridgeheadQuery();
 //! returns a Query for matching bond orders
 RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeBondOrderEqualsQuery(
     Bond::BondType what);
+
+template <class T>
+T *makeBondSimpleQuery(int what, std::function<int(Bond const *)> func,
+                       const std::string &description = "Bond Simple") {
+  T *res = new T;
+  res->setVal(what);
+  res->setDataFunc(func);
+  res->setDescription(description);
+  return res;
+}
+
+static inline BOND_RANGE_QUERY *makeBondRangeQuery(
+    int lower, int upper, bool lowerOpen, bool upperOpen,
+    std::function<int(Bond const *)> func,
+    const std::string &description = "Bond Range") {
+  BOND_RANGE_QUERY *res = new BOND_RANGE_QUERY(lower, upper);
+  res->setDataFunc(func);
+  res->setDescription(description);
+  res->setEndsOpen(lowerOpen, upperOpen);
+  return res;
+}
 //! returns a Query for unspecified SMARTS bonds
 RDKIT_GRAPHMOL_EXPORT BOND_EQUALS_QUERY *makeSingleOrAromaticBondQuery();
 //! returns a Query for double|aromatic bonds
@@ -1207,6 +1228,134 @@ inline bool hasComplexBondTypeQuery(const Bond &bond) {
 }
 
 RDKIT_GRAPHMOL_EXPORT bool isMetal(const Atom &atom);
+
+template <typename EqQuery>
+bool localMatch(EqQuery const *q1, EqQuery const *q2) {
+  if (q1->getNegation() == q2->getNegation()) {
+    return q1->getVal() == q2->getVal();
+  } else {
+    return q1->getVal() != q2->getVal();
+  }
+}
+
+namespace detail {
+enum class RangeQueryType : std::uint8_t {
+  EQUAL,
+  LESS,
+  GREATER,
+  RANGE
+};
+
+inline RangeQueryType parseRangeQueryType(std::string &descr) {
+  if (descr.starts_with("range_")) {
+    descr = descr.substr(6);
+    return RangeQueryType::RANGE;
+  } else if (descr.starts_with("less_")) {
+    descr = descr.substr(5);
+    return RangeQueryType::LESS;
+  } else if (descr.starts_with("greater_")) {
+    descr = descr.substr(8);
+    return RangeQueryType::GREATER;
+  }
+  return RangeQueryType::EQUAL;
+}
+}  // namespace detail
+
+template <typename Traits>
+bool queriesMatch(typename Traits::BaseQuery const *q1,
+                  typename Traits::BaseQuery const *q2) {
+  PRECONDITION(q1, "no q1");
+  PRECONDITION(q2, "no q2");
+
+  bool res = false;
+  std::string d1 = q1->getDescription();
+  std::string d2 = q2->getDescription();
+  if (d1 == Traits::NullDesc || d2 == Traits::NullDesc) {
+    res = true;
+  } else if (d1 == Traits::OrDesc) {
+    for (auto iter1 = q1->beginChildren(); iter1 != q1->endChildren();
+         ++iter1) {
+      if (d2 == Traits::OrDesc) {
+        for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
+             ++iter2) {
+          if (queriesMatch<Traits>(iter1->get(), iter2->get())) {
+            res = true;
+            break;
+          }
+        }
+      } else {
+        if (queriesMatch<Traits>(iter1->get(), q2)) {
+          res = true;
+        }
+      }
+      if (res) {
+        break;
+      }
+    }
+  } else if (d1 == Traits::AndDesc) {
+    res = true;
+    for (auto iter1 = q1->beginChildren(); iter1 != q1->endChildren();
+         ++iter1) {
+      bool matched = false;
+      if (d2 == Traits::AndDesc) {
+        for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
+             ++iter2) {
+          if (queriesMatch<Traits>(iter1->get(), iter2->get())) {
+            matched = true;
+            break;
+          }
+        }
+      } else {
+        matched = queriesMatch<Traits>(iter1->get(), q2);
+      }
+      if (!matched) {
+        res = false;
+        break;
+      }
+    }
+  } else if (d2 == Traits::OrDesc) {
+    for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
+         ++iter2) {
+      if (queriesMatch<Traits>(q1, iter2->get())) {
+        res = true;
+        break;
+      }
+    }
+  } else if (d2 == Traits::AndDesc) {
+    res = true;
+    for (auto iter2 = q2->beginChildren(); iter2 != q2->endChildren();
+         ++iter2) {
+      if (!queriesMatch<Traits>(q1, iter2->get())) {
+        res = false;
+        break;
+      }
+    }
+  } else if (d1 == d2 && Traits::isEqualityQuery(d1)) {
+    res = localMatch<typename Traits::EqQuery>(
+        dynamic_cast<typename Traits::EqQuery const *>(q1),
+        dynamic_cast<typename Traits::EqQuery const *>(q2));
+  } else {
+    std::string bd1 = d1;
+    std::string bd2 = d2;
+    detail::parseRangeQueryType(bd1);
+    detail::parseRangeQueryType(bd2);
+    if (bd1 == bd2 && Traits::isEqualityQuery(bd1)) {
+      auto *e1 = dynamic_cast<const typename Traits::EqQuery *>(q1);
+      auto *e2 = dynamic_cast<const typename Traits::EqQuery *>(q2);
+      if (e1 && e2) {
+        res = localMatch<typename Traits::EqQuery>(e1, e2);
+      } else {
+        auto *r1 = dynamic_cast<const typename Traits::RangeQuery *>(q1);
+        auto *r2 = dynamic_cast<const typename Traits::RangeQuery *>(q2);
+        if (r1 && r2) {
+          res = (r1->getLower() == r2->getLower() &&
+                 r1->getUpper() == r2->getUpper());
+        }
+      }
+    }
+  }
+  return res;
+}
 }  // namespace QueryOps
 }  // namespace RDKit
 #endif

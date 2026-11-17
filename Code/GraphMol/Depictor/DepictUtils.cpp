@@ -676,8 +676,8 @@ std::unique_ptr<RDKit::RWMol> prepareTemplateForRGroups(
   return reducedTemplateMol;
 }
 
-void reducedToFullMatches(const RDKit::RWMol &reducedQuery,
-                          const RDKit::RWMol &molHs,
+void reducedToFullMatches(const RDKit::ROMol &reducedQuery,
+                          const RDKit::ROMol &molHs,
                           std::vector<RDKit::MatchVectType> &matches) {
   boost::dynamic_bitset<> molHsMatches(molHs.getNumAtoms());
   for (auto &match : matches) {

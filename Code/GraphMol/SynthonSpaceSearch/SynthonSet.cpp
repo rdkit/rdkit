@@ -782,7 +782,7 @@ std::unique_ptr<ROMol> SynthonSet::buildMolecule(
   combMol->setProp<std::string>(common_properties::_Name, molName);
   try {
     auto sampleMol = molzip(*combMol, mzparams);
-    MolOps::sanitizeMol(*dynamic_cast<RWMol *>(sampleMol.get()));
+    MolOps::sanitizeMol(*static_cast<RWMol *>(sampleMol.get()));
     return sampleMol;
   } catch (std::exception &e) {
     std::string msg("Error:: in reaction " + getId() +

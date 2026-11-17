@@ -1375,6 +1375,14 @@ select mol_to_smarts(mol_adjust_query_properties('*c1ncc(*)cc1'::qmol));
  *[c&D3]1[n&D2][c&D2][c&D3](*)[c&D2][c&D2]1
 (1 row)
 
+-- malformed JSON is ignored with a warning instead of terminating the backend
+select mol_to_smarts(mol_adjust_query_properties('Cc1ccccc1'::mol,'{"adjustDegree":false'));
+WARNING:  adjustQueryProperties: Invalid argument 'params' ignored
+                      mol_to_smarts                      
+---------------------------------------------------------
+ [#6]-[#6&D3]1:[#6&D2]:[#6&D2]:[#6&D2]:[#6&D2]:[#6&D2]:1
+(1 row)
+
 -- CXSmiles
 SELECT mol_to_smiles(mol_from_smiles('C[C@H](F)[C@H](C)[C@@H](C)Br |a:1,o1:3,5|'));
          mol_to_smiles         

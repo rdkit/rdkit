@@ -348,7 +348,7 @@ void testStereo()  // stereochemistry
     TEST_ASSERT(mol.get());
     BOOST_LOG(rdInfoLog) << MolToSmarts(*mol) << "\n";
     TEST_ASSERT(CheckStereo(*mol.get()) == false);
-    unsigned flags = chk.checkMolStructure(*dynamic_cast<RWMol *>(mol.get()));
+    unsigned flags = chk.checkMolStructure(*static_cast<RWMol *>(mol.get()));
     BOOST_LOG(rdInfoLog) << MolToSmarts(*mol) << "\n";
     BOOST_LOG(rdInfoLog) << "FLAGS: "
                          << StructChecker::StructureFlagsToString(flags)
@@ -378,7 +378,7 @@ void testStereo()  // stereochemistry
       //                TEST_ASSERT(CheckStereo(*mol) == true);
                   }
       */
-      unsigned flags = chk.checkMolStructure(*dynamic_cast<RWMol *>(mol.get()));
+      unsigned flags = chk.checkMolStructure(*static_cast<RWMol *>(mol.get()));
       BOOST_LOG(rdInfoLog) << MolToSmarts(*mol) << "\n";
       BOOST_LOG(rdInfoLog) << "ref: "
                            << StructChecker::StructureFlagsToString(res[i])
@@ -579,7 +579,7 @@ void testNitro() {
   StructChecker chk(options);
 
   ROMOL_SPTR mol(MolBlockToMol(nitro));
-  RWMol *rwmol = dynamic_cast<RWMol *>(mol.get());
+  RWMol *rwmol = static_cast<RWMol *>(mol.get());
   TEST_ASSERT(rwmol != nullptr);
   unsigned flags = chk.checkMolStructure(*rwmol);
   // N+1 should match N+1(=N,O)(-N,O-1)(-C,N,S) but doesn't

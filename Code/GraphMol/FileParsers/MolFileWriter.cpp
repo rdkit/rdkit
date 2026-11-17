@@ -1112,7 +1112,7 @@ const std::string GetV3000MolFileBondLine(
 }
 
 void appendEnhancedStereoGroups(
-    std::string &res, const RWMol &tmol,
+    std::string &res, const ROMol &tmol,
     std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> &wedgeBonds) {
   if (!tmol.getStereoGroups().empty()) {
     auto stereo_groups = tmol.getStereoGroups();

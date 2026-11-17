@@ -127,7 +127,7 @@ std::unique_ptr<ROMol> deprotect(
         m = prods[0];
         try {
           RDLog::LogStateSetter blocker;
-          MolOps::sanitizeMol(*dynamic_cast<RWMol *>(m.get()));
+          MolOps::sanitizeMol(*static_cast<RWMol *>(m.get()));
         } catch (MolSanitizeException &) {
           continue;
         }

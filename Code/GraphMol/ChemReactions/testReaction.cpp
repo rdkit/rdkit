@@ -7772,8 +7772,8 @@ void testChemicalReactionCopyAssignment() {
   }
 
   // Check that the reactions don't share resources
-  const RWMol &rxn1_reactant = *rxn1->getReactants().at(0);
-  const_cast<RWMol &>(rxn1_reactant).clear();
+  const ROMol *rxn1_reactant = rxn1->getReactants().at(0).get();
+  static_cast<RWMol *>(const_cast<ROMol*>(rxn1_reactant))->clear();
   ROMOL_SPTR rxn2_reactant = rxn2->getReactants().at(0);
   TEST_ASSERT(rxn2_reactant->getNumAtoms() > 0);
 

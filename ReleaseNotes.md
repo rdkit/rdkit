@@ -18,10 +18,14 @@ GitHub)
   `std::span<const int>` instead of `const INT_VECT &`. These views are
   invalidated when the `RingInfo` is modified. `RingInfo::addRing()` now takes
   `std::span<const int>` arguments. The Python, Java, and C# APIs are unchanged.
+- `Flippers.h` has been removed from the installed headers.
 
 ## Code removed in this release:
 
 ## Deprecated code (to be removed in a future release):
+- The C++ functions `RingUtils::makeRingNeighborMap()` and
+  `RingUtils::pickFusedRings()` have been deprecated, please use
+  `RingUtils::findFusedRingSystems()` instead.
 
 
 # Release_2026.09.1

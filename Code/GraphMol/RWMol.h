@@ -42,6 +42,16 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
          make the copy substantially faster (thus the name).
     \param confId if this is >=0, the resulting ROMol will contain only
          the specified conformer from \c other.
+
+    note:  this will eventually become explicit to prevent
+           void foo(const RWMol &m);
+	   from implicitly making a copy when called with an ROMol.
+	   
+	   To prevent this, RWMol is designed to be statically cast from an
+	   ROMol, so you can call with:
+
+	     foo(static_cast<RWMol&>(mol));
+	     foo(*static_cast<RWMol*>(mol));
   */
   RWMol(const ROMol &other, bool quickCopy = false, int confId = -1)
       : ROMol(other, quickCopy, confId) {}

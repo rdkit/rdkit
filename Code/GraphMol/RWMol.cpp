@@ -82,7 +82,7 @@ void insertStereoGroups(RWMol &mol, const ROMol &other,
   mol.setStereoGroups(new_groups);
 }
 
-void insertSubstanceGroups(RWMol &mol, const RWMol &other,
+void insertSubstanceGroups(RWMol &mol, const ROMol &other,
                            unsigned int origNumAtoms,
                            unsigned int origNumBonds) {
   for (auto sgroup : getSubstanceGroups(other)) {

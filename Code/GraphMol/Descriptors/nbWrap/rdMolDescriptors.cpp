@@ -16,6 +16,7 @@
 #include <nanobind/stl/map.h>
 #include <nanobind/stl/tuple.h>
 #include <nanobind/trampoline.h>
+#include <nanobind/ndarray.h>
 
 #include <RDBoost/Wrap_nb.h>
 #include <RDBoost/boost_shared_ptr.h>
@@ -47,6 +48,8 @@
 #include <RDGeneral/Exceptions.h>
 
 #include <boost/dynamic_bitset.hpp>
+#include <algorithm>
+#include <memory>
 #include <optional>
 #include <ranges>
 #include <vector>
@@ -885,7 +888,61 @@ struct PythonPropertyFunctor : public RDKit::Descriptors::PropertyFunctor {
   double operator()(const RDKit::ROMol &mol) const override {
     NB_OVERRIDE_NAME("__call__", operator(), mol);
   }
+
+  // exceptions from Python callbacks must reach the caller
+  RDKit::Descriptors::PropertyFailureMode failureMode() const override {
+    return RDKit::Descriptors::PropertyFailureMode::THROW;
+  }
 };
+
+// The Python callbacks need the GIL and their exceptions must be restored on
+// the calling thread, so batches containing them are not run on workers
+bool hasPythonProperties(const RDKit::Descriptors::Properties &props) {
+  const auto &functors = props.getProperties();
+  return std::any_of(functors.begin(), functors.end(), [](const auto &f) {
+    return dynamic_cast<const PythonPropertyFunctor *>(f.get()) != nullptr;
+  });
+}
+
+nb::ndarray<nb::numpy, double, nb::ndim<2>> computePropertiesForMolsHelper(
+    const RDKit::Descriptors::Properties &self, nb::object pymols,
+    int numThreads) {
+  // keep the Python objects alive while the C++ work runs without the GIL
+  std::vector<nb::object> keepAlive;
+  std::vector<const RDKit::ROMol *> mols;
+  for (nb::handle item : pymols) {
+    keepAlive.push_back(nb::borrow<nb::object>(item));
+    if (item.is_none()) {
+      mols.push_back(nullptr);
+      continue;
+    }
+    const RDKit::ROMol *mol = nullptr;
+    if (!nb::try_cast(item, mol)) {
+      throw nb::type_error("mols should be an iterable of Mol objects");
+    }
+    mols.push_back(mol);
+  }
+
+  std::vector<std::vector<double>> rows;
+  const size_t nRows = mols.size();
+  const size_t nCols = self.getPropertyNames().size();
+  if (hasPythonProperties(self)) {
+    // Python callbacks need the GIL, so there's no benefit to threading
+    rows = self.computePropertiesForMols(mols, 1);
+  } else {
+    nb::gil_scoped_release release;
+    rows = self.computePropertiesForMols(mols, numThreads);
+  }
+  std::unique_ptr<double[]> buf(new double[nRows * nCols]);
+  for (size_t i = 0; i < nRows; ++i) {
+    std::copy_n(rows[i].begin(), nCols, buf.get() + i * nCols);
+  }
+  double *data = buf.release();
+  nb::capsule owner(
+      data, [](void *p) noexcept { delete[] reinterpret_cast<double *>(p); });
+  return nb::ndarray<nb::numpy, double, nb::ndim<2>>(data, {nRows, nCols},
+                                                     owner);
+}
 
 int registerPropertyHelper(
     boost::shared_ptr<RDKit::Descriptors::PropertyFunctor> ppf) {
@@ -1509,7 +1566,10 @@ for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperti
 To compute a subset
 properties = rdMolDescriptors.Properties(['exactmw', 'lipinskiHBA'])
 for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperties(mol)):
-  print(name, value))DOC")
+  print(name, value)
+
+To compute properties for many molecules at once (returns a numpy array with one row per molecule)
+values = properties.ComputeProperties(mols, numThreads=4))DOC")
       .def(nb::init<>())
       .def(nb::init<const std::vector<std::string> &>(), "propNames"_a)
       .def("GetPropertyNames",
@@ -1520,6 +1580,25 @@ for name, value in zip(properties.GetPropertyNames(), properties.ComputeProperti
            "annotateMol"_a = false,
            "Return a list of computed properties, if annotateMol==True, "
            "annotate the molecule with the computed properties.")
+      .def("ComputeProperties", &computePropertiesForMolsHelper, "mols"_a,
+           "numThreads"_a = 1,
+           R"DOC(Compute the properties for a sequence of molecules.
+
+  ARGUMENTS:
+    - mols: an iterable of molecules. None entries are allowed and produce
+      a row of NaNs.
+    - numThreads: the number of threads to use, only has an effect if the
+      RDKit was built with multi-thread support. If this is zero, the max
+      supported by the system will be used. If it is negative, that number
+      is subtracted from the max supported by the system.
+      Python-defined properties are always computed on the calling thread.
+
+  RETURNS:
+    a numpy array of floats with shape (len(mols), len(GetPropertyNames())).
+    Row i contains the values ComputeProperties(mols[i]) returns. Values that
+    cannot be computed are NaN; exceptions raised by Python-defined
+    properties are propagated.
+)DOC")
       .def("AnnotateProperties",
            &RDKit::Descriptors::Properties::annotateProperties, "mol"_a,
            "Annotate the molecule with the computed properties.  These "
