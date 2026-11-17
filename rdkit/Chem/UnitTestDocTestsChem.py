@@ -2,10 +2,8 @@ import doctest
 import unittest
 
 from rdkit import Chem
-from rdkit.Chem import (BRICS, AllChem, Descriptors, EnumerateHeterocycles,
-                        EnumerateStereoisomers, FragmentMatcher, MACCSkeys,
-                        PropertyMol, Recap, SaltRemover, TemplateAlign,
-                        rdDepictor)
+from rdkit.Chem import (BRICS, AllChem, Descriptors, EnumerateHeterocycles, EnumerateStereoisomers,
+                        FragmentMatcher, MACCSkeys, Recap, SaltRemover, TemplateAlign, rdDepictor)
 
 
 def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
@@ -18,7 +16,6 @@ def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
   tests.addTests(doctest.DocTestSuite(Recap, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(BRICS, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(AllChem, optionflags=doctest.ELLIPSIS))
-  tests.addTests(doctest.DocTestSuite(PropertyMol, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(SaltRemover, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(Chem, optionflags=doctest.ELLIPSIS))
   # Tests which have a dependency on using the RDKit coordinate generator

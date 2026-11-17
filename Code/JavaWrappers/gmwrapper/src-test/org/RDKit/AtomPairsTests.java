@@ -225,7 +225,7 @@ public class AtomPairsTests extends GraphMolTest {
 
 	@Test
 	public void testBulkTorsions() {
-		String fName = new File(getRdBase(), "/Projects/DbCLI/testData/pubchem.200.sdf").getPath();
+		String fName = new File(getRdBase(), "/Code/GraphMol/Fingerprints/testData/pubchem.200.sdf").getPath();
 		SDMolSupplier suppl = new SDMolSupplier(fName);
 		while (!suppl.atEnd()) {
 			ROMol mol = suppl.next();

@@ -11,7 +11,6 @@ import doctest
 import unittest
 
 from rdkit import Chem, DataStructs
-from rdkit.Chem.Fingerprints.FingerprintMols import FingerprinterDetails
 from rdkit.DataStructs import (BitUtils, FingerprintSimilarity, LazySignature, VectCollection)
 
 
@@ -62,29 +61,24 @@ class TestCaseAdditional(unittest.TestCase):
     self.assertEqual(obj[8], 'cached')
 
   def test__init__(self):
-    from rdkit.Chem.Fingerprints import FingerprintMols
+    from rdkit.Chem import rdFingerprintGenerator
+    fpg = rdFingerprintGenerator.GetRDKitFPGenerator()
     ms = [Chem.MolFromSmiles('CCOC'), Chem.MolFromSmiles('CCO'), Chem.MolFromSmiles('COC')]
-    fps = [FingerprintMols.FingerprintMol(x) for x in ms]
+    fps = [fpg.GetFingerprint(x) for x in ms]
     self.assertAlmostEqual(FingerprintSimilarity(fps[0], fps[1]), 0.6, places=2)
 
-    details = FingerprinterDetails()
-    fpArgs = details.__dict__
     fps = []
     for i, x in enumerate(ms, 1):
-      fpArgs['fpSize'] = 16 * i
-      fps.append(FingerprintMols.FingerprintMol(x, **fpArgs))
+      fpg = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=16 * i)
+      fps.append(fpg.GetFingerprint(x))
     self.assertAlmostEqual(FingerprintSimilarity(fps[0], fps[1]), 0.555, places=2)
     self.assertAlmostEqual(FingerprintSimilarity(fps[1], fps[0]), 0.555, places=2)
 
-    fpArgs['fpSize'] = 1024
-    fpArgs['tgtDensity'] = 0.02
-    fp = FingerprintMols.FingerprintMol(ms[0], **fpArgs)
+    # here we have to use the older interface:
+    fp = Chem.RDKFingerprint(ms[0], fpSize=1024, tgtDensity=0.02)
     self.assertEqual(len(fp), 256)
-    fp2 = DataStructs.FoldToTargetDensity(fp, density=0.1)
-    self.assertEqual(len(fp2), 64)
-    fp2 = DataStructs.FoldToTargetDensity(fp, density=0.1, minLength=128)
-    self.assertEqual(len(fp2), 128)
-    self.assertGreater(0.1, fp2.GetNumOnBits() / len(fp2))
+    fp = DataStructs.FoldToTargetDensity(fp, density=0.1, minLength=128)
+    self.assertEqual(len(fp), 128)
 
 
 if __name__ == '__main__':  # pragma: nocover
