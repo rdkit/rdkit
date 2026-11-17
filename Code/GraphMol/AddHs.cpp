@@ -1172,7 +1172,7 @@ std::pair<bool, bool> queryHasHs(Q queryAtom, bool inor = false) {
   ;
 }
 
-HydrogenType isQueryH(const Atom *atom) {
+HydrogenType isQueryH(const Atom *atom, bool warn = true) {
   PRECONDITION(atom, "bogus atom");
   if (atom->getAtomicNum() == 1) {
     // the simple case: the atom is flagged as being an H and
@@ -1203,11 +1203,13 @@ HydrogenType isQueryH(const Atom *atom) {
     }
     if (res.first) {     // hasH
       if (res.second) {  // inOr
-        BOOST_LOG(rdWarningLog)
-            << "WARNING: merging explicit H queries involved "
-               "in ORs is not supported. This query will not "
-               "be merged"
-            << std::endl;
+        if (warn) {
+          BOOST_LOG(rdWarningLog)
+              << "WARNING: merging explicit H queries involved "
+                 "in ORs is not supported. This query will not "
+                 "be merged"
+              << std::endl;
+        }
         return HydrogenType::UnMergableQueryHydrogen;
       } else {
         return HydrogenType::QueryHydrogen;
@@ -1349,11 +1351,9 @@ bool needsHs(const ROMol &mol) {
 
 std::pair<bool, bool> hasQueryHs(const ROMol &mol) {
   bool queryHs = false;
-  // We don't care about announcing ORs or other items during isQueryH
-  RDLog::LogStateSetter blocker;
 
   for (const auto atom : mol.atoms()) {
-    switch (isQueryH(atom)) {
+    switch (isQueryH(atom, false)) {
       case HydrogenType::UnMergableQueryHydrogen:
         return std::make_pair(true, true);
       case HydrogenType::QueryHydrogen:

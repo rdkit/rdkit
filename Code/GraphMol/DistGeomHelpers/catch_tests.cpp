@@ -73,6 +73,26 @@ TEST_CASE("invalid coordinate maps", "[constrained-embedding]") {
   }
 }
 
+TEST_CASE("Torsion verbosity preserves global logging settings") {
+  const bool verbose = GENERATE(false, true);
+  const bool gaussian = GENERATE(false, true);
+  auto mol = "CCCCCCO"_smiles;
+  REQUIRE(mol);
+  ForceFields::CrystalFF::CrystalFFDetails details;
+  if (gaussian) {
+    details.torsionParamKind =
+        ForceFields::CrystalFF::TorsionParamKind::Gaussian;
+  }
+  RDLog::CaptureLog info(rdInfoLog);
+  RDLog::LogStateSetter configured({rdDebugLog});
+  const auto originalState = boost::logging::log_status();
+  ForceFields::CrystalFF::getExperimentalTorsions(
+      *mol, details, true, false, false, false, gaussian ? 4 : 2, verbose);
+  CHECK_FALSE(details.expTorsionAtoms.empty());
+  CHECK(info.messages().empty() == !verbose);
+  CHECK(boost::logging::log_status() == originalState);
+}
+
 TEST_CASE("Torsions not found in fused macrocycles", "[macrocycles]") {
   RDLog::InitLogs();
   SECTION("reported") {

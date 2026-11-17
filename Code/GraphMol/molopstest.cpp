@@ -14,6 +14,11 @@
 #include <map>
 #include <cmath>
 #include <random>
+#ifdef RDK_TEST_MULTITHREADED
+#include <atomic>
+#include <functional>
+#include <thread>
+#endif
 
 #include <catch2/catch_all.hpp>
 
@@ -8104,6 +8109,54 @@ TEST_CASE("Testing hasQueryHs") {
   auto github7687c = "[1&#7,#1,#6]"_smarts;
   REQUIRE(RDKit::MolOps::hasQueryHs(*github7687c) == has_unmergeable_hs);
 }
+
+TEST_CASE("Query hydrogen inspection is silent without silencing merging") {
+  auto mol = "[#1,N]"_smarts;
+  REQUIRE(mol);
+  RDLog::CaptureLog warnings(rdWarningLog);
+  const auto originalState = boost::logging::log_status();
+  CHECK(MolOps::hasQueryHs(*mol) == std::make_pair(true, true));
+  CHECK(warnings.messages().empty());
+  CHECK(boost::logging::log_status() == originalState);
+  MolOps::mergeQueryHs(*mol);
+  CHECK(warnings.messages().find("ORs is not supported") != std::string::npos);
+}
+
+#ifdef RDK_TEST_MULTITHREADED
+namespace {
+void inspectQueryHydrogens(const ROMol &mol, std::atomic<bool> &start,
+                           std::atomic<bool> &done, std::atomic<bool> &correct) {
+  while (!start.load()) {
+    std::this_thread::yield();
+  }
+  for (unsigned int i = 0; i < 100000; ++i) {
+    if (MolOps::hasQueryHs(mol) != std::make_pair(true, true)) {
+      correct.store(false);
+    }
+  }
+  done.store(true);
+}
+}  // namespace
+
+TEST_CASE("Query hydrogen inspection does not disable another thread's logs") {
+  auto mol = "[#1,N]"_smarts;
+  REQUIRE(mol);
+  RDLog::LogStateSetter configured({rdWarningLog});
+  const auto originalState = boost::logging::log_status();
+  std::atomic<bool> start{false}, done{false}, correct{true};
+  std::thread worker(inspectQueryHydrogens, std::cref(*mol), std::ref(start),
+                     std::ref(done), std::ref(correct));
+  start.store(true);
+  bool loggingStayedUnchanged = true;
+  while (!done.load()) {
+    loggingStayedUnchanged &= boost::logging::log_status() == originalState;
+  }
+  worker.join();
+  CHECK(correct.load());
+  CHECK(loggingStayedUnchanged);
+  CHECK(boost::logging::log_status() == originalState);
+}
+#endif
 
 TEST_CASE("Testing isRingFused") {
   auto molOrig = "C1C(C2CC3CCCCC3C12)C1CCCCC1"_smiles;
