@@ -162,7 +162,7 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedMolHolder : public MolHolderBase {
     fingerprinter.
 
     Note:  To use CXSmiles you must use addSmiles, not addMol
-             addMol stores non cxsmiles
+             addMol currently stores only non cxsmiles
     See RDKit::FPHolder
 */
 class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedSmilesMolHolder
@@ -214,17 +214,18 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedSmilesMolHolder
     reduced speed it should be used in conjunction with a pattern
     fingerprinter.
 
+    See RDKit::FPHolder
+	
     Note: TrustedSmiles currently does not support CXSmiles
           use CachedSmilesMolHolder::addSmiles for cxsmiles support
 	  or use MolHolder or CachedMolHolder.
 	  
-    Consequences, both properties of the FORMAT rather than bugs:
-      - radical counts are not correct use CachedSmilesMolHolder::addSmiles
-         or the other MolHolders
-      - addMol() stores CANONICAL smiles, so atom ORDER is not preserved;
-        use addSmiles() to store smiles as input
+    Consequences of Trusted smiles:
+      - Because sanitization is not done on the molecule, this means that radical counts,
+         hybridization and conjugation are not supported for query.
+      - In such cases use MolHolder, CachedMolHolder or CachedSmilesMolHolder
 
-    See RDKit::FPHolder
+
 */
 class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedTrustedSmilesMolHolder
     : public MolHolderBase {
