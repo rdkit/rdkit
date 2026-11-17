@@ -186,5 +186,70 @@ class TestCase(unittest.TestCase):
     svg = IPythonConsole._toSVG(m)
 
 
+@unittest.skipIf(IPythonConsole is None, 'IPython not available')
+class Test3DDrawing(unittest.TestCase):
+
+  def _makeMolWithConformers(self, smiles='CC', ids=(0, 1)):
+    mol = Chem.MolFromSmiles(smiles)
+    for offset, confId in enumerate(ids):
+      conf = Chem.Conformer(mol.GetNumAtoms())
+      conf.SetId(confId)
+      for idx in range(mol.GetNumAtoms()):
+        conf.SetAtomPosition(idx, (1.5 * idx, 10.0 * offset, 0.0))
+      mol.AddConformer(conf, assignId=False)
+    return mol
+
+  def testDrawMols3DStyles(self):
+    cases = [(None, ['stick'] * 7), ('sphere', ['sphere'] * 7),
+             (['sphere', 'stick'], ['sphere', 'stick']),
+             (('stick', 'sphere'), ['stick', 'sphere'])]
+    for drawAs, expected in cases:
+      with self.subTest(drawAs=drawAs):
+        view = mock.Mock()
+        mols = [Chem.MolFromSmiles('CC') for _ in expected]
+        colors = ('cyanCarbon', 'redCarbon')
+        result = IPythonConsole.drawMols3D(mols, view=view, drawAs=drawAs, colors=colors)
+        self.assertIs(result, view.show.return_value)
+        self.assertEqual(view.addModel.call_count, len(mols))
+        calls = []
+        for idx, styleName in enumerate(expected):
+          style = {'colorscheme': colors[idx % len(colors)]}
+          if styleName == 'sphere':
+            style['radius'] = 0.5
+          calls.append(mock.call({'model': idx}, {styleName: style}))
+        self.assertEqual(view.setStyle.call_args_list[-len(mols):], calls)
+
+  def testAddMolToViewConformer(self):
+    for ids in [(0, 1), (3, 7)]:
+      mol = self._makeMolWithConformers(ids=ids)
+      for style in ['cartoon', 'stick']:
+        with self.subTest(ids=ids, style=style):
+          view = mock.Mock()
+          IPythonConsole.addMolToView(mol, view, confId=ids[1], drawAs=style)
+          if style == 'cartoon':
+            expected = Chem.MolToPDBBlock(mol, confId=ids[1], flavor=0x20 | 0x10)
+            view.addModel.assert_called_once_with(expected, 'pdb')
+          else:
+            expected = Chem.MolToMolBlock(mol, confId=ids[1])
+            view.addModel.assert_called_once_with(expected, 'sdf')
+
+  def testAddLargeMolToViewConformer(self):
+    mol = self._makeMolWithConformers(smiles='C' * 999, ids=(3, 7))
+    view = mock.Mock()
+    IPythonConsole.addMolToView(mol, view, confId=7)
+    expected = Chem.MolToPDBBlock(mol, confId=7, flavor=0x20 | 0x10)
+    view.addModel.assert_called_once_with(expected, 'pdb')
+
+  def testDrawMols3DCartoonUsesPDB(self):
+    mol = self._makeMolWithConformers()
+    view = mock.Mock()
+    IPythonConsole.drawMols3D([mol, mol], view=view, confIds=[1, 0],
+                             drawAs=['cartoon', 'stick'])
+    expectedPDB = Chem.MolToPDBBlock(mol, confId=1, flavor=0x20 | 0x10)
+    expectedSDF = Chem.MolToMolBlock(mol, confId=0)
+    self.assertEqual(view.addModel.call_args_list,
+                     [mock.call(expectedPDB, 'pdb'), mock.call(expectedSDF, 'sdf')])
+
+
 if __name__ == '__main__':
   unittest.main()
