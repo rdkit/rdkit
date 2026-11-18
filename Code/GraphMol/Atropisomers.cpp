@@ -487,7 +487,7 @@ void cleanupAtropisomerStereoGroups(ROMol &mol) {
   std::vector<StereoGroup> newsgs;
   for (const auto &sg : mol.getStereoGroups()) {
     std::vector<Atom *> okatoms;
-    std::vector<Bond *> okbonds;
+    auto okbonds = sg.getBonds();
 
     for (auto atom : sg.getAtoms()) {
       bool foundAtrop = false;
@@ -508,11 +508,12 @@ void cleanupAtropisomerStereoGroups(ROMol &mol) {
       }
     }
 
-    if (okbonds.empty()) {
+    if (okatoms.size() == sg.getAtoms().size()) {
       newsgs.push_back(sg);
     } else {
       newsgs.emplace_back(sg.getGroupType(), std::move(okatoms),
-                          std::move(okbonds));
+                          std::move(okbonds), sg.getReadId());
+      newsgs.back().setWriteId(sg.getWriteId());
     }
   }
   mol.setStereoGroups(std::move(newsgs));

@@ -555,7 +555,15 @@ Here are the non-element atom queries that are supported:
 
 
 Here's a partial list of the features that are supported:
-  - enhanced stereochemistry (V3000 only)
+  - enhanced stereochemistry (V3000 only).
+    Groups of stereogenic double bonds are read and written as
+    ``STEBABS``, ``STEBRACn``, or ``STEBRELn`` collections. For example,
+    ``MDLV30/STEBRAC1 BONDS=(2 2 4)`` puts bonds 2 and 4 in one AND group.
+    Use distinct group numbers for atom and bond collections of the same
+    relative stereo type. Strict parsing rejects a shared number. Permissive
+    parsing warns and reads the records as separate groups. Writing an AND
+    or OR group that combines double bonds with other stereo elements raises
+    an exception.
   - Sgroups: Sgroups are read and written, but interpretation of their contents is still very much
     a work in progress
   - Dative bonds in V2000 (type 9), despite them not being part of the standard, we support them because they frequently show up in real-world data

@@ -36,7 +36,9 @@
 #include <typeinfo>
 #include <exception>
 #include <charconv>
+#include <map>
 #include <regex>
+#include <set>
 #include <sstream>
 #include <locale>
 #include <cstdlib>
@@ -194,26 +196,32 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
   // M  V30 MDLV30/STEABS ATOMS=(2 2 3)
   // M  V30 MDLV30/STEREL1 ATOMS=(1 12)
   // M  V30 MDLV30/STERAC1 ATOMS=(1 12)
-  const regex stereo_label(
+  static const regex atom_stereo_label(
       R"regex(MDLV30/STE(...)([0-9]*) +ATOMS=\(([0-9]+) +(.*)\) *)regex");
+  static const regex bond_stereo_label(
+      R"regex(MDLV30/STEB(...)([0-9]*) +BONDS=\(([0-9]+) +(.*)\) *)regex");
 
   smatch match;
   std::vector<StereoGroup> groups;
+  std::map<std::pair<StereoGroupType, unsigned>, bool> numberedCollections;
 
   // Read the collection until the end
   auto tempStr = getV3000Line(inStream, line);
   boost::to_upper(tempStr);
-  unsigned abs_group_seen = 0;
+  bool absAtomsSeen = false;
+  bool absBondsSeen = false;
   while (!startsWith(tempStr, "END", 3)) {
     // If this line in the collection is part of a stereo group
-    if (regex_match(tempStr, match, stereo_label)) {
+    const bool bondCollection = tempStr.starts_with("MDLV30/STEB");
+    if (regex_match(tempStr, match,
+                    bondCollection ? bond_stereo_label : atom_stereo_label)) {
       StereoGroupType grouptype = RDKit::StereoGroupType::STEREO_ABSOLUTE;
       unsigned groupid = 0;
 
       if (match[1] == "ABS") {
         grouptype = RDKit::StereoGroupType::STEREO_ABSOLUTE;
-        // Warn only one per mol about multiple ABS groups
-        if (abs_group_seen == 1) {
+        auto &seen = bondCollection ? absBondsSeen : absAtomsSeen;
+        if (seen) {
           std::ostringstream errout;
           errout << "Seen a second ABS stereo group on line " << line
                  << std::endl;
@@ -223,7 +231,7 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
             BOOST_LOG(rdWarningLog) << errout.str() << std::endl;
           }
         }
-        ++abs_group_seen;
+        seen = true;
       } else if (match[1] == "REL") {
         grouptype = RDKit::StereoGroupType::STEREO_OR;
         groupid = FileParserUtils::toUnsigned(match[2], true);
@@ -237,31 +245,53 @@ std::string parseEnhancedStereo(std::istream *inStream, unsigned int &line,
         throw FileParseException(errout.str());
       }
 
+      if (grouptype != StereoGroupType::STEREO_ABSOLUTE) {
+        auto [pos, inserted] = numberedCollections.emplace(
+            std::pair{grouptype, groupid}, bondCollection);
+        if (!inserted && pos->second != bondCollection) {
+          const auto message =
+              "Atom and bond stereo collections share a group number on line " +
+              std::to_string(line);
+          if (strictParsing) {
+            throw FileParseException(message);
+          }
+          BOOST_LOG(rdWarningLog)
+              << message << "; keeping separate groups" << std::endl;
+        }
+      }
       const unsigned int count = FileParserUtils::toUnsigned(match[3], true);
       std::vector<Atom *> atoms;
+      std::vector<Bond *> bonds;
       std::stringstream ss(match[4]);
-      unsigned int index;
+      std::set<int> seenIndices;
+      const char *member = bondCollection ? "Bond" : "Atom";
       for (size_t i = 0; i < count; ++i) {
-        ss >> index;
-        // atoms are 1 indexed in molfiles
-        auto atom = mol->getAtomWithIdx(index - 1);
-        if (std::ranges::find(atoms, atom) != atoms.end()) {
-          std::string message =
+        int index;
+        if (!(ss >> index) || index <= 0 ||
+            !(bondCollection ? mol->hasBondBookmark(index)
+                             : mol->hasAtomBookmark(index))) {
+          throw FileParseException("Invalid " + std::string(member) +
+                                   " index in stereo group on line " +
+                                   std::to_string(line));
+        }
+        if (!seenIndices.insert(index).second) {
+          auto message =
               (boost::format(
-                   "Atom %1% appears more than once in stereo group specification on line %2%!") %
-               index % line)
+                   "%1% %2% appears more than once in stereo group specification on line %3%!") %
+               member % index % line)
                   .str();
           if (strictParsing) {
             throw FileParseException(message);
           } else {
             BOOST_LOG(rdWarningLog) << message << std::endl;
           }
+        } else if (bondCollection) {
+          bonds.push_back(mol->getUniqueBondWithBookmark(index));
         } else {
-          atoms.push_back(atom);
+          atoms.push_back(mol->getUniqueAtomWithBookmark(index));
         }
       }
-      std::vector<Bond *> newBonds;
-      groups.emplace_back(grouptype, std::move(atoms), std::move(newBonds),
+      groups.emplace_back(grouptype, std::move(atoms), std::move(bonds),
                           groupid);
     } else {
       // skip collection types we don't know how to read. Only one documented

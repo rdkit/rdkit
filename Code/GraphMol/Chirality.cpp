@@ -2190,19 +2190,22 @@ void cleanupStereoGroups(ROMol &mol) {
       }
     }
     for (const auto bond : sg.getBonds()) {
-      if (bond->getStereo() != Bond::BondStereo::STEREOATROPCCW &&
-          bond->getStereo() != Bond::BondStereo::STEREOATROPCW) {
-        keep = false;
-      } else {
+      if (bond->getStereo() == Bond::STEREOATROPCCW ||
+          bond->getStereo() == Bond::STEREOATROPCW ||
+          (bond->getBondType() == Bond::DOUBLE &&
+           bond->getStereo() > Bond::STEREOANY)) {
         okbonds.push_back(bond);
+      } else {
+        keep = false;
       }
     }
 
     if (keep) {
       newsgs.push_back(sg);
-    } else if (!okatoms.empty()) {
+    } else if (!okatoms.empty() || !okbonds.empty()) {
       newsgs.emplace_back(sg.getGroupType(), std::move(okatoms),
                           std::move(okbonds), sg.getReadId());
+      newsgs.back().setWriteId(sg.getWriteId());
     }
   }
   mol.setStereoGroups(std::move(newsgs));
