@@ -66,6 +66,11 @@ class TestCase(unittest.TestCase):
     centers = [idx for idx, _ in Chem.FindMolChiralCenters(base, includeCIP=False)]
     self.assertEqual(len(centers), 4)  # The unspecified center is not detected!
 
+    undefinedCenterIdx = 13
+    undefinedCenter = base.GetAtomWithIdx(undefinedCenterIdx)
+    self.assertEqual(undefinedCenter.GetTotalDegree(), 4)
+    self.assertEqual(undefinedCenter.GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
+
     def mol_with_groups(group_specs):
       mol = Chem.RWMol(base)
       groups = [
@@ -91,18 +96,37 @@ class TestCase(unittest.TestCase):
     # a whole; centers outside the group remain fixed.
     # Once enumerated, the racemic and relative groups should be stripped,
     # since the atoms in them have already been enumerated.
+    firstTwoTetrahedrals = centers[0:2]
+    lastAndUndefinedTetrahedrals = [centers[-1], undefinedCenterIdx]
     for group_type, atom_indices, expected_cxsmiles in (
-        (Chem.StereoGroupType.STEREO_ABSOLUTE, centers[0:2], {
+        (Chem.StereoGroupType.STEREO_ABSOLUTE, firstTwoTetrahedrals, {
+          # In this case, nothing is enumerated, because the group is absolute.
+          # No flippers are detected, so we just return the original molecule
+          # (including the ABS stereo group).
           'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C |a:1,4|'
         }),
-        (Chem.StereoGroupType.STEREO_AND, centers[0:2], {
+        (Chem.StereoGroupType.STEREO_AND, firstTwoTetrahedrals, {
           'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C',
           'C[C@@H](F)C[C@@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C'
         }),
-        (Chem.StereoGroupType.STEREO_OR, centers[0:2], {
+        (Chem.StereoGroupType.STEREO_OR, firstTwoTetrahedrals, {
           'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C',
           'C[C@@H](F)C[C@@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C'
-        })):
+        }),
+
+        # Undefined centers are not enumerated when in a stereo groups.
+        (Chem.StereoGroupType.STEREO_ABSOLUTE, lastAndUndefinedTetrahedrals, {
+          'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C |a:10|'
+        }),
+        (Chem.StereoGroupType.STEREO_AND, lastAndUndefinedTetrahedrals, {
+          'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C',
+          'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@@H](I)CC(O)C'
+        }),
+        (Chem.StereoGroupType.STEREO_OR, lastAndUndefinedTetrahedrals, {
+          'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C',
+          'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@@H](I)CC(O)C'
+        }),
+        ):
       mol = mol_with_groups([(group_type, atom_indices)])
       isomers, cxsmiles = enumerate_cxsmiles(mol)
       self.assertEqual(len(isomers), len(expected_cxsmiles))
@@ -113,7 +137,7 @@ class TestCase(unittest.TestCase):
     mol = mol_with_groups([
       (Chem.StereoGroupType.STEREO_ABSOLUTE, [centers[0]]),
       (Chem.StereoGroupType.STEREO_AND, centers[1:3]),
-      (Chem.StereoGroupType.STEREO_OR, [centers[3]]),
+      (Chem.StereoGroupType.STEREO_OR, lastAndUndefinedTetrahedrals),
     ])
     isomers, cxsmiles = enumerate_cxsmiles(mol)
     expected_cxsmiles = {
