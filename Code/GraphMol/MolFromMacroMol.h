@@ -19,6 +19,11 @@
 
 namespace RDKit {
 
+//! Parameters for MolFromMacroMol()
+struct RDKIT_GRAPHMOL_EXPORT MolFromMacroMolParams {
+  bool sanitize = true; /**< sanitize the molecule after building it */
+};
+
 //! Expands a MacroMol into an ordinary molecule.
 /*!
   Each macro atom is replaced by a copy of its template, looked up by monomer
@@ -31,8 +36,9 @@ namespace RDKit {
   The leaving groups of the attachment points used by macro bonds are removed,
   and each macro atom's main group is recorded as a SUP SGroup. The leaving
   groups of unused attachment points remain, including any explicit hydrogen
-  atoms. Ordinary atoms and bonds are copied unchanged. The result is not
-  sanitized.
+  atoms. Ordinary atoms and bonds are copied unchanged. The result is
+  sanitized unless \c params.sanitize is false, in which case only the
+  valences are computed, without checking them.
 
   Only atoms, bonds, and their stereochemistry and properties are carried
   over. In particular, the result has no conformers (generate coordinates
@@ -43,6 +49,7 @@ namespace RDKit {
   \param macroMol  the molecule to expand
   \param templates the library used if \c macroMol's local template library
                    is empty
+  \param params    controls the conversion
 
   \throws ValueErrorException if
     - \c macroMol contains query atoms or bonds (templates cannot contain
@@ -53,9 +60,11 @@ namespace RDKit {
     - a macro bond would change the valence of an attachment atom: its bond
       type must match that of the bond to the leaving atom it replaces or, if
       the attachment point has no leaving atom, be HYDROGEN or ZERO
+  \throws MolSanitizeException if sanitization fails
 */
 RDKIT_GRAPHMOL_EXPORT std::unique_ptr<RWMol> MolFromMacroMol(
-    const MacroMol &macroMol, const MacroMolTemplateLibrary &templates);
+    const MacroMol &macroMol, const MacroMolTemplateLibrary &templates,
+    const MolFromMacroMolParams &params = MolFromMacroMolParams());
 
 }  // namespace RDKit
 

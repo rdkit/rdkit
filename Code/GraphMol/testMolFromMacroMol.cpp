@@ -17,6 +17,7 @@
 #include <GraphMol/QueryAtom.h>
 #include <GraphMol/QueryBond.h>
 #include <GraphMol/RDKitBase.h>
+#include <GraphMol/SanitException.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <catch2/catch_all.hpp>
@@ -204,7 +205,6 @@ TEST_CASE("MolFromMacroMol preserves chirality at an attachment atom",
 
   auto mol = MolFromMacroMol(macroMol, templates);
   REQUIRE(mol);
-  MolOps::sanitizeMol(*mol);
 
   // The new carbon takes the place of the Cl, so the configuration should
   // match the template with Cl replaced by C.
@@ -228,7 +228,8 @@ TEST_CASE("MolFromMacroMol preserves aromaticity of template bonds",
   const auto regularAtom = macroMol.addAtom(new Atom(6), false, true);
   macroMol.addMacroAtomToAtomBond(macroAtom, regularAtom, 1);
 
-  auto mol = MolFromMacroMol(macroMol, templates);
+  // check the bonds as copied, before sanitization could change them
+  auto mol = MolFromMacroMol(macroMol, templates, {.sanitize = false});
   REQUIRE(mol);
   for (const auto *bond : mol->bonds()) {
     if (bond->getBondType() == Bond::AROMATIC) {
@@ -256,7 +257,6 @@ TEST_CASE("MolFromMacroMol handles a stereocenter in a leaving group",
     macroMol.addMacroAtom("Y", MonomerClass::Chemical);
     auto mol = MolFromMacroMol(macroMol, templates);
     REQUIRE(mol);
-    MolOps::sanitizeMol(*mol);
     CHECK(MolToSmiles(*mol) == MolToSmiles(*parsed));
   }
 
@@ -268,7 +268,6 @@ TEST_CASE("MolFromMacroMol handles a stereocenter in a leaving group",
 
     auto mol = MolFromMacroMol(macroMol, templates);
     REQUIRE(mol);
-    MolOps::sanitizeMol(*mol);
     CHECK(MolToSmiles(*mol) == "CO");
   }
 }
@@ -303,7 +302,6 @@ TEST_CASE("MolFromMacroMol preserves double bond stereo", "[MolFromMacroMol]") {
         CHECK(bond->getStereoAtoms().size() == 2);
       }
     }
-    MolOps::sanitizeMol(*mol);
     return MolToSmiles(*mol);
   };
 
@@ -339,7 +337,6 @@ TEST_CASE("MolFromMacroMol preserves double bond stereo", "[MolFromMacroMol]") {
     REQUIRE(resultBond);
     CHECK(resultBond->getStereo() == Bond::STEREOCIS);
     CHECK(resultBond->getStereoAtoms() == std::vector<int>({0, 3}));
-    MolOps::sanitizeMol(*mol);
     CHECK(MolToSmiles(*mol) == "C/C=C\\C");
   }
 }
@@ -357,7 +354,6 @@ TEST_CASE("MolFromMacroMol works with the built-in templates",
   SECTION("linear dipeptide") {
     auto mol = MolFromMacroMol(macroMol, templates);
     REQUIRE(mol);
-    MolOps::sanitizeMol(*mol);
     // L-Ala-Gly; the unused leaving groups (N-terminal H and C-terminal OH)
     // remain
     auto expected =
@@ -374,7 +370,6 @@ TEST_CASE("MolFromMacroMol works with the built-in templates",
     macroMol.addMacroBond(gly, ala, 2, 1);
     auto mol = MolFromMacroMol(macroMol, templates);
     REQUIRE(mol);
-    MolOps::sanitizeMol(*mol);
     auto expected = v2::SmilesParse::MolFromSmiles("N1[C@@H](C)C(=O)NCC1=O");
     CHECK(MolToSmiles(*mol) == MolToSmiles(*expected));
   }
@@ -405,7 +400,6 @@ TEST_CASE("MolFromMacroMol checks macro bond types", "[MolFromMacroMol]") {
   SECTION("double-bonded leaving atom") {
     auto mol = convert("CC=O", {0, 1}, {{2}, 1, 2, 1}, Bond::DOUBLE);
     REQUIRE(mol);
-    MolOps::sanitizeMol(*mol);
     CHECK(MolToSmiles(*mol) == "C=CC");
 
     CHECK_THROWS_WITH(
@@ -531,5 +525,50 @@ TEST_CASE("MolFromMacroMol prefers the local template library",
     macroMol.addMacroAtom("G", MonomerClass::AminoAcid);
     CHECK_THROWS_WITH(MolFromMacroMol(macroMol, templates),
                       ContainsSubstring("No template found for macro atom 1"));
+  }
+}
+
+TEST_CASE("MolFromMacroMol sanitizes the result by default",
+          "[MolFromMacroMol]") {
+  const MacroMolTemplateLibrary templates;
+
+  SECTION("aromaticity is perceived") {
+    // Kekule benzene made of ordinary atoms
+    MacroMol macroMol;
+    for (unsigned int i = 0; i < 6; ++i) {
+      macroMol.addAtom(new Atom(6), false, true);
+    }
+    for (unsigned int i = 0; i < 6; ++i) {
+      macroMol.addBond(i, (i + 1) % 6, i % 2 ? Bond::SINGLE : Bond::DOUBLE);
+    }
+
+    auto mol = MolFromMacroMol(macroMol, templates);
+    REQUIRE(mol);
+    for (const auto *bond : mol->bonds()) {
+      CHECK(bond->getBondType() == Bond::AROMATIC);
+    }
+
+    auto unsanitized =
+        MolFromMacroMol(macroMol, templates, {.sanitize = false});
+    REQUIRE(unsanitized);
+    for (const auto *bond : unsanitized->bonds()) {
+      CHECK(bond->getBondType() != Bond::AROMATIC);
+    }
+  }
+
+  SECTION("valences are only checked when sanitizing") {
+    // a carbon with five neighbors
+    MacroMol macroMol;
+    macroMol.addAtom(new Atom(6), false, true);
+    for (unsigned int i = 1; i <= 5; ++i) {
+      macroMol.addAtom(new Atom(6), false, true);
+      macroMol.addBond(0u, i, Bond::SINGLE);
+    }
+
+    CHECK_THROWS_AS(MolFromMacroMol(macroMol, templates), MolSanitizeException);
+    std::unique_ptr<RWMol> unsanitized;
+    CHECK_NOTHROW(unsanitized = MolFromMacroMol(macroMol, templates,
+                                                {.sanitize = false}));
+    CHECK(unsanitized);
   }
 }

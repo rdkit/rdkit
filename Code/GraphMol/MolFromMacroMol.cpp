@@ -458,8 +458,9 @@ void regenerateDoubleBondNeighborDirections(RWMol &mol) {
 
 }  // namespace
 
-std::unique_ptr<RWMol> MolFromMacroMol(
-    const MacroMol &macroMol, const MacroMolTemplateLibrary &templates) {
+std::unique_ptr<RWMol> MolFromMacroMol(const MacroMol &macroMol,
+                                       const MacroMolTemplateLibrary &templates,
+                                       const MolFromMacroMolParams &params) {
   // Use either the local library or the given one, never a mix of both
   const auto &localTemplates = macroMol.getLocalTemplateLibrary();
   const auto &templatesToUse =
@@ -473,7 +474,11 @@ std::unique_ptr<RWMol> MolFromMacroMol(
   fixTemplateStereo(state);
   fixMacroMolBondStereo(state, macroMol);
 
-  result->updatePropertyCache(false);
+  if (params.sanitize) {
+    MolOps::sanitizeMol(*result);
+  } else {
+    result->updatePropertyCache(false);
+  }
   regenerateDoubleBondNeighborDirections(*result);
   return result;
 }
