@@ -250,6 +250,16 @@ class Test3DDrawing(unittest.TestCase):
     self.assertEqual(view.addModel.call_args_list,
                      [mock.call(expectedPDB, 'pdb'), mock.call(expectedSDF, 'sdf')])
 
+  def testDrawMols3DCartoonDefaultConformer(self):
+    for ids in [(0, 1), (7, 3), ()]:
+      with self.subTest(ids=ids):
+        mol = self._makeMolWithConformers(ids=ids)
+        view = mock.Mock()
+        IPythonConsole.drawMols3D([mol], view=view, drawAs=['cartoon'])
+        expected = Chem.MolToPDBBlock(mol, confId=ids[0] if ids else -1,
+                                      flavor=0x20 | 0x10)
+        view.addModel.assert_called_once_with(expected, 'pdb')
+
 
 if __name__ == '__main__':
   unittest.main()

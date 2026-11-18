@@ -67,6 +67,9 @@ Returns
 -------
 None'''
   if mol.GetNumAtoms() >= 999 or drawAs == 'cartoon':
+    # The PDB writer interprets a negative ID as a request for all conformers.
+    if confId < 0 and mol.GetNumConformers():
+      confId = mol.GetConformer().GetId()
     # py3DMol is happier with TER and MASTER records present
     pdb = Chem.MolToPDBBlock(mol, confId=confId, flavor=0x20 | 0x10)
     view.addModel(pdb, 'pdb')
