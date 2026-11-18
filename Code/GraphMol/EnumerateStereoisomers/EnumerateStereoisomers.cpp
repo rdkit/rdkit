@@ -244,8 +244,9 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::buildIsomer(
   for (size_t i = 0; i < d_flippers.size(); i++) {
     d_flippers[i]->flip(*isomer, config[i]);
   }
-  // We don't need StereoGroups any more so remove them.
-  if (!isomer->getStereoGroups().empty()) {
+  // Once we've enumerated the groups, they are no longer needed. If there
+  // were no flippers, preserve the input groups as in the Python API.
+  if (!d_flippers.empty() && !isomer->getStereoGroups().empty()) {
     isomer->setStereoGroups(std::vector<StereoGroup>());
   }
   MolOps::setDoubleBondNeighborDirections(*isomer);
