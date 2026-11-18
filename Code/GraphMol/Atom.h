@@ -196,10 +196,12 @@ class RDKIT_GRAPHMOL_EXPORT Atom : public RDProps {
   unsigned int getValence(ValenceType which) const;
 
   //! returns the explicit valence (including Hs) of this atom
-  [[deprecated("please use getValence(true)")]] int getExplicitValence() const;
+  [[deprecated("please use getValence(Atom::ValenceType::EXPLICIT)")]] int
+  getExplicitValence() const;
 
   //! returns the implicit valence for this Atom
-  [[deprecated("please use getValence(false)")]] int getImplicitValence() const;
+  [[deprecated("please use getValence(Atom::ValenceType::IMPLICIT)")]] int
+  getImplicitValence() const;
 
   //! returns whether the atom has a valency violation or not
   bool hasValenceViolation() const;

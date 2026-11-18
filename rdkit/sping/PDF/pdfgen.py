@@ -711,7 +711,7 @@ class Canvas:
           return width, height, color
           done = 1
         elif x[0] in unsupportedMarkers:
-          raise PDFError(' Unsupported JPEG marker: {%0.2x}'.format(x[0]))
+          raise PDFError(' Unsupported JPEG marker: %0.2x' % x[0])
         elif x[0] not in noParamMarkers:
           #skip segments with parameters
           #read length and skip the data
@@ -781,7 +781,7 @@ class Canvas:
     try:
       args = PageTransitionEffects[effectname]
     except KeyError:
-      raise PDFError('Unknown Effect Name "{%s}"'.format(effectname))
+      raise PDFError('Unknown Effect Name "%s"' % effectname)
       self._pageTransitionString = ''
       return
 

@@ -217,5 +217,59 @@ EndFeature
     self.assertNotEqual(feats_1[0], feats_0[0])
 
 
+  def testGithub9770(self):
+    # N in nitrile group should be recognized as HB acceptor in BaseFeatures.fdef
+    cfac = ChemicalFeatures.BuildFeatureFactory(
+      os.path.join(RDConfig.RDDataDir, "BaseFeatures.fdef"))
+
+    # Acetonitrile
+    m = Chem.MolFromSmiles('CC#N')
+    feats = [f for f in cfac.GetFeaturesForMol(m) if f.GetFamily() == 'Acceptor']
+    self.assertEqual(len(feats), 1)
+    self.assertEqual(list(feats[0].GetAtomIds()), [2])
+
+    # Benzonitrile
+    m = Chem.MolFromSmiles('c1ccccc1C#N')
+    feats = [f for f in cfac.GetFeaturesForMol(m) if f.GetFamily() == 'Acceptor']
+    self.assertEqual(len(feats), 1)
+    self.assertEqual(list(feats[0].GetAtomIds()), [7])
+
+    # Tertiary aniline nitrogen
+    m = Chem.MolFromSmiles('CN(C)c1ccccc1')
+    feats = [f for f in cfac.GetFeaturesForMol(m) if f.GetFamily() == 'Acceptor']
+    self.assertEqual(len(feats), 1)
+    self.assertEqual(list(feats[0].GetAtomIds()), [1])
+
+    # Aromatic N acceptor (pyridine) should still be recognized
+    m = Chem.MolFromSmiles('c1ncccc1')
+    feats = [f for f in cfac.GetFeaturesForMol(m) if f.GetFamily() == 'Acceptor']
+    self.assertEqual(len(feats), 1)
+    self.assertEqual(list(feats[0].GetAtomIds()), [1])
+
+    # Pyrrolic NH (indole) is not an acceptor
+    m = Chem.MolFromSmiles('c1ccc2[nH]ccc2c1')
+    feats = [f for f in cfac.GetFeaturesForMol(m) if f.GetFamily() == 'Acceptor']
+    self.assertEqual(len(feats), 0)
+
+  def testMinimalFeatureDonors(self):
+    cfac = ChemicalFeatures.BuildFeatureFactory(
+      os.path.join(RDConfig.RDBaseDir, 'Docs', 'Book', 'data', 'MinimalFeatures.fdef'))
+    cases = [
+      ('C', []),
+      ('CC', []),
+      ('COC', []),
+      ('CO', [(1,)]),
+      ('CN', [(1,)]),
+      ('CS', [(1,)]),
+      ('[NH4+]', [(0,)]),
+      ('c1cc[nH]c1', [(3,)]),
+      ('CC(=O)O', []),
+    ]
+    for smiles, expected in cases:
+      with self.subTest(smiles=smiles):
+        mol = Chem.MolFromSmiles(smiles)
+        donors = cfac.GetFeaturesForMol(mol, includeOnly='Donor')
+        self.assertEqual([feat.GetAtomIds() for feat in donors], expected)
+
 if __name__ == '__main__':
   unittest.main()

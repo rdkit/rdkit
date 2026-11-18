@@ -2951,6 +2951,17 @@ TEST_CASE("Stop caching ring finding results") {
   }
 }
 
+TEST_CASE("Symmetrized SSSR results retain their ring type", "[rings][bug]") {
+  auto algorithm = GENERATE(MolOps::SymmetrizeSSSRAlgorithm::LEGACY,
+                            MolOps::SymmetrizeSSSRAlgorithm::RDL);
+  CAPTURE(algorithm);
+  auto mol = "C1C2CC1CCC2"_smiles;
+  REQUIRE(mol);
+  VECT_INT_VECT rings;
+  CHECK(MolOps::symmetrizeSSSR(*mol, rings, algorithm) == 3);
+  CHECK(mol->getRingInfo()->isSymmSssr());
+}
+
 TEST_CASE("molecules with more than 255 rings produce a bad pickle") {
   std::string pathName = getenv("RDBASE");
   pathName += "/Code/GraphMol/test_data/";
@@ -5142,6 +5153,98 @@ TEST_CASE("canonical re-kekulization after sanitization preserves stereo",
   }
 }
 
+TEST_CASE("github #9629: renumberAtoms drops ring families and ring type") {
+  UseLegacyRingFindingFixture fix(false);
+
+  auto m = "C1CCN2CCCC2C1"_smiles;
+  REQUIRE(m);
+  REQUIRE(m->getRingInfo()->areRingFamiliesInitialized());
+
+  // identity renumbering must preserve everything about ring info
+  std::vector<unsigned int> perm(m->getNumAtoms());
+  std::iota(perm.begin(), perm.end(), 0u);
+  std::unique_ptr<ROMol> nmol(MolOps::renumberAtoms(*m, perm));
+  REQUIRE(nmol->getRingInfo()->isInitialized());
+  CHECK(nmol->getRingInfo()->getRingType() ==
+        m->getRingInfo()->getRingType());
+  CHECK(nmol->getRingInfo()->areRingFamiliesInitialized());
+  CHECK(nmol->getRingInfo()->numRingFamilies() ==
+        m->getRingInfo()->numRingFamilies());
+
+  // the reported symptom: the perceived stereo-center count changed.
+  // Mirror what Descriptors::numAtomStereoCenters() does internally
+  auto countPossible = [](const ROMol &mol) {
+    RWMol tmol(mol);
+    constexpr bool cleanIt = true;
+    constexpr bool force = true;
+    constexpr bool flagPossible = true;
+    MolOps::assignStereochemistry(tmol, cleanIt, force, flagPossible);
+    unsigned int res = 0;
+    for (const auto &atom : tmol.atoms()) {
+      if (atom->hasProp(common_properties::_ChiralityPossible)) {
+        ++res;
+      }
+    }
+    return res;
+  };
+  CHECK(countPossible(*nmol) == countPossible(*m));
+
+  SECTION("ring family contents are remapped to the new atom order") {
+    std::vector<unsigned int> rperm(m->getNumAtoms());
+    std::iota(rperm.rbegin(), rperm.rend(), 0u);  // reversed order
+    std::vector<unsigned int> revOrder(m->getNumAtoms());
+    for (unsigned int i = 0; i < rperm.size(); ++i) {
+      revOrder[rperm[i]] = i;
+    }
+    std::unique_ptr<ROMol> rnmol(MolOps::renumberAtoms(*m, rperm));
+    REQUIRE(rnmol->getRingInfo()->areRingFamiliesInitialized());
+
+    auto normalize = [](std::vector<std::vector<int>> fams) {
+      for (auto &fam : fams) {
+        std::sort(fam.begin(), fam.end());
+      }
+      std::sort(fams.begin(), fams.end());
+      return fams;
+    };
+
+    std::vector<std::vector<int>> expectedAtomFams;
+    for (auto fam : m->getRingInfo()->atomRingFamilies()) {
+      for (auto &idx : fam) {
+        idx = revOrder[idx];
+      }
+      expectedAtomFams.push_back(std::move(fam));
+    }
+    CHECK(normalize(rnmol->getRingInfo()->atomRingFamilies()) ==
+          normalize(expectedAtomFams));
+
+    // bonds keep their original indices across renumbering
+    CHECK(normalize(rnmol->getRingInfo()->bondRingFamilies()) ==
+          normalize(m->getRingInfo()->bondRingFamilies()));
+  }
+
+  SECTION("ring families preserve the original bond selection") {
+    auto dm = "N->1CCN->[Pt]1"_smiles;
+    REQUIRE(dm);
+    dm->getRingInfo()->resetRingFamilies();
+    MolOps::findRingFamilies(*dm, true);
+    REQUIRE(dm->getRingInfo()->numRingFamilies() == 1);
+    std::vector<unsigned int> dperm(dm->getNumAtoms());
+    std::iota(dperm.begin(), dperm.end(), 0u);
+    std::unique_ptr<ROMol> dnmol(MolOps::renumberAtoms(*dm, dperm));
+    CHECK(dnmol->getRingInfo()->numRingFamilies() == 1);
+
+    auto hm = "CC1O[H]O=C(C)C1 |H:4.3|"_smiles;
+    REQUIRE(hm);
+    hm->getRingInfo()->resetRingFamilies();
+    MolOps::findRingFamilies(*hm, false, true);
+    REQUIRE(hm->getRingInfo()->numRingFamilies() == 1);
+    std::vector<unsigned int> hperm(hm->getNumAtoms());
+    std::iota(hperm.begin(), hperm.end(), 0u);
+    std::unique_ptr<ROMol> hnmol(MolOps::renumberAtoms(*hm, hperm));
+    CHECK(hnmol->getRingInfo()->numRingFamilies() == 1);
+  }
+}
+
 TEST_CASE("duplicate atoms/bonds in StereoGroups") {
   SECTION("atoms") {
     auto m = "C[C@H](O)C[C@H](F)Cl"_smiles;
@@ -5217,5 +5320,20 @@ TEST_CASE(
 
     bool expectKekulizeError = true;
     runCheck("c1ccc[cH3]c1", expectKekulizeError);
+  }
+}
+
+TEST_CASE("getTotalNumHs() and query atoms") {
+  SECTION("basics") {
+    auto m = "C[CH][CH][CH,NH2]"_smarts;
+    REQUIRE(m);
+    m->getAtomWithIdx(2)->setNoImplicit(false);
+    CHECK(m->getAtomWithIdx(0)->getTotalNumHs(false) == 0);
+    CHECK(m->getAtomWithIdx(1)->getTotalNumHs(false) == 1);
+    CHECK_THROWS_AS(
+        m->getAtomWithIdx(2)->getValence(Atom::ValenceType::IMPLICIT),
+        std::runtime_error);
+    CHECK(m->getAtomWithIdx(2)->getTotalNumHs(false) == 1);
+    CHECK(m->getAtomWithIdx(3)->getTotalNumHs(false) == 0);
   }
 }

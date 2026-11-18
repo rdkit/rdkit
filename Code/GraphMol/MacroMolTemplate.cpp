@@ -49,7 +49,17 @@ void validateLeavingGroup(const ROMol &mol,
                           std::set<int> &attachmentPoints,
                           std::vector<unsigned int> &atomMembership) {
   // Validate one leaving group and record its atoms and attachment point.
-  if (leavingGroup.atomIdxs.empty()) {
+  const bool hasLeavingAtom = leavingGroup.leavingAtomIdx >= 0;
+  if (!hasLeavingAtom) {
+    if (leavingGroup.leavingAtomIdx != -1) {
+      invalidTemplate("leaving atom index must be -1 or an atom index");
+    }
+    if (!leavingGroup.atomIdxs.empty()) {
+      invalidTemplate(
+          "an attachment point without a leaving atom cannot have leaving "
+          "group atoms");
+    }
+  } else if (leavingGroup.atomIdxs.empty()) {
     invalidTemplate("leaving groups cannot be empty");
   }
   validateUniqueInRange(leavingGroup.atomIdxs, mol.getNumAtoms(),
@@ -63,13 +73,17 @@ void validateLeavingGroup(const ROMol &mol,
   if (mainAtoms.find(leavingGroup.attachAtomIdx) == mainAtoms.end()) {
     invalidTemplate("attachment atom must be part of the main group");
   }
+  if (!hasLeavingAtom) {
+    return;  // no leaving atoms to check
+  }
 
+  const auto leavingAtomIdx =
+      static_cast<unsigned int>(leavingGroup.leavingAtomIdx);
   if (std::find(leavingGroup.atomIdxs.begin(), leavingGroup.atomIdxs.end(),
-                leavingGroup.leavingAtomIdx) == leavingGroup.atomIdxs.end()) {
+                leavingAtomIdx) == leavingGroup.atomIdxs.end()) {
     invalidTemplate("leaving atom must be part of its leaving group");
   }
-  if (!mol.getBondBetweenAtoms(leavingGroup.attachAtomIdx,
-                               leavingGroup.leavingAtomIdx)) {
+  if (!mol.getBondBetweenAtoms(leavingGroup.attachAtomIdx, leavingAtomIdx)) {
     invalidTemplate("attachment atom must be bonded to the leaving atom");
   }
   const std::unordered_set<unsigned int> leavingAtoms(
@@ -85,7 +99,7 @@ void validateLeavingGroup(const ROMol &mol,
       const auto otherAtomIdx = nbr->getIdx();
       if (leavingAtoms.find(otherAtomIdx) == leavingAtoms.end()) {
         ++boundaryBondCount;
-        if (atomIdx == leavingGroup.leavingAtomIdx &&
+        if (atomIdx == leavingAtomIdx &&
             otherAtomIdx == leavingGroup.attachAtomIdx) {
           foundAttachmentBond = true;
         }
@@ -167,12 +181,15 @@ std::unique_ptr<MacroMolTemplate> MacroMolTemplateBuilder::build() const {
   mainSgroup.setAtoms(d_mainAtomIdxs);
   for (const auto &leavingGroup : d_leavingGroups) {
     mainSgroup.addAttachPoint(leavingGroup.attachAtomIdx,
-                              static_cast<int>(leavingGroup.leavingAtomIdx),
+                              leavingGroup.leavingAtomIdx,
                               std::to_string(leavingGroup.attachPoint));
   }
   const auto mainSgroupIdx = addSubstanceGroup(mol, std::move(mainSgroup));
 
   for (const auto &leavingGroup : d_leavingGroups) {
+    if (leavingGroup.atomIdxs.empty()) {
+      continue;  // an attachment point without a leaving atom
+    }
     SubstanceGroup sgroup(&mol, SUP_TYPE);
     sgroup.setProp("CLASS", LGRP_CLASS);
     sgroup.setAtoms(leavingGroup.atomIdxs);
@@ -208,8 +225,8 @@ void MacroMolTemplateLibrary::addTemplate(
     std::unique_ptr<MacroMolTemplate> macroMolTemplate) {
   PRECONDITION(macroMolTemplate, "cannot add a null MacroMolTemplate");
 
-  const MacroMolTemplateKey nameKey{
-      macroMolTemplate->getMonomerClass(), macroMolTemplate->getName()};
+  const MacroMolTemplateKey nameKey{macroMolTemplate->getMonomerClass(),
+                                    macroMolTemplate->getName()};
   if (byName.find(nameKey) != byName.end()) {
     throw ValueErrorException(
         "MacroMolTemplateLibrary already contains an entry with the same "
@@ -245,6 +262,16 @@ const MacroMolTemplate *MacroMolTemplateLibrary::getBySymbol(
     return it->second;
   }
   return nullptr;
+}
+
+std::vector<const MacroMolTemplate *> MacroMolTemplateLibrary::getTemplates()
+    const {
+  std::vector<const MacroMolTemplate *> templates;
+  templates.reserve(byName.size());
+  for (const auto &entry : byName) {
+    templates.push_back(entry.second.get());
+  }
+  return templates;
 }
 
 }  // namespace RDKit

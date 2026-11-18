@@ -18,35 +18,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Get RDKit version
-        id: version
-        run: |
-          YEAR=$(grep -F 'set(RDKit_Year' CMakeLists.txt | cut -d'"' -f2)
-          MONTH=$(grep -F 'set(RDKit_Month' CMakeLists.txt | cut -d'"' -f2)
-          MONTH=$((10#$MONTH))
-          REV=$(grep -F 'set(RDKit_Revision ' CMakeLists.txt | cut -d'"' -f2)
-          REV=$((10#$REV))
-
-          VERSION="${YEAR}.${MONTH}.${REV}"
-
-          MOD=$(grep -F 'set(RDKit_RevisionModifier' CMakeLists.txt | cut -d'"' -f2)
-
-          if [ -n "$MOD" ]; then
-            VERSION="${VERSION}-${MOD}"
-            IS_PRERELEASE="true"
-          else
-            IS_PRERELEASE="false"
-          fi
-
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Build WASM
         env:
-          NPM_VERSION: ${{ steps.version.outputs.version }}
           GET_SRC: copy
         run: |
           cd ./Code/MinimalLib
@@ -64,6 +40,22 @@ jobs:
       - name: Make package
         working-directory: Code/MinimalLib/build
         run: npm pack
+
+      - name: Get package version
+        id: version
+        working-directory: Code/MinimalLib/build
+        run: |
+          VERSION=$(jq -r .version package.json)
+          # RDKit versions look like 2027.03.1 or 2027.03.1pre (no hyphen).
+          # npm cleans the latter to 2027.3.1-pre on publish, which is a prerelease.
+          if [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            IS_PRERELEASE="false"
+          else
+            IS_PRERELEASE="true"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "is_prerelease=$IS_PRERELEASE" >> $GITHUB_OUTPUT
+          echo "Publishing @rdkit/rdkit@$VERSION (prerelease=$IS_PRERELEASE)"
 
       - name: Debug npm and OIDC
         run: |

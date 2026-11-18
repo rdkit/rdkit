@@ -1503,7 +1503,8 @@ bool atomIsCandidateForRingStereochem(
 // at the moment this is just candidates for ring stereochemistry
 void findChiralAtomSpecialCases(ROMol &mol,
                                 boost::dynamic_bitset<> &possibleSpecialCases,
-                                const std::vector<unsigned int> &atomRanks) {
+                                const std::vector<unsigned int> &atomRanks,
+                                bool allowPartialGroups = true) {
   PRECONDITION(possibleSpecialCases.size() >= mol.getNumAtoms(),
                "bit vector too small");
   possibleSpecialCases.reset();
@@ -1543,6 +1544,8 @@ void findChiralAtomSpecialCases(ROMol &mol,
       }
     }
     INT_VECT ringStereoAtoms(0);
+    std::vector<const Atom *> taggedAtoms{atom};
+    bool completeGroup = true;
     if (!nextAtoms.empty()) {
       atom->getPropIfPresent(common_properties::_ringStereoAtoms,
                              ringStereoAtoms);
@@ -1552,6 +1555,9 @@ void findChiralAtomSpecialCases(ROMol &mol,
       const Atom *ratom = nextAtoms.front();
       nextAtoms.pop_front();
       atomsSeen.set(ratom->getIdx());
+      if (ratom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+        taggedAtoms.push_back(ratom);
+      }
       if (ratom->getChiralTag() != Atom::CHI_UNSPECIFIED &&
           !ratom->hasProp(common_properties::_CIPCode) &&
           atomIsCandidateForRingStereochem(mol, ratom, atomRanks)) {
@@ -1564,6 +1570,8 @@ void findChiralAtomSpecialCases(ROMol &mol,
         ratom->setProp(common_properties::_ringStereoAtoms, oringatoms, true);
         possibleSpecialCases.set(ratom->getIdx());
         possibleSpecialCases.set(atom->getIdx());
+      } else if (ratom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
+        completeGroup = false;
       }
       // now push this atom's neighbors
       for (const auto bond : mol.atomBonds(ratom)) {
@@ -1580,7 +1588,14 @@ void findChiralAtomSpecialCases(ROMol &mol,
         }
       }
     }  // end of BFS
-    if (ringStereoAtoms.size() != 0) {
+    if (!allowPartialGroups && !completeGroup) {
+      // Inverting only part of a coupled ring system can change its stereoisomer.
+      // Discard provisional partner lists as well as any previously cached lists.
+      for (const auto taggedAtom : taggedAtoms) {
+        taggedAtom->clearProp(common_properties::_ringStereoAtoms);
+        possibleSpecialCases.reset(taggedAtom->getIdx());
+      }
+    } else if (ringStereoAtoms.size() != 0) {
       atom->setProp(common_properties::_ringStereoAtoms, ringStereoAtoms, true);
       // because we're only going to hit each ring atom once, the first atom we
       // encounter in a ring is going to end up with all the other atoms set as

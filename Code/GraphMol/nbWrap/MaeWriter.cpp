@@ -14,6 +14,8 @@
 #include <nanobind/stl/string.h>
 #include <nanobind/stl/vector.h>
 
+#include <maeparser/Writer.hpp>
+
 #include <memory>
 #include <string>
 #include <vector>
