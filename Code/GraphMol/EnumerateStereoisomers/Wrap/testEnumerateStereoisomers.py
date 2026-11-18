@@ -58,6 +58,72 @@ class TestCase(unittest.TestCase):
     self.assertEqual(len(smiles2), 4)
     self.assertEqual(smiles, smiles2)
 
+  def testEnumerateStereoisomersOnlyStereoGroups(self):
+    # The last chiral center in the SMILES (the [CH]) is intentionally
+    # left unspecified. This atom won't ever be enumerated, since
+    # it's never included in any of the stereo groups.
+    base = Chem.MolFromSmiles('C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)C[CH](O)C')
+    centers = [idx for idx, _ in Chem.FindMolChiralCenters(base, includeCIP=False)]
+    self.assertEqual(len(centers), 4)  # The unspecified center is not detected!
+
+    def mol_with_groups(group_specs):
+      mol = Chem.RWMol(base)
+      groups = [
+        Chem.rdchem.CreateStereoGroup(group_type, mol, atom_indices)
+        for group_type, atom_indices in group_specs
+      ]
+      mol.SetStereoGroups(groups)
+      return mol
+
+    def enumerate_cxsmiles(mol):
+      options = rdEnumerateStereoisomers.StereoEnumerationOptions()
+      options.onlyStereoGroups = True
+      isomers = [isomer for isomer in rdEnumerateStereoisomers.StereoisomerEnumerator(mol, options)]
+
+      # Do not canonicalize the SMILES to preserve the atom ordering
+      # from the input and make it easier to compare enumerated parities.
+      params = Chem.SmilesWriteParams()
+      params.canonical = False
+      params.rootedAtAtom = 0
+      return isomers, {Chem.MolToCXSmiles(isomer, params) for isomer in isomers}
+
+    # Absolute groups are fixed. A racemic or relative group can be inverted as
+    # a whole; centers outside the group remain fixed.
+    # Once enumerated, the racemic and relative groups should be stripped,
+    # since the atoms in them have already been enumerated.
+    for group_type, atom_indices, expected_cxsmiles in (
+        (Chem.StereoGroupType.STEREO_ABSOLUTE, centers[0:2], {
+          'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C |a:1,4|'
+        }),
+        (Chem.StereoGroupType.STEREO_AND, centers[0:2], {
+          'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C',
+          'C[C@@H](F)C[C@@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C'
+        }),
+        (Chem.StereoGroupType.STEREO_OR, centers[0:2], {
+          'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C',
+          'C[C@@H](F)C[C@@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C'
+        })):
+      mol = mol_with_groups([(group_type, atom_indices)])
+      isomers, cxsmiles = enumerate_cxsmiles(mol)
+      self.assertEqual(len(isomers), len(expected_cxsmiles))
+      self.assertEqual(cxsmiles, expected_cxsmiles)
+
+    # Multiple group types are handled independently. The ABS center and the
+    # ungrouped center stay fixed while the AND and OR groups can each flip.
+    mol = mol_with_groups([
+      (Chem.StereoGroupType.STEREO_ABSOLUTE, [centers[0]]),
+      (Chem.StereoGroupType.STEREO_AND, centers[1:3]),
+      (Chem.StereoGroupType.STEREO_OR, [centers[3]]),
+    ])
+    isomers, cxsmiles = enumerate_cxsmiles(mol)
+    expected_cxsmiles = {
+      'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C',
+      'C[C@H](F)C[C@@H](Cl)C[C@@H](Br)C[C@H](I)CC(O)C',
+      'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@@H](I)CC(O)C',
+      'C[C@H](F)C[C@@H](Cl)C[C@@H](Br)C[C@@H](I)CC(O)C',
+    }
+    self.assertEqual(len(isomers), 4)
+    self.assertEqual(cxsmiles, expected_cxsmiles)
 
   def testEnumerateStereoisomersEmbeddingNotRejectingInput(self):
     mol = Chem.MolFromSmiles('C1C/C=C/CCC[C@H]1C(=O)Nc2ccc(cc2)C[C@@H](C(=O)[O-])[NH3+]')
