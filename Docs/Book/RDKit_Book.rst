@@ -563,7 +563,9 @@ Here's a partial list of the features that are supported:
     relative stereo type. Strict parsing rejects a shared number. Permissive
     parsing warns and reads the records as separate groups. Writing an AND
     or OR group that combines double bonds with other stereo elements raises
-    an exception.
+    an exception. When a stereo group contains a double bond,
+    ``CanonicalizeStereoGroups()`` preserves the relative groups as drawn.
+    Its ABS output option still controls inclusion of the absolute group.
   - Sgroups: Sgroups are read and written, but interpretation of their contents is still very much
     a work in progress
   - Dative bonds in V2000 (type 9), despite them not being part of the standard, we support them because they frequently show up in real-world data

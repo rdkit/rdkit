@@ -19,6 +19,8 @@
 #include <RDGeneral/hash/hash.hpp>
 #include <RDGeneral/utils.h>
 #include <algorithm>
+#include <iterator>
+#include <set>
 
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -471,31 +473,44 @@ void getAtomsToInvert2(const RDKit::ROMol &mol,
   return;
 }
 
-void addSingleAbsGroup(ROMol &mol) {
-  // all chiral centers are added to an abs group
-  // if there are not chiral centers, no group is added
-
-  std::vector<StereoGroup> sgs;
+void addSingleAbsGroup(ROMol &mol,
+                       std::vector<StereoGroup> relativeGroups = {}) {
+  std::set<const Atom *> relativeAtoms;
+  std::set<const Bond *> relativeBonds;
+  for (const auto &group : relativeGroups) {
+    relativeAtoms.insert(group.getAtoms().begin(), group.getAtoms().end());
+    relativeBonds.insert(group.getBonds().begin(), group.getBonds().end());
+  }
   std::vector<Atom *> chiralAtoms;
   std::vector<Bond *> chiralBonds;
+  // Only explicitly grouped double bonds need an ABS record in a molfile.
+  for (const auto &group : mol.getStereoGroups()) {
+    if (group.getGroupType() == StereoGroupType::STEREO_ABSOLUTE) {
+      std::ranges::copy_if(
+          group.getBonds(), std::back_inserter(chiralBonds),
+          [](const Bond *bond) { return bond->getBondType() == Bond::DOUBLE; });
+    }
+  }
   for (auto &atom : mol.atoms()) {
-    if (atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CCW ||
-        atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW) {
+    if ((atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CCW ||
+         atom->getChiralTag() == Atom::ChiralType::CHI_TETRAHEDRAL_CW) &&
+        !relativeAtoms.contains(atom)) {
       chiralAtoms.push_back(atom);
     }
   }
   for (auto &bond : mol.bonds()) {
-    if (bond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
-        bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) {
+    if ((bond->getStereo() == Bond::BondStereo::STEREOATROPCW ||
+         bond->getStereo() == Bond::BondStereo::STEREOATROPCCW) &&
+        !relativeBonds.contains(bond)) {
       chiralBonds.push_back(bond);
     }
   }
 
   if (!chiralAtoms.empty() || !chiralBonds.empty()) {
-    sgs.emplace_back(StereoGroupType::STEREO_ABSOLUTE, chiralAtoms,
-                     chiralBonds);
+    relativeGroups.emplace_back(StereoGroupType::STEREO_ABSOLUTE,
+                                std::move(chiralAtoms), std::move(chiralBonds));
   }
-  mol.setStereoGroups(sgs);  // could be empty, or have one abs group
+  mol.setStereoGroups(std::move(relativeGroups));
 }
 
 void clearStereoGroups(ROMol &mol) {
@@ -888,6 +903,27 @@ void canonicalizeStereoGroups(std::unique_ptr<ROMol> &mol,
       addSingleAbsGroup(*mol);
     } else {
       clearStereoGroups(*mol);
+    }
+    return;
+  }
+
+  // Enumeration and the final CXSMILES round-trip only handle atom and
+  // atropisomer stereo. Preserve the relative configurations as drawn when
+  // a group contains a double bond.
+  const auto &groups = mol->getStereoGroups();
+  if (std::ranges::any_of(groups, [](const StereoGroup &group) {
+        return std::ranges::any_of(group.getBonds(), [](const Bond *bond) {
+          return bond->getBondType() == Bond::DOUBLE;
+        });
+      })) {
+    auto relativeGroups = groups;
+    std::erase_if(relativeGroups, [](const StereoGroup &group) {
+      return group.getGroupType() == StereoGroupType::STEREO_ABSOLUTE;
+    });
+    if (outputAbsoluteGroups == StereoGroupAbsOptions::NeverInclude) {
+      mol->setStereoGroups(std::move(relativeGroups));
+    } else {
+      addSingleAbsGroup(*mol, std::move(relativeGroups));
     }
     return;
   }

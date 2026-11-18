@@ -18,6 +18,7 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
+#include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/MolWriters.h>
@@ -87,6 +88,66 @@ M  V30 BEGIN COLLECTION
       auto roundTrip = v2::FileParsers::MolFromMolBlock(written);
       REQUIRE(roundTrip);
       checkGroup(*roundTrip);
+      if (type != STEREO_ABSOLUTE) {
+        std::unique_ptr<ROMol> canonical = std::move(roundTrip);
+        canonicalizeStereoGroups(canonical);
+        checkGroup(*canonical);
+        auto reread =
+            v2::FileParsers::MolFromMolBlock(MolToMolBlock(*canonical));
+        REQUIRE(reread);
+        checkGroup(*reread);
+      }
+    }
+  }
+  SECTION(
+      "canonicalization preserves correlated members and honors ABS options") {
+    auto mol = "F/C=C/[C@H](Cl)[C@@H](Br)I"_smiles;
+    REQUIRE(mol);
+    auto bond = mol->getBondWithIdx(1);
+    auto center = mol->getAtomWithIdx(3);
+    auto otherCenter = mol->getAtomWithIdx(5);
+    mol->setStereoGroups({StereoGroup(STEREO_OR, {center}, {bond}, 7)});
+    const auto options =
+        GENERATE(StereoGroupAbsOptions::NeverInclude,
+                 StereoGroupAbsOptions::AlwaysInclude,
+                 StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist);
+    std::unique_ptr<ROMol> canonical = std::make_unique<ROMol>(*mol);
+    canonicalizeStereoGroups(canonical, options);
+    const auto &groups = canonical->getStereoGroups();
+    REQUIRE(groups.size() ==
+            (options == StereoGroupAbsOptions::NeverInclude ? 1 : 2));
+    CHECK(groups[0].getGroupType() == STEREO_OR);
+    CHECK(groups[0].getReadId() == 7);
+    CHECK(groups[0].getAtoms() ==
+          std::vector<Atom *>{canonical->getAtomWithIdx(center->getIdx())});
+    CHECK(groups[0].getBonds() ==
+          std::vector<Bond *>{canonical->getBondWithIdx(bond->getIdx())});
+    if (groups.size() == 2) {
+      CHECK(groups[1].getGroupType() == STEREO_ABSOLUTE);
+      CHECK(groups[1].getAtoms() ==
+            std::vector<Atom *>{
+                canonical->getAtomWithIdx(otherCenter->getIdx())});
+      CHECK(groups[1].getBonds().empty());
+    }
+  }
+  SECTION("explicit absolute double bonds respect ABS output options") {
+    auto mol = "F/C=C/F"_smiles;
+    REQUIRE(mol);
+    mol->setStereoGroups(
+        {StereoGroup(STEREO_ABSOLUTE, {}, {mol->getBondWithIdx(1)})});
+    const auto options =
+        GENERATE(StereoGroupAbsOptions::NeverInclude,
+                 StereoGroupAbsOptions::AlwaysInclude,
+                 StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist);
+    std::unique_ptr<ROMol> canonical = std::move(mol);
+    canonicalizeStereoGroups(canonical, options);
+    const auto &groups = canonical->getStereoGroups();
+    if (options == StereoGroupAbsOptions::AlwaysInclude) {
+      REQUIRE(groups.size() == 1);
+      CHECK(groups[0].getBonds() ==
+            std::vector<Bond *>{canonical->getBondWithIdx(1)});
+    } else {
+      CHECK(groups.empty());
     }
   }
   SECTION("cleanup retains the specified double bond and group IDs") {
