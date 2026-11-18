@@ -77,6 +77,15 @@ jobs:
           call activate rdkit_build
           cd build
           cmake --build . --config Release --target install
+      - name: Upload Windows artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rdkit-windows-x64
+          path: |
+            bin
+            lib
+            rdkit
       - name: Trim and store ccache
         uses: ./.github/actions/store-ccache
         if: ${{ success() && steps.cache-restore.outputs.cache-hit != 'true' }}
