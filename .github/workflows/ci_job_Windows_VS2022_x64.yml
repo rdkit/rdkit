@@ -48,6 +48,7 @@ jobs:
           cmake .. ^
           -G "Ninja" ^
           -DCMAKE_BUILD_TYPE=Release ^
+          -DRDK_LTO_MODE=FULL ^
           -DCMAKE_C_COMPILER_LAUNCHER=ccache ^
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache ^
           -DRDK_INSTALL_INTREE=ON ^
