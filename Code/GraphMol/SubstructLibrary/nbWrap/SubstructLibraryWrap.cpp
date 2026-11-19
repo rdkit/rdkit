@@ -65,7 +65,17 @@ const char *CachedTrustedSmilesMolHolderDoc =
     R"DOC(Holds molecules as trusted smiles string
 This allows more molecules to be held in memory at a time and avoids RDKit sanitization
 overhead.
+
 See: http://rdkit.blogspot.com/2016/09/avoiding-unnecessary-work-and.html
+    Note: TrustedSmiles currently does not support CXSmiles
+          use CachedSmilesMolHolder::addSmiles for cxsmiles support
+    	  or use MolHolder or CachedMolHolder.
+    
+    Consequences of Trusted smiles:
+      - Because sanitization is not done on the molecule, this means that radical counts,
+         hybridization and conjugation are not supported for query.
+      - In such cases use MolHolder, CachedMolHolder or CachedSmilesMolHolder
+    
   AddMol(mol) -> adds a molecule to the molecule holder, returns index of molecule
 
   AddSmiles(smiles) -> adds a smiles string to the molecule holder, returns index of molecule
