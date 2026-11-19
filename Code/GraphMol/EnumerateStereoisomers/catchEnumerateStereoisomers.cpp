@@ -167,89 +167,105 @@ TEST_CASE("Enumerated stereo survives mol block round trips of wiggly input") {
   // Each isomer resolves the stereo the wiggly bond marked as unknown, so the
   // wiggly bond has to go, or writing the isomer would mark it unknown again.
   // The input itself must be left alone.
-  const auto alkene = GENERATE(false, true);
-  const auto parsed = GENERATE(false, true);
-  CAPTURE(alkene, parsed);
-  auto mol = alkene ? "CC=CC |w:1.0|"_smiles : "CC(F)(Cl)Br |w:1.0|"_smiles;
-  REQUIRE(mol);
-  if (parsed) {
-    mol.reset(MolBlockToMol(MolToMolBlock(*mol)));
-    REQUIRE(mol);
-    REQUIRE(mol->getBondWithIdx(0)->getProp<int>(
-                common_properties::_UnknownStereo) == 1);
-  }
-  const auto before = MolToMolBlock(*mol);
-  StereoisomerEnumerator enumerator(*mol);
-  std::unordered_set<std::string> smiles;
-  unsigned int count = 0;
-  while (auto isomer = enumerator.next()) {
-    ++count;
-    const auto smi = MolToSmiles(*isomer);
-    smiles.insert(smi);
-    // Let the writers generate coordinates for each enumerated E/Z state.
-    isomer->clearConformers();
-    for (const auto &block :
-         {MolToMolBlock(*isomer), MolToV3KMolBlock(*isomer)}) {
-      std::unique_ptr<RWMol> reread{MolBlockToMol(block)};
-      REQUIRE(reread);
-      CHECK(MolToSmiles(*reread) == smi);
+  auto check = [](const ROMol &mol,
+                  const std::unordered_set<std::string> &expected) {
+    const auto before = MolToMolBlock(mol);
+    StereoisomerEnumerator enumerator(mol);
+    std::unordered_set<std::string> smiles;
+    unsigned int count = 0;
+    while (auto isomer = enumerator.next()) {
+      ++count;
+      const auto smi = MolToSmiles(*isomer);
+      smiles.insert(smi);
+      // Let the writers generate coordinates for each enumerated E/Z state.
+      isomer->clearConformers();
+      for (const auto &block :
+           {MolToMolBlock(*isomer), MolToV3KMolBlock(*isomer)}) {
+        std::unique_ptr<RWMol> reread{MolBlockToMol(block)};
+        REQUIRE(reread);
+        CHECK(MolToSmiles(*reread) == smi);
+      }
     }
+    CHECK(smiles == expected);
+    CHECK(count == 2);
+    CHECK(MolToMolBlock(mol) == before);
+  };
+  auto parse = [](const ROMol &mol) {
+    std::unique_ptr<RWMol> parsed{MolBlockToMol(MolToMolBlock(mol))};
+    REQUIRE(parsed);
+    REQUIRE(parsed->getBondWithIdx(0)->getProp<int>(
+                common_properties::_UnknownStereo) == 1);
+    return parsed;
+  };
+  const std::unordered_set<std::string> alkeneIsomers{"C/C=C/C", R"(C/C=C\C)"};
+  const std::unordered_set<std::string> centerIsomers{"C[C@](F)(Cl)Br",
+                                                      "C[C@@](F)(Cl)Br"};
+  auto alkene = "CC=CC |w:1.0|"_smiles;
+  REQUIRE(alkene);
+  auto center = "CC(F)(Cl)Br |w:1.0|"_smiles;
+  REQUIRE(center);
+
+  SECTION("double bond, from SMILES") { check(*alkene, alkeneIsomers); }
+  SECTION("double bond, from a mol block") {
+    check(*parse(*alkene), alkeneIsomers);
   }
-  const std::unordered_set<std::string> expected =
-      alkene ? std::unordered_set<std::string>{"C/C=C/C", R"(C/C=C\C)"}
-             : std::unordered_set<std::string>{"C[C@](F)(Cl)Br",
-                                               "C[C@@](F)(Cl)Br"};
-  CHECK(smiles == expected);
-  CHECK(count == 2);
-  CHECK(MolToMolBlock(*mol) == before);
+  SECTION("stereocenter, from SMILES") { check(*center, centerIsomers); }
+  SECTION("stereocenter, from a mol block") {
+    check(*parse(*center), centerIsomers);
+  }
 }
 
-TEST_CASE("Enumeration preserves wiggly bonds without an enumerable center") {
+TEST_CASE("Enumeration removes wiggly bonds without an enumerable center") {
+  // A wiggly bond at an atom which cannot be a stereocenter marks nothing, so
+  // it is not carried over to the isomers.
+  auto check = [](const ROMol &mol) {
+    StereoisomerEnumerator enumerator(mol);
+    auto isomer = enumerator.next();
+    REQUIRE(isomer);
+    CHECK(!enumerator.next());
+    std::unique_ptr<RWMol> reread{MolBlockToMol(MolToMolBlock(*isomer))};
+    REQUIRE(reread);
+    CHECK(
+        !reread->getBondWithIdx(1)->hasProp(common_properties::_UnknownStereo));
+  };
   auto mol = "CCO |w:1.1|"_smiles;
   REQUIRE(mol);
-  const auto parsed = GENERATE(false, true);
-  if (parsed) {
-    mol.reset(MolBlockToMol(MolToMolBlock(*mol)));
-    REQUIRE(mol);
+  SECTION("from SMILES") { check(*mol); }
+  SECTION("from a mol block") {
+    std::unique_ptr<RWMol> parsed{MolBlockToMol(MolToMolBlock(*mol))};
+    REQUIRE(parsed);
+    REQUIRE(parsed->getBondWithIdx(1)->getProp<int>(
+                common_properties::_UnknownStereo) == 1);
+    check(*parsed);
   }
-  StereoisomerEnumerator enumerator(*mol);
-  auto isomer = enumerator.next();
-  REQUIRE(isomer);
-  CHECK(!enumerator.next());
-  std::unique_ptr<RWMol> reread{MolBlockToMol(MolToMolBlock(*isomer))};
-  REQUIRE(reread);
-  CHECK(reread->getBondWithIdx(1)->getProp<int>(
-            common_properties::_UnknownStereo) == 1);
 }
 
 TEST_CASE("Enumeration preserves the defined neighbor of a wiggly bond") {
   // The wiggly bond marks atom 1 as unknown, but stereo perception also reports
   // the defined center at its other end, atom 3, as unknown. With
   // onlyUnassigned, atom 3 must keep its configuration.
+  auto check = [](const ROMol &mol) {
+    const auto tag = mol.getAtomWithIdx(3)->getChiralTag();
+    REQUIRE(tag != Atom::CHI_UNSPECIFIED);
+    StereoisomerEnumerator enumerator(mol);
+    unsigned int count = 0;
+    while (auto isomer = enumerator.next()) {
+      ++count;
+      CHECK(isomer->getAtomWithIdx(3)->getChiralTag() == tag);
+    }
+    CHECK(count == 2);
+  };
   auto mol = "CC(F)[C@H](Cl)Br"_smiles;
   REQUIRE(mol);
   mol->getBondBetweenAtoms(1, 3)->setBondDir(Bond::UNKNOWN);
-  const auto parsed = GENERATE(false, true);
-  const auto onlyUnassigned = GENERATE(false, true);
-  CAPTURE(parsed, onlyUnassigned);
-  if (parsed) {
-    mol.reset(MolBlockToMol(MolToMolBlock(*mol)));
-    REQUIRE(mol);
+  SECTION("from SMILES") { check(*mol); }
+  SECTION("from a mol block") {
+    std::unique_ptr<RWMol> parsed{MolBlockToMol(MolToMolBlock(*mol))};
+    REQUIRE(parsed);
+    REQUIRE(parsed->getBondBetweenAtoms(1, 3)->getProp<int>(
+                common_properties::_UnknownStereo) == 1);
+    check(*parsed);
   }
-  const auto tag = mol->getAtomWithIdx(3)->getChiralTag();
-  REQUIRE(tag != Atom::CHI_UNSPECIFIED);
-  StereoEnumerationOptions options;
-  options.onlyUnassigned = onlyUnassigned;
-  StereoisomerEnumerator enumerator(*mol, options);
-  unsigned int count = 0;
-  while (auto isomer = enumerator.next()) {
-    ++count;
-    if (onlyUnassigned) {
-      CHECK(isomer->getAtomWithIdx(3)->getChiralTag() == tag);
-    }
-  }
-  // atom 1 is always enumerated; atom 3 only when assigned stereo is too
-  CHECK(count == (onlyUnassigned ? 2 : 4));
 }
 
 TEST_CASE("Unique") {

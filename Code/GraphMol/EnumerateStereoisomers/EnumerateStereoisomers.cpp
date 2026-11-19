@@ -30,6 +30,18 @@ StereoisomerEnumerator::StereoisomerEnumerator(
   if (d_mol.getNumConformers()) {
     Chirality::wedgeMolBonds(d_mol, &d_mol.getConformer());
   }
+  // Clear these before perceiving the stereo, as the Python implementation
+  // does. A wiggly bond also makes the defined stereocenter at its far end look
+  // unknown, which would get it enumerated with onlyUnassigned.
+  for (auto bond : d_mol.bonds()) {
+    if (bond->getBondDir() == Bond::BondDir::EITHERDOUBLE ||
+        bond->getBondDir() == Bond::BondDir::UNKNOWN) {
+      bond->setBondDir(Bond::BondDir::NONE);
+    }
+    // wiggly bonds read from a mol file are recorded in this property, which
+    // the writers would otherwise restore them from
+    bond->clearProp(common_properties::_UnknownStereo);
+  }
   buildFlippers();
   // Clear unhelpful stuff out
   for (auto atom : d_mol.atoms()) {
@@ -145,14 +157,7 @@ void StereoisomerEnumerator::buildFlippers() {
       continue;
     }
     if (si.type == Chirality::StereoType::Atom_Tetrahedral) {
-      // An incoming wiggly bond can make StereoInfo Unknown at a defined
-      // neighbor.
-      if (d_options.onlyUnassigned &&
-          d_mol.getAtomWithIdx(si.centeredOn)->getChiralTag() !=
-              Atom::CHI_UNSPECIFIED) {
-        continue;
-      }
-      d_flippers.emplace_back(new details::AtomFlipper(d_mol, si));
+      d_flippers.emplace_back(new details::AtomFlipper(si));
     } else if (si.type == Chirality::StereoType::Bond_Double) {
       std::unique_ptr<details::BondFlipper> newFlipper(
           new details::BondFlipper(d_mol, si));
