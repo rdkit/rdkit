@@ -19,6 +19,7 @@ jobs:
         uses: ./.github/actions/ci-env
       - name: Setup build environment
         run: |
+          sudo apt-get update
           sudo apt-get install g++ wget make libgl1-mesa-dev mesa-common-dev
           source ${CONDA}/etc/profile.d/conda.sh
           sudo chown -R ${USER} ${CONDA}
