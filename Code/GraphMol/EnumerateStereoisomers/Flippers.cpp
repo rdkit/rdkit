@@ -16,25 +16,8 @@
 namespace RDKit {
 namespace EnumerateStereoisomers {
 namespace details {
-namespace {
-void clearUnknownStereo(Bond *bond) {
-  // Clear both spellings only when assigning the configuration they describe.
-  bond->clearProp(common_properties::_UnknownStereo);
-  if (bond->getBondDir() == Bond::UNKNOWN ||
-      bond->getBondDir() == Bond::EITHERDOUBLE) {
-    bond->setBondDir(Bond::NONE);
-  }
-}
-}  // namespace
-
-AtomFlipper::AtomFlipper(ROMol &mol, const Chirality::StereoInfo &si)
-    : Flipper(), d_atomIdx(si.centeredOn) {
-  for (auto bond : mol.atomBonds(mol.getAtomWithIdx(d_atomIdx))) {
-    if (bond->getBeginAtomIdx() == d_atomIdx) {
-      clearUnknownStereo(bond);
-    }
-  }
-}
+AtomFlipper::AtomFlipper(const Chirality::StereoInfo &si)
+    : Flipper(), d_atomIdx(si.centeredOn) {}
 
 void AtomFlipper::flip(ROMol &mol, bool flag) {
   auto atom = mol.getAtomWithIdx(d_atomIdx);
@@ -55,16 +38,6 @@ BondFlipper::BondFlipper(ROMol &mol, const Chirality::StereoInfo &si)
       bond->setStereoAtoms(si.controllingAtoms[0], si.controllingAtoms[2]);
     } else {
       d_valid = false;
-    }
-  }
-  if (d_valid) {
-    clearUnknownStereo(bond);
-    for (auto atom : {bond->getBeginAtom(), bond->getEndAtom()}) {
-      for (auto neighbor : mol.atomBonds(atom)) {
-        if (neighbor->getBondType() == Bond::SINGLE) {
-          clearUnknownStereo(neighbor);
-        }
-      }
     }
   }
 }
