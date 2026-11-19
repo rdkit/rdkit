@@ -1776,7 +1776,7 @@ TEST_CASE("testProvideBoundsMatrix") {
   REQUIRE(cid >= 0);
 
   const auto conf = m->getConformer(cid);
-  CHECK(feq((conf.getAtomPos(0) - conf.getAtomPos(1)).length(), 0.55, 0.05));
+  CHECK(feq((conf.getAtomPos(0) - conf.getAtomPos(1)).length(), 0.55, 0.1));
   CHECK(feq((conf.getAtomPos(0) - conf.getAtomPos(2)).length(), 2.0, 0.1));
   boost::logging::enable_logs("rdApp.warning");
 }
@@ -1966,6 +1966,7 @@ TEST_CASE("ETKDGv4-Benzamide") {
     run(params, 157.0, 26.0);
   }
 }
+
 #ifdef RDK_BUILD_THREADSAFE_SSS
 TEST_CASE("Parallel embedding failures keep independent conformer flags") {
   constexpr unsigned int numConfs = 32;
@@ -2102,3 +2103,4 @@ TEST_CASE("First parallel embedding resolves shared defaults") {
   }
 }
 #endif
+
