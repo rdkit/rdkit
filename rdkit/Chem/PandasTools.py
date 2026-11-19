@@ -450,7 +450,7 @@ def WriteSDF(df, out, molColName='ROMol', idName=None, properties=None, allNumer
   if allNumeric:
     properties.extend([
       dt for dt in df.dtypes.keys()
-      if not pd.api.types.is_string_dtype(df.dtypes[dt]) and (np.issubdtype(df.dtypes[dt], np.floating) or np.issubdtype(df.dtypes[dt], np.integer))
+      if pd.api.types.is_float_dtype(df.dtypes[dt]) or pd.api.types.is_integer_dtype(df.dtypes[dt])
     ])
 
   if molColName in properties:
