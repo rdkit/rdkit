@@ -35,7 +35,7 @@
 
 import unittest
 
-from rdkit import Chem
+from rdkit import Chem, DataStructs
 from rdkit.RDLogger import logger
 
 try:
@@ -43,7 +43,7 @@ try:
 except ImportError:
   matplotlib = None
 
-from rdkit.Chem import Draw
+from rdkit.Chem import Draw, rdFingerprintGenerator
 from rdkit.Chem.Draw import rdMolDraw2D
 from rdkit.Chem.Draw import SimilarityMaps as sm
 
@@ -55,6 +55,19 @@ class TestCase(unittest.TestCase):
   def setUp(self):
     self.mol1 = Chem.MolFromSmiles('c1ccccc1')
     self.mol2 = Chem.MolFromSmiles('c1ccncc1')
+
+  def testCountFingerprintGeneratorCyclicTorsions(self):
+    generator = rdFingerprintGenerator.GetTopologicalTorsionGenerator()
+    for smiles in ('C1CC1', 'C1CC1C', 'CCCC'):
+      with self.subTest(smiles=smiles):
+        mol = Chem.MolFromSmiles(smiles)
+        fp = generator.GetCountFingerprint(mol)
+        weights = sm.GetAtomicWeightsForFingerprintGenerator(mol, mol, generator, useCounts=True)
+        expected = [
+          1.0 - DataStructs.DiceSimilarity(fp, generator.GetCountFingerprint(mol, ignoreAtoms=[aid]))
+          for aid in range(mol.GetNumAtoms())
+        ]
+        self.assertEqual(weights, expected)
 
   @unittest.skipUnless(matplotlib, 'Matplotlib required')
   def testSimilarityMap(self):
