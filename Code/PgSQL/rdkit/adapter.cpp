@@ -611,8 +611,10 @@ extern "C" int molcmp(CROMol i, CROMol a) {
     smi2 = MolToSmiles(*am, useChirality);
   } else {
     RDKit::SmilesWriteParams sps;
-    smi1 = MolToCXSmiles(*im, sps, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
-    smi2 = MolToCXSmiles(*am, sps, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+    smi1 =
+        MolToCXSmiles(*im, sps, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
+    smi2 =
+        MolToCXSmiles(*am, sps, SmilesWrite::CXSmilesFields::CX_ALL_BUT_COORDS);
   }
   return smi1 == smi2 ? 0 : (smi1 < smi2 ? -1 : 1);
 }
@@ -964,6 +966,9 @@ extern "C" int CBfpSize(CBfp a) {
 extern "C" double calcBitmapTanimotoSml(CBfp a, CBfp b) {
   auto *abv = (std::string *)a;
   auto *bbv = (std::string *)b;
+  if (abv->size() != bbv->size()) {
+    elog(ERROR, "calcBitmapTanimotoSml: Fingerprint sizes do not match");
+  }
   const auto *afp = (const unsigned char *)abv->c_str();
   const auto *bfp = (const unsigned char *)bbv->c_str();
   /* return CalcBitmapTanimoto(afp, bfp, abv->size()); */
@@ -973,14 +978,20 @@ extern "C" double calcBitmapTanimotoSml(CBfp a, CBfp b) {
 extern "C" double calcBitmapDiceSml(CBfp a, CBfp b) {
   auto *abv = (std::string *)a;
   auto *bbv = (std::string *)b;
+  if (abv->size() != bbv->size()) {
+    elog(ERROR, "calcBitmapDiceSml: Fingerprint sizes do not match");
+  }
   const auto *afp = (const unsigned char *)abv->c_str();
   const auto *bfp = (const unsigned char *)bbv->c_str();
   return CalcBitmapDice(afp, bfp, abv->size());
 }
 
-double calcBitmapTverskySml(CBfp a, CBfp b, float ca, float cb) {
+extern "C" double calcBitmapTverskySml(CBfp a, CBfp b, float ca, float cb) {
   auto *abv = (std::string *)a;
   auto *bbv = (std::string *)b;
+  if (abv->size() != bbv->size()) {
+    elog(ERROR, "calcBitmapTverskySml: Fingerprint sizes do not match");
+  }
   const auto *afp = (const unsigned char *)abv->c_str();
   const auto *bfp = (const unsigned char *)bbv->c_str();
   return CalcBitmapTversky(afp, bfp, abv->size(), ca, cb);

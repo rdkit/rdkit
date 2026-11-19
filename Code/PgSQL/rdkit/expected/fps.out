@@ -269,3 +269,10 @@ select tanimoto_sml(atompairbv_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), atom
  0.571428571428571
 (1 row)
 
+-- make sure we fail if the fingerprint sizes do not match
+SELECT tanimoto_sml(('\x'||repeat('ff',100))::bfp, ('\x'||repeat('00',16))::bfp);
+ERROR:  calcBitmapTanimotoSml: Fingerprint sizes do not match
+SELECT dice_sml(('\x'||repeat('ff',100))::bfp, ('\x'||repeat('00',16))::bfp);
+ERROR:  calcBitmapDiceSml: Fingerprint sizes do not match
+SELECT tversky_sml(('\x'||repeat('ff',100))::bfp, ('\x'||repeat('00',16))::bfp, 0.5, 0.5);
+ERROR:  calcBitmapTverskySml: Fingerprint sizes do not match
