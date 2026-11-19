@@ -630,7 +630,7 @@ void initAtomInfo(
         default:
           throw ValueErrorException("bad StereoInfo.specified type");
       }
-    } else if (cleanIt) {
+    } else if (cleanIt && atom->getChiralTag() != Atom::CHI_ALLENE) {
       atom->setChiralTag(Atom::ChiralType::CHI_UNSPECIFIED);
     }
   }

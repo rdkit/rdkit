@@ -64,6 +64,9 @@ std::string getAtomChiralityInfo(const Atom *atom) {
   }
   if (atString.empty() && allowNontet) {
     switch (atom->getChiralTag()) {
+      case Atom::CHI_ALLENE:
+        atString = "@AL";
+        break;
       case Atom::CHI_SQUAREPLANAR:
         atString = "@SP";
         break;

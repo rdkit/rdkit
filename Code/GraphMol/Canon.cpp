@@ -1465,9 +1465,19 @@ RDKIT_GRAPHMOL_EXPORT void canonicalizeFragment(
           continue;
         }
 
-        // Extra check needed if/when @AL1/@AL2 supported
-        if (Chirality::detail::isAtomPotentialTetrahedralCenter(atom) ||
-            Chirality::hasNonTetrahedralStereo(atom)) {
+        if (atom->getChiralTag() == Atom::CHI_ALLENE) {
+          std::vector<INT_LIST> bondOrders;
+          for (const auto terminal : Chirality::getAlleneTerminalAtoms(atom)) {
+            bondOrders.push_back(atomTraversalBondOrder[terminal->getIdx()]);
+          }
+          const auto permutation = Chirality::getAllenePermutation(
+              atom, bondOrders, molStack.begin()->obj.atom->getIdx());
+          if (!permutation) {
+            atom->setProp(common_properties::_brokenChirality, true);
+          }
+          atomPermutationIndices[atom->getIdx()] = permutation;
+        } else if (Chirality::detail::isAtomPotentialTetrahedralCenter(atom) ||
+                   Chirality::hasNonTetrahedralStereo(atom)) {
           int perm = 0;
           if (Chirality::hasNonTetrahedralStereo(atom)) {
             atom->getPropIfPresent(common_properties::_chiralPermutation, perm);
