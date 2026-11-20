@@ -2319,11 +2319,18 @@ void MolPickler::_addRingInfoFromPickle(std::istream &ss, ROMol *mol,
         }
       } else {
         for (unsigned int j = 1; j < static_cast<unsigned int>(ringSize); ++j) {
-          bonds[j - 1] =
-              mol->getBondBetweenAtoms(atoms[j - 1], atoms[j])->getIdx();
+          const auto bond = mol->getBondBetweenAtoms(atoms[j - 1], atoms[j]);
+          if (!bond) {
+            throw MolPicklerException("ring-bond not found");
+          }
+          bonds[j - 1] = bond->getIdx();
         }
-        bonds[ringSize - 1] =
-            mol->getBondBetweenAtoms(atoms[0], atoms[ringSize - 1])->getIdx();
+        const auto bond =
+            mol->getBondBetweenAtoms(atoms[0], atoms[ringSize - 1]);
+        if (!bond) {
+          throw MolPicklerException("ring-bond not found");
+        }
+        bonds[ringSize - 1] = bond->getIdx();
       }
       atomRings.push_back(std::move(atoms));
       bondRings.push_back(std::move(bonds));

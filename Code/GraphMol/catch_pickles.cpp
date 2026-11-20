@@ -705,3 +705,28 @@ $$$$
             "M  V30 1 SUP 1 ATOMS=(1 128) XBONDS=(1 257) LABEL=Generic") !=
         std::string::npos);
 }
+
+TEST_CASE("OOB read in depickling") {
+  auto m = "C1CCC1"_smiles;
+  REQUIRE(m);
+  std::string pkl;
+  MolPickler::pickleMol(*m, pkl);
+  REQUIRE(pkl.size() == 95);
+  // these are bytes in the ring definitions of the pickle:
+  REQUIRE(static_cast<unsigned int>(pkl[83]) == 2);
+  REQUIRE(static_cast<unsigned int>(pkl[84]) == 3);
+  pkl[83] = 3;
+  pkl[84] = 2;
+  {
+    RWMol m2;
+    std::istringstream inStream(pkl);
+    REQUIRE_THROWS_AS(MolPickler::molFromPickle(inStream, m2),
+                      MolPicklerException);
+  }
+  {
+    RWMol m2;
+    std::istringstream inStream(pkl);
+    REQUIRE_THROWS_WITH(MolPickler::molFromPickle(inStream, m2),
+                        "ring-bond not found");
+  }
+}
