@@ -25,8 +25,19 @@ namespace Canon {
 namespace {
 void flipIfNeeded(Bond::BondStereo &st1,
                   const canon_atom *const *controllingAtoms) {
+  if (st1 != Bond::STEREOCIS && st1 != Bond::STEREOTRANS) {
+    return;
+  }
   CHECK_INVARIANT(controllingAtoms[0], "missing controlling atom");
   CHECK_INVARIANT(controllingAtoms[2], "missing controlling atom");
+  if ((controllingAtoms[1] &&
+       controllingAtoms[1]->index == controllingAtoms[0]->index) ||
+      (controllingAtoms[3] &&
+       controllingAtoms[3]->index == controllingAtoms[2]->index)) {
+    // The current partition can't choose a reference on this end yet.
+    st1 = Bond::STEREONONE;
+    return;
+  }
   bool flip = false;
   if (controllingAtoms[1] &&
       controllingAtoms[1]->index > controllingAtoms[0]->index) {
@@ -413,7 +424,9 @@ void getNbrs(const ROMol &mol, const Atom *at, const std::span<int> ids) {
 
 bondholder makeBondHolder(const Bond *bond, unsigned int otherIdx,
                           bool includeChirality,
-                          const std::vector<Canon::canon_atom> &atoms) {
+                          const std::vector<Canon::canon_atom> &atoms,
+                          const boost::dynamic_bitset<> *atomsInPlay = nullptr,
+                          const boost::dynamic_bitset<> *bondsInPlay = nullptr) {
   PRECONDITION(bond, "bad pointer");
   Bond::BondStereo stereo = Bond::STEREONONE;
   if (includeChirality) {
@@ -426,6 +439,8 @@ bondholder makeBondHolder(const Bond *bond, unsigned int otherIdx,
     res.stype = bond->getStereo();
     if (res.stype == Bond::BondStereo::STEREOCIS ||
         res.stype == Bond::BondStereo::STEREOTRANS) {
+      // Compare parity only after normalizing the reference atoms by rank.
+      res.bondStereo = Bond::STEREOCIS;
       res.controllingAtoms[0] = &atoms[bond->getStereoAtoms()[0]];
       res.controllingAtoms[2] = &atoms[bond->getStereoAtoms()[1]];
       if (bond->getBeginAtom()->getDegree() > 2) {
@@ -445,6 +460,32 @@ bondholder makeBondHolder(const Bond *bond, unsigned int otherIdx,
               nbr->getIdx() !=
                   static_cast<unsigned int>(bond->getStereoAtoms()[1])) {
             res.controllingAtoms[3] = &atoms[nbr->getIdx()];
+          }
+        }
+      }
+      if (atomsInPlay && bondsInPlay) {
+        for (unsigned int i : {0, 2}) {
+          auto endIdx = i == 0 ? bond->getBeginAtomIdx() : bond->getEndAtomIdx();
+          for (auto &ref : std::span(res.controllingAtoms).subspan(i, 2)) {
+            if (ref) {
+              auto refIdx = ref->atom->getIdx();
+              const auto *refBond =
+                  bond->getOwningMol().getBondBetweenAtoms(endIdx, refIdx);
+              if (!(*atomsInPlay)[refIdx] || !refBond ||
+                  !(*bondsInPlay)[refBond->getIdx()]) {
+                ref = nullptr;
+              }
+            }
+          }
+          if (!res.controllingAtoms[i]) {
+            if (!res.controllingAtoms[i + 1]) {
+              res.bondStereo = res.stype = Bond::STEREONONE;
+              break;
+            }
+            // Switching to the surviving ligand reverses relative parity.
+            std::swap(res.controllingAtoms[i], res.controllingAtoms[i + 1]);
+            res.stype = res.stype == Bond::STEREOCIS ? Bond::STEREOTRANS
+                                                     : Bond::STEREOCIS;
           }
         }
       }
@@ -666,10 +707,12 @@ void initFragmentCanonAtoms(const ROMol &mol,
       Canon::canon_atom &endAt = atoms[bond->getEndAtomIdx()];
       begAt.nbrIds[begAt.degree++] = bond->getEndAtomIdx();
       endAt.nbrIds[endAt.degree++] = bond->getBeginAtomIdx();
-      begAt.bonds.push_back(
-          makeBondHolder(bond, bond->getEndAtomIdx(), includeChirality, atoms));
+      begAt.bonds.push_back(makeBondHolder(bond, bond->getEndAtomIdx(),
+                                           includeChirality, atoms, &atomsInPlay,
+                                           &bondsInPlay));
       endAt.bonds.push_back(makeBondHolder(bond, bond->getBeginAtomIdx(),
-                                           includeChirality, atoms));
+                                           includeChirality, atoms, &atomsInPlay,
+                                           &bondsInPlay));
       if (bondSymbols) {
         begAt.bonds.back().p_symbol = &(*bondSymbols)[bond->getIdx()];
         endAt.bonds.back().p_symbol = &(*bondSymbols)[bond->getIdx()];
