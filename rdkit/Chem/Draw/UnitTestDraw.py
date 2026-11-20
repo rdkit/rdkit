@@ -422,6 +422,22 @@ class TestCase(unittest.TestCase):
     svg = Draw.MolToSVG(mol)
     self.assertTrue(svg)
 
+  def testMolToSVGWedgeBonds(self):
+    mol = Chem.MolFromSmiles('C[C@H](F)Cl')
+    wedge = r"<path class='bond-\d+ [^']+'[^>]*style='fill:#[0-9A-Fa-f]{6};"
+    self.assertRegex(Draw.MolToSVG(mol), wedge)
+    self.assertNotRegex(Draw.MolToSVG(mol, wedgeBonds=False), wedge)
+
+  def testMolToFileSVGWedgeBonds(self):
+    mol = Chem.MolFromSmiles('C[C@H](F)Cl')
+    wedge = r"<path class='bond-\d+ [^']+'[^>]*style='fill:#[0-9A-Fa-f]{6};"
+    with tempfile.TemporaryDirectory() as tmpdir:
+      filename = pathlib.Path(tmpdir) / 'mol.svg'
+      Draw.MolToFile(mol, filename)
+      self.assertRegex(filename.read_text(), wedge)
+      Draw.MolToFile(mol, filename, wedgeBonds=False)
+      self.assertNotRegex(filename.read_text(), wedge)
+
   def testHighlightMatch(self):
     smiles = "c1ccc(C)c(C)c1C"
     mol = Chem.MolFromSmiles(smiles)

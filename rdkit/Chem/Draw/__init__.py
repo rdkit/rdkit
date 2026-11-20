@@ -152,6 +152,7 @@ def MolToSVG(mol, size=(300, 300), kekulize=True, wedgeBonds=True, drawOptions=N
   """Returns an SVG string containing a drawing of the molecule.
 
   Supports the same arguments as MolToImage for highlights and legend.
+  Set wedgeBonds=False to skip adding stereo wedges when preparing the molecule.
   For legend position (Top/Left/Right/Bottom) and vertical text on side legends,
   pass an rdMolDraw2D.MolDrawOptions instance with legendPosition and
   legendVerticalText set. Legend position applies to single-molecule drawing;
@@ -161,7 +162,8 @@ def MolToSVG(mol, size=(300, 300), kekulize=True, wedgeBonds=True, drawOptions=N
   if not mol:
     raise ValueError('Null molecule provided')
   return _moltoSVG(mol, size, kwargs.get('highlightAtoms', []), kwargs.get('legend', ''), kekulize,
-                   drawOptions=drawOptions, highlightBonds=kwargs.get('highlightBonds', []))
+                   drawOptions=drawOptions, highlightBonds=kwargs.get('highlightBonds', []),
+                   wedgeBonds=wedgeBonds)
 
 
 def ShowMol(mol, size=(300, 300), kekulize=True, wedgeBonds=True, title='RDKit Molecule',
@@ -290,17 +292,7 @@ def _moltoimg(mol, sz, highlights, legend, returnPNG=False, drawOptions=None, **
 
 
 def _moltoSVG(mol, sz, highlights, legend, kekulize, drawOptions=None, **kwargs):
-  if mol.NeedsUpdatePropertyCache():
-    mol.UpdatePropertyCache(False)
-
-  kekulize = shouldKekulize(mol, kekulize)
-
-  if not drawOptions or drawOptions.prepareMolsBeforeDrawing:
-    try:
-      with rdBase.BlockLogs():
-        mol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=kekulize)
-    except ValueError:  # <- can happen on a kekulization failure
-      mol = rdMolDraw2D.PrepareMolForDrawing(mol, kekulize=False)
+  mol = _prepareMol(mol, drawOptions=drawOptions, kekulize=kekulize, **kwargs)
   d2d = rdMolDraw2D.MolDraw2DSVG(sz[0], sz[1])
   if drawOptions is not None:
     d2d.SetDrawOptions(drawOptions)
