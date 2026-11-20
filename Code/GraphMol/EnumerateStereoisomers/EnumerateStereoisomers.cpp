@@ -144,24 +144,26 @@ bool StereoisomerEnumerator::iterator::operator==(
 
 void StereoisomerEnumerator::buildFlippers() {
   auto sis = Chirality::findPotentialStereo(d_mol, true, true);
-  for (const auto &si : sis) {
-    if (d_options.onlyUnassigned &&
-        si.specified != Chirality::StereoSpecified::Unknown &&
-        si.specified != Chirality::StereoSpecified::Unspecified) {
-      continue;
-    }
-    if (si.type == Chirality::StereoType::Atom_Tetrahedral) {
-      d_flippers.emplace_back(new details::AtomFlipper(si));
-    } else if (si.type == Chirality::StereoType::Bond_Double) {
-      std::unique_ptr<details::BondFlipper> newFlipper(
-          new details::BondFlipper(d_mol, si));
-      if (newFlipper->isValid()) {
+  if (!d_options.onlyStereoGroups) {
+    for (const auto &si : sis) {
+      if (d_options.onlyUnassigned &&
+          si.specified != Chirality::StereoSpecified::Unknown &&
+          si.specified != Chirality::StereoSpecified::Unspecified) {
+        continue;
+      }
+      if (si.type == Chirality::StereoType::Atom_Tetrahedral) {
+        d_flippers.emplace_back(new details::AtomFlipper(si));
+      } else if (si.type == Chirality::StereoType::Bond_Double) {
+        std::unique_ptr<details::BondFlipper> newFlipper(
+            new details::BondFlipper(d_mol, si));
+        if (newFlipper->isValid()) {
+          d_flippers.push_back(std::move(newFlipper));
+        }
+      } else if (si.type == Chirality::StereoType::Bond_Atropisomer) {
+        std::unique_ptr<details::AtropisomerFlipper> newFlipper(
+            new details::AtropisomerFlipper(si));
         d_flippers.push_back(std::move(newFlipper));
       }
-    } else if (si.type == Chirality::StereoType::Bond_Atropisomer) {
-      std::unique_ptr<details::AtropisomerFlipper> newFlipper(
-          new details::AtropisomerFlipper(si));
-      d_flippers.push_back(std::move(newFlipper));
     }
   }
 
@@ -242,8 +244,9 @@ std::unique_ptr<ROMol> StereoisomerEnumerator::buildIsomer(
   for (size_t i = 0; i < d_flippers.size(); i++) {
     d_flippers[i]->flip(*isomer, config[i]);
   }
-  // We don't need StereoGroups any more so remove them.
-  if (!isomer->getStereoGroups().empty()) {
+  // Once we've enumerated the groups, they are no longer needed. If there
+  // were no flippers, preserve the input groups as in the Python API.
+  if (!d_flippers.empty() && !isomer->getStereoGroups().empty()) {
     isomer->setStereoGroups(std::vector<StereoGroup>());
   }
   MolOps::setDoubleBondNeighborDirections(*isomer);
