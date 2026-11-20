@@ -488,8 +488,64 @@ void testResolution() {
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 }
 
+void testIsolatedAtoms() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing FreeSASA with isolated atoms"
+      << std::endl;
+
+  // Shrake-Rupley used to read past an empty neighbour list; such an atom is
+  // fully exposed, so its area is that of the whole probe-inflated sphere
+  auto sphereArea = [](double radius, double probeRadius) {
+    const double r = radius + probeRadius;
+    return 4.0 * M_PI * r * r;
+  };
+
+  for (auto algorithm :
+       {FreeSASA::SASAOpts::ShrakeRupley, FreeSASA::SASAOpts::LeeRichards}) {
+    FreeSASA::SASAOpts opts;
+    opts.algorithm = algorithm;
+
+    // no neighbours at all
+    {
+      RWMol mol;
+      mol.addAtom(new Atom(6), true, true);
+      auto *conf = new Conformer(mol.getNumAtoms());
+      conf->setAtomPos(0, RDGeom::Point3D(0.0, 0.0, 0.0));
+      mol.addConformer(conf, true);
+
+      const std::vector<double> radii = {1.5};
+      double sasa = FreeSASA::calcSASA(mol, radii, -1, nullptr, opts);
+      TEST_ASSERT(fabs(sasa - sphereArea(radii[0], opts.probeRadius)) < 1e-6);
+    }
+
+    // only the distant atom has no neighbours
+    {
+      RWMol mol;
+      for (unsigned int i = 0; i < 3; ++i) {
+        mol.addAtom(new Atom(6), true, true);
+      }
+      mol.addBond(0, 1, Bond::SINGLE);
+      auto *conf = new Conformer(mol.getNumAtoms());
+      conf->setAtomPos(0, RDGeom::Point3D(0.0, 0.0, 0.0));
+      conf->setAtomPos(1, RDGeom::Point3D(1.5, 0.0, 0.0));
+      conf->setAtomPos(2, RDGeom::Point3D(20.0, 0.0, 0.0));
+      mol.addConformer(conf, true);
+
+      const std::vector<double> radii = {1.7, 1.7, 2.2};
+      FreeSASA::calcSASA(mol, radii, -1, nullptr, opts);
+      double isolated =
+          mol.getAtomWithIdx(2)->getProp<double>(common_properties::Atom::SASA);
+      TEST_ASSERT(fabs(isolated - sphereArea(radii[2], opts.probeRadius)) <
+                  1e-6);
+    }
+  }
+
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
   testPDB();
   testResolution();
+  testIsolatedAtoms();
 }
