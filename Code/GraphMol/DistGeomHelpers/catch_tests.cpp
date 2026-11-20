@@ -33,6 +33,7 @@
 #include "BoundsMatrixBuilderDetails.h"
 #include "catch2/catch_test_macros.hpp"
 #include <tuple>
+#include <numeric>
 #include <map>
 #include <limits>
 #include <numbers>
@@ -40,6 +41,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <DistGeom/ZMatrixUtils.h>
 #include <DistGeom/ZMatrix.h>
+#include <DistGeom/TriangleSmooth.h>
 #include "ZMatrixBuilder.h"
 
 #ifdef RDK_TEST_MULTITHREADED
@@ -3377,5 +3379,41 @@ TEST_CASE("highly strained chiral centers") {
     REQUIRE(mol);
     MolOps::addHs(*mol);
     CHECK(DGeomHelpers::EmbedMolecule(*mol, ps) == result);
+  }
+}
+
+TEST_CASE(
+    "Github #9850: setLowerBoundVDW handles H-bond donors/acceptors at atom index 0") {
+  auto mol1 = "O=Cc1ccccc1O"_smiles;  // carbonyl O is atom 0
+  REQUIRE(mol1);
+  MolOps::addHs(*mol1);
+  const auto n = mol1->getNumAtoms();
+
+  std::vector<unsigned int> perm(n);
+  std::iota(perm.begin(), perm.end(), 0);
+  std::swap(perm[0], perm[1]);  // move carbonyl O to atom 1
+  std::unique_ptr<ROMol> mol2(MolOps::renumberAtoms(*mol1, perm));
+
+  DistGeom::BoundsMatPtr b1(new DistGeom::BoundsMatrix(n));
+  DGeomHelpers::initBoundsMat(b1);
+  DGeomHelpers::setTopolBounds(*mol1, b1, true, false, true, true);
+  REQUIRE(DistGeom::triangleSmoothBounds(b1));
+
+  DistGeom::BoundsMatPtr b2(new DistGeom::BoundsMatrix(n));
+  DGeomHelpers::initBoundsMat(b2);
+  DGeomHelpers::setTopolBounds(*mol2, b2, true, false, true, true);
+  REQUIRE(DistGeom::triangleSmoothBounds(b2));
+
+  CHECK_THAT(b1->getLowerBound(0, 14), Catch::Matchers::WithinAbs(1.8, 1e-4));
+  CHECK_THAT(b2->getLowerBound(1, 14), Catch::Matchers::WithinAbs(1.8, 1e-4));
+  for (unsigned int u = 0; u < n; ++u) {
+    for (unsigned int v = 0; v < n; ++v) {
+      const unsigned int u2 = (u == 0) ? 1 : ((u == 1) ? 0 : u);
+      const unsigned int v2 = (v == 0) ? 1 : ((v == 1) ? 0 : v);
+      CHECK_THAT(b1->getLowerBound(u, v),
+                 Catch::Matchers::WithinAbs(b2->getLowerBound(u2, v2), 1e-6));
+      CHECK_THAT(b1->getUpperBound(u, v),
+                 Catch::Matchers::WithinAbs(b2->getUpperBound(u2, v2), 1e-6));
+    }
   }
 }
