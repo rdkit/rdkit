@@ -3230,6 +3230,11 @@ M  END
       auto m1 =
           "C[C@H](C1=C(C=CC(=C1Cl)F)Cl)OC2=C(N=CC(=C2)C3"
           "=CN(N=C3)C4CCNCC4)N"_smiles;
+      // The SVG position check below uses the historical depiction.
+      RDDepict::Compute2DCoordParameters params;
+      params.canonOrient = true;
+      params.useBranchDepthPrioritization = false;
+      RDDepict::compute2DCoords(*m1, params);
       std::ofstream outs((nameBase + "4.svg").c_str());
       MolDraw2DSVG drawer(200, 200);
       // this is currently the default min font size.  Repeated for
@@ -3317,6 +3322,11 @@ void test18FixedScales() {
         "(c3ccccc3)CC2)C(C)(C)C1)c1ccc(Cl)cc1";
     std::unique_ptr<ROMol> m(SmilesToMol(smi));
     TEST_ASSERT(m);
+    // Fixed-scale expectations below depend on the historical layout.
+    RDDepict::Compute2DCoordParameters params;
+    params.canonOrient = true;
+    params.useBranchDepthPrioritization = false;
+    RDDepict::compute2DCoords(*m, params);
 
     {
       MolDraw2DSVG drawer(300, 300);
@@ -3960,6 +3970,14 @@ void test20Annotate() {
   std::cout << " ----------------- Testing annotation of 2D Drawing."
             << std::endl;
 
+  // The annotation position checks use the historical atom-rank layout.
+  auto computeHistoricalCoords = [](ROMol &mol) {
+    RDDepict::Compute2DCoordParameters params;
+    params.canonOrient = true;
+    params.useBranchDepthPrioritization = false;
+    RDDepict::compute2DCoords(mol, params);
+  };
+
   // add serial numbers to the atoms in the molecule.
   // There's an option for this, but for debugging it's sometimes
   // useful to be able to put notes on just a few atoms.
@@ -3977,6 +3995,7 @@ void test20Annotate() {
     auto m1 = "S=C1N=C(NC(CC#N)(C)C=C=C)NC2=NNN=C21"_smiles;
     addAtomSerialNumbers(*m1);
     addBondSerialNumbers(*m1);
+    computeHistoricalCoords(*m1);
 #ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(500, 500);
@@ -4014,6 +4033,7 @@ void test20Annotate() {
 
   {
     auto m1 = "C[C@@H](F)/C=C/[C@H](O)C"_smiles;
+    computeHistoricalCoords(*m1);
 #ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
@@ -4056,6 +4076,7 @@ void test20Annotate() {
     atom->setProp("atomNote", "foolish annotation");
     auto bond = m1->getBondWithIdx(5);
     bond->setProp("bondNote", "way too long to be useful");
+    computeHistoricalCoords(*m1);
 #ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(300, 300);
@@ -4093,6 +4114,7 @@ void test20Annotate() {
   }
   {
     auto m1 = "S=C1N=C(NC(CC#N)(C)C=C=C)NC2=NNN=C21"_smiles;
+    computeHistoricalCoords(*m1);
 #ifdef RDK_BUILD_CAIRO_SUPPORT
     {
       MolDraw2DCairo drawer(200, 200);

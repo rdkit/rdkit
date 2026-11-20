@@ -36,7 +36,8 @@ unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
                              bool permuteDeg4Nodes = false,
                              double bondLength = -1.0, bool forceRDKit = false,
                              bool useRingTemplates = false,
-                             bool usePathAngleExpansion = true) {
+                             bool usePathAngleExpansion = true,
+                             bool useBranchDepthPrioritization = true) {
   RDGeom::INT_POINT2D_MAP cMap;
   cMap.clear();
   python::list ks = coordMap.keys();
@@ -62,10 +63,10 @@ unsigned int Compute2DCoords(RDKit::ROMol &mol, bool canonOrient,
       .permuteDeg4Nodes = permuteDeg4Nodes,
       .forceRDKit = forceRDKit,
       .useRingTemplates = useRingTemplates,
-      .usePathAngleExpansion = usePathAngleExpansion};
+      .usePathAngleExpansion = usePathAngleExpansion,
+      .useBranchDepthPrioritization = useBranchDepthPrioritization};
 
-  unsigned int res;
-  res = RDDepict::compute2DCoords(mol, params);
+  unsigned int res = RDDepict::compute2DCoords(mol, params);
   if (bondLength > 0) {
     RDDepict::BOND_LEN = oBondLen;
   }
@@ -76,7 +77,8 @@ unsigned int Compute2DCoordsMimicDistmat(
     RDKit::ROMol &mol, python::object distMat, bool canonOrient,
     bool clearConfs, double weightDistMat, unsigned int nFlipsPerSample,
     unsigned int nSamples, int sampleSeed, bool permuteDeg4Nodes,
-    double bondLength = -1.0, bool forceRDKit = false) {
+    double bondLength = -1.0, bool forceRDKit = false,
+    bool useBranchDepthPrioritization = true) {
   PyObject *distMatPtr = distMat.ptr();
   if (!PyArray_Check(distMatPtr)) {
     throw_value_error("Argument isn't an array");
@@ -104,7 +106,8 @@ unsigned int Compute2DCoordsMimicDistmat(
   unsigned int res;
   res = RDDepict::compute2DCoordsMimicDistMat(
       mol, &dmat, canonOrient, clearConfs, weightDistMat, nFlipsPerSample,
-      nSamples, sampleSeed, permuteDeg4Nodes, forceRDKit);
+      nSamples, sampleSeed, permuteDeg4Nodes, forceRDKit,
+      useBranchDepthPrioritization);
   if (bondLength > 0) {
     RDDepict::BOND_LEN = oBondLen;
   }
@@ -366,6 +369,10 @@ BOOST_PYTHON_MODULE(rdDepictor) {
                   ring systems\n\
      usePathAngleExpansion - use path-angle expansion to resolve atom clashes\n\
                   and bond crossings\n\n\
+     useBranchDepthPrioritization - prefer deeper acyclic branches while\n\
+                  building the initial zig-zag layout. This tends to keep the\n\
+                  longest path visually continuous. Explicit random sampling\n\
+                  still runs and may change that layout. (default=true)\n\n\
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
   python::def(
@@ -377,7 +384,8 @@ BOOST_PYTHON_MODULE(rdDepictor) {
        python::arg("sampleSeed") = 0, python::arg("permuteDeg4Nodes") = false,
        python::arg("bondLength") = -1.0, python::arg("forceRDKit") = false,
        python::arg("useRingTemplates") = false,
-       python::arg("usePathAngleExpansion") = true),
+       python::arg("usePathAngleExpansion") = true,
+       python::arg("useBranchDepthPrioritization") = true),
       docString.c_str());
 
   docString =
@@ -405,7 +413,11 @@ BOOST_PYTHON_MODULE(rdDepictor) {
                  node during the sampling process \n\
      bondLength - change the default bond length for depiction \n\
      forceRDKit - use RDKit to generate coordinates even if \n\
-                  preferCoordGen is set to true\n\n\
+                  preferCoordGen is set to true\n\
+     useBranchDepthPrioritization - prefer deeper acyclic branches while\n\
+                  building the initial zig-zag layout. Distance-matrix\n\
+                  sampling still runs and may change that ordering.\n\
+                  (default=true)\n\n\
   RETURNS: \n\n\
      ID of the conformation added to the molecule\n";
   python::def(
@@ -415,7 +427,8 @@ BOOST_PYTHON_MODULE(rdDepictor) {
        python::arg("weightDistMat") = 0.5, python::arg("nFlipsPerSample") = 3,
        python::arg("nSample") = 100, python::arg("sampleSeed") = 100,
        python::arg("permuteDeg4Nodes") = true, python::arg("bondLength") = -1.0,
-       python::arg("forceRDKit") = false),
+       python::arg("forceRDKit") = false,
+       python::arg("useBranchDepthPrioritization") = true),
       docString.c_str());
 
   docString =
