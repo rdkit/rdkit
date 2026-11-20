@@ -439,7 +439,8 @@ bondholder makeBondHolder(const Bond *bond, unsigned int otherIdx,
     res.stype = bond->getStereo();
     if (res.stype == Bond::BondStereo::STEREOCIS ||
         res.stype == Bond::BondStereo::STEREOTRANS) {
-      // Compare parity only after normalizing the reference atoms by rank.
+      // Use the same value for cis and trans so neither sorts first here.
+      // Either value works: both are above STEREONONE.
       res.bondStereo = Bond::STEREOCIS;
       res.controllingAtoms[0] = &atoms[bond->getStereoAtoms()[0]];
       res.controllingAtoms[2] = &atoms[bond->getStereoAtoms()[1]];
