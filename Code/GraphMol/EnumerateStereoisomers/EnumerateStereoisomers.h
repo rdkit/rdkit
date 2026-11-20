@@ -59,8 +59,9 @@ struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoEnumerationOptions {
                                 // stereocenter doubles the number of results
                                 // (and execution time) it's important to
                                 // keep an eye on this.
-  int randomSeed{-1};  // Seed for random number generator.  -1 means don't
-                       // seed.
+  int randomSeed{0xC0FFEE};     // Seed for random number generator.  -1 means
+                                // don't seed. Default is 0xC0FFEE so the
+                             // enumerator is deterministic by default.
 
   bool useRingSystemFilter{
       true};  // filter out stereoisomers containing ring systems that
