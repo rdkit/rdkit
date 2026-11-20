@@ -30,12 +30,14 @@
 #
 
 import copy
+import math
 import os
 import sys
 import unittest
 
 from rdkit import Chem
 from rdkit.Chem import rdFreeSASA
+from rdkit.Geometry import Point3D
 
 expected = [[0, 1, "Polar", 1.64], [1, 0, "Apolar", 1.88], [2, 0, "Apolar", 1.61],
             [3, 1, "Polar", 1.42], [4, 0, "Apolar", 1.88], [5, 0, "Apolar", 1.88],
@@ -313,6 +315,40 @@ class TestCase(unittest.TestCase):
     with self.assertRaises(ValueError):
       rdFreeSASA.CalcSASA(mol, radii=radii, opts=opts)
 
+
+  def test_isolated_atoms(self):
+    # Shrake-Rupley used to read past an empty neighbour list; such an atom is
+    # fully exposed, so its area is that of the whole probe-inflated sphere
+    def sphereArea(radius, probeRadius):
+      return 4.0 * math.pi * (radius + probeRadius)**2
+
+    def build(positions):
+      mol = Chem.RWMol()
+      for _ in positions:
+        mol.AddAtom(Chem.Atom(6))
+      mol = mol.GetMol()
+      conf = Chem.Conformer(mol.GetNumAtoms())
+      for i, pos in enumerate(positions):
+        conf.SetAtomPosition(i, Point3D(*pos))
+      mol.AddConformer(conf)
+      return mol
+
+    for alg in (rdFreeSASA.ShrakeRupley, rdFreeSASA.LeeRichards):
+      opts = rdFreeSASA.SASAOpts()
+      opts.algorithm = alg
+
+      # no neighbours at all
+      radii = [1.5]
+      mol = build([(0.0, 0.0, 0.0)])
+      sasa = rdFreeSASA.CalcSASA(mol, radii=radii, opts=opts)
+      self.assertTrue(abs(sasa - sphereArea(radii[0], opts.probeRadius)) < 1e-6)
+
+      # only the distant atom has no neighbours
+      radii = [1.7, 1.7, 2.2]
+      mol = build([(0.0, 0.0, 0.0), (1.5, 0.0, 0.0), (20.0, 0.0, 0.0)])
+      rdFreeSASA.CalcSASA(mol, radii=radii, opts=opts)
+      isolated = mol.GetAtomWithIdx(2).GetDoubleProp("SASA")
+      self.assertTrue(abs(isolated - sphereArea(radii[2], opts.probeRadius)) < 1e-6)
 
 if __name__ == '__main__':
   unittest.main()
