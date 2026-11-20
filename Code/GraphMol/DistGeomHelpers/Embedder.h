@@ -20,12 +20,13 @@
 #include <vector>
 #include "GraphMol/ROMol.h"
 #include <boost/shared_ptr.hpp>
+#include <memory>
 #include "ZMatrixBuilder.h"
 
 namespace DistGeom {
 class BoundsMatrix;
 class ChiralSet;
-using VECT_CHIRALSET = std::vector<boost::shared_ptr<ChiralSet>>;
+using VECT_CHIRALSET = std::vector<std::shared_ptr<ChiralSet>>;
 }  // namespace DistGeom
 
 namespace RDGeom {
@@ -191,6 +192,7 @@ struct RDKIT_DISTGEOMHELPERS_EXPORT EmbedParameters {
   bool symmetrizeConjugatedTerminalGroupsForPruning{true};
   EmbedFF embedForceField{EmbedFF::UFF};
   std::optional<unsigned int> optimizeConfWithId{std::nullopt};
+  std::vector<std::shared_ptr<DistGeom::ChiralSet>> additionalChiralSets{};
 };
 
 //! update parameters from a JSON string
