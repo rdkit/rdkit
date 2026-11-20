@@ -10,6 +10,7 @@
 
 #include <ranges>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
@@ -376,6 +377,137 @@ TEST_CASE("EnhancedStereo") {
   }
   CHECK(got.size() == 8);
 #endif
+}
+
+TEST_CASE("onlyStereoGroups") {
+  auto base = "C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)C[CH](O)C"_smiles;
+  REQUIRE(base);
+
+  // The last chiral center in the SMILES is intentionally left unspecified.
+  // It is not included in any group, so it must not be enumerated.
+  const std::vector<unsigned int> centers{1, 4, 7, 10};
+
+  std::ranges::for_each(centers, [&](auto idx) {
+    REQUIRE(base->getAtomWithIdx(idx)->getChiralTag() != Atom::CHI_UNSPECIFIED);
+  });
+
+  unsigned int undefinedCenterIdx = 13;
+  auto undefinedCenter = base->getAtomWithIdx(undefinedCenterIdx);
+  REQUIRE(undefinedCenter->getTotalDegree() == 4);
+  REQUIRE(undefinedCenter->getChiralTag() == Atom::CHI_UNSPECIFIED);
+
+  using GroupSpec = std::pair<StereoGroupType, std::vector<unsigned int>>;
+  auto molWithGroups = [&](const std::vector<GroupSpec> &groupSpecs) {
+    auto mol = std::make_unique<RWMol>(*base);
+    std::vector<StereoGroup> groups;
+    for (const auto &[groupType, atomIndices] : groupSpecs) {
+      std::vector<Atom *> atoms;
+      for (auto atomIdx : atomIndices) {
+        atoms.push_back(mol->getAtomWithIdx(atomIdx));
+      }
+      groups.emplace_back(groupType, std::move(atoms), std::vector<Bond *>{});
+    }
+    mol->setStereoGroups(std::move(groups));
+    return mol;
+  };
+
+  auto enumerateCXSmiles = [](const ROMol &mol) {
+    StereoEnumerationOptions options;
+    options.onlyStereoGroups = true;
+    StereoisomerEnumerator enumerator(mol, options);
+
+    // Do not canonicalize the SMILES to preserve the atom ordering
+    // from the input and make it easier to compare enumerated parities.
+    SmilesWriteParams params;
+    params.canonical = false;
+    params.rootedAtAtom = 0;
+    std::vector<std::string> results;
+    while (auto isomer = enumerator.next()) {
+      results.push_back(MolToCXSmiles(*isomer, params));
+    }
+    return results;
+  };
+
+  const std::vector<unsigned int> firstTwoTetrahedrals{centers[0], centers[1]};
+
+  SECTION("ABS groups are preserved when there is nothing to enumerate") {
+    auto mol = molWithGroups(
+        {{StereoGroupType::STEREO_ABSOLUTE, firstTwoTetrahedrals}});
+    const std::unordered_set<std::string> expected{
+        // In this case, nothing is enumerated, because the group is absolute.
+        // No flippers are detected, so we just return the original molecule
+        // (including the ABS stereo group).
+        "C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C |a:1,4|"};
+    const auto gotVec = enumerateCXSmiles(*mol);
+    const std::unordered_set<std::string> got(gotVec.begin(), gotVec.end());
+    CHECK(gotVec.size() == 1);
+    CHECK(got.size() == 1);
+    CHECK(got == expected);
+  }
+
+  SECTION("AND and OR groups can each be flipped as a whole") {
+    const std::unordered_set<std::string> expected{
+        "C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C",
+        "C[C@@H](F)C[C@@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C"};
+    for (auto groupType :
+         {StereoGroupType::STEREO_AND, StereoGroupType::STEREO_OR}) {
+      CAPTURE(groupType);
+      auto mol = molWithGroups({{groupType, firstTwoTetrahedrals}});
+      const auto gotVec = enumerateCXSmiles(*mol);
+      const std::unordered_set<std::string> got(gotVec.begin(), gotVec.end());
+      CHECK(gotVec.size() == 2);
+      CHECK(got.size() == 2);
+      CHECK(got == expected);
+    }
+  }
+
+  const std::vector<unsigned int> lastAndUndefinedTetrahedrals{
+      centers[3], undefinedCenterIdx};
+
+  SECTION("undefined centers are not enumerated in absolute groups") {
+    auto mol = molWithGroups(
+        {{StereoGroupType::STEREO_ABSOLUTE, lastAndUndefinedTetrahedrals}});
+    const std::unordered_set<std::string> expected{
+        "C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C |a:10|"};
+    const auto gotVec = enumerateCXSmiles(*mol);
+    const std::unordered_set<std::string> got(gotVec.begin(), gotVec.end());
+    CHECK(gotVec.size() == 1);
+    CHECK(got.size() == 1);
+    CHECK(got == expected);
+  }
+
+  SECTION("undefined centers are not enumerated in AND and OR groups") {
+    const std::unordered_set<std::string> expected{
+        "C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C",
+        "C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@@H](I)CC(O)C"};
+    for (auto groupType :
+         {StereoGroupType::STEREO_AND, StereoGroupType::STEREO_OR}) {
+      CAPTURE(groupType);
+      auto mol = molWithGroups({{groupType, lastAndUndefinedTetrahedrals}});
+      const auto gotVec = enumerateCXSmiles(*mol);
+      const std::unordered_set<std::string> got(gotVec.begin(), gotVec.end());
+      CHECK(gotVec.size() == 2);
+      CHECK(got.size() == 2);
+      CHECK(got == expected);
+    }
+  }
+
+  SECTION("Multiple group types and an ungrouped center") {
+    auto mol = molWithGroups(
+        {{StereoGroupType::STEREO_ABSOLUTE, {centers[0]}},
+         {StereoGroupType::STEREO_AND, {centers[1], centers[2]}},
+         {StereoGroupType::STEREO_OR, lastAndUndefinedTetrahedrals}});
+    const std::unordered_set<std::string> expected{
+        "C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C",
+        "C[C@H](F)C[C@@H](Cl)C[C@@H](Br)C[C@H](I)CC(O)C",
+        "C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@@H](I)CC(O)C",
+        "C[C@H](F)C[C@@H](Cl)C[C@@H](Br)C[C@@H](I)CC(O)C"};
+    const auto gotVec = enumerateCXSmiles(*mol);
+    const std::unordered_set<std::string> got(gotVec.begin(), gotVec.end());
+    CHECK(gotVec.size() == 4);
+    CHECK(got.size() == 4);
+    CHECK(got == expected);
+  }
 }
 
 TEST_CASE("Issue 2890") {
