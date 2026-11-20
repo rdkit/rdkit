@@ -148,6 +148,18 @@ std::unique_ptr<MacroMolTemplate> MacroMolTemplateBuilder::build() const {
   if (!d_mainGroupSet || d_mainAtomIdxs.empty()) {
     invalidTemplate("main group must be nonempty");
   }
+  // Queries are not supported (yet); they would be lost when expanding a
+  // MacroMol.
+  for (const auto atom : d_mol.atoms()) {
+    if (atom->hasQuery()) {
+      invalidTemplate("query atoms are not supported");
+    }
+  }
+  for (const auto bond : d_mol.bonds()) {
+    if (bond->hasQuery()) {
+      invalidTemplate("query bonds are not supported");
+    }
+  }
 
   // Validate the complete atom partition before deriving any SGroup metadata.
   validateUniqueInRange(d_mainAtomIdxs, d_mol.getNumAtoms(), "main group");
