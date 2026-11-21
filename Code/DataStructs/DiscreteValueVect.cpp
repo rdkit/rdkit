@@ -192,19 +192,37 @@ void DiscreteValueVect::initFromText(const char *pkl, const unsigned int len) {
   }
   std::uint32_t tInt;
   streamRead(ss, tInt);
+  if (tInt > SIXTEENBITVALUE) {
+    throw ValueErrorException("bad value type in DiscreteValueVect pickle");
+  }
   d_type = static_cast<DiscreteValueType>(tInt);
 
   streamRead(ss, tInt);
   d_bitsPerVal = tInt;
+  if (d_bitsPerVal != (1u << static_cast<unsigned int>(d_type))) {
+    throw ValueErrorException("bad bits per value in DiscreteValueVect pickle");
+  }
   d_valsPerInt = BITS_PER_INT / d_bitsPerVal;
   streamRead(ss, tInt);
   d_mask = tInt;
+  if (d_mask != ((1u << d_bitsPerVal) - 1)) {
+    throw ValueErrorException("bad mask in DiscreteValueVect pickle");
+  }
   streamRead(ss, tInt);
   d_length = tInt;
   streamRead(ss, tInt);
   d_numInts = tInt;
+  if (d_numInts != (static_cast<std::uint64_t>(d_length) + d_valsPerInt - 1) /
+                       d_valsPerInt) {
+    throw ValueErrorException(
+        "length does not match storage size in DiscreteValueVect pickle");
+  }
   auto *data = new std::uint32_t[d_numInts];
   ss.read((char *)data, d_numInts * sizeof(std::uint32_t));
+  if (ss.fail()) {
+    delete[] data;
+    throw ValueErrorException("truncated DiscreteValueVect pickle");
+  }
 
 #if defined(BOOST_BIG_ENDIAN)
   std::uint32_t *td = new std::uint32_t[d_numInts];
