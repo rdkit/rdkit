@@ -1244,6 +1244,7 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly, bool mergeIsotopes) {
     Atom *atom = mol.getAtomWithIdx(currIdx);
     if (!hatoms[currIdx]) {
       unsigned int numHsToRemove = 0;
+      std::vector<unsigned int> hNeighborsRemoved;
       ROMol::ADJ_ITER begin, end;
       boost::tie(begin, end) = mol.getAtomNeighbors(atom);
 
@@ -1256,6 +1257,7 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly, bool mergeIsotopes) {
           bool checkIsotope = mergeIsotopes || bgn.getIsotope() == 0;
           if (checkUnmapped && checkIsotope) {
             atomsToRemove.push_back(rdcast<unsigned int>(*begin));
+            hNeighborsRemoved.push_back(rdcast<unsigned int>(*begin));
             ++numHsToRemove;
           }
         }
@@ -1275,6 +1277,33 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly, bool mergeIsotopes) {
         //  but that would produce non-standard SMARTS without the user
         //  having started with a non-standard SMARTS.
         //
+
+        // Removing the explicit Hs changes the ordering of the bonds
+        // about this atom; if it is a chiral center we may need to flip
+        // the chiral tag to compensate (this is the same fixup that
+        // removeHs() does for each H it removes). github #9675
+        bool flipChirality = false;
+        auto chiralTag = atom->getChiralTag();
+        if (chiralTag != Atom::CHI_UNSPECIFIED) {
+          INT_LIST removedBonds;
+          for (auto hidx : hNeighborsRemoved) {
+            auto *bnd = mol.getBondBetweenAtoms(currIdx, hidx);
+            if (bnd) {
+              removedBonds.push_back(bnd->getIdx());
+            }
+          }
+          INT_LIST neighborIndices;
+          for (const auto &nbnd : mol.atomBonds(atom)) {
+            if (std::find(removedBonds.begin(), removedBonds.end(),
+                          nbnd->getIdx()) == removedBonds.end()) {
+              neighborIndices.push_back(nbnd->getIdx());
+            }
+          }
+          neighborIndices.insert(neighborIndices.end(),
+                                 removedBonds.begin(), removedBonds.end());
+          flipChirality = atom->getPerturbationOrder(neighborIndices) % 2;
+        }
+
         if (!atom->hasQuery()) {
           // it wasn't a query atom, we need to replace it so that we can add
           // a query:
@@ -1282,9 +1311,15 @@ void mergeQueryHs(RWMol &mol, bool mergeUnmappedOnly, bool mergeIsotopes) {
           auto *newAt = new QueryAtom;
           newAt->setQuery(tmp);
           newAt->updateProps(*atom);
+          // updateProps() copies the property dictionary but not the
+          // chiral tag; carry it over explicitly (github #9675)
+          newAt->setChiralTag(chiralTag);
           mol.replaceAtom(atom->getIdx(), newAt);
           delete newAt;
           atom = mol.getAtomWithIdx(currIdx);
+        }
+        if (flipChirality) {
+          atom->invertChirality();
         }
         for (unsigned int i = 0; i < numHsToRemove; ++i) {
           ATOM_EQUALS_QUERY *tmp = makeAtomHCountQuery(i);
