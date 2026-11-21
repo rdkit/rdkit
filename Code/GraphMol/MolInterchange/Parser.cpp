@@ -331,6 +331,10 @@ void readSubstanceGroups(RWMol *mol, const bj::value &sgVals) {
       const auto &brks = sgVal.at("brackets").as_array();
       for (const auto &brk : brks) {
         SubstanceGroup::Bracket bracket;
+        if (brk.as_array().size() > bracket.size()) {
+          throw FileParseException(
+              "Bad Format: bracket has more than three points");
+        }
         unsigned int idx = 0;
         for (const auto &pt : brk.as_array()) {
           const auto &pta = pt.as_array();
@@ -396,6 +400,9 @@ void readBondStereo(Bond *bnd, const bj::value &bondVal,
   }
   if (bondVal.as_object().contains("stereoAtoms")) {
     const auto &aids = bondVal.at("stereoAtoms").as_array();
+    if (aids.size() != 2) {
+      throw FileParseException("Bad Format: stereoAtoms must have two atoms");
+    }
     bnd->setStereoAtoms(static_cast<int>(aids[0].as_int64()),
                         static_cast<int>(aids[1].as_int64()));
   } else if (stereo == "cis" || stereo == "trans") {
@@ -838,6 +845,9 @@ void readRDKitRepresentation(RWMol *mol, const bj::value &repVal,
         INT_VECT atomRing;
         INT_VECT bondRing;
         size_t sz = val.as_array().size();
+        if (!sz) {
+          throw FileParseException("Bad Format: empty atomRing");
+        }
         atomRing.reserve(sz);
         bondRing.reserve(sz);
         for (size_t i = 0; i < sz - 1; ++i) {
