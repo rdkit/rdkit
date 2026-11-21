@@ -86,7 +86,7 @@ char *Base64Decode(const char *inText, unsigned int *size) {
 
   size_t i;
   // FIX: we don't really need to build this table here
-  for (i = 0; i < 255; i++) {
+  for (i = 0; i < 256; i++) {
     transTable[i] = 0x80;
   }
   for (i = 'A'; i <= 'Z'; i++) {
@@ -101,7 +101,9 @@ char *Base64Decode(const char *inText, unsigned int *size) {
   transTable[static_cast<int>('+')] = 62;
   transTable[static_cast<int>('/')] = 63;
 
-  size_t outLen = 3 * inLen / 4;
+  // each complete 4-char block yields 3 bytes, and a trailing partial block
+  // writes up to 3 more below
+  size_t outLen = 3 * (inLen / 4) + 3;
   auto *res = new char[outLen];
   res[outLen - 1] = 0;
   size_t pos = 0;
