@@ -84,11 +84,11 @@ NB_MODULE(rdShapeAlign, m) {
       .def_prop_rw(
           "atomRadii",
           [](const ShapeInputOptions &opts) {
-            nb::list py_list;
+            nb::tuple_builder radii(opts.atomRadii.size());
             for (const auto &val : opts.atomRadii) {
-              py_list.append(nb::make_tuple(static_cast<int>(val.first), val.second));
+              radii.put(nb::make_tuple(static_cast<int>(val.first), val.second));
             }
-            return nb::tuple(py_list);
+            return radii.commit();
           },
           [](ShapeInputOptions &opts, nb::object ar) {
             int len = nb::len(ar);

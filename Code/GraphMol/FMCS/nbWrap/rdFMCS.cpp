@@ -8,6 +8,8 @@
 //  which is included in the file license.txt, found at the root
 //  of the RDKit source tree.
 //
+#include <stdexcept>
+
 #include <nanobind/nanobind.h>
 #include <nanobind/stl/shared_ptr.h>
 #include <nanobind/stl/string.h>
@@ -399,7 +401,11 @@ class PyMCSParameters {
     CHECK_INVARIANT(cfud, "");
     bool res = false;
     {
-      PyGILStateHolder h;
+      nb::gil_scoped_acquire gil;
+      if (!gil.is_valid()) {
+        throw std::runtime_error(
+            "Cannot call MCS atom comparator: Python is shutting down");
+      }
       res = nb::cast<bool>(cfud->pyAtomBondCompData.pyAtomComp.attr(
           COMPARE_FUNC_NAME)(nb::cast(&p, nb::rv_policy::reference),
                              nb::cast(&mol1, nb::rv_policy::reference), atom1,
@@ -416,7 +422,11 @@ class PyMCSParameters {
     CHECK_INVARIANT(cfud, "");
     bool res = false;
     {
-      PyGILStateHolder h;
+      nb::gil_scoped_acquire gil;
+      if (!gil.is_valid()) {
+        throw std::runtime_error(
+            "Cannot call MCS bond comparator: Python is shutting down");
+      }
       res = nb::cast<bool>(cfud->pyAtomBondCompData.pyBondComp.attr(
           COMPARE_FUNC_NAME)(nb::cast(&p, nb::rv_policy::reference),
                              nb::cast(&mol1, nb::rv_policy::reference), bond1,
@@ -436,7 +446,10 @@ class PyMCSParameters {
       paramsCopy.BondTyper = pcud->pyAtomBondCompData.standardBondTyperFunc;
     }
     {
-      PyGILStateHolder h;
+      nb::gil_scoped_acquire gil;
+      if (!gil.is_valid()) {
+        return false;  // Cancel the search when Python cannot report progress.
+      }
       PyMCSParameters ps(paramsCopy, *pcud);
       PyMCSProgressData pd(stat);
       // Use rv_policy::reference because ps and pd are stack-allocated and
@@ -458,7 +471,11 @@ class PyMCSParameters {
     CHECK_INVARIANT(fmud, "");
     bool res = false;
     {
-      PyGILStateHolder h;
+      nb::gil_scoped_acquire gil;
+      if (!gil.is_valid()) {
+        throw std::runtime_error(
+            "Cannot call MCS final match check: Python is shutting down");
+      }
       PyMCSParameters ps(*params, *fmud);
       auto pyAtomIdxMatch = buildAtomIdxMatchTuple(c1, c2, query, target);
       auto pyBondIdxMatch =
@@ -481,7 +498,11 @@ class PyMCSParameters {
     CHECK_INVARIANT(afud, "");
     bool res = false;
     {
-      PyGILStateHolder h;
+      nb::gil_scoped_acquire gil;
+      if (!gil.is_valid()) {
+        throw std::runtime_error(
+            "Cannot call MCS acceptance callback: Python is shutting down");
+      }
       PyMCSParameters ps(*params, *afud);
       auto pyAtomIdxMatch = convertMatchesToTupleOfPairs(atomIdxMatch);
       auto pyBondIdxMatch = convertMatchesToTupleOfPairs(bondIdxMatch);
