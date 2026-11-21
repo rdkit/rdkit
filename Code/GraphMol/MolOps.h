@@ -1000,6 +1000,8 @@ inline int symmetrizeSSSR(ROMol &mol, bool includeDativeBonds,
     - The result of this is cached in the molecule's local property
   dictionary, which will handle deallocation. The caller should <b>not</b> \c
   delete this pointer.
+    - Each combination of \c useBO, \c emptyVal, and \c bondsToUse is cached
+  separately.
 
 */
 RDKIT_GRAPHMOL_EXPORT double *getAdjacencyMatrix(

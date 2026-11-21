@@ -1471,7 +1471,7 @@ BOOST_PYTHON_MODULE(rdmolfiles) {
               (void (*)(const ROMol &, const std::string &,
                         const MolWriterParams &, int))RDKit::MolToV3KMolFile,
               (python::arg("mol"), python::arg("filename"),
-               python::arg("params") = true, python::arg("confId") = -1),
+               python::arg("params"), python::arg("confId") = -1),
               docString.c_str());
 
   docString =

@@ -12,7 +12,7 @@ endif (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/enum.h)
 
 rdkit_library(RDGeneral
         Invariant.cpp types.cpp utils.cpp RDGeneralExceptions.cpp RDLog.cpp
-        LocaleSwitcher.cpp versions.cpp SHARED)
+        LocaleSwitcher.cpp ControlCHandler.cpp versions.cpp SHARED)
 target_compile_definitions(RDGeneral PRIVATE RDKIT_RDGENERAL_BUILD)
 
 if (RDK_USE_BOOST_STACKTRACE AND UNIX AND NOT APPLE)
@@ -76,4 +76,7 @@ rdkit_catch_test(dictTestsCatch catch_dict.cpp
         LINK_LIBRARIES RDGeneral)
 
 rdkit_catch_test(logTestsCatch catch_logs.cpp
+        LINK_LIBRARIES RDGeneral)
+
+rdkit_catch_test(controlCHandlerTestsCatch catch_controlc.cpp
         LINK_LIBRARIES RDGeneral)

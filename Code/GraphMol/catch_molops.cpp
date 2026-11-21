@@ -885,3 +885,31 @@ TEST_CASE("GitHub #9270: Segfault when calling MolToSmiles on submol") {
     REQUIRE(dblBond->getStereoAtoms() == std::vector<int>{1, 3});
   }
 }
+
+TEST_CASE("getAdjacencyMatrix honors emptyVal and bondsToUse") {
+  auto m = "CCO"_smiles;
+  REQUIRE(m);
+  const auto nAtoms = m->getNumAtoms();
+  SECTION("emptyVal fills non-adjacent entries") {
+    const double *adjMat = MolOps::getAdjacencyMatrix(*m, false, -1);
+    CHECK(adjMat[0 * nAtoms + 0] == -1.0);
+    CHECK(adjMat[0 * nAtoms + 1] == 1.0);
+    CHECK(adjMat[0 * nAtoms + 2] == -1.0);
+  }
+  SECTION("the cache distinguishes emptyVal") {
+    const double *zeros = MolOps::getAdjacencyMatrix(*m, false, 0);
+    const double *minusOnes = MolOps::getAdjacencyMatrix(*m, false, -1);
+    CHECK(zeros[0 * nAtoms + 2] == 0.0);
+    CHECK(minusOnes[0 * nAtoms + 2] == -1.0);
+  }
+  SECTION("the cache distinguishes bondsToUse") {
+    const double *allBonds = MolOps::getAdjacencyMatrix(*m);
+    boost::dynamic_bitset<> firstBondOnly(m->getNumBonds());
+    firstBondOnly.set(0);
+    const double *subset = MolOps::getAdjacencyMatrix(*m, false, 0, false,
+                                                      nullptr, &firstBondOnly);
+    CHECK(allBonds[1 * nAtoms + 2] == 1.0);
+    CHECK(subset[0 * nAtoms + 1] == 1.0);
+    CHECK(subset[1 * nAtoms + 2] == 0.0);
+  }
+}
