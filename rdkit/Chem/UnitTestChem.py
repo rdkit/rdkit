@@ -14,8 +14,7 @@ import pickle
 import unittest
 
 from rdkit import Chem, RDConfig
-from rdkit.Chem import EnumerateStereoisomers
-
+from rdkit.Chem import rdEnumerateStereoisomers
 
 class TestCase(unittest.TestCase):
 
@@ -176,7 +175,7 @@ class TestCase(unittest.TestCase):
     """ github4144: EnumerateStereiosomers clearing ring info """
     m = Chem.MolFromSmiles('CSCc1cnc(C=Nn2c(C)nc3sc4c(c3c2=O)CCCCC4)s1')
     sssr = [list(x) for x in Chem.GetSymmSSSR(m)]
-    sms = EnumerateStereoisomers.EnumerateStereoisomers(m)
+    sms = rdEnumerateStereoisomers.StereoisomerEnumerator(m)
     for sm in sms:
       sssr2 = [list(x) for x in Chem.GetSymmSSSR(sm)]
       self.assertEqual(sssr, sssr2)
@@ -184,13 +183,13 @@ class TestCase(unittest.TestCase):
   def testWigglyBondsAndEnumerateStereoisomers(self):
 
     m = Chem.MolFromSmiles('CC=CC |w:1.0|')
-    sms = [Chem.MolToSmiles(x) for x in EnumerateStereoisomers.EnumerateStereoisomers(m)]
+    sms = [Chem.MolToSmiles(x) for x in rdEnumerateStereoisomers.StereoisomerEnumerator(m)]
     self.assertEqual(len(sms), 2)
     self.assertIn('C/C=C/C', sms)
     self.assertIn('C/C=C\\C', sms)
 
     m = Chem.MolFromSmiles('CC(F)(Cl)(Br) |w:1.0|')
-    sms = [Chem.MolToSmiles(x) for x in EnumerateStereoisomers.EnumerateStereoisomers(m)]
+    sms = [Chem.MolToSmiles(x) for x in rdEnumerateStereoisomers.StereoisomerEnumerator(m)]
     self.assertEqual(len(sms), 2)
     self.assertIn('C[C@](F)(Cl)Br', sms)
     self.assertIn('C[C@@](F)(Cl)Br', sms)
@@ -220,8 +219,9 @@ class TestCase(unittest.TestCase):
       return mol
 
     def enumerate_cxsmiles(mol):
-      options = EnumerateStereoisomers.StereoEnumerationOptions(onlyStereoGroups=True)
-      isomers = list(EnumerateStereoisomers.EnumerateStereoisomers(mol, options))
+      options = rdEnumerateStereoisomers.StereoEnumerationOptions()
+      options.onlyStereoGroups=True
+      isomers = list(rdEnumerateStereoisomers.StereoisomerEnumerator(mol, options))
       params = Chem.SmilesWriteParams()
 
       # Do not canonicalize the SMILES to preserve the atom ordering

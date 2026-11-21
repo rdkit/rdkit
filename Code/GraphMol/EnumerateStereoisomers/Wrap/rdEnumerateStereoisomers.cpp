@@ -55,7 +55,7 @@ class LocalStereoEnumerator {
     return iso;
   }
 
-  unsigned int GetStereoisomerCount() {
+  uint64_t GetStereoisomerCount() {
     return dp_enumerator->getStereoisomerCount();
   }
 
