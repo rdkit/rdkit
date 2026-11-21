@@ -713,20 +713,38 @@ TEST_CASE("OOB read in depickling") {
   MolPickler::pickleMol(*m, pkl);
   REQUIRE(pkl.size() == 95);
   // these are bytes in the ring definitions of the pickle:
+  REQUIRE(static_cast<unsigned int>(pkl[80]) == 4);
   REQUIRE(static_cast<unsigned int>(pkl[83]) == 2);
   REQUIRE(static_cast<unsigned int>(pkl[84]) == 3);
-  pkl[83] = 3;
-  pkl[84] = 2;
-  {
-    RWMol m2;
-    std::istringstream inStream(pkl);
-    REQUIRE_THROWS_AS(MolPickler::molFromPickle(inStream, m2),
-                      MolPicklerException);
+  SECTION("ring size zero") {
+    pkl[80] = 0;
+    {
+      RWMol m2;
+      std::istringstream inStream(pkl);
+      REQUIRE_THROWS_AS(MolPickler::molFromPickle(inStream, m2),
+                        MolPicklerException);
+    }
+    {
+      RWMol m2;
+      std::istringstream inStream(pkl);
+      REQUIRE_THROWS_WITH(MolPickler::molFromPickle(inStream, m2),
+                          "invalid ring size");
+    }
   }
-  {
-    RWMol m2;
-    std::istringstream inStream(pkl);
-    REQUIRE_THROWS_WITH(MolPickler::molFromPickle(inStream, m2),
-                        "ring-bond not found");
+  SECTION("invalid ring member order") {
+    pkl[83] = 3;
+    pkl[84] = 2;
+    {
+      RWMol m2;
+      std::istringstream inStream(pkl);
+      REQUIRE_THROWS_AS(MolPickler::molFromPickle(inStream, m2),
+                        MolPicklerException);
+    }
+    {
+      RWMol m2;
+      std::istringstream inStream(pkl);
+      REQUIRE_THROWS_WITH(MolPickler::molFromPickle(inStream, m2),
+                          "ring-bond not found");
+    }
   }
 }

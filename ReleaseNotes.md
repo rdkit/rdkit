@@ -5,6 +5,7 @@
 (Note: I'm no longer attempting to manually curate names. If you would like to
 see your contribution acknowledged with your name, please set your name in
 GitHub)
+Co5mos, İlker YILMAZ
 
 ## Backwards incompatible changes:
 - `Flippers.h` has been removed from the installed headers.
@@ -30,6 +31,8 @@ Hurst, Yahya Kayaal, Steven Kearnes, Brian Kelley, Malte Korn, Niels Maeder, Dan
 Nealschneider, Yakov Pechersky, Julianus Pfeuffer, Davis Rens, Ricardo
 Rodriguez, Anton Siomchen, Stefano Taverni, Yuri Victorovich, Nic Zonta,
 mtrojanowski-beit, Xavier M 
+
+## Highlights
 
 ## New Features and Enhancements:
   - Aligning molecules from Java/C#

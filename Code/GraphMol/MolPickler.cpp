@@ -2280,8 +2280,8 @@ void MolPickler::_addRingInfoFromPickle(std::istream &ss, ROMol *mol,
       T tmpT;
       T ringSize;
       streamRead(ss, ringSize, version);
-      if (ringSize < 0) {
-        throw MolPicklerException("negative ring size");
+      if (ringSize <= 0) {
+        throw MolPicklerException("invalid ring size");
       }
       INT_VECT atoms(static_cast<int>(ringSize));
       INT_VECT bonds(static_cast<int>(ringSize));
