@@ -75,6 +75,8 @@ static PyObject *Clustering_MurtaghCluster(python::object data, int nPts,
     return nullptr;
   }
 
+  python::handle<> dataOwner(reinterpret_cast<PyObject *>(dataContig));
+
   ia = (boost::int64_t *)calloc(nPts, sizeof(boost::int64_t));
   auto ia_capsule = PyCapsule_New(ia, nullptr, capsule_cleanup);
 
@@ -132,6 +134,8 @@ static PyObject *Clustering_MurtaghDistCluster(python::object data, int nPts,
     throw_value_error("PyArray_Type expected as input");
     return nullptr;
   }
+
+  python::handle<> dataOwner(reinterpret_cast<PyObject *>(dataContig));
 
   ia = (boost::int64_t *)calloc(nPts, sizeof(boost::int64_t));
   auto ia_capsule = PyCapsule_New(ia, nullptr, capsule_cleanup);

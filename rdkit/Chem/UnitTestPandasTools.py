@@ -237,7 +237,8 @@ class TestPandasTools(unittest.TestCase):
   '''
     try:
       with StringIO(csv_data) as hnd:
-        df = PandasTools.pd.read_csv(hnd, sep=";")
+        # The C CSV parser leaks encoding state; this test covers rendering.
+        df = PandasTools.pd.read_csv(hnd, sep=";", engine="python")
         PandasTools.InstallPandasTools()
         PandasTools.RenderImagesInAllDataFrames()
         PandasTools.AddMoleculeColumnToFrame(df, 'Smiles')
