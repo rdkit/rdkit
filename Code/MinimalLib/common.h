@@ -195,6 +195,11 @@ RWMol *mol_from_input(const std::string &input,
         MolOps::assignChiralTypesFromMolParity(*res);
       }
       if (assignStereo) {
+        if (haveRDKitJson) {
+          // JSON stores double-bond stereo and reference atoms, but no
+          // single-bond directions. Restore these before stereo cleanup.
+          MolOps::setDoubleBondNeighborDirections(*res);
+        }
         MolOps::assignStereochemistry(*res, true, true, true);
       }
       if (assignCIPLabels) {

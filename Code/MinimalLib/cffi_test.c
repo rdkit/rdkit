@@ -4153,6 +4153,96 @@ M  END\n";
   free(pkl);
 }
 
+void test_json_stereo_roundtrip() {
+  const char *inputs[] = {
+      "F/C=C/F",          "F/C=C\\F",          "C/C=C/C=C/C", "C/C=C\\C=C/C",
+      "C[C@H](F)/C=C/Cl", "[H]/C(F)=C(/Cl)Br", "FC=CF",       "C[C@H](F)Cl"};
+  const char *options[] = {NULL, "{\"assignStereo\":true}",
+                           "{\"assignStereo\":false}",
+                           "{\"assignCIPLabels\":true}"};
+  const short previous = use_legacy_stereo_perception(1);
+  printf("--------------------------\n");
+  printf("  test_json_stereo_roundtrip\n");
+  for (short legacy = 0; legacy <= 1; ++legacy) {
+    use_legacy_stereo_perception(legacy);
+    for (size_t i = 0; i < sizeof(inputs) / sizeof(inputs[0]); ++i) {
+      for (int with_coords = 0; with_coords <= 1; ++with_coords) {
+        size_t size;
+        char *pkl = get_mol(inputs[i], &size, "{\"removeHs\":false}");
+        assert(pkl && size);
+        char *expected = get_smiles(pkl, size, NULL);
+        assert(expected);
+        if (with_coords) {
+          assert(set_2d_coords(&pkl, &size));
+        }
+        char *json = get_json(pkl, size, NULL);
+        assert(json);
+        for (size_t j = 0; j < sizeof(options) / sizeof(options[0]); ++j) {
+          size_t roundtrip_size;
+          char *roundtrip = get_mol(json, &roundtrip_size, options[j]);
+          assert(roundtrip && roundtrip_size);
+          char *actual = get_smiles(roundtrip, roundtrip_size, NULL);
+          assert(actual);
+          if (strcmp(actual, expected)) {
+            fprintf(
+                stderr,
+                "JSON stereo: legacy=%d coords=%d input=%s options=%s expected=%s actual=%s\n",
+                legacy, with_coords, inputs[i],
+                options[j] ? options[j] : "default", expected, actual);
+          }
+          assert(!strcmp(actual, expected));
+          free(actual);
+          free(roundtrip);
+        }
+        free(json);
+        free(expected);
+        free(pkl);
+      }
+    }
+  }
+  use_legacy_stereo_perception(previous);
+}
+
+void test_json_stereo_cleanup() {
+  const char *unknown =
+      "{\"commonchem\":{\"version\":10},"
+      "\"defaults\":{\"atom\":{\"stereo\":\"unspecified\"},"
+      "\"bond\":{\"stereo\":\"unspecified\"}},\"molecules\":[{"
+      "\"atoms\":[{\"z\":9},{\"z\":6,\"impHs\":1},{\"z\":6,\"impHs\":1},{\"z\":9}],"
+      "\"bonds\":[{\"atoms\":[0,1],\"bo\":1},{\"atoms\":[1,2],\"bo\":2,\"stereo\":\"either\"},"
+      "{\"atoms\":[2,3],\"bo\":1}]}]}";
+  const char *nonstereogenic =
+      "{\"commonchem\":{\"version\":10},"
+      "\"defaults\":{\"atom\":{\"stereo\":\"unspecified\"},"
+      "\"bond\":{\"stereo\":\"unspecified\"}},\"molecules\":[{"
+      "\"atoms\":[{\"z\":9},{\"z\":6},{\"z\":9},{\"z\":6},{\"z\":17},{\"z\":35}],"
+      "\"bonds\":[{\"atoms\":[0,1],\"bo\":1},{\"atoms\":[1,2],\"bo\":1},"
+      "{\"atoms\":[1,3],\"bo\":2,\"stereo\":\"trans\",\"stereoAtoms\":[0,4]},"
+      "{\"atoms\":[3,4],\"bo\":1},{\"atoms\":[3,5],\"bo\":1}]}]}";
+  const short previous = use_legacy_stereo_perception(1);
+  printf("--------------------------\n");
+  printf("  test_json_stereo_cleanup\n");
+  for (short legacy = 0; legacy <= 1; ++legacy) {
+    use_legacy_stereo_perception(legacy);
+    size_t size;
+    char *pkl = get_mol(unknown, &size, NULL);
+    assert(pkl && size);
+    char *json = get_json(pkl, size, NULL);
+    assert(json && strstr(json, "\"stereo\":\"either\""));
+    free(json);
+    free(pkl);
+
+    pkl = get_mol(nonstereogenic, &size, NULL);
+    assert(pkl && size);
+    json = get_json(pkl, size, NULL);
+    assert(json && !strstr(json, "\"stereo\":\"trans\"") &&
+           !strstr(json, "\"stereo\":\"cis\""));
+    free(json);
+    free(pkl);
+  }
+  use_legacy_stereo_perception(previous);
+}
+
 int main() {
   enable_logging();
   char *vers = version();
@@ -4160,6 +4250,8 @@ int main() {
   free(vers);
 
   test_io();
+  test_json_stereo_roundtrip();
+  test_json_stereo_cleanup();
   test_svg();
   test_rxn_svg();
   test_flexicanvas();
