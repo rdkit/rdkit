@@ -10,12 +10,15 @@
 #include "RDGeneral/test.h"
 #include <catch2/catch_all.hpp>
 #include <RDGeneral/Invariant.h>
+#include <RDGeneral/FileParseException.h>
+#include <GraphMol/Atropisomers.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/Subgraphs/Subgraphs.h>
 #include <GraphMol/Subgraphs/SubgraphUtils.h>
+#include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <GraphMol/FileParsers/MolWriters.h>
@@ -23,6 +26,199 @@
 #include <GraphMol/test_fixtures.h>
 
 using namespace RDKit;
+
+TEST_CASE("V3000 enhanced stereo collections for double bonds",
+          "[molblock][stereo]") {
+  const bool legacy = GENERATE(false, true);
+  UseLegacyStereoPerceptionFixture useLegacy(legacy);
+  const std::string prefix = R"CTAB(diene
+  RDKit          2D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 6 5 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 C -1 1 0 0
+M  V30 2 C 0 0 0 0
+M  V30 3 C 1 0 0 0
+M  V30 4 C 2 -1 0 0
+M  V30 5 C 3 -1 0 0
+M  V30 6 C 4 0 0 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 10 1 1 2
+M  V30 20 2 2 3
+M  V30 30 1 3 4
+M  V30 40 2 4 5
+M  V30 50 1 5 6
+M  V30 END BOND
+M  V30 BEGIN COLLECTION
+)CTAB";
+  const std::string end = "M  V30 END COLLECTION\nM  V30 END CTAB\nM  END\n";
+  using enum StereoGroupType;
+  SECTION("independent input and default molfile round-trip") {
+    for (const auto &[label, type] : {std::pair{"STEBABS", STEREO_ABSOLUTE},
+                                      std::pair{"STEBRAC7", STEREO_AND},
+                                      std::pair{"STEBREL7", STEREO_OR}}) {
+      CAPTURE(label, legacy);
+      auto mol = v2::FileParsers::MolFromMolBlock(
+          prefix + "M  V30 MDLV30/" + label + " BONDS=(2 40 20)\n" + end);
+      auto checkGroup = [&](const ROMol &m) {
+        const auto &groups = m.getStereoGroups();
+        REQUIRE(groups.size() == 1);
+        const auto &group = groups.front();
+        CHECK(group.getGroupType() == type);
+        CHECK(group.getAtoms().empty());
+        REQUIRE(group.getBonds().size() == 2);
+        CHECK(group.getBonds()[0] == m.getBondWithIdx(3));
+        CHECK(group.getBonds()[1] == m.getBondWithIdx(1));
+        auto stereo = m.getBondWithIdx(1)->getStereo();
+        CHECK((stereo == Bond::STEREOE || stereo == Bond::STEREOTRANS));
+        stereo = m.getBondWithIdx(3)->getStereo();
+        CHECK((stereo == Bond::STEREOZ || stereo == Bond::STEREOCIS));
+      };
+      REQUIRE(mol);
+      checkGroup(*mol);
+      CHECK(mol->getStereoGroups().front().getReadId() ==
+            (type == STEREO_ABSOLUTE ? 0u : 7u));
+      forwardStereoGroupIds(*mol);
+      auto written = MolToMolBlock(*mol);
+      CHECK(written.find(std::string(label) + " BONDS=(2 4 2)") !=
+            std::string::npos);
+      auto roundTrip = v2::FileParsers::MolFromMolBlock(written);
+      REQUIRE(roundTrip);
+      checkGroup(*roundTrip);
+      if (type != STEREO_ABSOLUTE) {
+        std::unique_ptr<ROMol> canonical = std::move(roundTrip);
+        canonicalizeStereoGroups(canonical);
+        checkGroup(*canonical);
+        auto reread =
+            v2::FileParsers::MolFromMolBlock(MolToMolBlock(*canonical));
+        REQUIRE(reread);
+        checkGroup(*reread);
+      }
+    }
+  }
+  SECTION(
+      "canonicalization preserves correlated members and honors ABS options") {
+    auto mol = "F/C=C/[C@H](Cl)[C@@H](Br)I"_smiles;
+    REQUIRE(mol);
+    auto bond = mol->getBondWithIdx(1);
+    auto center = mol->getAtomWithIdx(3);
+    auto otherCenter = mol->getAtomWithIdx(5);
+    mol->setStereoGroups({StereoGroup(STEREO_OR, {center}, {bond}, 7)});
+    const auto options =
+        GENERATE(StereoGroupAbsOptions::NeverInclude,
+                 StereoGroupAbsOptions::AlwaysInclude,
+                 StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist);
+    std::unique_ptr<ROMol> canonical = std::make_unique<ROMol>(*mol);
+    canonicalizeStereoGroups(canonical, options);
+    const auto &groups = canonical->getStereoGroups();
+    REQUIRE(groups.size() ==
+            (options == StereoGroupAbsOptions::NeverInclude ? 1 : 2));
+    CHECK(groups[0].getGroupType() == STEREO_OR);
+    CHECK(groups[0].getReadId() == 7);
+    CHECK(groups[0].getAtoms() ==
+          std::vector<Atom *>{canonical->getAtomWithIdx(center->getIdx())});
+    CHECK(groups[0].getBonds() ==
+          std::vector<Bond *>{canonical->getBondWithIdx(bond->getIdx())});
+    if (groups.size() == 2) {
+      CHECK(groups[1].getGroupType() == STEREO_ABSOLUTE);
+      CHECK(groups[1].getAtoms() ==
+            std::vector<Atom *>{
+                canonical->getAtomWithIdx(otherCenter->getIdx())});
+      CHECK(groups[1].getBonds().empty());
+    }
+  }
+  SECTION("explicit absolute double bonds respect ABS output options") {
+    auto mol = "F/C=C/F"_smiles;
+    REQUIRE(mol);
+    mol->setStereoGroups(
+        {StereoGroup(STEREO_ABSOLUTE, {}, {mol->getBondWithIdx(1)})});
+    const auto options =
+        GENERATE(StereoGroupAbsOptions::NeverInclude,
+                 StereoGroupAbsOptions::AlwaysInclude,
+                 StereoGroupAbsOptions::OnlyIncludeWhenOtherGroupsExist);
+    std::unique_ptr<ROMol> canonical = std::move(mol);
+    canonicalizeStereoGroups(canonical, options);
+    const auto &groups = canonical->getStereoGroups();
+    if (options == StereoGroupAbsOptions::AlwaysInclude) {
+      REQUIRE(groups.size() == 1);
+      CHECK(groups[0].getBonds() ==
+            std::vector<Bond *>{canonical->getBondWithIdx(1)});
+    } else {
+      CHECK(groups.empty());
+    }
+  }
+  SECTION("cleanup retains the specified double bond and group IDs") {
+    auto mol = "C/C=C/CC=C"_smiles;
+    REQUIRE(mol);
+    StereoGroup group(STEREO_OR, {},
+                      {mol->getBondWithIdx(1), mol->getBondWithIdx(4)}, 3);
+    group.setWriteId(5);
+    mol->setStereoGroups({group});
+    Chirality::cleanupStereoGroups(*mol);
+    const auto &groups = mol->getStereoGroups();
+    REQUIRE(groups.size() == 1);
+    CHECK(groups.front().getBonds() ==
+          std::vector<Bond *>{mol->getBondWithIdx(1)});
+    CHECK(groups.front().getReadId() == 3);
+    CHECK(groups.front().getWriteId() == 5);
+  }
+  SECTION("ambiguous atom and bond group numbers") {
+    const auto input = prefix +
+                       "M  V30 MDLV30/STEREL7 ATOMS=(1 2)\n"
+                       "M  V30 MDLV30/STEBREL7 BONDS=(1 20)\n" +
+                       end;
+    CHECK_THROWS_AS(v2::FileParsers::MolFromMolBlock(input),
+                    FileParseException);
+    v2::FileParsers::MolFileParserParams params;
+    params.strictParsing = false;
+    params.sanitize = false;
+    auto mol = v2::FileParsers::MolFromMolBlock(input, params);
+    REQUIRE(mol);
+    CHECK(mol->getStereoGroups().size() == 2);
+  }
+  SECTION(
+      "a correlated mixed group cannot be written as independent collections") {
+    auto mol = "C/C=C/[C@H](F)Cl"_smiles;
+    REQUIRE(mol);
+    mol->setStereoGroups({StereoGroup(STEREO_AND, {mol->getAtomWithIdx(3)},
+                                      {mol->getBondWithIdx(1)})});
+    CHECK_THROWS_AS(MolToV3KMolBlock(*mol), ValueErrorException);
+  }
+  SECTION("atom and double bond ABS collections coexist") {
+    auto mol = "C/C=C/[C@H](F)Cl"_smiles;
+    REQUIRE(mol);
+    mol->setStereoGroups(
+        {StereoGroup(STEREO_ABSOLUTE, {mol->getAtomWithIdx(3)}, {}),
+         StereoGroup(STEREO_ABSOLUTE, {}, {mol->getBondWithIdx(1)})});
+    auto block = MolToMolBlock(*mol);
+    CHECK(block.find("STEABS ATOMS=(1 4)") != std::string::npos);
+    CHECK(block.find("STEBABS BONDS=(1 2)") != std::string::npos);
+    auto read = v2::FileParsers::MolFromMolBlock(block);
+    REQUIRE(read);
+    const auto &groups = read->getStereoGroups();
+    REQUIRE(groups.size() == 1);
+    CHECK(groups[0].getAtoms() == std::vector<Atom *>{read->getAtomWithIdx(3)});
+    CHECK(groups[0].getBonds() == std::vector<Bond *>{read->getBondWithIdx(1)});
+  }
+  SECTION("converting an atom-numbered axis preserves existing bond members") {
+    auto mol = "F/C=C/F.Fc1c(Cl)cccc1-c1c(Br)cccc1F"_smiles;
+    REQUIRE(mol);
+    auto axis = mol->getBondBetweenAtoms(11, 12);
+    REQUIRE(axis);
+    axis->setStereo(Bond::STEREOATROPCW);
+    auto alkene = mol->getBondWithIdx(1);
+    mol->setStereoGroups(
+        {StereoGroup(STEREO_ABSOLUTE, {axis->getBeginAtom()}, {alkene})});
+    Atropisomers::cleanupAtropisomerStereoGroups(*mol);
+    const auto &groups = mol->getStereoGroups();
+    REQUIRE(groups.size() == 1);
+    CHECK(groups[0].getAtoms().empty());
+    CHECK(groups[0].getBonds() == std::vector<Bond *>{alkene, axis});
+  }
+}
 
 TEST_CASE("Github #5863: failure in WedgeMolBonds") {
   SECTION("as reported") {
