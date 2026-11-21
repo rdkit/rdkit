@@ -16,7 +16,11 @@
 #include "BitVectUtils.h"
 #include "ExplicitBitVect.h"
 #include "SparseIntVect.h"
+#include "base64.h"
 #include <limits>
+#include <memory>
+#include <string>
+#include <vector>
 
 using namespace RDKit;
 
@@ -41,4 +45,21 @@ TEST_CASE("github #9033: tversky is 1 when no bits are set") {
   CHECK(BraunBlanquetSimilarity(bv1, bv2) == 0.0);
   CHECK(RusselSimilarity(bv1, bv2) == 0.0);
   CHECK(RogotGoldbergSimilarity(bv1, bv2) == 0.0);
+}
+
+TEST_CASE("Base64Decode handles unpadded and empty input") {
+  struct Case {
+    std::string in;
+    std::string out;
+  };
+  std::vector<Case> cases{{"", ""},        {"T", ""},
+                          {"TW", "M"},     {"TWE", "Ma"},
+                          {"TWFu", "Man"}, {"TWFuTWE", "ManMa"},
+                          {"TWE=", "Ma"},  {"TWFuTWE=", "ManMa"}};
+  for (const auto &c : cases) {
+    INFO(c.in);
+    unsigned int len = 0;
+    std::unique_ptr<char[]> res(Base64Decode(c.in.c_str(), &len));
+    CHECK(std::string(res.get(), len) == c.out);
+  }
 }
