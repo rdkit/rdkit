@@ -6,6 +6,8 @@
 see your contribution acknowledged with your name, please set your name in
 GitHub)
 
+Co5mos, İlker YILMAZ
+
 ## Highlights
 
 ## Backwards incompatible changes:
