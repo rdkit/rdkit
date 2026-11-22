@@ -7620,7 +7620,7 @@ CAS<~>
     smi = rdChemReactions.ReactionToSmiles(rxn)
     self.assertEqual(
       smi,
-      "C=C1C[C@](C)(C(C)(C)C)CC(=C)/C1=C/c1cc(C)c(C)c(CCC)c1>>C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1"
+      "C=C1C[C@@](C)(C(C)(C)C)CC(=C)/C1=C\\c1cc(C)c(C)c(CCC)c1>>C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1"
     )
 
     Chem.SetUseLegacyStereoPerception(True)
@@ -7638,7 +7638,7 @@ CAS<~>
     smi = rdChemReactions.ReactionToSmiles(rxn)
     self.assertEqual(
       smi,
-      "C=C1C[C@](C)(C(C)(C)C)CC(=C)/C1=C/c1cc(C)c(C)c(CCC)c1>>C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1"
+      "C=C1C[C@@](C)(C(C)(C)C)CC(=C)/C1=C\\c1cc(C)c(C)c(CCC)c1>>C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1"
     )
 
     rxn = rdChemReactions.ReactionFromRxnFile(fileN, True, True, False)
@@ -7646,7 +7646,7 @@ CAS<~>
     smi = rdChemReactions.ReactionToSmiles(rxn)
     self.assertEqual(
       smi,
-      "C=C1C[C@](C)(C(C)(C)C)CC(=C)/C1=C/c1cc(C)c(C)c(CCC)c1>>C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1"
+      "C=C1C[C@@](C)(C(C)(C)C)CC(=C)/C1=C\\c1cc(C)c(C)c(CCC)c1>>C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1"
     )
 
     Chem.SetUseLegacyStereoPerception(True)
