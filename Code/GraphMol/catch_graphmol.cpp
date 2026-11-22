@@ -2351,7 +2351,7 @@ TEST_CASE("getValenceContrib()") {
   REQUIRE(m);
   CHECK(m->getBondWithIdx(1)->getValenceContrib(m->getAtomWithIdx(0)) == 0);
   CHECK(m->getBondWithIdx(1)->getValenceContrib(m->getAtomWithIdx(1)) == 0);
-  CHECK(m->getBondWithIdx(1)->getValenceContrib(m->getAtomWithIdx(2)) == 1);
+  CHECK(m->getBondWithIdx(1)->getValenceContrib(m->getAtomWithIdx(2)) == 2);
 }
 
 TEST_CASE("conformer details") {
@@ -4235,13 +4235,14 @@ TEST_CASE("Hybridization of dative bonded atoms") {
   const std::vector<Atom::HybridizationType> ref_hybridizations = {
       Atom::HybridizationType::SP3, Atom::HybridizationType::SP3,
       Atom::HybridizationType::SP2, Atom::HybridizationType::SP2,
-      Atom::HybridizationType::SP2, Atom::HybridizationType::SP3D2};
+      Atom::HybridizationType::SP2, Atom::HybridizationType::SP3D};
 
   SECTION("Base mol") {
     auto m = "CCC(=O)O"_smiles;
     REQUIRE(m);
 
     for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+      INFO("Checking atom " << i);
       CHECK(m->getAtomWithIdx(i)->getHybridization() == ref_hybridizations[i]);
     }
   }
@@ -4253,6 +4254,7 @@ TEST_CASE("Hybridization of dative bonded atoms") {
     REQUIRE(dBond->getBondType() == Bond::BondType::DATIVE);
 
     for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+      INFO("Checking atom " << i);
       CHECK(m->getAtomWithIdx(i)->getHybridization() == ref_hybridizations[i]);
     }
   }
