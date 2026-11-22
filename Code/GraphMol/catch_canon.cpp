@@ -26,6 +26,7 @@
 #include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 
+#include <numeric>
 #include <random>
 #include <tuple>
 
@@ -1578,6 +1579,20 @@ static void checkSmilesRoundtrip(const std::string &smiles,
   } else {
     CHECK(firstSmiles != secondSmiles);
   }
+}
+
+TEST_CASE("Canonical SMILES is independent of atom order (GitHub #8721)") {
+  auto usingLegacyStereo = GENERATE(false, true);
+  CAPTURE(usingLegacyStereo);
+  UseLegacyStereoPerceptionFixture useLegacy(usingLegacyStereo);
+
+  auto mol = v2::SmilesParse::MolFromSmiles(
+      "O=C(c1ccccc1C(=O)N1C(=O)c2ccccc2C1=O)N1C(=O)c2ccccc2C1=O");
+  REQUIRE(mol);
+  std::vector<unsigned int> order(mol->getNumAtoms());
+  std::iota(order.rbegin(), order.rend(), 0u);
+  std::unique_ptr<ROMol> renumbered{MolOps::renumberAtoms(*mol, order)};
+  CHECK(MolToSmiles(*renumbered) == MolToSmiles(*mol));
 }
 
 TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
