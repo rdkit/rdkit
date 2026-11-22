@@ -26,6 +26,7 @@
 #include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 
+#include <numeric>
 #include <random>
 #include <tuple>
 
@@ -1811,4 +1812,28 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
   auto shouldMatch = usingLegacyStereo ? legacyState : modernState;
 
   checkSmilesRoundtrip(smiles, shouldMatch);
+}
+
+TEST_CASE("Ring stereo canonicalization is independent of atom order") {
+  const auto &smiles = GENERATE(
+      as<std::string>{},
+      R"smi(c1c2c(ncc1Br)O[C@]3(C2)[C@H]4CC[N@@](C3)CC4)smi",  // #1965
+      R"smi(C1CC2(C1)NC(=S)N(C2=O)[C@]3([C@H]4CC[C@@H]3CC4)/C=C\C(=C(\Cl)/F)\F)smi"  // #1639
+  );
+  auto usingLegacyStereo = GENERATE(false, true);
+  CAPTURE(smiles, usingLegacyStereo);
+  UseLegacyStereoPerceptionFixture useLegacy(usingLegacyStereo);
+
+  auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+  REQUIRE(mol);
+  const auto expected = MolToSmiles(*mol);
+  std::vector<unsigned int> order(mol->getNumAtoms());
+  std::iota(order.begin(), order.end(), 0u);
+  std::mt19937 rng(0xf00d);
+  for (int i = 0; i < 10; ++i) {
+    CAPTURE(i);
+    std::shuffle(order.begin(), order.end(), rng);
+    std::unique_ptr<ROMol> renumbered{MolOps::renumberAtoms(*mol, order)};
+    CHECK(MolToSmiles(*renumbered) == expected);
+  }
 }
