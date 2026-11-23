@@ -3066,18 +3066,33 @@ void findPotentialStereoBonds(ROMol &mol, bool cleanIt) {
 void cleanupChirality(RWMol &mol) {
   unsigned int degree, perm;
   bool needCleanupStereoGroups = false;
+  // Sulfur and selenium with a lone pair are pyramidal stereocenters even
+  // when their bonds are conjugated (and their hybridization is therefore
+  // SP2). This matches the eligibility rule used by
+  // Chirality::isAtomPotentialTetrahedralCenter() (github #9848).
+  const auto isPyramidalChalcogen = [](const Atom *atom) {
+    const auto anum = atom->getAtomicNum();
+    if (anum != 16 && anum != 34) {
+      return false;
+    }
+    const auto explicitValence = atom->getValence(Atom::ValenceType::EXPLICIT);
+    return explicitValence == 4 ||
+           (explicitValence == 3 && atom->getFormalCharge() == 1);
+  };
   for (auto atom : mol.atoms()) {
     switch (atom->getChiralTag()) {
       case Atom::CHI_TETRAHEDRAL_CW:
       case Atom::CHI_TETRAHEDRAL_CCW:
-        if (atom->getHybridization() != Atom::SP3) {
+        if (atom->getHybridization() != Atom::SP3 &&
+            !isPyramidalChalcogen(atom)) {
           atom->setChiralTag(Atom::CHI_UNSPECIFIED);
           needCleanupStereoGroups = true;
         }
         break;
 
       case Atom::CHI_TETRAHEDRAL:
-        if (atom->getHybridization() != Atom::SP3) {
+        if (atom->getHybridization() != Atom::SP3 &&
+            !isPyramidalChalcogen(atom)) {
           atom->setChiralTag(Atom::CHI_UNSPECIFIED);
           needCleanupStereoGroups = true;
         } else {
