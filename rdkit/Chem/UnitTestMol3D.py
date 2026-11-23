@@ -30,6 +30,23 @@ class TestCase(unittest.TestCase):
     rms2 = AllChem.GetConformerRMS(m1, 0, 0, prealigned=True)
     self.assertAlmostEqual(rms2, 0.0, 4)
 
+  def testConformerRMSMatrixAlignmentSubset(self):
+    mol = Chem.MolFromSmiles('CCCC')
+    # The first three atoms superimpose. The fourth rotates around the central bond.
+    for offset, end in enumerate(((2., 1.4, 0.), (2., -1.4, 0.), (2., 0., 1.4))):
+      conf = Chem.Conformer(4)
+      for idx, (x, y, z) in enumerate(((-0.5, 1.4, 0.), (0., 0., 0.), (1.5, 0., 0.), end)):
+        conf.SetAtomPosition(idx, (x + offset, y, z))
+      mol.AddConformer(conf, assignId=True)
+
+    matrix = AllChem.GetConformerRMSMatrix(mol, atomIds=[0, 1, 2])
+    prealigned = AllChem.GetConformerRMSMatrix(mol, prealigned=True)
+    expected = [1.4, 1.4 / 2**0.5, 1.4 / 2**0.5]
+    for result in (matrix, prealigned):
+      self.assertEqual(len(result), len(expected))
+      for rms, ref in zip(result, expected):
+        self.assertAlmostEqual(rms, ref)
+
   def testConformerRMSMatrix(self):
     m1 = Chem.MultiConfMolFromSDF(os.path.join(RDConfig.RDCodeDir, "Chem/test_data/biaryl.sdf"),
                                   removeHs=False)

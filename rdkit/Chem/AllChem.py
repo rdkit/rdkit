@@ -172,8 +172,8 @@ def GetConformerRMSMatrix(mol, atomIds=None, prealigned=False):
 
     Arguments:
       - mol:     the molecule
-      - atomIds: (optional) list of atom ids to use a points for
-                 alingment - defaults to all atoms
+      - atomIds: (optional) atoms to use for alignment, defaults to all atoms.
+                 The RMS values are calculated over all atoms.
       - prealigned: (optional) by default the conformers are assumed
                     be unaligned and will therefore be aligned to the
                     first conformer
@@ -198,13 +198,12 @@ def GetConformerRMSMatrix(mol, atomIds=None, prealigned=False):
   confIds = [conf.GetId() for conf in mol.GetConformers()]
   if not prealigned:
     if atomIds:
-      AlignMolConformers(mol, atomIds=atomIds, RMSlist=rmsvals)
+      AlignMolConformers(mol, atomIds=atomIds)
     else:
       AlignMolConformers(mol, RMSlist=rmsvals)
-  else:  # already prealigned
-    for i in range(1, len(confIds)):
-      rmsvals.append(
-        GetConformerRMS(mol, confIds[0], confIds[i], atomIds=atomIds, prealigned=prealigned))
+  # Only an all-atom alignment supplies the full RMS to the reference conformer.
+  if not rmsvals:
+    rmsvals = [GetConformerRMS(mol, confIds[0], cid, prealigned=True) for cid in confIds[1:]]
   # loop over the conformations (except the reference one)
   cmat = []
   for i in range(1, len(confIds)):
