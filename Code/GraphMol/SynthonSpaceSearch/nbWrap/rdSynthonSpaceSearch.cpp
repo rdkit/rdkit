@@ -23,12 +23,14 @@
 
 #include <GraphMol/ROMol.h>
 #include <GraphMol/RWMol.h>
+#include "GraphMol/DistGeomHelpers/Embedder.h"
 #include <GraphMol/EnumerateStereoisomers/EnumerateStereoisomers.h>
 #include <GraphMol/Fingerprints/FingerprintGenerator.h>
 #include <GraphMol/GaussianShape/ShapeOverlayOptions.h>
 #include <GraphMol/GeneralizedSubstruct/XQMol.h>
 #include <GraphMol/RascalMCES/RascalOptions.h>
 #include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
+#include "GraphMol/DistGeomHelpers/nbWrap/py_embed_parameters.h"
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -73,6 +75,26 @@ void set_excludedVolume(SynthonSpaceSearch::SynthonSpaceSearchParams &params,
     return;
   }
   params.excludedVolume = nb::cast<GaussianShape::ShapeInput *>(pyExcVol);
+}
+
+DGeomHelpers::PyEmbedParameters get_embedParameters1(
+    const SynthonSpaceSearch::SynthonSpaceSearchParams &params) {
+  return DGeomHelpers::PyEmbedParameters(params.embedParameters);
+}
+
+void set_embedParameters1(SynthonSpaceSearch::SynthonSpaceSearchParams &params,
+                          const DGeomHelpers::PyEmbedParameters &pyEmbParams) {
+  params.embedParameters = pyEmbParams;
+}
+
+DGeomHelpers::PyEmbedParameters get_embedParameters2(
+    const SynthonSpaceSearch::ShapeBuildParams &params) {
+  return DGeomHelpers::PyEmbedParameters(params.embedParameters);
+}
+
+void set_embedParameters2(SynthonSpaceSearch::ShapeBuildParams &params,
+                          const DGeomHelpers::PyEmbedParameters &pyEmbParams) {
+  params.embedParameters = pyEmbParams;
 }
 
 SynthonSpaceSearch::SearchResults substructureSearch_helper1(
@@ -154,8 +176,8 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper4(
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
-    results = self.substructureSearch(query, smParams, params, startLine,
-                                      finishLine);
+    results =
+        self.substructureSearch(query, smParams, params, startLine, finishLine);
   }
   if (results.getCancelled()) {
     throwCancelled("SubstructureSearch cancelled");
@@ -176,8 +198,8 @@ SynthonSpaceSearch::SearchResults substructureSearch_helper5(
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
-    results = self.substructureSearch(query, smParams, params, startLine,
-                                      finishLine);
+    results =
+        self.substructureSearch(query, smParams, params, startLine, finishLine);
   }
   if (results.getCancelled()) {
     throwCancelled("SubstructureSearch cancelled");
@@ -231,8 +253,8 @@ SynthonSpaceSearch::SearchResults fingerprintSearch_helper3(
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
-    results = self.fingerprintSearch(query, *fpGen, params, startLine,
-                                    finishLine);
+    results =
+        self.fingerprintSearch(query, *fpGen, params, startLine, finishLine);
   }
   if (results.getCancelled()) {
     throwCancelled("FingerprintSearch cancelled");
@@ -285,8 +307,8 @@ SynthonSpaceSearch::SearchResults rascalSearch_helper3(
   SynthonSpaceSearch::SearchResults results;
   {
     NOGIL gil;
-    results = self.rascalSearch(query, rascalOptions, params, startLine,
-                               finishLine);
+    results =
+        self.rascalSearch(query, rascalOptions, params, startLine, finishLine);
   }
   if (results.getCancelled()) {
     throwCancelled("RascalSearch cancelled");
@@ -426,6 +448,8 @@ void setUserConfGen_helper2(SynthonSpaceSearch::SynthonSpaceSearchParams &ps,
 }  // namespace
 
 NB_MODULE(rdSynthonSpaceSearch, m) {
+  nb::module_::import_("rdkit.Chem.rdDistGeom");
+
   m.doc() =
       R"DOC(Module containing implementation of SynthonSpace search of
 Synthon-based chemical libraries such as Enamine REAL.
@@ -534,10 +558,6 @@ produce long run times.)DOC")
               &SynthonSpaceSearch::SynthonSpaceSearchParams::numConformers,
               "When doing a shape search, the number of conformers to generate"
               " for molecules.  Default=100.")
-      .def_rw("confRMSThreshold",
-              &SynthonSpaceSearch::SynthonSpaceSearchParams::confRMSThreshold,
-              "When doing a shape search, the RMS threshold to use when pruning"
-              " conformers.  Default=1.0.")
       .def_rw(
           "shapeOverlayOptions",
           &SynthonSpaceSearch::SynthonSpaceSearchParams::shapeOverlayOptions,
@@ -586,6 +606,13 @@ use 7 threads.  Default=1.)DOC")
           nb::for_setter(nb::keep_alive<1, 2>()),
           "  Add an excluded volume to use in the shape search.  The volume"
           " overlap and mean overlap over clashing atoms will be reported.")
+      .def_prop_rw("embedParameters", &get_embedParameters1,
+                   &set_embedParameters1,
+                   R"DOC(The DGeom parameters to use.  Default is ETKDGv4 with
+ pruneRmsThresh=0.5.  If you assign an EmbedParameters object,
+ all defaults are replaced by that object's values.  You can't alter values
+ of embedParameters in place;  Set all required values in a new
+ rdDistGeom.EmbedParameters object and assign.)DOC")
       .def_rw("maxExcludedVolume",
               &SynthonSpaceSearch::SynthonSpaceSearchParams::maxExcludedVolume,
               "Maximum allowed excluded volume for a hit to be accepted."
@@ -630,11 +657,15 @@ use 7 threads.  Default=1.)DOC")
       m, "ShapeBuildParams",
       "Parameters for building shape objects for SynthonSpaceSearch.")
       .def(nb::init<>())
+      .def_prop_rw("embedParameters", &get_embedParameters2,
+                   &set_embedParameters2,
+                   R"DOC(The DGeom parameters to use.  Default is ETKDGv4 with
+ pruneRmsThresh=0.5.  If you assign an EmbedParameters object,
+ all defaults are replaced by that object's values.  You can't alter values
+ of embedParameters in place;  Set all required values in a new
+ rdDistGeom.EmbedParameters object and assign)DOC")
       .def_rw("numConfs", &SynthonSpaceSearch::ShapeBuildParams::numConfs,
               "Maximum number of conformers per synthon or query.  Default=10")
-      .def_rw("rmsThreshold",
-              &SynthonSpaceSearch::ShapeBuildParams::rmsThreshold,
-              "RMS threshold to use when pruning conformations.  Default=1.0.")
       .def_rw(
           "shapeSimThreshold",
           &SynthonSpaceSearch::ShapeBuildParams::shapeSimThreshold,
@@ -645,9 +676,6 @@ use 7 threads.  Default=1.)DOC")
           "The number of threads to use for shape building.  If > 0, will use that"
           " number.  If <= 0, will use the number of hardware"
           " threads plus this number.Default=1.")
-      .def_rw(
-          "randomSeed", &SynthonSpaceSearch::ShapeBuildParams::randomSeed,
-          "Seed for random number generator.  Default=-1 means use system random seed.")
       .def_rw("stereoEnumOpts",
               &SynthonSpaceSearch::ShapeBuildParams::stereoEnumOpts,
               "Options for stereoisomer enumeration.")
@@ -662,13 +690,6 @@ use 7 threads.  Default=1.)DOC")
               &SynthonSpaceSearch::ShapeBuildParams::maxSynthonAtoms,
               "If >0, sets a maximum number of heavy atoms, excluding dummies,"
               " for synthon to have a shape made.  Default=0.")
-      .def_rw(
-          "maxEmbedAttempts",
-          &SynthonSpaceSearch::ShapeBuildParams::maxEmbedAttempts,
-          "Maximum number of attempts for embedding a single synthon.  Default=10.")
-      .def_rw("timeOut", &SynthonSpaceSearch::ShapeBuildParams::timeOut,
-              "Maximum time in seconds to spend on each synthon when generating"
-              " conformers.  Default=600 means no timeout.")
       .def_rw(
           "interimFile", &SynthonSpaceSearch::ShapeBuildParams::interimFile,
           "Interim file to write the SynthonSpace to during shape generation.  In the"

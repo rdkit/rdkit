@@ -73,10 +73,9 @@ TEST_CASE("Shape Small test") {
                                     "1-3;2-1;amide-1"};
   ShapeBuildParams shapeBuildOptions;
   shapeBuildOptions.numConfs = 100;
-  shapeBuildOptions.rmsThreshold = 0.5;
   shapeBuildOptions.numThreads = 1;
   shapeBuildOptions.shapeSimThreshold = 0.95;
-  shapeBuildOptions.randomSeed = 0xdac;
+  shapeBuildOptions.embedParameters.randomSeed = 0xdac;
 
   SynthonSpace synthonspace;
 #if 0
@@ -93,9 +92,10 @@ TEST_CASE("Shape Small test") {
   params.approxSimilarityAdjuster = 0.2;
   params.numConformers = shapeBuildOptions.numConfs;
   params.numThreads = shapeBuildOptions.numThreads;
-  params.confRMSThreshold = shapeBuildOptions.rmsThreshold;
-  params.timeOut = 0;
-  params.randomSeed = shapeBuildOptions.randomSeed;
+  params.embedParameters.pruneRmsThresh =
+      shapeBuildOptions.embedParameters.pruneRmsThresh;
+  params.embedParameters.randomSeed =
+      shapeBuildOptions.embedParameters.randomSeed;
   params.bestHit = true;
   auto queryMol = v2::SmilesParse::MolFromSmiles(querySmi);
   auto results = synthonspace.shapeSearch(*queryMol, params);
@@ -127,9 +127,7 @@ TEST_CASE("Shape Callback Version") {
   params.approxSimilarityAdjuster = 0.2;
   params.numConformers = 10;
   params.numThreads = 2;
-  params.confRMSThreshold = 0.5;
-  params.timeOut = 0;
-  params.randomSeed = 0xdac;
+  params.embedParameters.randomSeed = 0xdac;
   params.bestHit = true;
   auto queryMol =
       "O=C(c1ccccc1)N1CCCC1 |(0.0443291,-1.81486,-1.76886;0.0506321,-0.858174,-0.921491;1.37975,-0.430412,-0.483603;2.18964,-1.35506,0.144714;3.47088,-1.00454,0.585539;3.93803,0.297573,0.388032;3.1267,1.22739,-0.242406;1.85597,0.849751,-0.670531;-1.14837,-0.261434,-0.446583;-1.26073,0.836916,0.520219;-2.73583,1.04666,0.696614;-3.34033,-0.283345,0.290893;-2.46516,-0.679843,-0.874401)|"_smiles;
@@ -161,7 +159,6 @@ TEST_CASE("Shape DB Writer") {
   synthonspace.readTextFile(libName, cancelled);
   CHECK(synthonspace.getNumReactions() == 1);
   ShapeBuildParams shapeBuildParams;
-  shapeBuildParams.timeOut = 0;
   synthonspace.buildSynthonShapes(cancelled, shapeBuildParams);
 
   auto spaceName = std::tmpnam(nullptr);
@@ -245,7 +242,7 @@ C=CCC1(S(=O)(=O)[U])CC1	100000101377	2	20a	2024-09
   bool cancelled = false;
   space.readStream(iss, cancelled);
   ShapeBuildParams shapeOptions;
-  shapeOptions.randomSeed = 1;
+  shapeOptions.embedParameters.randomSeed = 1;
   CHECK_NOTHROW(space.buildSynthonShapes(cancelled, shapeOptions));
 }
 
@@ -288,9 +285,7 @@ TEST_CASE("Two piece query") {
   SynthonSpaceSearchParams params;
   params.similarityCutoff = 0.7;
   params.numThreads = 1;
-  params.confRMSThreshold = 0.5;
-  params.timeOut = 0;
-  params.randomSeed = 1;
+  params.embedParameters.randomSeed = 1;
   params.bestHit = true;
   params.shapeOverlayOptions.simAlpha = 0.95;
   params.shapeOverlayOptions.simBeta = 0.05;
@@ -379,7 +374,7 @@ c1ccccc1[1*]	1-1	0	test1
   shapeBuildParams.numConfs = 10;
   shapeBuildParams.userConformerGenerator = generateConfs;
   shapeBuildParams.shapeSimThreshold = -1.0;
-  shapeBuildParams.randomSeed = 0xdac;
+  shapeBuildParams.embedParameters.randomSeed = 0xdac;
   bool cancelled = false;
   SynthonSpace synthonSpace;
   synthonSpace.readStream(iss, cancelled);
@@ -392,16 +387,16 @@ c1ccccc1[1*]	1-1	0	test1
   params.approxSimilarityAdjuster = 0.3;
   params.numConformers = 10;
   params.numThreads = 1;
-  params.confRMSThreshold = 1.0;
-  params.timeOut = 0;
-  params.randomSeed = 0xdac;
+  params.embedParameters.pruneRmsThresh = 1.0;
+  params.embedParameters.randomSeed = 0xdac;
   params.bestHit = true;
   params.maxHits = 1;  // for speed
   auto results = synthonSpace.shapeSearch(*queryMol, params);
   CHECK(results.getHitMolecules().size() == 1);
   CHECK(results.getHitMolecules()[0]->getName() == "1-1;2-1;3-1;test1");
+  // Different results on Mac and Linux.
   CHECK_THAT(results.getHitMolecules()[0]->getProp<double>("Similarity"),
-             Catch::Matchers::WithinAbs(0.786, 0.001));
+             (Catch::Matchers::WithinAbs(0.831, 0.001) || Catch::Matchers::WithinAbs(0.799, 0.001)));
 }
 
 TEST_CASE("Trim sample molecules") {
@@ -482,9 +477,7 @@ TEST_CASE("Excluded volume") {
   SynthonSpaceSearchParams params;
   params.numConformers = 10;
   params.numThreads = 1;
-  params.confRMSThreshold = 0.5;
-  params.timeOut = 0;
-  params.randomSeed = 0xdac;
+  params.embedParameters.randomSeed = 0xdac;
   params.bestHit = true;
   params.maxHits = 10;
   params.similarityCutoff = 0.45;
@@ -515,9 +508,7 @@ TEST_CASE("Shape Write possible hits") {
   params.approxSimilarityAdjuster = 0.2;
   params.numConformers = 10;
   params.numThreads = 2;
-  params.confRMSThreshold = 0.5;
-  params.timeOut = 0;
-  params.randomSeed = 0xdac;
+  params.embedParameters.randomSeed = 0xdac;
   params.bestHit = true;
   params.possibleHitsFile = "amide_space_shapes_poss_hits.txt";
   params.writePossibleHitsAndStop = false;
@@ -557,18 +548,10 @@ TEST_CASE("Best hits false") {
 
   std::string querySmi =
       "C[C@H]1CCN(c2nnc(CO)n2C2CCCC2)C1 |(3.88187,-1.9608,1.02401;3.40947,-0.556473,0.685633;3.49763,-0.278493,-0.787477;2.18424,0.313597,-1.21035;1.39217,0.480256,0.0110759;0.36454,1.42337,0.278193;0.656593,2.66561,0.766052;-0.477075,3.33073,0.923413;-1.48168,2.52297,0.540741;-2.93641,2.8664,0.551747;-3.33354,3.43671,-0.657732;-0.965924,1.32594,0.134935;-1.71735,0.224133,-0.333621;-1.11549,-0.643316,-1.37025;-2.26431,-1.65079,-1.54776;-2.58926,-1.96617,-0.0975393;-2.00229,-0.836476,0.740437;1.90383,-0.551243,0.906815),wD:1.0|";
-  size_t expNumHits{8};
   std::vector<std::string> expNames{
       {"1-1;2-1;3-1;triazole-1", "1-1;2-2;3-1;triazole-1",
        "1-1;2-1;3-2;triazole-1", "1-1;2-2;3-2;triazole-1",
-       "1-2;2-1;3-1;triazole-1", "1-2;2-1;3-2;triazole-1",
-       "1-2;2-2;3-1;triazole-1", "1-2;2-2;3-2;triazole-1"}};
-  ShapeBuildParams shapeBuildOptions;
-  shapeBuildOptions.numConfs = 100;
-  shapeBuildOptions.rmsThreshold = 0.5;
-  shapeBuildOptions.numThreads = 1;
-  shapeBuildOptions.shapeSimThreshold = 0.95;
-  shapeBuildOptions.randomSeed = 0xdac;
+       "1-2;2-1;3-1;triazole-1", "1-2;2-2;3-1;triazole-1"}};
 
   SynthonSpace synthonspace;
   synthonspace.readDBFile(dbName);
@@ -577,20 +560,17 @@ TEST_CASE("Best hits false") {
   params.fragSimilarityAdjuster = 0.2;
   params.approxSimilarityAdjuster = 0.2;
   params.numConformers = 100;
-  params.numThreads = shapeBuildOptions.numThreads;
-  params.confRMSThreshold = shapeBuildOptions.rmsThreshold;
+  params.numThreads = 1;
   params.timeOut = 0;
-  params.randomSeed = shapeBuildOptions.randomSeed;
+  params.embedParameters.randomSeed = 0xdac;
   params.bestHit = false;
   auto queryMol = v2::SmilesParse::MolFromSmiles(querySmi);
   auto results = synthonspace.shapeSearch(*queryMol, params);
-  CHECK(expNumHits == results.getHitMolecules().size());
+  CHECK(expNames.size() == results.getHitMolecules().size());
   // These are the results I got for bestHit = true.
-  std::vector<double> fullScores{0.944, 0.930, 0.916, 0.893,
-                                 0.863, 0.856, 0.822, 0.820};
+  std::vector<double> fullScores{0.944, 0.930, 0.916, 0.893, 0.863, 0.822};
   int i = 0;
   for (const auto &mol : results.getHitMolecules()) {
-    std::cout << mol->getName() << " : " << mol->getProp<double>("Similarity") << " vs " << fullScores[i] << std::endl;
     CHECK((mol->getProp<double>("Similarity") <= fullScores[i++]));
     CHECK(std::ranges::find(
               expNames, mol->getProp<std::string>(common_properties::_Name)) !=
@@ -614,7 +594,7 @@ TEST_CASE("Github 9744 - possible hits not in descending order of similarity") {
   params.similarityCutoff = 0.7;
   params.fragSimilarityAdjuster = 0.2;
   params.numThreads = 1;
-  params.confRMSThreshold = 0.5;
+  params.embedParameters.pruneRmsThresh = 0.5;
   params.timeOut = 0;
   params.randomSeed = 1;
   params.bestHit = true;
@@ -643,4 +623,24 @@ TEST_CASE("Github 9744 - possible hits not in descending order of similarity") {
     CHECK(line == expHits[lineNum]);
     lineNum++;
   }
+}
+TEST_CASE("Shape DGeom Parameters") {
+  SynthonSpaceSearchParams searchParams;
+  CHECK(searchParams.embedParameters.pruneRmsThresh == 0.5);
+  CHECK(searchParams.embedParameters.ETversion == 4);
+
+  searchParams.embedParameters = DGeomHelpers::ETKDGv3;
+  CHECK(searchParams.embedParameters.ETversion == 2);  // Yep, that's correct.
+  CHECK(searchParams.embedParameters.pruneRmsThresh == -1.0);
+  searchParams.embedParameters.pruneRmsThresh = 1.0;
+  CHECK(searchParams.embedParameters.pruneRmsThresh == 1.0);
+
+  ShapeBuildParams buildParams;
+  CHECK(buildParams.embedParameters.pruneRmsThresh == 0.5);
+  CHECK(buildParams.embedParameters.ETversion == 4);
+  buildParams.embedParameters = DGeomHelpers::ETKDGv3;
+  CHECK(buildParams.embedParameters.ETversion == 2);  // Yep, that's correct.
+  CHECK(buildParams.embedParameters.pruneRmsThresh == -1.0);
+  buildParams.embedParameters.pruneRmsThresh = 2.0;
+  CHECK(buildParams.embedParameters.pruneRmsThresh == 2.0);
 }

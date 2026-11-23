@@ -152,7 +152,7 @@ TEST_CASE("S Random Hits") {
   SynthonSpaceSearchParams params;
   params.maxHits = 100;
   params.randomSample = true;
-  params.randomSeed = 1;
+  params.embedParameters.randomSeed = 1;
   params.numThreads = -1;
   auto results =
       synthonspace.substructureSearch(*queryMol, matchParams, params);
@@ -292,7 +292,7 @@ TEST_CASE("FP Random Hits") {
   SynthonSpaceSearchParams params;
   params.maxHits = 100;
   params.randomSample = true;
-  params.randomSeed = 1;
+  params.embedParameters.randomSeed = 1;
   params.numThreads = -1;
   params.approxSimilarityAdjuster = 0.1;
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
@@ -326,6 +326,7 @@ TEST_CASE("Timeout") {
   params.maxHits = -1;
   params.similarityCutoff = 0.3;
   params.fragSimilarityAdjuster = 0.3;
+  params.embedParameters.timeout = 2;
   params.timeOut = 2;
   params.numThreads = -1;
   std::unique_ptr<FingerprintGenerator<std::uint64_t>> fpGen(
@@ -339,7 +340,7 @@ TEST_CASE("Timeout") {
   params.maxHits = 100;
   params.similarityCutoff = 0.3;
   params.fragSimilarityAdjuster = 0.2;
-  params.timeOut = 0;
+  params.embedParameters.timeout = 0;
   auto results1 = synthonspace.fingerprintSearch(*queryMol, *fpGen, params);
   CHECK(!results1.getTimedOut());
   tidy5567Binary();
@@ -354,9 +355,9 @@ TEST_CASE("FP Approx Similarity") {
   SynthonSpace synthonspace;
   synthonspace.readDBFile(binName);
   SynthonSpaceSearchParams params;
-  params.randomSeed = 1;
+  params.embedParameters.randomSeed = 1;
   params.similarityCutoff = 0.5;
-  params.timeOut = 0;
+  params.embedParameters.timeout = 0;
   params.maxHits = 1000;
   params.numThreads = -1;
 
@@ -469,10 +470,9 @@ TEST_CASE("Shape More Small tests") {
       {"277310376-742385846;182115391-684092275;487354835-896308859;urea-3"}};
   ShapeBuildParams shapeBuildOptions;
   shapeBuildOptions.numConfs = 100;
-  shapeBuildOptions.rmsThreshold = 0.5;
   shapeBuildOptions.numThreads = 1;
   shapeBuildOptions.shapeSimThreshold = 0.95;
-  shapeBuildOptions.randomSeed = 0xdac;
+  shapeBuildOptions.embedParameters.randomSeed = 0xdac;
 
   for (size_t i = 0; i < dbNames.size(); i++) {
     SynthonSpace synthonspace;
@@ -490,9 +490,11 @@ TEST_CASE("Shape More Small tests") {
     params.approxSimilarityAdjuster = 0.2;
     params.numConformers = shapeBuildOptions.numConfs;
     params.numThreads = shapeBuildOptions.numThreads;
-    params.confRMSThreshold = shapeBuildOptions.rmsThreshold;
-    params.timeOut = 0;
-    params.randomSeed = shapeBuildOptions.randomSeed;
+    params.embedParameters.pruneRmsThresh =
+        shapeBuildOptions.embedParameters.pruneRmsThresh;
+    params.embedParameters.timeout = 0;
+    params.embedParameters.randomSeed =
+        shapeBuildOptions.embedParameters.randomSeed;
     params.bestHit = true;
     auto queryMol = v2::SmilesParse::MolFromSmiles(querySmis[i]);
     auto results = synthonspace.shapeSearch(*queryMol, params);
@@ -556,9 +558,8 @@ TEST_CASE("Shape Two piece query") {
   params.similarityCutoff = 0.7;
   params.fragSimilarityAdjuster = 0.2;
   params.numThreads = 1;
-  params.confRMSThreshold = 0.5;
-  params.timeOut = 0;
-  params.randomSeed = 1;
+  params.embedParameters.timeout = 0;
+  params.embedParameters.randomSeed = 1;
   params.bestHit = true;
   params.shapeOverlayOptions.simAlpha = 0.95;
   params.shapeOverlayOptions.simBeta = 0.05;
@@ -635,7 +636,7 @@ N#CCc(cncc1)c1[2*]	689988332-107515102	2	urea-3)");
   SynthonSpaceSearchParams spaceSearchParams;
   spaceSearchParams.userConformerGenerator = generateConfs;
   spaceSearchParams.useProgressBar = 0;
-  spaceSearchParams.timeOut = 0;
+  spaceSearchParams.embedParameters.timeout = 0;
   spaceSearchParams.similarityCutoff = 0.7;
   spaceSearchParams.bestHit = true;
   USED_generateConfs = false;
@@ -704,9 +705,8 @@ Cc1nc2ccc(NC(=O)[1*])cc2o1	1-1	0	4al4
   params.approxSimilarityAdjuster = 0.2;
   params.numConformers = 100;
   params.numThreads = 1;
-  params.confRMSThreshold = 0.5;
-  params.timeOut = 0;
-  params.randomSeed = 0xdac;
+  params.embedParameters.timeout = 0;
+  params.embedParameters.randomSeed = 0xdac;
   params.bestHit = true;
   params.maxHits = 10;
   params.similarityCutoff = 0.5;

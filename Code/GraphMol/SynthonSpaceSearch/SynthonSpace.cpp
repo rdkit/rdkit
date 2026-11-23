@@ -945,12 +945,10 @@ void SynthonSpace::buildSynthonShapes(bool &cancelled,
     std::ranges::sort(sampleMols, [](const auto &a, const auto &b) -> bool {
       return a->d_numAtoms > b->d_numAtoms;
     });
-    auto dgParams = DGeomHelpers::ETKDGv3;
+    auto dgParams = shapeBuildParams.embedParameters;
+    // This will already be running in multi-thread mode, so only use 1 thread
+    // for the embedding.
     dgParams.numThreads = 1;
-    dgParams.pruneRmsThresh = shapeBuildParams.rmsThreshold;
-    dgParams.randomSeed = shapeBuildParams.randomSeed;
-    dgParams.maxIterations = shapeBuildParams.maxEmbedAttempts;
-    dgParams.timeout = shapeBuildParams.timeOut;
     auto numWithShapesB4 = getNumSynthonsWithShapes();
     details::makeShapesFromMols(sampleMols, dgParams, shapeBuildParams, pbar);
     auto numWithShapes = getNumSynthonsWithShapes();

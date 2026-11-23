@@ -42,7 +42,7 @@ SynthonSpaceSearcher::SynthonSpaceSearcher(
   }
   if (d_params.randomSample) {
     if (!d_randGen) {
-      if (d_params.randomSeed == -1) {
+      if (d_params.embedParameters.randomSeed == -1) {
         std::random_device rd;
         d_randGen = std::make_unique<std::mt19937>(rd());
       } else {

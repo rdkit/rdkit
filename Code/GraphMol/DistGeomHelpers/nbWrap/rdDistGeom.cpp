@@ -23,68 +23,13 @@
 #include <GraphMol/GraphMol.h>
 #include <RDGeneral/ControlCHandler.h>
 
+#include "py_embed_parameters.h"
+
 #include <GraphMol/DistGeomHelpers/BoundsMatrixBuilder.h>
 #include <GraphMol/DistGeomHelpers/Embedder.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
-
-namespace {
-struct PyEmbedParameters : public RDKit::DGeomHelpers::EmbedParameters {
- public:
-  PyEmbedParameters() : RDKit::DGeomHelpers::EmbedParameters() {}
-  PyEmbedParameters(const RDKit::DGeomHelpers::EmbedParameters &other)
-      : RDKit::DGeomHelpers::EmbedParameters(other) {}
-
-  void setCoordMap(const nb::dict &cmap) {
-    d_coordMap.reset(new std::map<int, RDGeom::Point3D>());
-    for (auto item : cmap) {
-      (*d_coordMap)[nb::cast<int>(item.first)] =
-          nb::cast<RDGeom::Point3D>(item.second);
-    }
-    coordMap = d_coordMap.get();
-  }
-
-  nb::tuple getFailureCounts() const {
-    nb::list lst;
-    for (auto failure : failures) {
-      lst.append(failure);
-    }
-    return nb::tuple(lst);
-  }
-
-  void setCPCI(const nb::dict &CPCIdict) {
-    CPCI = std::make_shared<
-        std::map<std::pair<unsigned int, unsigned int>, double>>();
-    for (auto item : CPCIdict) {
-      auto id = nb::cast<nb::tuple>(item.first);
-      unsigned int a = nb::cast<unsigned int>(id[0]);
-      unsigned int b = nb::cast<unsigned int>(id[1]);
-      (*CPCI)[{a, b}] = nb::cast<double>(item.second);
-    }
-  }
-
-  void setBoundsMatrix(
-      nb::ndarray<nb::numpy, double, nb::ndim<2>, nb::c_contig> bm) {
-    if (bm.shape(0) != bm.shape(1)) {
-      throw nb::value_error("The array has to be square");
-    }
-    if (bm.shape(0) == 0) {
-      throw nb::value_error("The array has to have a nonzero size");
-    }
-    unsigned int nrows = (unsigned int)bm.shape(0);
-    unsigned int dSize = nrows * nrows;
-    auto *cData = new double[dSize];
-    memcpy(cData, bm.data(), dSize * sizeof(double));
-    DistGeom::BoundsMatrix::DATA_SPTR sdata(cData);
-    boundsMat = boost::shared_ptr<const DistGeom::BoundsMatrix>(
-        new DistGeom::BoundsMatrix(nrows, sdata));
-  }
-
- private:
-  std::unique_ptr<std::map<int, RDGeom::Point3D>> d_coordMap;
-};
-}  // namespace
 
 namespace RDKit {
 
@@ -135,7 +80,7 @@ static int EmbedMolecule(ROMol &mol, unsigned int maxAttempts, int seed,
   return res;
 }
 
-static int EmbedMolecule2(ROMol &mol, PyEmbedParameters &params) {
+static int EmbedMolecule2(ROMol &mol, DGeomHelpers::PyEmbedParameters &params) {
   int res;
   {
     nb::gil_scoped_release release;
@@ -199,7 +144,7 @@ static INT_VECT EmbedMultipleConfs(
 }
 
 static INT_VECT EmbedMultipleConfs2(ROMol &mol, unsigned int numConfs,
-                                    PyEmbedParameters &params) {
+                                    DGeomHelpers::PyEmbedParameters &params) {
   INT_VECT res;
   {
     nb::gil_scoped_release release;
@@ -213,8 +158,9 @@ static INT_VECT EmbedMultipleConfs2(ROMol &mol, unsigned int numConfs,
 }
 
 static nb::ndarray<nb::numpy, double, nb::ndim<2>> getMolBoundsMatrix2(
-    const ROMol &mol, const PyEmbedParameters &params, bool doTriangleSmoothing,
-    bool scaleVDW, bool set15bounds, bool set14bounds, bool set13bounds) {
+    const ROMol &mol, const DGeomHelpers::PyEmbedParameters &params,
+    bool doTriangleSmoothing, bool scaleVDW, bool set15bounds, bool set14bounds,
+    bool set13bounds) {
   unsigned int nats = mol.getNumAtoms();
   DistGeom::BoundsMatPtr mat(new DistGeom::BoundsMatrix(nats));
   DGeomHelpers::initBoundsMat(mat);
@@ -236,7 +182,7 @@ static nb::ndarray<nb::numpy, double, nb::ndim<2>> getMolBoundsMatrix(
     const ROMol &mol, bool set15bounds, bool scaleVDW, bool doTriangleSmoothing,
     bool useMacrocycle14config, bool forceTransAmides, bool set14bounds,
     bool set13bounds) {
-  PyEmbedParameters params;
+  DGeomHelpers::PyEmbedParameters params;
   params.useMacrocycle14config = useMacrocycle14config;
   params.forceTransAmides = forceTransAmides;
   return getMolBoundsMatrix2(mol, params, doTriangleSmoothing, scaleVDW,
@@ -331,7 +277,8 @@ distance geometry)DOC";
 
   m.def(
       "GetExperimentalTorsions",
-      [](const RDKit::ROMol &mol, const PyEmbedParameters &ps) {
+      [](const RDKit::ROMol &mol,
+         const RDKit::DGeomHelpers::PyEmbedParameters &ps) {
         return RDKit::getExpTorsHelper(
             mol, ps.useExpTorsionAnglePrefs, ps.useSmallRingTorsions,
             ps.useMacrocycleTorsions, ps.useBasicKnowledge, ps.ETversion,
@@ -548,113 +495,137 @@ RETURNS:
       .value("MMFF", RDKit::DGeomHelpers::EmbedFF::MMFF)
       .export_values();
 
-  nb::class_<PyEmbedParameters>(m, "EmbedParameters",
-                                "Parameters controlling embedding")
+  nb::class_<RDKit::DGeomHelpers::PyEmbedParameters>(
+      m, "EmbedParameters", "Parameters controlling embedding")
       .def(nb::init<>())
-      .def_rw("maxIterations", &PyEmbedParameters::maxIterations,
+      .def_rw("maxIterations",
+              &RDKit::DGeomHelpers::PyEmbedParameters::maxIterations,
               R"DOC(maximum number of embedding attempts to use for a
 single conformation)DOC")
-      .def_rw("numThreads", &PyEmbedParameters::numThreads,
+      .def_rw("numThreads", &RDKit::DGeomHelpers::PyEmbedParameters::numThreads,
               "number of threads to use when embedding multiple conformations")
-      .def_rw("timeout", &PyEmbedParameters::timeout,
+      .def_rw("timeout", &RDKit::DGeomHelpers::PyEmbedParameters::timeout,
               R"DOC(maximum time in seconds to generate a conformer for a
 single molecule fragment. If set to 0, no timeout is set)DOC")
-      .def_rw("randomSeed", &PyEmbedParameters::randomSeed,
+      .def_rw("randomSeed", &RDKit::DGeomHelpers::PyEmbedParameters::randomSeed,
               "seed for the random number generator")
-      .def_rw("clearConfs", &PyEmbedParameters::clearConfs,
+      .def_rw("clearConfs", &RDKit::DGeomHelpers::PyEmbedParameters::clearConfs,
               "clear all existing conformations on the molecule")
-      .def_rw("useRandomCoords", &PyEmbedParameters::useRandomCoords,
+      .def_rw("useRandomCoords",
+              &RDKit::DGeomHelpers::PyEmbedParameters::useRandomCoords,
               R"DOC(start the embedding from random coordinates instead of
 using eigenvalues of the distance matrix)DOC")
-      .def_rw("boxSizeMult", &PyEmbedParameters::boxSizeMult,
+      .def_rw("boxSizeMult",
+              &RDKit::DGeomHelpers::PyEmbedParameters::boxSizeMult,
               "determines the size of the box used for random coordinates")
-      .def_rw("randNegEig", &PyEmbedParameters::randNegEig,
+      .def_rw("randNegEig", &RDKit::DGeomHelpers::PyEmbedParameters::randNegEig,
               R"DOC(if the embedding yields a negative eigenvalue, pick
 coordinates that correspond to this component at random)DOC")
-      .def_rw("numZeroFail", &PyEmbedParameters::numZeroFail,
+      .def_rw("numZeroFail",
+              &RDKit::DGeomHelpers::PyEmbedParameters::numZeroFail,
               "fail embedding if we have at least this many zero eigenvalues")
-      .def_rw("optimizerForceTol", &PyEmbedParameters::optimizerForceTol,
+      .def_rw("optimizerForceTol",
+              &RDKit::DGeomHelpers::PyEmbedParameters::optimizerForceTol,
               R"DOC(the tolerance to be used during the distance-geometry
 force field minimization)DOC")
-      .def_rw("basinThresh", &PyEmbedParameters::basinThresh,
+      .def_rw("basinThresh",
+              &RDKit::DGeomHelpers::PyEmbedParameters::basinThresh,
               "set the basin threshold for the DGeom force field.")
       .def_rw("ignoreSmoothingFailures",
-              &PyEmbedParameters::ignoreSmoothingFailures,
+              &RDKit::DGeomHelpers::PyEmbedParameters::ignoreSmoothingFailures,
               R"DOC(try and embed the molecule if if triangle smoothing of
 the bounds matrix fails)DOC")
-      .def_rw("enforceChirality", &PyEmbedParameters::enforceChirality,
+      .def_rw("enforceChirality",
+              &RDKit::DGeomHelpers::PyEmbedParameters::enforceChirality,
               "enforce correct chirilaty if chiral centers are present")
       .def_rw("useExpTorsionAnglePrefs",
-              &PyEmbedParameters::useExpTorsionAnglePrefs,
+              &RDKit::DGeomHelpers::PyEmbedParameters::useExpTorsionAnglePrefs,
               "impose experimental torsion angle preferences")
-      .def_rw("useBasicKnowledge", &PyEmbedParameters::useBasicKnowledge,
+      .def_rw("useBasicKnowledge",
+              &RDKit::DGeomHelpers::PyEmbedParameters::useBasicKnowledge,
               "impose basic-knowledge constraints such as flat rings")
-      .def_rw("ETversion", &PyEmbedParameters::ETversion,
+      .def_rw("ETversion", &RDKit::DGeomHelpers::PyEmbedParameters::ETversion,
               "version of the experimental torsion-angle preferences")
-      .def_rw("verbose", &PyEmbedParameters::verbose,
+      .def_rw("verbose", &RDKit::DGeomHelpers::PyEmbedParameters::verbose,
               "be verbose about configuration")
-      .def_rw("pruneRmsThresh", &PyEmbedParameters::pruneRmsThresh,
+      .def_rw("pruneRmsThresh",
+              &RDKit::DGeomHelpers::PyEmbedParameters::pruneRmsThresh,
               R"DOC(used to filter multiple conformations: keep only
 conformations that are at least this far apart from each other)DOC")
-      .def_rw("onlyHeavyAtomsForRMS", &PyEmbedParameters::onlyHeavyAtomsForRMS,
+      .def_rw("onlyHeavyAtomsForRMS",
+              &RDKit::DGeomHelpers::PyEmbedParameters::onlyHeavyAtomsForRMS,
               "Only consider heavy atoms when doing RMS filtering")
       .def_rw("embedFragmentsSeparately",
-              &PyEmbedParameters::embedFragmentsSeparately,
+              &RDKit::DGeomHelpers::PyEmbedParameters::embedFragmentsSeparately,
               "split the molecule into fragments and embed them separately")
-      .def_rw("useSmallRingTorsions", &PyEmbedParameters::useSmallRingTorsions,
+      .def_rw("useSmallRingTorsions",
+              &RDKit::DGeomHelpers::PyEmbedParameters::useSmallRingTorsions,
               "impose small ring torsion angle preferences")
       .def_rw("useMacrocycleTorsions",
-              &PyEmbedParameters::useMacrocycleTorsions,
+              &RDKit::DGeomHelpers::PyEmbedParameters::useMacrocycleTorsions,
               "impose macrocycle torsion angle preferences")
       .def_rw("useMacrocycle14config",
-              &PyEmbedParameters::useMacrocycle14config,
+              &RDKit::DGeomHelpers::PyEmbedParameters::useMacrocycle14config,
               "This forces amides and esters to be trans in macrocycles. "
               "This does not affect chain amides / esters!")
       .def_rw(
-          "onlyInitialEmbedding", &PyEmbedParameters::onlyInitialEmbedding,
+          "onlyInitialEmbedding",
+          &RDKit::DGeomHelpers::PyEmbedParameters::onlyInitialEmbedding,
           "If true, only the initial 3D embedding is generated (default=false)")
       .def_rw("useLegacyImplementation",
-              &PyEmbedParameters::useLegacyImplementation,
+              &RDKit::DGeomHelpers::PyEmbedParameters::useLegacyImplementation,
               "whether to use the combined minimization approach")
       .def_rw(
-          "initialEmbeddingMode", &PyEmbedParameters::initialEmbeddingMode,
+          "initialEmbeddingMode",
+          &RDKit::DGeomHelpers::PyEmbedParameters::initialEmbeddingMode,
           "Mode for initial embedding: DG_EMBEDDING, INTERNAL_CORRDINATE_EMBEDDING, RANDOM_COORDINATE_EMBEDDING")
       .def_rw(
-          "boundsMatForceScaling", &PyEmbedParameters::boundsMatForceScaling,
+          "boundsMatForceScaling",
+          &RDKit::DGeomHelpers::PyEmbedParameters::boundsMatForceScaling,
           R"DOC(scale the weights of the atom pair distance restraints relative to
 the other types of restraints)DOC")
       .def_rw(
-          "useSymmetryForPruning", &PyEmbedParameters::useSymmetryForPruning,
+          "useSymmetryForPruning",
+          &RDKit::DGeomHelpers::PyEmbedParameters::useSymmetryForPruning,
           R"DOC(use molecule symmetry when doing the RMSD pruning. Note that this
 option automatically also sets onlyHeavyAtomsForRMS to true.)DOC")
       .def(
-          "SetBoundsMat", &PyEmbedParameters::setBoundsMatrix, "boundsMatArg"_a,
+          "SetBoundsMat",
+          &RDKit::DGeomHelpers::PyEmbedParameters::setBoundsMatrix,
+          "boundsMatArg"_a,
           R"DOC(set the distance-bounds matrix to be used (no triangle smoothing
 will be done on this) from a Numpy array)DOC")
       .def(
-          "SetCPCI", &PyEmbedParameters::setCPCI, "CPCIdict"_a,
+          "SetCPCI", &RDKit::DGeomHelpers::PyEmbedParameters::setCPCI,
+          "CPCIdict"_a,
           R"DOC(set the customised pairwise Columb-like interaction to atom pairs.
 used during structural minimisation stage)DOC")
-      .def_rw("forceTransAmides", &PyEmbedParameters::forceTransAmides,
+      .def_rw("forceTransAmides",
+              &RDKit::DGeomHelpers::PyEmbedParameters::forceTransAmides,
               "This forces chain amides and esters to be trans. "
               "This does not affect amides / esters in macrocycles!")
-      .def_rw("trackFailures", &PyEmbedParameters::trackFailures,
+      .def_rw("trackFailures",
+              &RDKit::DGeomHelpers::PyEmbedParameters::trackFailures,
               "keep track of which checks during the embedding process fail")
-      .def("GetFailureCounts", &PyEmbedParameters::getFailureCounts,
+      .def("GetFailureCounts",
+           &RDKit::DGeomHelpers::PyEmbedParameters::getFailureCounts,
            "returns the counts of each failure type")
       .def_rw(
           "enableSequentialRandomSeeds",
-          &PyEmbedParameters::enableSequentialRandomSeeds,
+          &RDKit::DGeomHelpers::PyEmbedParameters::enableSequentialRandomSeeds,
           "handle random number seeds so that conformer generation can be restarted")
       .def_rw("symmetrizeConjugatedTerminalGroupsForPruning",
-              &PyEmbedParameters::symmetrizeConjugatedTerminalGroupsForPruning,
+              &RDKit::DGeomHelpers::PyEmbedParameters::
+                  symmetrizeConjugatedTerminalGroupsForPruning,
               "symmetrize terminal conjugated groups for RMSD pruning")
-      .def("SetCoordMap", &PyEmbedParameters::setCoordMap,
+      .def("SetCoordMap", &RDKit::DGeomHelpers::PyEmbedParameters::setCoordMap,
            "sets the coordmap to be used")
       .def_rw(
-          "optimizeConfWithId", &PyEmbedParameters::optimizeConfWithId,
+          "optimizeConfWithId",
+          &RDKit::DGeomHelpers::PyEmbedParameters::optimizeConfWithId,
           "If provided, the Conformer with this ID in the molecule (if present) is optimized with the ETKDG force field in place.")
-      .def_rw("embedForceField", &PyEmbedParameters::embedForceField,
+      .def_rw("embedForceField",
+              &RDKit::DGeomHelpers::PyEmbedParameters::embedForceField,
               "Force Field to use for ideal 1-2 and 1-3 distances.")
       .def("__setattr__", &safeSetattr);
 
@@ -693,38 +664,68 @@ RETURNS:
 )DOC");
 
   m.def(
-      "ETKDG", []() { return PyEmbedParameters(RDKit::DGeomHelpers::ETKDG); },
+      "ETKDG",
+      []() {
+        return RDKit::DGeomHelpers::PyEmbedParameters(
+            RDKit::DGeomHelpers::ETKDG);
+      },
       "Returns an EmbedParameters object for the ETKDG method - version 1.");
   m.def(
       "ETKDGv2",
-      []() { return PyEmbedParameters(RDKit::DGeomHelpers::ETKDGv2); },
+      []() {
+        return RDKit::DGeomHelpers::PyEmbedParameters(
+            RDKit::DGeomHelpers::ETKDGv2);
+      },
       "Returns an EmbedParameters object for the ETKDG method - version 2.");
   m.def(
       "srETKDGv3",
-      []() { return PyEmbedParameters(RDKit::DGeomHelpers::srETKDGv3); },
+      []() {
+        return RDKit::DGeomHelpers::PyEmbedParameters(
+            RDKit::DGeomHelpers::srETKDGv3);
+      },
       R"DOC(Returns an EmbedParameters object for the ETKDG method -
 version 3 (small rings).)DOC");
   m.def(
       "ETKDGv3",
-      []() { return PyEmbedParameters(RDKit::DGeomHelpers::ETKDGv3); },
+      []() {
+        return RDKit::DGeomHelpers::PyEmbedParameters(
+            RDKit::DGeomHelpers::ETKDGv3);
+      },
       R"DOC(Returns an EmbedParameters object for the ETKDG method -
 version 3 (macrocycles).)DOC");
   m.def(
-      "ETDG", []() { return PyEmbedParameters(RDKit::DGeomHelpers::ETDG); },
+      "ETDG",
+      []() {
+        return RDKit::DGeomHelpers::PyEmbedParameters(
+            RDKit::DGeomHelpers::ETDG);
+      },
       "Returns an EmbedParameters object for the ETDG method.");
   m.def(
-      "ETDGv2", []() { return PyEmbedParameters(RDKit::DGeomHelpers::ETDGv2); },
+      "ETDGv2",
+      []() {
+        return RDKit::DGeomHelpers::PyEmbedParameters(
+            RDKit::DGeomHelpers::ETDGv2);
+      },
       "Returns an EmbedParameters object for the ETDG method - version 2.");
   m.def(
-      "KDG", []() { return PyEmbedParameters(RDKit::DGeomHelpers::KDG); },
+      "KDG",
+      []() {
+        return RDKit::DGeomHelpers::PyEmbedParameters(RDKit::DGeomHelpers::KDG);
+      },
       "Returns an EmbedParameters object for the KDG method.");
   m.def(
-      "DG", []() { return PyEmbedParameters(RDKit::DGeomHelpers::DG); },
+      "DG",
+      []() {
+        return RDKit::DGeomHelpers::PyEmbedParameters(RDKit::DGeomHelpers::DG);
+      },
       "Returns an EmbedParameters object for plain distance geometry.");
 
   m.def(
       "ETKDGv4",
-      []() { return PyEmbedParameters(RDKit::DGeomHelpers::ETKDGv4); },
+      []() {
+        return RDKit::DGeomHelpers::PyEmbedParameters(
+            RDKit::DGeomHelpers::ETKDGv4);
+      },
       "Returns an EmbedParameters object for the ETKDG method - version 4.");
 
   m.def("GetMoleculeBoundsMatrix", &RDKit::getMolBoundsMatrix, "mol"_a,
@@ -785,7 +786,9 @@ RETURNS:
 
   m.def(
       "EmbedParametersToJSON",
-      [](const PyEmbedParameters &ps) { return embedParametersToJSON(ps); },
+      [](const RDKit::DGeomHelpers::PyEmbedParameters &ps) {
+        return embedParametersToJSON(ps);
+      },
       "embedParameters"_a,
       R"DOC(Returns json string containing embedParameters attributes
 

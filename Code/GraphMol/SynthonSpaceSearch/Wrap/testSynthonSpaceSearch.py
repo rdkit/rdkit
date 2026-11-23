@@ -41,9 +41,9 @@ import sys
 from pathlib import Path
 
 from rdkit import Chem
-from rdkit.Chem import (rdSynthonSpaceSearch, rdFingerprintGenerator,
+from rdkit.Chem import (rdDistGeom, rdSynthonSpaceSearch, rdFingerprintGenerator,
                         rdRascalMCES, rdGeneralizedSubstruct, rdMolDescriptors,
-                        rdDistGeom, rdGaussianShape)
+                        rdGaussianShape)
 
 def createShapeDatabaseForTest(spaceFile, restartFile):
   space = rdSynthonSpaceSearch.SynthonSpace()
@@ -314,10 +314,13 @@ class TestCase(unittest.TestCase):
     ssparams.maxHits = -1
     ssparams.numThreads = 1
     ssparams.numConformers = 10
-    ssparams.confRMSThreshold = 0.25
-    ssparams.randomSeed = 0xdac
+    ep = ssparams.embedParameters
+    ep.pruneRmsThresh = 0.25
+    ep.randomSeed = 0xdac
+    ssparams.embedParameters = ep
     ssparams.bestHit = True
-
+    self.assertEqual(ssparams.embedParameters.randomSeed, 0xdac)
+    
     ssparams.fragSimilarityAdjuster = 0.2
     ssparams.approxSimilarityAdjuster = 0.2
     ssparams.similarityCutoff = 0.98
@@ -372,7 +375,6 @@ class TestCase(unittest.TestCase):
     ssparams.fragSimilarityAdjuster = 0.2
     ssparams.approxSimilarityAdjuster = 0.2
     ssparams.numConformers = 10
-    ssparams.confRMSThreshold = 0.5
     ssparams.randomSeed = 0xdac
     ssparams.bestHit = True
     ssparams.similarityCutoff = 0.5
@@ -402,7 +404,10 @@ class TestCase(unittest.TestCase):
     ssparams.fragSimilarityAdjuster = 0.2
     ssparams.approxSimilarityAdjuster = 0.2
     ssparams.numConformers = 100
-    ssparams.confRMSThreshold = 0.5
+    ep = ssparams.embedParameters
+    ep.pruneRmsThresh = 0.25
+    ep.randomSeed = 0xdac
+    ssparams.embedParameters = ep
     ssparams.randomSeed = 0xdac
     ssparams.bestHit = True
     ssparams.similarityCutoff = 0.8
@@ -451,5 +456,30 @@ class TestCase(unittest.TestCase):
     self.assertEqual(numWithShapes, 7)
 
 
+  def testDGeomParams(self):
+    # Just test that they can be read and set.
+    ssparams = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
+    self.assertEqual(ssparams.embedParameters.ETversion, 4)
+    self.assertEqual(ssparams.embedParameters.pruneRmsThresh, 0.5)
+
+
+    # It's important to set the embedParameters up as required
+    # and then add it.  Mutation in place doesn't work as the
+    # getter always returns a new copy.
+    ep = rdDistGeom.ETKDGv3()
+    ep.pruneRmsThresh = 1.0
+    ssparams.embedParameters = ep
+    self.assertEqual(ssparams.embedParameters.ETversion, 2)
+    self.assertEqual(ssparams.embedParameters.pruneRmsThresh, 1.0)
+
+    buildParams = rdSynthonSpaceSearch.ShapeBuildParams()
+    bep = rdDistGeom.ETKDGv2()
+    bep.pruneRmsThresh = 2.0
+    buildParams.embedParameters = bep
+    self.assertEqual(buildParams.embedParameters.ETversion, 2)
+    self.assertEqual(buildParams.embedParameters.pruneRmsThresh, 2.0)
+    
+    
+    
 if __name__ == "__main__":
   unittest.main()

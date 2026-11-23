@@ -11,11 +11,11 @@
 #include <RDBoost/python.h>
 #include <RDBoost/Wrap.h>
 
-#include <GraphMol/ROMol.h>
-#include <GraphMol/EnumerateStereoisomers/EnumerateStereoisomers.h>
-#include <GraphMol/RascalMCES/RascalOptions.h>
-#include <GraphMol/GaussianShape/ShapeOverlayOptions.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonSpace.h>
+#include "GraphMol/ROMol.h"
+#include "GraphMol/DistGeomHelpers/Embedder.h"
+#include "GraphMol/EnumerateStereoisomers/EnumerateStereoisomers.h"
+#include "GraphMol/RascalMCES/RascalOptions.h"
+#include "GraphMol/SynthonSpaceSearch/SynthonSpace.h"
 
 namespace python = boost::python;
 
@@ -507,7 +507,8 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           &SynthonSpaceSearch::SynthonSpaceSearchParams::randomSeed,
           "If using randomSample, this seeds the random number"
           " generator so as to give reproducible results.  Default=-1"
-          " means use a random seed.")
+          " means use a random seed.  For shape searching, there is a separate"
+          " random number seed in embedParameters.")
       .def_readwrite("buildHits",
                      &SynthonSpaceSearch::SynthonSpaceSearchParams::buildHits,
                      "If false, reports the maximum number of hits that"
@@ -566,11 +567,6 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           "When doing a shape search, the number of conformers to generate"
           " for molecules.  Default=100.")
       .def_readwrite(
-          "confRMSThreshold",
-          &SynthonSpaceSearch::SynthonSpaceSearchParams::confRMSThreshold,
-          "When doing a shape search, the RMS threshold to use when pruning"
-          " conformers.  Default=1.0.")
-      .def_readwrite(
           "shapeOverlayOptions",
           &SynthonSpaceSearch::SynthonSpaceSearchParams::shapeOverlayOptions,
           "Options for the shape overlays.")
@@ -596,6 +592,10 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           "timeOut", &SynthonSpaceSearch::SynthonSpaceSearchParams::timeOut,
           "Time limit for search, in seconds.  Default is 600s, 0 means no"
           " timeout.  Requires an integer")
+      .def_readwrite(
+          "embedParameters",
+          &SynthonSpaceSearch::SynthonSpaceSearchParams::embedParameters,
+          "The DGeom parameters to use.  Default is ETKDGv4 with pruneRMSThreshold=0.5.")
       .def_readwrite(
           "toTryChunkSize",
           &SynthonSpaceSearch::SynthonSpaceSearchParams::toTryChunkSize,
@@ -667,11 +667,12 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
   python::class_<SynthonSpaceSearch::ShapeBuildParams, boost::noncopyable>(
       "ShapeBuildParams", docString.c_str())
       .def_readwrite(
+          "embedParameters",
+          &SynthonSpaceSearch::ShapeBuildParams::embedParameters,
+          "The DGeom parameters to use.  Default is ETKDGv4 with pruneRMSThreshold=0.5.")
+      .def_readwrite(
           "numConfs", &SynthonSpaceSearch::ShapeBuildParams::numConfs,
           "Maximum number of conformers per synthon or query.  Default=10")
-      .def_readwrite(
-          "rmsThreshold", &SynthonSpaceSearch::ShapeBuildParams::rmsThreshold,
-          "RMS threshold to use when pruning conformations.  Default=1.0.")
       .def_readwrite(
           "shapeSimThreshold",
           &SynthonSpaceSearch::ShapeBuildParams::shapeSimThreshold,
@@ -682,9 +683,6 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           "The number of threads to use for shape building.  If > 0, will use that"
           " number.  If <= 0, will use the number of hardware"
           " threads plus this number.Default=1.")
-      .def_readwrite(
-          "randomSeed", &SynthonSpaceSearch::ShapeBuildParams::randomSeed,
-          "Seed for random number generator.  Default=-1 means use system random seed.")
       .def_readwrite("stereoEnumOpts",
                      &SynthonSpaceSearch::ShapeBuildParams::stereoEnumOpts,
                      "Options for stereoisomer enumeration.")
@@ -700,14 +698,6 @@ BOOST_PYTHON_MODULE(rdSynthonSpaceSearch) {
           &SynthonSpaceSearch::ShapeBuildParams::maxSynthonAtoms,
           "If >0, sets a maximum number of heavy atoms, excluding dummies,"
           " for synthon to have a shape made.  Default=0.")
-      .def_readwrite(
-          "maxEmbedAttempts",
-          &SynthonSpaceSearch::ShapeBuildParams::maxEmbedAttempts,
-          "Maximum number of attempts for embedding a single synthon.  Default=10.")
-      .def_readwrite(
-          "timeOut", &SynthonSpaceSearch::ShapeBuildParams::timeOut,
-          "Maximum time in seconds to spend on each synthon when generating"
-          " conformers.  Default=600 means no timeout.")
       .def_readwrite(
           "interimFile", &SynthonSpaceSearch::ShapeBuildParams::interimFile,
           "Interim file to write the SynthonSpace to during shape generation.  In the"

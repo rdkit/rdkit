@@ -13,8 +13,9 @@
 
 #include <functional>
 
-#include <GraphMol/EnumerateStereoisomers/EnumerateStereoisomers.h>
-#include <GraphMol/SynthonSpaceSearch/SynthonShapeInput.h>
+#include "GraphMol/EnumerateStereoisomers/EnumerateStereoisomers.h"
+#include "GraphMol/SynthonSpaceSearch/SynthonShapeInput.h"
+#include "GraphMol/DistGeomHelpers/Embedder.h"
 
 #ifdef RDK_USE_BOOST_SERIALIZATION
 #include <RDGeneral/BoostStartInclude.h>
@@ -35,6 +36,11 @@ const std::vector<std::string> CONNECTOR_SYMBOLS{"[U]", "[Np]", "[Pu]", "[Am]"};
 constexpr unsigned int MAX_CONNECTOR_NUM{4};
 
 struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
+  SynthonSpaceSearchParams() {
+    // Only way to over-ride this, it seems.
+    embedParameters.pruneRmsThresh = 0.5;
+  }
+
   std::int64_t maxHits{1000};  // The maximum number of hits to return.
                                // Use -1 for no maximum.
   std::uint64_t maxNumFragSets{
@@ -59,7 +65,10 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
   bool randomSample{false};  // If true, returns a random sample of the hit
                              // hits, up to maxHits in number.
   int randomSeed{-1};        // Seed for random-number generator.  -1 means use
-                             // a random seed (std::random_device).
+                             // a random seed (std::random_device).  If you're
+                             // doing shape searching, you may also need to set
+                             // the random number seed in embedParameters which
+                             // is separate.
   bool buildHits{true};  // If false, reports the maximum number of hits that
                          // the search could produce, but doesn't return them.
   double similarityCutoff{0.5};  // Similarity cutoff for returning hits by
@@ -94,9 +103,6 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
                                     // -1 means no maximum.
   unsigned int numConformers{100};  // When doing a shape search, the number of
                                     // conformers to use for each molecule.
-  double confRMSThreshold{0.5};  // When doing a shape search, the RMS threshold
-                                 // to use when pruning conformers.  Passed
-                                 // directly to EmbedMultipleConfs.
   GaussianShape::ShapeOverlayOptions
       shapeOverlayOptions;  // Options to use when shape searching.
   bool bestHit{false};  // If true, when doing a shape search it will return the
@@ -111,17 +117,21 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
                // the query or potential hit, enumerate and
                // test all possibilities.
   EnumerateStereoisomers::StereoEnumerationOptions stereoEnumOpts{
-      true, true, false, true,
-      0,    0xdac};  // Options for stereoisomer enumeration.  Over-ride default
-                     // tryEmbedding of false and use fixed randomSeed for
-                     // consistency of results from run to run.
+      .tryEmbedding = true,
+      .randomSeed =
+          0xdac};  // Options for stereoisomer enumeration.  Over-ride default
+                   // tryEmbedding of false and use fixed randomSeed for
+                   // consistency of results from run to run.
   std::uint64_t timeOut{600};  // Maximum number of seconds to spend on a single
                                // search.  0 means no maximum.
   int numThreads = 1;  // The number of threads to use.  If > 0, will use that
                        // number.  If <= 0, will use the number of hardware
                        // threads plus this number.  So if the number of
                        // hardware threads is 8, and numThreads is -1, it will
-                       // use 7 threads.
+                       // use 7 threads.  The embedding, if done, will use
+                       // whatever is in embedParameters.numThreads
+  DGeomHelpers::EmbedParameters embedParameters{
+      DGeomHelpers::ETKDGv4};      // The DGeom parameters to use .
   unsigned int useProgressBar{0};  // Makes a progress bar of given width.  The
                                    // number given is the number of '*'
                                    // characters in a full bar.  There will be
@@ -167,23 +177,30 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT SynthonSpaceSearchParams {
 
 // Options to be passed to buildSynthonShapes.
 struct RDKIT_SYNTHONSPACESEARCH_EXPORT ShapeBuildParams {
+  ShapeBuildParams() {
+    // Only way to over-ride this, it seems.
+    embedParameters.pruneRmsThresh = 0.5;
+    embedParameters.maxIterations = 10;
+    embedParameters.randomSeed = 0xdac;
+    embedParameters.timeout = 10;
+  }
+
   // The relevant ones are passed directly into EmbedMultipleConfs.
-  unsigned int numConfs{100};  // Max number of conformations per synthon
-  double rmsThreshold{0.5};    // RMS threshold used when pruning conformations
+  DGeomHelpers::EmbedParameters embedParameters{
+      DGeomHelpers::ETKDGv4};      // The default DGeom parameters.
+  unsigned int numConfs{100};      // Max number of conformations per synthon
   double shapeSimThreshold{0.95};  // This is passed to pruneShapes(). For each
                                    // synthon, no 2 shapes will be more similar
                                    // to each other than the threshold.
   int numThreads{1};  // The number of threads to use.  If > 0, will use that
                       // number.  If <= 0, will use the number of hardware
                       // threads plus this number.
-  int randomSeed{
-      0xdac};  // Seed for random number generator.  Fixed by default
-               // so the same synthon conformers are produced each time.
   EnumerateStereoisomers::StereoEnumerationOptions stereoEnumOpts{
-      true, true, false, true,
-      0,    0xdac};  // Options for stereoisomer enumeration.  Over-ride default
-  // tryEmbedding of false and use fixed randomSeed for
-  // consistency of results from run to run.
+      .tryEmbedding = true,
+      .randomSeed =
+          0xdac};  // Options for stereoisomer enumeration.  Over-ride default
+                   // tryEmbedding of false and use fixed randomSeed for
+                   // consistency of results from run to run.
   unsigned int useProgressBar{0};   // Makes a progress bar of given width.  The
                                     // number given is the number of '*'
                                     // characters in a full bar.  There will be
@@ -193,9 +210,6 @@ struct RDKIT_SYNTHONSPACESEARCH_EXPORT ShapeBuildParams {
   unsigned int maxSynthonAtoms{0};  // If > 0, sets a maximum number of heavy
                                     // atoms, excluding dummies, for a synthon
                                     // to have a shape made.
-  unsigned int maxEmbedAttempts{10};  // Maximum attempts for an embedding.
-  unsigned int timeOut{60};  // Maximum time in seconds to spend on each synthon
-                             // when generating conformers.
   std::string
       interimFile;  // Interim file to write SynthonSpace to.  In the event of
                     // a failure, a restart from this file will be possible.
