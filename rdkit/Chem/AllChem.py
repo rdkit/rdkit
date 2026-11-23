@@ -59,14 +59,13 @@ def TransformMol(mol, tform, confId=-1, keepConfs=False):
   refConf = mol.GetConformer(confId)
   TransformConformer(refConf, tform)
   if not keepConfs:
-    if confId == -1:
-      confId = 0
+    confId = refConf.GetId()
     allConfIds = [c.GetId() for c in mol.GetConformers()]
     for cid in allConfIds:
-      if not cid == confId:
+      if cid != confId:
         mol.RemoveConformer(cid)
     # reset the conf Id to zero since there is only one conformer left
-    mol.GetConformer(confId).SetId(0)
+    refConf.SetId(0)
 
 
 def ComputeMolShape(mol, confId=-1, boxDim=(20, 20, 20), spacing=0.5, **kwargs):

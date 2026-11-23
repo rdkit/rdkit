@@ -5,6 +5,8 @@ import os
 import random
 import unittest
 
+import numpy
+
 from rdkit import Chem, RDConfig
 from rdkit.Chem import AllChem, TorsionFingerprints
 
@@ -48,6 +50,24 @@ class TestCase(unittest.TestCase):
     # test the prealigned option
     rmat2 = AllChem.GetConformerRMSMatrix(m1, prealigned=True)
     self.assertAlmostEqual(rmat[0], rmat2[0])
+
+  def testTransformMolDefaultConformer(self):
+    transform = numpy.eye(4)
+    transform[:3, 3] = [2., -1., 4.]
+    for otherId in (7, 0):
+      with self.subTest(otherId=otherId):
+        mol = Chem.MolFromSmiles('CCO')
+        AllChem.Compute2DCoords(mol)
+        first = mol.GetConformer()
+        first.SetId(3)
+        expected = first.GetPositions() + transform[:3, 3]
+        other = Chem.Conformer(first)
+        other.SetId(otherId)
+        mol.AddConformer(other)
+
+        AllChem.TransformMol(mol, transform)
+        self.assertEqual([conf.GetId() for conf in mol.GetConformers()], [0])
+        numpy.testing.assert_allclose(mol.GetConformer().GetPositions(), expected)
 
   def testTorsionFingerprints(self):
     # we use the xray structure from the paper (JCIM, 52, 1499, 2012): 1DWD
