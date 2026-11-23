@@ -29,6 +29,11 @@ unassigned atropisomers.)DOC";
   nb::class_<StereoEnumerationOptions>(m, "StereoEnumerationOptions",
                                        "EnumerateSteroisomers options.")
       .def(nb::init<>())
+      .def(nb::init<bool, bool, bool, bool, std::uint64_t, int, bool>(),
+           "tryEmbedding"_a = false, "onlyUnassigned"_a = true,
+           "onlyStereoGroups"_a = false, "unique"_a = true,
+           "maxIsomers"_a = 16384, "randomSeed"_a = 0xC0FFEE,
+           "useRingSystemFilter"_a = true)
       .def_rw(
           "tryEmbedding", &StereoEnumerationOptions::tryEmbedding,
           R"DOC(If true, the process attempts to generate a standard RDKit distance geometry
@@ -52,9 +57,11 @@ returned.  Default=True.)DOC")
           R"DOC(The maximum number of isomers to yield.  If the number of possible isomers
 is greater than maxIsomers, a random subset will be yielded.  If 0, there
 is no maximum.  Since every additional stereocenter doubles the number of
-results (and execution time) it's important to keep an eye on this.)DOC")
-      .def_rw("randomSeed", &StereoEnumerationOptions::randomSeed,
-              "Seed for random number generator.  Default=-1 means no seed.")
+results (and execution time) it's important to keep an eye on this.
+The default value is 16384.")DOC")
+      .def_rw(
+          "randomSeed", &StereoEnumerationOptions::randomSeed,
+          "Seed for random number generator. -1 means no seed. Default=0xC0FFEE")
       .def_rw(
           "useRingSystemFilter", &StereoEnumerationOptions::useRingSystemFilter,
           "filter out stereoisomers containing ring systems that are known to be"

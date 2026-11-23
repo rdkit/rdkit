@@ -66,6 +66,20 @@ struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoEnumerationOptions {
   bool useRingSystemFilter{
       true};  // filter out stereoisomers containing ring systems that
               // are known to be impossible in 3D space
+
+  StereoEnumerationOptions(bool tryEmbedding = false,
+                           bool onlyUnassigned = true,
+                           bool onlyStereoGroups = false, bool unique = true,
+                           std::uint64_t maxIsomers = 16384,
+                           int randomSeed = 0xC0FFEE,
+                           bool useRingSystemFilter = true)
+      : tryEmbedding{tryEmbedding},
+        onlyUnassigned{onlyUnassigned},
+        onlyStereoGroups{onlyStereoGroups},
+        unique{unique},
+        maxIsomers{maxIsomers},
+        randomSeed{randomSeed},
+        useRingSystemFilter{useRingSystemFilter} {}
 };
 
 // Class that enumerates the stereoisomers of a molecule.  Acts like a

@@ -79,6 +79,13 @@ BOOST_PYTHON_MODULE(rdEnumerateStereoisomers) {
   python::class_<EnumerateStereoisomers::StereoEnumerationOptions,
                  boost::noncopyable>("StereoEnumerationOptions",
                                      docString.c_str())
+      .def(python::init<bool, bool, bool, bool, std::uint64_t, int, bool>(
+          (python::args("self"), python::args("tryEmbedding") = false,
+           python::args("onlyUnassigned") = true,
+           python::args("onlyStereoGroups") = false,
+           python::args("unique") = true, python::args("maxIsomers") = 16384,
+           python::args("randomSeed") = 0xC0FFEE,
+           python::args("useRingSystemFilter") = true)))
       .def_readwrite(
           "tryEmbedding",
           &EnumerateStereoisomers::StereoEnumerationOptions::tryEmbedding,
@@ -106,11 +113,12 @@ BOOST_PYTHON_MODULE(rdEnumerateStereoisomers) {
           "The maximum number of isomers to yield.  If the number of possible isomers"
           " is greater than maxIsomers, a random subset will be yielded.  If 0, there"
           " is no maximum.  Since every additional stereocenter doubles the number of"
-          " results (and execution time) it's important to keep an eye on this.")
+          " results (and execution time) it's important to keep an eye on this."
+          " The default value is 16384.")
       .def_readwrite(
           "randomSeed",
           &EnumerateStereoisomers::StereoEnumerationOptions::randomSeed,
-          "Seed for random number generator.  Default=-1 means no seed.")
+          "Seed for random number generator. -1 means no seed. Default=0xC0FFEE")
       .def_readwrite(
           "useRingSystemFilter",
           &EnumerateStereoisomers::StereoEnumerationOptions::
