@@ -462,6 +462,8 @@ select 'C1C([2H])C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"a
 select 'C1C([2H])C1CCCC'::mol @> mol_adjust_query_properties('C1CC1CC'::mol,'{"adjustDegree":false,"adjustHeavyDegree":true}');
 select mol_to_smarts(mol_adjust_query_properties('*c1ncc(*)cc1'::mol));
 select mol_to_smarts(mol_adjust_query_properties('*c1ncc(*)cc1'::qmol));
+-- malformed JSON is ignored with a warning instead of terminating the backend
+select mol_to_smarts(mol_adjust_query_properties('Cc1ccccc1'::mol,'{"adjustDegree":false'));
 
 
 -- CXSmiles

@@ -837,18 +837,19 @@ extern "C" CROMol MolAdjustQueryProperties(CROMol i, const char *params) {
     std::string pstring(params);
     try {
       MolOps::parseAdjustQueryParametersFromJSON(p, pstring);
+      // read_json throws on malformed input; it must stay inside the try
+      std::istringstream ss;
+      ss.str(params);
+
+      boost::property_tree::ptree pt;
+      boost::property_tree::read_json(ss, pt);
+      includeGenericGroups = pt.get("setGenericQueryFromProperties", false);
     } catch (const ValueErrorException &e) {
       elog(ERROR, "MolAdjustQueryProperties: %s", e.what());
     } catch (...) {
       elog(WARNING,
            "adjustQueryProperties: Invalid argument \'params\' ignored");
     }
-    std::istringstream ss;
-    ss.str(params);
-
-    boost::property_tree::ptree pt;
-    boost::property_tree::read_json(ss, pt);
-    includeGenericGroups = pt.get("setGenericQueryFromProperties", false);
   }
 
   ROMol *mol = nullptr;
@@ -963,6 +964,9 @@ extern "C" int CBfpSize(CBfp a) {
 extern "C" double calcBitmapTanimotoSml(CBfp a, CBfp b) {
   auto *abv = (std::string *)a;
   auto *bbv = (std::string *)b;
+  if (abv->size() != bbv->size()) {
+    elog(ERROR, "attempt to compare fingerprints of different length");
+  }
   const auto *afp = (const unsigned char *)abv->c_str();
   const auto *bfp = (const unsigned char *)bbv->c_str();
   /* return CalcBitmapTanimoto(afp, bfp, abv->size()); */
@@ -972,6 +976,9 @@ extern "C" double calcBitmapTanimotoSml(CBfp a, CBfp b) {
 extern "C" double calcBitmapDiceSml(CBfp a, CBfp b) {
   auto *abv = (std::string *)a;
   auto *bbv = (std::string *)b;
+  if (abv->size() != bbv->size()) {
+    elog(ERROR, "attempt to compare fingerprints of different length");
+  }
   const auto *afp = (const unsigned char *)abv->c_str();
   const auto *bfp = (const unsigned char *)bbv->c_str();
   return CalcBitmapDice(afp, bfp, abv->size());
@@ -980,6 +987,9 @@ extern "C" double calcBitmapDiceSml(CBfp a, CBfp b) {
 double calcBitmapTverskySml(CBfp a, CBfp b, float ca, float cb) {
   auto *abv = (std::string *)a;
   auto *bbv = (std::string *)b;
+  if (abv->size() != bbv->size()) {
+    elog(ERROR, "attempt to compare fingerprints of different length");
+  }
   const auto *afp = (const unsigned char *)abv->c_str();
   const auto *bfp = (const unsigned char *)bbv->c_str();
   return CalcBitmapTversky(afp, bfp, abv->size(), ca, cb);

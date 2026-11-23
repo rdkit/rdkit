@@ -134,62 +134,47 @@ Atom *Bond::getOtherAtom(Atom const *what) const {
 };
 
 double Bond::getBondTypeAsDouble() const {
-  double res;
   switch (getBondType()) {
     case UNSPECIFIED:
     case IONIC:
     case ZERO:
-      res = 0;
-      break;
+    case OTHER:
+      return 0;
     case SINGLE:
-      res = 1;
-      break;
+      return 1;
     case DOUBLE:
-      res = 2;
-      break;
+      return 2;
     case TRIPLE:
-      res = 3;
-      break;
+      return 3;
     case QUADRUPLE:
-      res = 4;
-      break;
+      return 4;
     case QUINTUPLE:
-      res = 5;
-      break;
+      return 5;
     case HEXTUPLE:
-      res = 6;
-      break;
+      return 6;
     case ONEANDAHALF:
-      res = 1.5;
-      break;
+      return 1.5;
     case TWOANDAHALF:
-      res = 2.5;
-      break;
+      return 2.5;
     case THREEANDAHALF:
-      res = 3.5;
-      break;
+      return 3.5;
     case FOURANDAHALF:
-      res = 4.5;
-      break;
+      return 4.5;
     case FIVEANDAHALF:
-      res = 5.5;
-      break;
+      return 5.5;
     case AROMATIC:
-      res = 1.5;
-      break;
+      return 1.5;
     case DATIVEONE:
-      res = 1.0;
-      break;  // FIX: this should probably be different
+      return 1.0;  // FIX: this should probably be different
     case DATIVE:
-      res = 1.0;
-      break;  // FIX: again probably wrong
+    case DATIVEL:
+    case DATIVER:
+      return 1.0;  // FIX: again probably wrong
     case HYDROGEN:
-      res = 0.0;
-      break;
-    default:
-      UNDER_CONSTRUCTION("Bad bond type");
+    case THREECENTER:
+      return 0.0;
   }
-  return res;
+  throw ValueErrorException("invalid bond type");
 }
 
 double Bond::getValenceContrib(const Atom *atom) const {
@@ -267,60 +252,7 @@ void Bond::setStereoAtoms(unsigned int bgnIdx, unsigned int endIdx) {
 };
 
 uint8_t getTwiceBondType(const Bond &b) {
-  switch (b.getBondType()) {
-    case Bond::UNSPECIFIED:
-    case Bond::IONIC:
-    case Bond::ZERO:
-      return 0;
-      break;
-    case Bond::SINGLE:
-      return 2;
-      break;
-    case Bond::DOUBLE:
-      return 4;
-      break;
-    case Bond::TRIPLE:
-      return 6;
-      break;
-    case Bond::QUADRUPLE:
-      return 8;
-      break;
-    case Bond::QUINTUPLE:
-      return 10;
-      break;
-    case Bond::HEXTUPLE:
-      return 12;
-      break;
-    case Bond::ONEANDAHALF:
-      return 3;
-      break;
-    case Bond::TWOANDAHALF:
-      return 5;
-      break;
-    case Bond::THREEANDAHALF:
-      return 7;
-      break;
-    case Bond::FOURANDAHALF:
-      return 9;
-      break;
-    case Bond::FIVEANDAHALF:
-      return 11;
-      break;
-    case Bond::AROMATIC:
-      return 3;
-      break;
-    case Bond::DATIVEONE:
-      return 2;
-      break;  // FIX: this should probably be different
-    case Bond::DATIVE:
-      return 2;
-      break;  // FIX: again probably wrong
-    case Bond::HYDROGEN:
-      return 0;
-      break;
-    default:
-      UNDER_CONSTRUCTION("Bad bond type");
-  }
+  return static_cast<uint8_t>(2.0 * b.getBondTypeAsDouble() + 0.01);
 }
 
 bool Bond::invertChirality() {

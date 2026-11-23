@@ -14,6 +14,9 @@
 #include <chrono>
 #include <random>
 #include <algorithm>
+#include <array>
+#include <cmath>
+#include <vector>
 #include <execution>
 
 #include <catch2/catch_test_macros.hpp>
@@ -25,6 +28,7 @@
 #include <GraphMol/FileParsers/MolSupplier.h>
 #include <GraphMol/GaussianShape/GaussianShape.h>
 #include <GraphMol/GaussianShape/ShapeInput.h>
+#include <GraphMol/GaussianShape/SingleConformerAlignment.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
 #include <RDGeneral/RDLog.h>
@@ -119,9 +123,9 @@ TEST_CASE("basic alignment") {
     ROMol cp(*probe);
     const auto scores = GaussianShape::AlignMolecule(
         *ref, cp, shapeOpts, shapeOpts, nullptr, overlayOpts);
-    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.477, 0.005));
+    CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.512, 0.005));
     CHECK_THAT(scores[1], Catch::Matchers::WithinAbs(0.747, 0.005));
-    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.207, 0.005));
+    CHECK_THAT(scores[2], Catch::Matchers::WithinAbs(0.278, 0.005));
     const auto rescores = GaussianShape::ScoreMolecule(*ref, cp, shapeOpts,
                                                        shapeOpts, overlayOpts);
     CHECK_THAT(rescores[0], Catch::Matchers::WithinAbs(scores[0], 0.005));
@@ -1070,5 +1074,66 @@ TEST_CASE("github #9441: problem with explicit Hs") {
         "[2H]/N=C(/N)N[C@@H]1Cc2ccccc2[C@H]1NC(=O)C(=O)Nc1ccc(Cl)c(F)c1 |(-1.8622,-20.4007,9.0038;-2.6909,-20.1336,8.5119;-3.0037,-18.871,8.3972;-4.0884,-18.5145,7.7538;-2.1651,-17.8781,8.9694;-2.5069,-16.4989,8.8473;-1.8532,-15.9197,7.6961;-1.6088,-14.4969,8.06;-1.3546,-13.3514,7.2821;-1.1595,-12.1122,7.9047;-1.2189,-12.0095,9.3012;-1.4695,-13.1438,10.0742;-1.6627,-14.393,9.4426;-1.9498,-15.7546,9.9967;-2.9045,-15.6225,10.9981;-2.5492,-15.8844,12.3606;-1.3948,-16.2409,12.6505;-3.6003,-15.728,13.4623;-4.7286,-15.3802,13.1585;-3.2054,-16.0128,14.8184;-4.0446,-15.9028,15.9995;-3.4411,-16.0498,17.2382;-4.1812,-15.9386,18.3961;-5.5426,-15.6693,18.3166;-6.4762,-15.526,19.7442;-6.1509,-15.5114,17.0857;-7.4532,-15.2539,17.0236;-5.4088,-15.6235,15.9289),wU:5.4,13.15|"_smiles;
     auto scores = GaussianShape::AlignMolecule(*m1, *m2);
     CHECK_THAT(scores[0], Catch::Matchers::WithinAbs(0.4197, 0.0001));
+  }
+}
+TEST_CASE("color gradients use their own converters") {
+  // The color converters are stored after the numFitShape shape points'
+  // ones; where they are stored mustn't change the gradients.
+  auto colorGradients = [](int numFitShape) {
+    const double ref[3] = {0.0, 0.0, 0.0}, fit[3] = {1.0, 0.5, -0.3};
+    const double alphas[1] = {1.0};
+    const int types[1] = {1};
+    const double quat[4] = {0.9, 0.1, 0.3, 0.2};
+    std::vector<double> gradConverters(12 * (numFitShape + 1), 0.0);
+    std::array<double, 7> grads{};
+    GaussianShape::calcVolAndGrads(ref, alphas, 1, types, fit, alphas, 1, types,
+                                   numFitShape, gradConverters, false, 0.0,
+                                   quat, grads.data());
+    return grads;
+  };
+  const auto atStart = colorGradients(0);
+  const auto afterShape = colorGradients(2);
+  for (unsigned int g = 1; g < atStart.size(); ++g) {
+    CHECK(atStart[g] != 0.0);
+    CHECK(afterShape[g] == atStart[g]);
+  }
+}
+TEST_CASE("color gradients are mixed into the matching components") {
+  // One atom and one color feature in each of ref and fit.
+  const std::vector<double> ref{0.0, 0.0, 0.0, 0.2, -0.4, 0.1};
+  const std::vector<double> fit{1.0, 0.5, -0.3, -0.6, 0.8, 0.7};
+  const std::vector<double> alphas{0.8, 1.0};
+  const int types[2] = {0, 1};
+  const double mixingParam = 0.5;
+  GaussianShape::SingleConformerAlignment sca(
+      ref, alphas, types, nullptr, 1, 1, 1.0, 1.0, fit, alphas, types, nullptr,
+      1, 1, 1.0, 1.0, {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
+      GaussianShape::OptimMode::SHAPE_PLUS_COLOR, 1.0, 0.0, mixingParam, false,
+      0.0, 0.001, 100);
+  const std::array<double, 7> quatTrans{1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+  double shapeVol, colorVol;
+  std::array<double, 7> mixed{};
+  sca.calcVolumeAndGradients(quatTrans, shapeVol, colorVol, mixed);
+
+  // The same thing computed piecewise.
+  std::vector<double> gradConverters(24, 0.0);
+  std::array<double, 7> shapeGrads{}, colorGrads{};
+  GaussianShape::calcVolAndGrads(
+      ref.data(), alphas.data(), 1, nullptr, fit.data(), alphas.data(), 1,
+      nullptr, gradConverters, false, 0.0, quatTrans.data(), shapeGrads.data());
+  GaussianShape::calcVolAndGrads(ref.data() + 3, alphas.data() + 1, 1,
+                                 types + 1, fit.data() + 3, alphas.data() + 1,
+                                 1, types + 1, 1, gradConverters, false, 0.0,
+                                 quatTrans.data(), colorGrads.data());
+  double shapeSum = 0.0, colorSum = 0.0;
+  for (unsigned int g = 1; g < 7; ++g) {
+    shapeSum += shapeGrads[g] * shapeGrads[g];
+    colorSum += colorGrads[g] * colorGrads[g];
+  }
+  const auto ratio = std::sqrt(shapeSum / colorSum);
+  for (unsigned int g = 1; g < 7; ++g) {
+    const auto expected =
+        shapeGrads[g] * (1 - mixingParam) + colorGrads[g] * ratio * mixingParam;
+    CHECK_THAT(mixed[g], Catch::Matchers::WithinAbs(expected, 1.0e-10));
   }
 }

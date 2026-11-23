@@ -14,9 +14,11 @@ rdkit_library(Descriptors
               USRDescriptor.cpp AtomFeat.cpp
               OxidationNumbers.cpp
               DCLV.cpp
+              GraphDescriptors.cpp EState.cpp MiscDescriptors.cpp
+              FragmentDescriptors.cpp QED.cpp SpacialScore.cpp
               ${DESC3D_SOURCES}
-              LINK_LIBRARIES PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch MolTransforms GraphMol
-                 EigenSolvers RDGeneral)
+              LINK_LIBRARIES PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch MolTransforms
+                 ChemTransforms Fingerprints GraphMol EigenSolvers RDGeneral)
 target_compile_definitions(Descriptors PRIVATE RDKIT_DESCRIPTORS_BUILD)
 
 rdkit_headers(Crippen.h BCUT.h Lipinski.h
@@ -29,6 +31,8 @@ rdkit_headers(Crippen.h BCUT.h Lipinski.h
               USRDescriptor.h AtomFeat.h
               OxidationNumbers.h
               DCLV.h
+              GraphDescriptors.h EState.h MiscDescriptors.h
+              FragmentDescriptors.h QED.h SpacialScore.h
               ${DESC3D_HDRS}
               DEST GraphMol/Descriptors)
 
@@ -70,6 +74,8 @@ LINK_LIBRARIES  Descriptors ForceFieldHelpers DistGeomHelpers  )
 endif(RDK_BUILD_DESCRIPTORS3D)
 
 rdkit_catch_test(descriptorsTestCatch catch_tests.cpp LINK_LIBRARIES Descriptors SmilesParse FileParsers)
+
+rdkit_catch_test(descriptorsPyPortsTestCatch catch_pyports.cpp LINK_LIBRARIES Descriptors SmilesParse)
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 add_subdirectory(Wrap)

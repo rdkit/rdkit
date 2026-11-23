@@ -9,11 +9,15 @@
 //
 #include "Rings.h"
 #include "RingInfo.h"
+#include "MolOps.h"
 #include <RDGeneral/Invariant.h>
+#include <RDGeneral/Exceptions.h>
 #include <algorithm>
 #include <limits>
 #include <numeric>
 #include <utility>
+#include <unordered_set>
+#include <RDGeneral/hash/hash.hpp>
 
 namespace RDKit {
 namespace {
@@ -41,10 +45,10 @@ std::pair<uint32_t, uint32_t> membershipRange(
   return {membershipBegins[idx], membershipBegins[idx + 1]};
 }
 
-std::vector<int> memberRingSizes(
-    const std::vector<uint32_t> &membershipBegins,
-    const std::vector<int> &memberships,
-    const std::vector<uint32_t> &ringBegins, unsigned int idx) {
+std::vector<int> memberRingSizes(const std::vector<uint32_t> &membershipBegins,
+                                 const std::vector<int> &memberships,
+                                 const std::vector<uint32_t> &ringBegins,
+                                 unsigned int idx) {
   const auto [begin, end] = membershipRange(membershipBegins, idx);
   std::vector<int> result(end - begin);
   for (auto pos = begin; pos < end; ++pos) {
@@ -66,18 +70,17 @@ bool isMemberInRingOfSize(const std::vector<uint32_t> &membershipBegins,
   return false;
 }
 
-unsigned int minMemberRingSize(
-    const std::vector<uint32_t> &membershipBegins,
-    const std::vector<int> &memberships,
-    const std::vector<uint32_t> &ringBegins, unsigned int idx) {
+unsigned int minMemberRingSize(const std::vector<uint32_t> &membershipBegins,
+                               const std::vector<int> &memberships,
+                               const std::vector<uint32_t> &ringBegins,
+                               unsigned int idx) {
   const auto [begin, end] = membershipRange(membershipBegins, idx);
   if (begin == end) {
     return 0;
   }
   auto result = std::numeric_limits<unsigned int>::max();
   for (auto pos = begin; pos < end; ++pos) {
-    result =
-        std::min(result, ringSizeUnchecked(ringBegins, memberships[pos]));
+    result = std::min(result, ringSizeUnchecked(ringBegins, memberships[pos]));
   }
   return result;
 }
@@ -145,10 +148,10 @@ bool areMembersInSameRing(const std::vector<uint32_t> &membershipBegins,
   return false;
 }
 
-void rebuildRingTypeMemberships(
-    std::vector<uint32_t> &membershipBegins,
-    std::vector<int> &memberships, const std::vector<int> &membersInRings,
-    const std::vector<uint32_t> &ringBegins) {
+void rebuildRingTypeMemberships(std::vector<uint32_t> &membershipBegins,
+                                std::vector<int> &memberships,
+                                const std::vector<int> &membersInRings,
+                                const std::vector<uint32_t> &ringBegins) {
   size_t numMembers =
       membershipBegins.empty() ? 0 : membershipBegins.size() - 1;
   for (const auto idx : membersInRings) {
@@ -166,8 +169,7 @@ void rebuildRingTypeMemberships(
   auto nextMembership = membershipBegins;
   for (size_t ringIdx = 0; ringIdx + 1 < ringBegins.size(); ++ringIdx) {
     for (auto pos = ringBegins[ringIdx]; pos < ringBegins[ringIdx + 1]; ++pos) {
-      memberships[nextMembership[membersInRings[pos]]++] =
-          rdcast<int>(ringIdx);
+      memberships[nextMembership[membersInRings[pos]]++] = rdcast<int>(ringIdx);
     }
   }
 }
@@ -196,12 +198,10 @@ unsigned int RingInfo::numAtomRings(unsigned int idx) const {
   PRECONDITION(df_init, "RingInfo not initialized");
   return numMemberRings(d_atomMembershipBegins, idx);
 }
-bool RingInfo::areAtomsInSameRing(unsigned int idx1,
-                                  unsigned int idx2) const {
+bool RingInfo::areAtomsInSameRing(unsigned int idx1, unsigned int idx2) const {
   PRECONDITION(df_init, "RingInfo not initialized");
-  return areMembersInSameRing<false>(d_atomMembershipBegins,
-                                     d_atomMemberships, d_atomRingBegins, idx1,
-                                     idx2);
+  return areMembersInSameRing<false>(d_atomMembershipBegins, d_atomMemberships,
+                                     d_atomRingBegins, idx1, idx2);
 }
 bool RingInfo::areAtomsInSameRingOfSize(unsigned int idx1, unsigned int idx2,
                                         unsigned int size) const {
@@ -233,12 +233,10 @@ unsigned int RingInfo::numBondRings(unsigned int idx) const {
   PRECONDITION(df_init, "RingInfo not initialized");
   return numMemberRings(d_bondMembershipBegins, idx);
 }
-bool RingInfo::areBondsInSameRing(unsigned int idx1,
-                                  unsigned int idx2) const {
+bool RingInfo::areBondsInSameRing(unsigned int idx1, unsigned int idx2) const {
   PRECONDITION(df_init, "RingInfo not initialized");
-  return areMembersInSameRing<false>(d_bondMembershipBegins,
-                                     d_bondMemberships, d_bondRingBegins, idx1,
-                                     idx2);
+  return areMembersInSameRing<false>(d_bondMembershipBegins, d_bondMemberships,
+                                     d_bondRingBegins, idx1, idx2);
 }
 bool RingInfo::areBondsInSameRingOfSize(unsigned int idx1, unsigned int idx2,
                                         unsigned int size) const {
@@ -443,7 +441,13 @@ unsigned int RingInfo::numRingFamilies() const {
 unsigned int RingInfo::numRelevantCycles() const {
   PRECONDITION(df_init, "RingInfo not initialized");
   PRECONDITION(dp_urfData, "Ring families not initialized");
-  return rdcast<unsigned int>(RDL_getNofRC(dp_urfData.get()));
+  auto nURF = RDL_getNofURF(dp_urfData.get());
+  auto nRC = rdcast<unsigned int>(RDL_getNofRC(dp_urfData.get()));
+  if (nRC < nURF || nRC == std::numeric_limits<unsigned int>::max()) {
+    throw ValueErrorException(
+        "Problems in RDL: Number of relevant cycles is invalid");
+  }
+  return nRC;
 };
 
 unsigned int RingInfo::addRingFamily(const INT_VECT &atomIndices,
@@ -501,22 +505,86 @@ void RingInfo::preallocate(unsigned int numAtoms, unsigned int numBonds) {
   }
 }
 
+namespace {
+// first keep the SSSR rings, then add additional relevant cycles up to the
+// maximum allowed
+std::vector<std::vector<int>> truncatedRelevantCycles(
+    const RDL_data *urfData, const unsigned int maxAllowed) {
+  std::vector<std::vector<int>> res;
+
+  RDL_cycle **sssr = nullptr;
+  auto sssrSize = RDL_getSSSR(urfData, &sssr);
+  if (sssrSize == RDL_INVALID_RESULT) {
+    throw ValueErrorException("Failed finding a SSSR for the mol.");
+  }
+
+  auto vectHash = [](const std::vector<int> &v) {
+    std::hash_result_t seed = 1;
+    gboost::hash_range(seed, v.begin(), v.end());
+    return seed;
+  };
+  std::unordered_set<std::vector<int>, decltype(vectHash)> sssrRings(0,
+                                                                     vectHash);
+  // keep the SSSR rings first
+  res.reserve(maxAllowed);
+  for (unsigned int i = 0; i < sssrSize; ++i) {
+    auto ring = RingUtils::rdlCycleToAtomRing(sssr[i]);
+    sssrRings.insert(ring);
+    res.push_back(std::move(ring));
+  }
+  RDL_deleteCycles(sssr, sssrSize);
+
+  // add additional relevant cycles up to the maximum allowed
+  RDL_cycleIterator *it = RDL_getRCyclesIterator(urfData);
+  while (!RDL_cycleIteratorAtEnd(it) && res.size() < maxAllowed) {
+    auto cycle = RDL_cycleIteratorGetCycle(it);
+    auto r = RingUtils::rdlCycleToAtomRing(cycle);
+    if (!sssrRings.count(r)) {
+      res.push_back(std::move(r));
+    }
+    RDL_deleteCycle(cycle);
+    RDL_cycleIteratorNext(it);
+  }
+  RDL_deleteCycleIterator(it);
+
+  // The RDL code gives rings ordered by size within each disconnected fragment
+  // of the molecule, but doesn't do the sort across fragments. We need to sort
+  // to make sure the rings go from smallest to largest size.
+  std::ranges::sort(res, MolOps::details::ringComparer);
+  return res;
+}
+}  // namespace
+
 std::vector<std::vector<int>> RingInfo::atomRelevantCycles() const {
   PRECONDITION(df_init, "RingInfo not initialized");
   PRECONDITION(dp_urfData, "Ring families not initialized");
-  std::vector<std::vector<int>> res;
-  if (dp_urfData) {
-    res.reserve(RDL_getNofRC(dp_urfData.get()));
 
-    RDL_cycleIterator *it = RDL_getRCyclesIterator(dp_urfData.get());
-    while (!RDL_cycleIteratorAtEnd(it)) {
-      auto cycle = RDL_cycleIteratorGetCycle(it);
-      res.push_back(RingUtils::rdlCycleToAtomRing(cycle));
-      RDL_deleteCycle(cycle);
-      RDL_cycleIteratorNext(it);
-    }
-    RDL_deleteCycleIterator(it);
+  size_t nURF = RDL_getNofURF(dp_urfData.get());
+  auto nRC = RDL_getNofRC(dp_urfData.get());
+  auto maxAllowed = MAX_SYMMETRIZED_RINGS + nURF;
+  if (nRC > maxAllowed) {
+    BOOST_LOG(rdWarningLog)
+        << "Number of relevant cycles truncated to " << maxAllowed
+        << ". Symmetric rings will not be correct." << std::endl;
+    return truncatedRelevantCycles(dp_urfData.get(), maxAllowed);
   }
+
+  std::vector<std::vector<int>> res;
+  res.reserve(nRC);
+  RDL_cycleIterator *it = RDL_getRCyclesIterator(dp_urfData.get());
+  while (!RDL_cycleIteratorAtEnd(it) && res.size() < nRC) {
+    auto cycle = RDL_cycleIteratorGetCycle(it);
+    res.push_back(RingUtils::rdlCycleToAtomRing(cycle));
+    RDL_deleteCycle(cycle);
+    RDL_cycleIteratorNext(it);
+  }
+  RDL_deleteCycleIterator(it);
+
+  // The RDL code gives rings ordered by size within each disconnected fragment
+  // of the molecule, but doesn't do the sort across fragments. We need to sort
+  // to make sure the rings go from smallest to largest size.
+  std::ranges::sort(res, MolOps::details::ringComparer);
+
   return res;
 }
 

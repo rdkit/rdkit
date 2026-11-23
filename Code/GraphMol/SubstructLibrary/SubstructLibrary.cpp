@@ -172,18 +172,36 @@ unsigned int SubstructLibrary::addMol(const ROMol &m) {
 }
 
 namespace {
+bool query_needs_rings(const ROMol &in_query);
+
+//  Need to descend on RecursiveStructures and AtomAnd, AtomOr and AtomNot
+bool atom_query_needs_rings(const Atom::QUERYATOM_QUERY *query) {
+  if (!query) {
+    return false;
+  }
+  const auto &desc = query->getDescription();
+  if (desc == "RecursiveStructure") {
+    const auto *rsq = static_cast<const RecursiveStructureQuery *>(query);
+    return rsq->getQueryMol() != nullptr &&
+           query_needs_rings(*rsq->getQueryMol());
+  }
+  if (desc.find("Ring") != std::string::npos) {
+    return true;
+  }
+  for (auto child = query->beginChildren(); child != query->endChildren();
+       ++child) {
+    if (atom_query_needs_rings(child->get())) {
+      return true;
+    }
+  }
+  return false;
+}
+
 //  Return true if the pattern contains a ring query
 bool query_needs_rings(const ROMol &in_query) {
   for (const auto &atom : in_query.atoms()) {
-    if (atom->hasQuery()) {
-      if (describeQuery(atom).find("Ring") != std::string::npos) {
-        return true;
-      } else if (atom->getQuery()->getDescription() == "RecursiveStructure") {
-        auto *rsq = (RecursiveStructureQuery *)atom->getQuery();
-        if (query_needs_rings(*rsq->getQueryMol())) {
-          return true;
-        }
-      }
+    if (atom->hasQuery() && atom_query_needs_rings(atom->getQuery())) {
+      return true;
     }
   }
   for (const auto &bond : in_query.bonds()) {

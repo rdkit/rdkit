@@ -309,9 +309,7 @@ ROMol *addHs2(const ROMol &orig, MolOps::AddHsParameters params,
   if (!onlyOnAtoms.is_none()) {
     onlyOn = pythonObjectToVect(onlyOnAtoms, orig.getNumAtoms());
   }
-  auto res = std::make_unique<RWMol>(orig);
-  MolOps::addHs(*res, params, onlyOn.get());
-  return static_cast<ROMol *>(res.release());
+  return MolOps::addHs(orig, params, onlyOn.get());
 }
 
 ROMol *addHs(const ROMol &orig, bool explicitOnly, bool addCoords,
@@ -1307,6 +1305,7 @@ struct molops_wrapper {
           "includeHydrogenBonds"_a = false,
           "algorithm"_a = MolOps::SymmetrizeSSSRAlgorithm::DEFAULT,
           "recalcSSSR"_a = true, docString.c_str());
+    m.attr("MAX_SYMMETRIZED_RINGS") = MAX_SYMMETRIZED_RINGS;
 
     // ------------------------------------------------------------------------
     docString =

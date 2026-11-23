@@ -90,6 +90,25 @@ class TestCase(unittest.TestCase):
     # fraction > 1
     self.assertRaises(ValueError, Scoring.CalcEnrichment, self.scoreBestCase, self.index, [1.5])
 
+  def test1_enrichment_factor_fractions(self):
+    # each fraction is computed on its own, whatever the order of the fractions,
+    # and the result has one value per fraction, including 1.0
+    scores = [[1], [0], [1], [0], [0], [1], [0], [0], [0], [0]]
+    numMol, numActives = len(scores), 3
+    fractions = [0.5, 0.1, 0.11, 0.12, 1.0]
+    enrich = Scoring.CalcEnrichment(scores, 0, fractions)
+    self.assertEqual(len(enrich), len(fractions))
+    for fraction, value in zip(fractions, enrich):
+      k = max(1, math.ceil(numMol * fraction))
+      expected = sum(s[0] for s in scores[:k]) / k * numMol / numActives
+      self.assertAlmostEqual(value, expected, self.acc)
+
+    # GitHub #7981: the fraction covers the whole list
+    scores = sorted(zip([0.0, 0.0, 0.0, 0.0, 1.0], [0, 0, 0, 1, 1]), reverse=True)
+    enrich = Scoring.CalcEnrichment(scores, 1, [0.9])
+    self.assertEqual(len(enrich), 1)
+    self.assertAlmostEqual(enrich[0], 1.0, self.acc)
+
   def test2_RIE(self):
     # """ test RIE """
     ratio = float(self.numActives) / self.numMol

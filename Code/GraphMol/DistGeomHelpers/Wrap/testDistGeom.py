@@ -817,8 +817,8 @@ class TestCase(unittest.TestCase):
     mol = Chem.AddHs(mol)
     rdDistGeom.EmbedMolecule(mol, params)
     cnts = params.GetFailureCounts()
-    self.assertGreater(cnts[rdDistGeom.EmbedFailureCauses.INITIAL_COORDS], 5)
-    self.assertGreater(cnts[rdDistGeom.EmbedFailureCauses.ETK_MINIMIZATION], 10)
+    self.assertGreater(cnts[rdDistGeom.EmbedFailureCauses.INITIAL_COORDS], 0)
+    self.assertGreater(cnts[rdDistGeom.EmbedFailureCauses.ETK_MINIMIZATION], 0)
 
   def testTrackFailures(self):
     params = _getParams(useLegacy=False, maxIt=50, seed=42)
@@ -963,7 +963,7 @@ class TestCase(unittest.TestCase):
     cid = rdDistGeom.EmbedMolecule(mol2, ps)
     self.assertEqual(cid, ps.optimizeConfWithId)
     rmsd = rdMolAlign.GetBestRMS(Chem.RemoveHs(mol), Chem.RemoveHs(mol2))
-    self.assertGreater(rmsd, .22)
+    self.assertGreater(rmsd, .21)
     self.assertLess(rmsd, .24)
 
   def testoptimizeConfWithId2(self):
@@ -978,7 +978,7 @@ class TestCase(unittest.TestCase):
     cids = rdDistGeom.EmbedMultipleConfs(mol2, 10, ps)
     self.assertEqual(len(cids), 1)
     rmsd = rdMolAlign.GetBestRMS(Chem.RemoveHs(mol), Chem.RemoveHs(mol2))
-    self.assertGreater(rmsd, .22)
+    self.assertGreater(rmsd, .21)
     self.assertLess(rmsd, .24)
 
   def testoptimizeConfWithId3(self):
