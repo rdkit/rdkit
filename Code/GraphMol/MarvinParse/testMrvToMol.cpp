@@ -327,6 +327,13 @@ class MrvTests {
 
       TEST_ASSERT(mol->getNumAtoms() == molTest->atomCount);
       TEST_ASSERT(mol->getNumBonds() == molTest->bondCount);
+      if (molTest->fileName == "MarvinStereoGroupsAbs.mrv") {
+        const auto &stereoGroups = mol->getStereoGroups();
+        TEST_ASSERT(stereoGroups.size() == 1);
+        TEST_ASSERT(stereoGroups.front().getGroupType() ==
+                    StereoGroupType::STEREO_ABSOLUTE);
+        TEST_ASSERT(stereoGroups.front().getReadId() == 0);
+      }
 
       {
         std::string expectedMrvName =
