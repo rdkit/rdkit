@@ -3,9 +3,8 @@ import unittest
 
 from rdkit import Chem
 from rdkit.Chem import (BRICS, AllChem, Descriptors, EnumerateHeterocycles,
-                        EnumerateStereoisomers, FragmentMatcher, MACCSkeys,
-                        PropertyMol, Recap, SaltRemover, TemplateAlign,
-                        rdDepictor)
+                        FragmentMatcher, MACCSkeys, PropertyMol, Recap,
+                        SaltRemover, TemplateAlign, rdDepictor)
 
 
 def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
