@@ -463,7 +463,7 @@ TEST_CASE("possible stereochemistry on atoms", "[chirality]") {
   SECTION("atoms with unknown set, real") {
     auto mol = "FC(O)C"_smiles;
     REQUIRE(mol);
-    mol->getBondBetweenAtoms(0, 1)->setBondDir(Bond::BondDir::UNKNOWN);
+    mol->getBondBetweenAtoms(1, 2)->setBondDir(Bond::BondDir::UNKNOWN);
     auto stereoInfo = Chirality::findPotentialStereo(*mol);
     REQUIRE(stereoInfo.size() == 1);
     CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
@@ -755,8 +755,8 @@ TEST_CASE("unknown stereo", "[chirality]") {
   SECTION("atoms") {
     auto mol = "CC(O)C[C@@H](O)F"_smiles;
     REQUIRE(mol);
-    REQUIRE(mol->getBondBetweenAtoms(0, 1));
-    mol->getBondBetweenAtoms(0, 1)->setBondDir(Bond::BondDir::UNKNOWN);
+    REQUIRE(mol->getBondBetweenAtoms(1, 2));
+    mol->getBondBetweenAtoms(1, 2)->setBondDir(Bond::BondDir::UNKNOWN);
     auto stereoInfo = Chirality::findPotentialStereo(*mol);
     REQUIRE(stereoInfo.size() == 2);
     CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
@@ -771,8 +771,8 @@ TEST_CASE("unknown stereo", "[chirality]") {
     // stereo
     auto mol = "C[C@H](O)C[C@@H](O)F"_smiles;
     REQUIRE(mol);
-    REQUIRE(mol->getBondBetweenAtoms(0, 1));
-    mol->getBondBetweenAtoms(0, 1)->setBondDir(Bond::BondDir::UNKNOWN);
+    REQUIRE(mol->getBondBetweenAtoms(1, 2));
+    mol->getBondBetweenAtoms(1, 2)->setBondDir(Bond::BondDir::UNKNOWN);
     auto stereoInfo = Chirality::findPotentialStereo(*mol);
     REQUIRE(stereoInfo.size() == 2);
     CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
@@ -3209,8 +3209,8 @@ TEST_CASE("more findPotential") {
     {
       auto m = "CC=C([CH](F)Cl)[CH](F)Cl"_smiles;
       REQUIRE(m);
-      m->getBondBetweenAtoms(2, 3)->setBondDir(Bond::UNKNOWN);
-      m->getBondBetweenAtoms(2, 6)->setBondDir(Bond::UNKNOWN);
+      m->getBondBetweenAtoms(3, 4)->setBondDir(Bond::UNKNOWN);
+      m->getBondBetweenAtoms(6, 7)->setBondDir(Bond::UNKNOWN);
       auto si = Chirality::findPotentialStereo(*m, true, true);
       CHECK(si.size() == 3);
     }
@@ -7053,6 +7053,31 @@ TEST_CASE("a wiggly bond does not express the stereocenter at its other end") {
   std::unique_ptr<RWMol> reread{MolBlockToMol(MolToMolBlock(*m))};
   REQUIRE(reread);
   CHECK(MolToSmiles(*reread) == MolToSmiles(*m));
+}
+
+TEST_CASE(
+    "getStereoInfo only reports the narrow end of a wiggly bond unknown") {
+  // The wiggly bond runs from atom 1 to the defined stereocenter at atom 3.
+  auto m = "CC(F)[C@H](Cl)Br"_smiles;
+  REQUIRE(m);
+  REQUIRE(m->getBondBetweenAtoms(1, 3)->getBeginAtomIdx() == 1);
+  m->getBondBetweenAtoms(1, 3)->setBondDir(Bond::BondDir::UNKNOWN);
+
+  auto check = [](const ROMol &mol) {
+    const auto narrowEnd =
+        Chirality::detail::getStereoInfo(mol.getAtomWithIdx(1));
+    CHECK(narrowEnd.specified == Chirality::StereoSpecified::Unknown);
+    const auto farEnd = Chirality::detail::getStereoInfo(mol.getAtomWithIdx(3));
+    CHECK(farEnd.specified == Chirality::StereoSpecified::Specified);
+  };
+  SECTION("bond direction") { check(*m); }
+  SECTION("_UnknownStereo property left by the mol file parser") {
+    std::unique_ptr<RWMol> parsed{MolBlockToMol(MolToMolBlock(*m))};
+    REQUIRE(parsed);
+    REQUIRE(parsed->getBondBetweenAtoms(1, 3)->getBondDir() ==
+            Bond::BondDir::NONE);
+    check(*parsed);
+  }
 }
 
 TEST_CASE("wiggly bonds are re-applied after clearSingleBondDirFlags") {

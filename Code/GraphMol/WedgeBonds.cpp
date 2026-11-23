@@ -196,9 +196,9 @@ std::pair<bool, INT_VECT> countChiralNbrs(const ROMol &mol, int noNbrs) {
     if (bond->getBondDir() == Bond::BEGINWEDGE ||
         bond->getBondDir() == Bond::BEGINDASH ||
         bond->getBondDir() == Bond::UNKNOWN) {
-      // a wiggly bond only marks the atom at its narrow end as unknown. It
-      // says nothing about the configuration at its wide end, so unlike a
-      // wedge or dash it does not count as that atom's wedge.
+      // wiggly bonds are claimed up front in pickBondsToWedge(), so one can
+      // never become the wedge of the stereocenter at its wide end. Counting
+      // it as that atom's wedge would leave the atom with none at all.
       if (bond->getBeginAtom()->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW ||
           bond->getBeginAtom()->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW) {
         nChiralNbrs[bond->getBeginAtomIdx()] = noNbrs + 1;

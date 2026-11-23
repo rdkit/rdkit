@@ -303,11 +303,14 @@ StereoInfo getStereoInfo(const Atom *atom) {
   int explicitUnknownStereo = 0;
   for (const auto &nbri : boost::make_iterator_range(mol.getAtomBonds(atom))) {
     const auto &bnd = mol[nbri];
-    if (bnd->getBondDir() == Bond::UNKNOWN) {
-      explicitUnknownStereo = 1;
-    } else if (!explicitUnknownStereo) {
-      bnd->getPropIfPresent<int>(common_properties::_UnknownStereo,
-                                 explicitUnknownStereo);
+    // a wiggly bond only marks the atom at its narrow (begin) end as unknown
+    if (bnd->getBeginAtom() == atom) {
+      if (bnd->getBondDir() == Bond::UNKNOWN) {
+        explicitUnknownStereo = 1;
+      } else if (!explicitUnknownStereo) {
+        bnd->getPropIfPresent<int>(common_properties::_UnknownStereo,
+                                   explicitUnknownStereo);
+      }
     }
     sinfo.controllingAtoms.push_back(bnd->getOtherAtomIdx(atom->getIdx()));
   }
