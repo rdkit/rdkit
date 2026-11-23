@@ -19,7 +19,7 @@ import numpy
 from rdkit import DataStructs, ForceField, RDConfig, rdBase
 from rdkit.Chem import *
 from rdkit.Chem.ChemicalFeatures import *
-from rdkit.Chem.EnumerateStereoisomers import (EnumerateStereoisomers, StereoEnumerationOptions)
+from rdkit.Chem.rdEnumerateStereoisomers import (StereoisomerEnumerator, StereoEnumerationOptions)
 from rdkit.Chem.rdChemReactions import *
 from rdkit.Chem.rdDepictor import *
 from rdkit.Chem.rdDistGeom import *
