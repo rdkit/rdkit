@@ -207,6 +207,14 @@ ROMol *generateMolExtendedReducedGraph(
     getErGAtomTypes(mol, *atomTypes);
   }
   auto *res = new RWMol(mol);
+  // The copy also inherits the input's cached computed properties (e.g. a
+  // DistanceMatrix cached by an earlier GetDistanceMatrix call). The reduced
+  // graph has more atoms than the input (one dummy per ring), so a stale
+  // N x N matrix would be read with the wrong size by getDistanceMat, giving
+  // wrong ErG fingerprints and reads past the end of the array (Github
+  // #9886). Drop the cached props but keep the ring info (false), which the
+  // reduced-graph construction relies on.
+  res->clearComputedProps(false);
 
   const int aliphaticFlag = atomTypes->size() - 1;  // the last type
   const int aromaticFlag = atomTypes->size();
