@@ -355,7 +355,7 @@ def ConstrainedEmbed(mol, core, useTethers=True, coreConfId=-1, randomseed=2342,
 
   if not useTethers:
     # clean up the conformation
-    ff = getForceField(mol, confId=0)
+    ff = getForceField(mol, confId=ci)
     for i, idxI in enumerate(match):
       for j in range(i + 1, len(match)):
         idxJ = match[j]
@@ -367,25 +367,20 @@ def ConstrainedEmbed(mol, core, useTethers=True, coreConfId=-1, randomseed=2342,
     while more and n:
       more = ff.Minimize()
       n -= 1
-    # rotate the embedded conformation onto the core:
-    rms = AlignMol(mol, core, atomMap=algMap)
   else:
     # rotate the embedded conformation onto the core:
-    rms = AlignMol(mol, core, atomMap=algMap)
-    ff = getForceField(mol, confId=0)
-    conf = core.GetConformer()
-    for i in range(core.GetNumAtoms()):
-      p = conf.GetAtomPosition(i)
+    AlignMol(mol, core, prbCid=ci, refCid=coreConfId, atomMap=algMap)
+    ff = getForceField(mol, confId=ci)
+    for atomIdx, p in coordMap.items():
       pIdx = ff.AddExtraPoint(p.x, p.y, p.z, fixed=True) - 1
-      ff.AddDistanceConstraint(pIdx, match[i], 0, 0, 100.)
+      ff.AddDistanceConstraint(pIdx, atomIdx, 0, 0, 100.)
     ff.Initialize()
     n = 4
     more = ff.Minimize(energyTol=1e-4, forceTol=1e-3)
     while more and n:
       more = ff.Minimize(energyTol=1e-4, forceTol=1e-3)
       n -= 1
-    # realign
-    rms = AlignMol(mol, core, atomMap=algMap)
+  rms = AlignMol(mol, core, prbCid=ci, refCid=coreConfId, atomMap=algMap)
   mol.SetProp('EmbedRMS', str(rms))
   return mol
 
