@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/ubsan.yml
+      - .github/workflows/ubsan-suppressions.txt
   workflow_dispatch:
   schedule:
     # Saturday at 04:23 UTC.
@@ -66,7 +67,8 @@ jobs:
 
       - name: Test
         env:
-          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1:external_symbolizer_path=/usr/bin/llvm-symbolizer-22
+          # ubsan-suppressions.txt explains each suppression.
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1:external_symbolizer_path=/usr/bin/llvm-symbolizer-22:suppressions=${{ github.workspace }}/.github/workflows/ubsan-suppressions.txt
           MPLBACKEND: Agg
           LD_LIBRARY_PATH: ${{ github.workspace }}/lib
           PYTHONPATH: ${{ github.workspace }}

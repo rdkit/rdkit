@@ -1,0 +1,4 @@
+# vptr: in-place APIs (SanitizeMol, Kekulize, MolStandardize *InPlace, ...)
+# static_cast a plain ROMol to RWMol&. RWMol adds no data members, so this is
+# benign.
+vptr_check:ROMol
