@@ -1368,10 +1368,11 @@ ResonanceMolSupplier::ResonanceMolSupplier(ROMol &mol, unsigned int flags,
   }
   d_maxStructs = std::min(maxStructs, MAX_STRUCTS);
   d_length = std::min(1U, d_maxStructs);
-  d_mol = new ROMol(mol);
+  auto *rwMol = new RWMol(mol);
+  d_mol = rwMol;
   // call here to avoid a race condition in threads
   MolOps::getDistanceMat(*d_mol);
-  MolOps::Kekulize((RWMol &)*d_mol, false);
+  MolOps::Kekulize(*rwMol, false);
   // identify conjugate substructures
   assignConjGrpIdx();
 }
@@ -1836,10 +1837,10 @@ void ResonanceMolSupplier::assignBondsFormalChargesHelper(
 // with the c vector
 ROMol *ResonanceMolSupplier::assignBondsFormalCharges(
     std::vector<unsigned int> &c) const {
-  auto *mol = new ROMol(this->mol());
+  auto *mol = new RWMol(this->mol());
   assignBondsFormalChargesHelper(*mol, c);
   ResonanceUtils::fixExplicitImplicitHs(*mol);
-  ResonanceUtils::sanitizeMol((RWMol &)*mol);
+  ResonanceUtils::sanitizeMol(*mol);
   return mol;
 }
 }  // namespace RDKit

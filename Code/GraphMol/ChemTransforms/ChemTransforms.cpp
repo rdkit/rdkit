@@ -215,7 +215,7 @@ std::vector<ROMOL_SPTR> replaceSubstructs(
     std::sort(sortMatch.begin(), sortMatch.end());
 
     if (!replaceAll || !res.size()) {
-      res.push_back(ROMOL_SPTR(new ROMol(mol, false)));
+      res.push_back(ROMOL_SPTR(new RWMol(mol, false)));
     }
     RWMol *newMol = static_cast<RWMol *>(res.rbegin()->get());
 
