@@ -88,7 +88,18 @@ None'''
     view.addModel(mb, 'sdf')
   if drawAs is None:
     drawAs = drawing_type_3d
-  view.setStyle({drawAs: {}})
+    
+  lone = [a.GetIdx() for a in mol.GetAtoms() if a.GetDegree() == 0]
+  bonded = [a.GetIdx() for a in mol.GetAtoms() if a.GetDegree() > 0]
+
+  if bonded :
+    view.setStyle({'serial': bonded}, {drawAs: {}})
+  else:
+    view.setStyle({drawAs: {}})
+
+  if lone:
+    view.addStyle({'serial': lone},
+                  {'sphere': {'radius': 0.5, 'colorscheme': 'default'}})
 
 
 def drawMol3D(m, view=None, confId=-1, drawAs=None, bgColor=None, size=None):
@@ -176,13 +187,26 @@ the py3Dmol.view object containing the drawing'''
     if removeHs:
       m = Chem.RemoveHs(m)
     addMolToView(m, view, confId, drawAs[i])
+
   for i in range(len(mols)):
+    lone = [a.GetIdx() for a in mols[i].GetAtoms() if a.GetDegree() == 0]
+    bonded = [a.GetIdx() for a in mols[i].GetAtoms() if a.GetDegree() > 0]
+
     style = {'colorscheme': colors[i % len(colors)]}
     if drawAs[i] == "sphere":
       style["radius"] = 0.5
-    view.setStyle({
-      'model': i,
-    }, {drawAs[i]: style})
+
+    if bonded:
+      view.setStyle({'model': i, 'serial': bonded},
+                    {drawAs[i]: style})
+    else:
+      view.setStyle({
+        'model': i,
+      }, {drawAs[i]: style})
+      
+    if lone:
+      view.setStyle({'model': i, 'serial': lone},
+                    {'sphere': {'radius': 0.5, 'colorscheme': 'default'}})
 
   view.setBackgroundColor(bgColor)
   view.zoomTo()
