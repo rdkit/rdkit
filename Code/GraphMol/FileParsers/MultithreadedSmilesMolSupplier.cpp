@@ -75,6 +75,7 @@ void MultithreadedSmilesMolSupplier::processTitleLine() {
   while (!dp_inStream->eof() && !dp_inStream->fail() &&
          lineIsEmptyOrComment(tempStr)) {
     tempStr = getLine(dp_inStream);
+    ++d_line;
   }
 
   boost::char_separator<char> sep(d_parseParams.delimiter.c_str(), "",
@@ -109,6 +110,7 @@ bool MultithreadedSmilesMolSupplier::extractNextRecord(std::string &record,
   while (!dp_inStream->eof() && !dp_inStream->fail() &&
          lineIsEmptyOrComment(tempStr)) {
     tempStr = getLine(dp_inStream);
+    ++d_line;
   }
 
   record = tempStr;

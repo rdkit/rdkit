@@ -8,7 +8,10 @@
 //  of the RDKit source tree.
 //
 #include "RDGeneral/test.h"
+#include <algorithm>
+#include <sstream>
 #include <string>
+#include <vector>
 #include <catch2/catch_all.hpp>
 #include <RDGeneral/Invariant.h>
 #include <GraphMol/RDKitBase.h>
@@ -197,5 +200,31 @@ TEST_CASE("callbacks smiles") {
       CHECK(mol->hasProp("recordId"));
       CHECK(mol->getProp<unsigned int>("recordId") == suppl.getLastRecordId());
     }
+  }
+}
+
+TEST_CASE("multithreaded smiles default names are line numbers") {
+  // without a name column, molecules are named after the line they were read
+  // from, the same as in the single-threaded SmilesMolSupplier. Without a
+  // title line, "smiles" is read as a record and fails to parse.
+  const std::string text = "# comment\n\nsmiles\nCC\n\nCCC\n";
+  for (bool titleLine : {false, true}) {
+    v2::FileParsers::SmilesMolSupplierParams smiParams;
+    smiParams.nameColumn = -1;
+    smiParams.titleLine = titleLine;
+
+    v2::FileParsers::MultithreadedMolSupplier::Parameters params;
+    params.numWriterThreads = 2;
+    v2::FileParsers::MultithreadedSmilesMolSupplier mtSuppl(
+        new std::istringstream(text), true, params, smiParams);
+    std::vector<std::string> names;
+    while (!mtSuppl.atEnd()) {
+      auto mol = mtSuppl.next();
+      if (mol) {
+        names.push_back(mol->getProp<std::string>(common_properties::_Name));
+      }
+    }
+    std::sort(names.begin(), names.end());
+    CHECK(names == std::vector<std::string>{"3", "5"});
   }
 }
