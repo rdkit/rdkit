@@ -38,6 +38,18 @@ namespace ForceFields {
 namespace CrystalFF {
 using namespace RDKit;
 
+namespace {
+void writeVerboseTorsionMessage(const std::string &message) {
+  // Explicit verbose output must work even when the info log is disabled.
+  // Use its configured destination without changing global flags.
+  if (rdInfoLog && rdInfoLog->dp_dest) {
+    auto &stream =
+        rdInfoLog->teestream ? *rdInfoLog->teestream : *rdInfoLog->dp_dest;
+    RDLog::toStream(stream) << message << std::endl;
+  }
+}
+}  // namespace
+
 // the "macrocycle" patterns for ETKDGv3 use a minimum ring size of 9
 constexpr unsigned int MIN_MACROCYCLE_SIZE = 9;
 
@@ -249,8 +261,6 @@ void getExperimentalTorsionsImpl(
     throw ValueErrorException("molecule has no atoms");
   }
 
-  RDLog::LogStateSetter logs(
-      RDLog::RDLoggerList({rdInfoLog, rdErrorLog, rdWarningLog}));
   // check that vectors are empty
   details.expTorsionAtoms.clear();
   details.expTorsionAngles.clear();
@@ -421,7 +431,7 @@ void getExperimentalTorsionsImpl(
               sstr << "(" << param.signs[i] << " " << param.V[i] << "), ";
             }
             sstr << "(" << param.signs.back() << " " << param.V.back() << ")] ";
-            BOOST_LOG(rdInfoLog) << sstr.str() << std::endl;
+            writeVerboseTorsionMessage(sstr.str());
           }
         } else {
           details.expTorsionAngles.push_back(
@@ -433,7 +443,7 @@ void getExperimentalTorsionsImpl(
             std::stringstream sstr;
             sstr << param.smarts << ": " << aid1 << " " << aid2 << " " << aid3
                  << " " << aid4 << ", [";
-            BOOST_LOG(rdInfoLog) << sstr.str() << std::endl;
+            writeVerboseTorsionMessage(sstr.str());
           }
         }
       }  // if not donePaths
