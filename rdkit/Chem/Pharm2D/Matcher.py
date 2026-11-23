@@ -85,6 +85,8 @@ def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingA
     dMat = Chem.GetDistanceMatrix(mol, sigFactory.includeBondOrder)
 
   distsToCheck = Utils.nPointDistDict[nPts]
+  bins = sigFactory.GetBins()
+  minD, maxD = bins[0][0], bins[-1][1]
 
   protoPharmacophores = Utils.GetAllCombinations(choices, noDups=1)
 
@@ -93,18 +95,13 @@ def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingA
     if _verbose:
       print('protoPharm:', protoPharm)
     for i in range(len(distsToCheck)):
-      dLow, dHigh = sigFactory.GetBins()[scaffold[i]]
+      dLow, dHigh = bins[scaffold[i]]
       a1, a2 = distsToCheck[i]
-      #
-      # FIX: this is making all kinds of assumptions about
-      #  things being single-atom matches (or at least that
-      #  only the first atom matters
-      #
-      idx1, idx2 = protoPharm[a1][0], protoPharm[a2][0]
-      dist = dMat[idx1, idx2]
+      atoms1, atoms2 = protoPharm[a1], protoPharm[a2]
+      dist = Utils._ShortestFeatureDistance(atoms1, atoms2, dMat, minD, maxD)
       if _verbose:
-        print(f'\t dist: {idx1}->{idx2} = {dist} ({dLow}, {dHigh})')
-      if dist < dLow or dist >= dHigh:
+        print(f'\t dist: {atoms1}->{atoms2} = {dist} ({dLow}, {dHigh})')
+      if dist is None or dist < dLow or dist >= dHigh:
         break
     else:
       if _verbose:

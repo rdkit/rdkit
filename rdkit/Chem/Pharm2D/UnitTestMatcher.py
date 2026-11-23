@@ -61,6 +61,37 @@ class TestCase(unittest.TestCase):
       atoms = Matcher.GetAtomsMatchingBit(factory, bit, mol, justOne=1)
       self.assertTrue(len(atoms))
 
+  def testMultiAtomFeatureDistance(self):
+    mol = Chem.MolFromSmiles('c1ccc(F)cc1')
+    families = self.factory.GetFeatFamilies()
+    pair = [families.index('Acceptor'), families.index('Aromatic')]
+    near = self.factory.GetBitIdx(pair, [1])
+    far = self.factory.GetBitIdx(pair, [4])
+    bitInfo = {}
+    fp = Generate.Gen2DFingerprint(mol, self.factory, bitInfo=bitInfo)
+    self.assertTrue(fp[near])
+    self.assertFalse(fp[far])
+    expected = [tuple(sorted(bitInfo[near][0]))]
+    self.assertEqual(Matcher.GetAtomsMatchingBit(self.factory, near, mol), expected)
+    self.assertEqual(Matcher.GetAtomsMatchingBit(self.factory, far, mol), [])
+
+  def testOverlappingFeatures(self):
+    mol = Chem.MolFromSmiles('c1ccc2ccccc2c1')
+    aromatic = self.factory.GetFeatFamilies().index('Aromatic')
+    bit = self.factory.GetBitIdx([aromatic, aromatic], [1])
+    self.assertFalse(Generate.Gen2DFingerprint(mol, self.factory)[bit])
+    self.assertEqual(Matcher.GetAtomsMatchingBit(self.factory, bit, mol), [])
+
+  def testBondOrderWeightedDistance(self):
+    mol = Chem.MolFromSmiles('N#N')
+    acceptor = self.factory.GetFeatFamilies().index('Acceptor')
+    bit = self.factory.GetBitIdx([acceptor, acceptor], [1])
+    self.assertTrue(Generate.Gen2DFingerprint(mol, self.factory)[bit])
+    self.assertEqual(Matcher.GetAtomsMatchingBit(self.factory, bit, mol), [((0,), (1,))])
+    self.factory.includeBondOrder = True
+    self.assertFalse(Generate.Gen2DFingerprint(mol, self.factory)[bit])
+    self.assertEqual(Matcher.GetAtomsMatchingBit(self.factory, bit, mol), [])
+
   def test3Roundtrip(self):
     # longer-running Bug 28 test
     nToDo = 20

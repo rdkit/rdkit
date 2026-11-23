@@ -54,16 +54,8 @@ def _ShortestPathsMatch(match, featureSet, sig, dMat, sigFactory):
   minD, maxD = bins[0][0], bins[-1][1]
 
   for i, (pt0, pt1) in enumerate(distsToCheck):
-    minSeen = maxD
-    for idx1 in match[pt0]:
-      for idx2 in match[pt1]:
-        minSeen = min(minSeen, dMat[idx1, idx2])
-        if minSeen == 0 or minSeen < minD:
-          return
-    # FIX: this won't be an int if we're using the bond order.
-    d = int(minSeen)
-    # do a quick distance filter
-    if d == 0 or d < minD or d >= maxD:
+    d = Utils._ShortestFeatureDistance(match[pt0], match[pt1], dMat, minD, maxD)
+    if d is None:
       return None
     dist[i] = d
 
