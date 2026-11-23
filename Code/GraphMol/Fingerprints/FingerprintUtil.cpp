@@ -163,6 +163,76 @@ std::uint32_t getTopologicalTorsionHash(
   }
   return res;
 }
+
+namespace {
+// The codes along a cyclic path are the base atom codes with 1 subtracted
+// for the interior atoms (positions 1..n-2); the two ends carry the same
+// atom, so they carry the same base code with no subtraction. Recover the
+// base code of each distinct ring atom, in cyclic order.
+std::vector<std::uint32_t> getCyclicPathBaseCodes(
+    const std::vector<std::uint32_t> &pathCodes) {
+  const unsigned int nRingAtoms = pathCodes.size() - 1;
+  std::vector<std::uint32_t> baseCodes;
+  baseCodes.reserve(nRingAtoms);
+  for (unsigned int i = 0; i < nRingAtoms; ++i) {
+    // position 0 is an end atom (no subtraction); the rest are interior
+    baseCodes.push_back(pathCodes[i] + (i == 0 ? 0 : 1));
+  }
+  return baseCodes;
+}
+
+// The atom codes along the path obtained by rotating the ring so that it
+// starts at ring atom `rotation`, with the branching subtraction applied
+// to the interior atoms of the rotated path.
+std::vector<std::uint32_t> getRotatedCyclicPathCodes(
+    const std::vector<std::uint32_t> &baseCodes, unsigned int rotation) {
+  const unsigned int nRingAtoms = baseCodes.size();
+  std::vector<std::uint32_t> rotatedCodes;
+  rotatedCodes.reserve(nRingAtoms + 1);
+  for (unsigned int i = 0; i <= nRingAtoms; ++i) {
+    unsigned int code = baseCodes[(rotation + i) % nRingAtoms];
+    // interior atoms of the rotated path lose 1 for branching; the two
+    // ends (the same atom) do not
+    if (i > 0 && i < nRingAtoms) {
+      --code;
+    }
+    rotatedCodes.push_back(code);
+  }
+  return rotatedCodes;
+}
+}  // namespace
+
+std::uint64_t getCanonicalCyclicTorsionCode(
+    const std::vector<std::uint32_t> &pathCodes, bool includeChirality) {
+  PRECONDITION(pathCodes.size() >= 2, "cyclic path too short");
+  PRECONDITION(pathCodes.front() == pathCodes.back(),
+               "path does not close a ring");
+  const std::vector<std::uint32_t> baseCodes =
+      getCyclicPathBaseCodes(pathCodes);
+  std::uint64_t res = getTopologicalTorsionCode(pathCodes, includeChirality);
+  for (unsigned int rotation = 1; rotation < baseCodes.size(); ++rotation) {
+    res = std::min(
+        res, getTopologicalTorsionCode(
+                 getRotatedCyclicPathCodes(baseCodes, rotation),
+                 includeChirality));
+  }
+  return res;
+}
+
+std::uint32_t getCanonicalCyclicTorsionHash(
+    const std::vector<std::uint32_t> &pathCodes) {
+  PRECONDITION(pathCodes.size() >= 2, "cyclic path too short");
+  PRECONDITION(pathCodes.front() == pathCodes.back(),
+               "path does not close a ring");
+  const std::vector<std::uint32_t> baseCodes =
+      getCyclicPathBaseCodes(pathCodes);
+  std::uint32_t res = getTopologicalTorsionHash(pathCodes);
+  for (unsigned int rotation = 1; rotation < baseCodes.size(); ++rotation) {
+    res = std::min(res, getTopologicalTorsionHash(
+                            getRotatedCyclicPathCodes(baseCodes, rotation)));
+  }
+  return res;
+}
 }  // namespace AtomPairs
 
 namespace MorganFingerprints {
