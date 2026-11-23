@@ -65,6 +65,26 @@ TEST_CASE("ControlCHandler shared state supports concurrent access") {
   CHECK_FALSE(ControlCHandler::getGotSignal());
 }
 
+TEST_CASE("isEmptyAndDone") {
+  ConcurrentQueue<int> q(4);
+  // empty and not done
+  CHECK_FALSE(q.isEmptyAndDone());
+
+  q.push(1);
+  // not empty and not done
+  CHECK_FALSE(q.isEmptyAndDone());
+
+  q.setDone();
+  // not empty and done: an element is still queued, so this must be false
+  CHECK_FALSE(q.isEmptyAndDone());
+
+  int e = 0;
+  REQUIRE(q.pop(e));
+  CHECK(e == 1);
+  // empty and done
+  CHECK(q.isEmptyAndDone());
+}
+
 TEST_CASE("testPushAndPop") {
   ConcurrentQueue<int> *q = new ConcurrentQueue<int>(4);
   int e1, e2, e3;
