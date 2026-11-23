@@ -40,10 +40,13 @@ jobs:
 
       - name: Configure
         run: |
+          # local-bounds catches out-of-bounds indexing of local arrays whose
+          # size is known at compile time. It traps (bare SIGILL) by default;
+          # -fno-sanitize-trap=local-bounds makes it print a UBSan report.
           cmake -S . -B build/ubsan -G Ninja \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-            -DCMAKE_C_FLAGS="-fsanitize=undefined -fno-sanitize-merge -fno-omit-frame-pointer" \
-            -DCMAKE_CXX_FLAGS="-fsanitize=undefined -fno-sanitize-merge -fno-omit-frame-pointer" \
+            -DCMAKE_C_FLAGS="-fsanitize=undefined,local-bounds -fno-sanitize-trap=local-bounds -fno-sanitize-merge -fno-omit-frame-pointer" \
+            -DCMAKE_CXX_FLAGS="-fsanitize=undefined,local-bounds -fno-sanitize-trap=local-bounds -fno-sanitize-merge -fno-omit-frame-pointer" \
             -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=undefined -shared-libsan" \
             -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=undefined -shared-libsan" \
             -DPython_EXECUTABLE="$PYTHON_EXECUTABLE" \
