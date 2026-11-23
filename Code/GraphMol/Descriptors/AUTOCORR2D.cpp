@@ -35,7 +35,10 @@
 
 #include "AUTOCORR2D.h"
 #include "MolData3Ddescriptors.h"
+#include <GraphMol/new_canon.h>
+#include <algorithm>
 #include <cmath>
+#include <numeric>
 
 namespace RDKit {
 namespace Descriptors {
@@ -43,6 +46,49 @@ namespace Descriptors {
 namespace {
 
 MolData3Ddescriptors moldata3D;
+
+// The sums below run over atoms in input order, so their last bits -- and,
+// after the rounding to three decimals at the end, occasionally the rounded
+// values -- depend on the atom order (Github #9887). Accumulate in
+// canonical-rank order instead, so the result is a function of the molecule
+// rather than of its atom numbering.
+std::vector<unsigned int> canonicalAtomOrder(const ROMol &mol) {
+  const unsigned int numAtoms = mol.getNumAtoms();
+  std::vector<unsigned int> order(numAtoms);
+  if (numAtoms == 0) {
+    return order;
+  }
+  std::vector<unsigned int> ranks;
+  Canon::rankMolAtoms(mol, ranks);
+  std::iota(order.begin(), order.end(), 0u);
+  std::sort(order.begin(), order.end(), [&ranks](unsigned int a,
+                                                 unsigned int b) {
+    return ranks[a] < ranks[b];
+  });
+  return order;
+}
+
+// Reorders v in place so that v[i] becomes the old v[order[i]].
+void permuteToCanonicalOrder(std::vector<double> &v,
+                             const std::vector<unsigned int> &order) {
+  const std::vector<double> old = v;
+  for (unsigned int i = 0; i < order.size(); ++i) {
+    v[i] = old[order[i]];
+  }
+}
+
+// Returns the distance matrix with rows/columns permuted into canonical
+// atom order.
+std::vector<double> canonicalDistMat(const double *dist, unsigned int numAtoms,
+                                     const std::vector<unsigned int> &order) {
+  std::vector<double> canonDist(numAtoms * numAtoms, 0.0);
+  for (unsigned int i = 0; i < numAtoms; ++i) {
+    for (unsigned int j = 0; j < numAtoms; ++j) {
+      canonDist[j * numAtoms + i] = dist[order[j] * numAtoms + order[i]];
+    }
+  }
+  return canonDist;
+}
 
 // this is the Broto-Moreau 2D descriptors (centered or not)
 void get2DautocorrelationDesc(const double *dist, unsigned int numAtoms,
@@ -53,6 +99,18 @@ void get2DautocorrelationDesc(const double *dist, unsigned int numAtoms,
   std::vector<double> wi = moldata3D.GetRelativeIonPol(mol);
   std::vector<double> we = moldata3D.GetRelativeENeg(mol);
   std::vector<double> ws = moldata3D.GetIState(mol);
+
+  // Accumulate in canonical atom order (Github #9887).
+  const std::vector<unsigned int> order = canonicalAtomOrder(mol);
+  permuteToCanonicalOrder(wp, order);
+  permuteToCanonicalOrder(wm, order);
+  permuteToCanonicalOrder(wv, order);
+  permuteToCanonicalOrder(wi, order);
+  permuteToCanonicalOrder(we, order);
+  permuteToCanonicalOrder(ws, order);
+  const std::vector<double> canonDist =
+      canonicalDistMat(dist, numAtoms, order);
+
   std::vector<double> w(6 * numAtoms, 0.0);
   std::vector<double> wmean(6, 0.0);
 
@@ -88,7 +146,7 @@ void get2DautocorrelationDesc(const double *dist, unsigned int numAtoms,
     int maxkVertexPairs = 0;
     for (unsigned int i = 0; i < numAtoms; ++i) {
       for (unsigned int j = i + 1; j < numAtoms; ++j) {
-        if (dist[j * numAtoms + i] == k + 1) {
+        if (canonDist[j * numAtoms + i] == k + 1) {
           for (unsigned int t = 0; t < 6; ++t) {
             TDBmatM[t * 8 + k] += (w[t * numAtoms + i] - wmean[t]) *
                                   (w[t * numAtoms + j] - wmean[t]);  // ATSC
@@ -154,6 +212,12 @@ void get2DautocorrelationDescCustom(const double *dist, unsigned int numAtoms,
   std::vector<double> w(numAtoms, 0.0);
   double wmean = 0.0;
 
+  // Accumulate in canonical atom order (Github #9887).
+  const std::vector<unsigned int> order = canonicalAtomOrder(mol);
+  permuteToCanonicalOrder(wc, order);
+  const std::vector<double> canonDist =
+      canonicalDistMat(dist, numAtoms, order);
+
   for (unsigned int i = 0; i < numAtoms; i++) {
     wmean += wc[+i] / (double)numAtoms;
   }
@@ -172,7 +236,7 @@ void get2DautocorrelationDescCustom(const double *dist, unsigned int numAtoms,
     int maxkVertexPairs = 0;
     for (unsigned int i = 0; i < numAtoms; ++i) {
       for (unsigned int j = i + 1; j < numAtoms; ++j) {
-        if (dist[j * numAtoms + i] == k + 1) {
+        if (canonDist[j * numAtoms + i] == k + 1) {
           TDBmatM[k] += (wc[i] - wmean) * (wc[j] - wmean);
           TDBmatG[k] += (wc[i] - wc[j]) * (wc[i] - w[j]);
           TDBmat[k] += wc[i] * wc[j];

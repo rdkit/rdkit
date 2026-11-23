@@ -17,6 +17,9 @@
 #include <vector>
 #include <algorithm>
 #include <fstream>
+#include <memory>
+#include <numeric>
+#include <random>
 #include <sstream>
 
 #include <GraphMol/Descriptors/AUTOCORR2D.h>
@@ -104,8 +107,82 @@ void testGithub3806() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGithub9887() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog)
+      << "    Test Github #9887: AUTOCORR2D values depend on atom order"
+      << std::endl;
+
+  {
+    std::unique_ptr<ROMol> m("CC(O)C(=O)OCCCCCO"_smiles);
+    TEST_ASSERT(m);
+    std::vector<double> ref;
+    RDKit::Descriptors::AUTOCORR2D(*m, ref);
+    TEST_ASSERT(ref.size() == 192);
+
+    // The SMILES from the issue report is a renumbering of the same molecule
+    // that used to give different values at positions 144 and 146.
+    std::unique_ptr<ROMol> m2("C(COC(C(C)O)=O)CCCO"_smiles);
+    TEST_ASSERT(m2);
+    std::vector<double> vs;
+    RDKit::Descriptors::AUTOCORR2D(*m2, vs);
+    TEST_ASSERT(vs.size() == ref.size());
+    for (unsigned i = 0; i < ref.size(); ++i) {
+      TEST_ASSERT(vs[i] == ref[i]);
+    }
+
+    // Several deterministic renumberings of the same molecule.
+    const unsigned int numAtoms = m->getNumAtoms();
+    std::vector<unsigned int> order(numAtoms);
+    std::iota(order.begin(), order.end(), 0u);
+    std::mt19937 rng(42);
+    for (unsigned trial = 0; trial < 20; ++trial) {
+      std::shuffle(order.begin(), order.end(), rng);
+      std::unique_ptr<ROMol> shuffled(MolOps::renumberAtoms(*m, order));
+      TEST_ASSERT(shuffled);
+      std::vector<double> shuffledVs;
+      RDKit::Descriptors::AUTOCORR2D(*shuffled, shuffledVs);
+      TEST_ASSERT(shuffledVs.size() == ref.size());
+      for (unsigned i = 0; i < ref.size(); ++i) {
+        TEST_ASSERT(shuffledVs[i] == ref[i]);
+      }
+    }
+
+    // The custom-property variant has the same order dependence; check it
+    // too. The property is a per-atom value (atomic number), set after each
+    // renumbering so it follows the atoms.
+    auto setCustomProp = [](ROMol *mol) {
+      for (auto atom : mol->atoms()) {
+        atom->setProp("customProp",
+                      static_cast<double>(atom->getAtomicNum()));
+      }
+    };
+    setCustomProp(m.get());
+    std::vector<double> refCustom;
+    RDKit::Descriptors::AUTOCORR2D(*m, refCustom, "customProp");
+    TEST_ASSERT(refCustom.size() == 32);
+
+    std::iota(order.begin(), order.end(), 0u);
+    std::mt19937 rng2(123);
+    for (unsigned trial = 0; trial < 20; ++trial) {
+      std::shuffle(order.begin(), order.end(), rng2);
+      std::unique_ptr<ROMol> shuffled(MolOps::renumberAtoms(*m, order));
+      TEST_ASSERT(shuffled);
+      setCustomProp(shuffled.get());
+      std::vector<double> shuffledVs;
+      RDKit::Descriptors::AUTOCORR2D(*shuffled, shuffledVs, "customProp");
+      TEST_ASSERT(shuffledVs.size() == refCustom.size());
+      for (unsigned i = 0; i < refCustom.size(); ++i) {
+        TEST_ASSERT(shuffledVs[i] == refCustom[i]);
+      }
+    }
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
   testautocorrelation();
   testGithub3806();
+  testGithub9887();
 }
