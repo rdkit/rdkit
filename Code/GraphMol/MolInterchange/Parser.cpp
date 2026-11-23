@@ -331,9 +331,9 @@ void readSubstanceGroups(RWMol *mol, const bj::value &sgVals) {
       const auto &brks = sgVal.at("brackets").as_array();
       for (const auto &brk : brks) {
         SubstanceGroup::Bracket bracket;
-        if (brk.as_array().size() > bracket.size()) {
+        if (brk.as_array().size() != bracket.size()) {
           throw FileParseException(
-              "Bad Format: bracket has more than three points");
+              "Bad Format: bracket doesn't have three points");
         }
         unsigned int idx = 0;
         for (const auto &pt : brk.as_array()) {

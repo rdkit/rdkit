@@ -535,15 +535,19 @@ TEST_CASE("check array sizes when parsing JSON") {
     badjson.replace(pos, lookFor.size(), replacement);
     return badjson;
   };
-  SECTION("too many bracket points") {
+  SECTION("wrong number of bracket points") {
     std::string extraPoints;
     for (unsigned int i = 0; i < 64; ++i) {
       extraPoints += ",[1.0,1.0,0.0]";
     }
-    auto badjson = replace(R"JSON([0.0,0.0,0.0]]])JSON",
-                           "[0.0,0.0,0.0]" + extraPoints + "]]");
-    CHECK_THROWS_AS(MolInterchange::JSONDataToMols(badjson),
-                    FileParseException);
+    // one point, two points, and 67 points
+    for (const auto &points : {std::string(""), std::string(",[0.0,0.0,0.0]"),
+                               ",[0.5,1.0,0.0],[0.0,0.0,0.0]" + extraPoints}) {
+      auto badjson =
+          replace(R"JSON(,[0.5,1.0,0.0],[0.0,0.0,0.0]]])JSON", points + "]]");
+      CHECK_THROWS_AS(MolInterchange::JSONDataToMols(badjson),
+                      FileParseException);
+    }
   }
   SECTION("wrong number of stereoAtoms") {
     for (const auto &stereoAtoms : {"[]", "[0]", "[0,3,1]"}) {
