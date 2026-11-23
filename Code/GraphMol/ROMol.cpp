@@ -657,7 +657,7 @@ const Conformer &ROMol::getConformer(int id) const {
   }
   // we did not find a conformation with the specified ID
   std::string mesg = "Can't find conformation with ID: ";
-  mesg += id;
+  mesg += std::to_string(id);
   throw ConformerException(mesg);
 }
 

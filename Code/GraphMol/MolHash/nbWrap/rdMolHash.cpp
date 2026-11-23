@@ -40,8 +40,7 @@ NB_MODULE(rdMolHash, m) {
       .value("ArthorSubstructureOrder",
              MolHash::HashFunction::ArthorSubstructureOrder)
       .value("HetAtomTautomerv2", MolHash::HashFunction::HetAtomTautomerv2)
-      .value("HetAtomProtomerv2", MolHash::HashFunction::HetAtomProtomerv2)
-      .export_values();
+      .value("HetAtomProtomerv2", MolHash::HashFunction::HetAtomProtomerv2);
 
   m.def(
       "MolHash",

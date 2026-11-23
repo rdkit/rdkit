@@ -299,6 +299,14 @@ double *getAdjacencyMatrix(const ROMol &mol, bool useBO, int emptyVal,
   if (useBO) {
     propName += "BO";
   }
+  if (emptyVal != 0) {
+    propName += "_emptyVal" + std::to_string(emptyVal);
+  }
+  if (bondsToUse) {
+    std::string bondBits;
+    boost::to_string(*bondsToUse, bondBits);
+    propName += "_bonds" + bondBits;
+  }
   if (!force && mol.hasProp(propName)) {
     mol.getProp(propName, sptr);
     return sptr.get();
@@ -306,7 +314,7 @@ double *getAdjacencyMatrix(const ROMol &mol, bool useBO, int emptyVal,
 
   int nAts = mol.getNumAtoms();
   auto *res = new double[nAts * nAts];
-  memset(static_cast<void *>(res), emptyVal, nAts * nAts * sizeof(double));
+  std::fill(res, res + nAts * nAts, static_cast<double>(emptyVal));
 
   for (const auto bond : mol.bonds()) {
     if (bondsToUse && !(*bondsToUse)[bond->getIdx()]) {

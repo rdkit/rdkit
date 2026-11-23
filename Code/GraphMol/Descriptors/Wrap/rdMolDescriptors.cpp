@@ -45,6 +45,9 @@
 namespace python = boost::python;
 
 namespace {
+// Holds the atom-pair constants as class attributes.
+struct AtomPairsParameters {};
+
 std::vector<unsigned int> atomPairTypes(
     RDKit::AtomPairs::atomNumberTypes,
     RDKit::AtomPairs::atomNumberTypes +
@@ -1202,7 +1205,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
 
   std::string docString = "";
 
-  python::class_<python::object>("AtomPairsParameters")
+  python::class_<AtomPairsParameters>("AtomPairsParameters")
       .setattr("version", RDKit::AtomPairs::atomPairsVersion)
       .setattr("numTypeBits", RDKit::AtomPairs::numTypeBits)
       .setattr("numPiBits", RDKit::AtomPairs::numPiBits)

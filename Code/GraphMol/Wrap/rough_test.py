@@ -7674,201 +7674,6 @@ CAS<~>
 
     Chem.SetUseLegacyStereoPerception(True)
 
-  def test_picklingWithAddedAttribs(self):
-    m = Chem.MolFromSmiles("C")
-    m.foo = 1
-    m.SetIntProp("bar", 2)
-    pkl = pickle.dumps(m)
-    nm = pickle.loads(pkl)
-    self.assertEqual(nm.GetIntProp("bar"), 2)
-    self.assertEqual(nm.foo, 1)
-
-  def testGithubIssue6306(self):
-    # test of unpickling
-    props = Chem.GetDefaultPickleProperties()
-    try:
-      Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)
-      mols = [Chem.MolFromSmiles(s) for s in ["C", "CC"]]
-      scaffolds = [MurckoScaffold.GetScaffoldForMol(m) for m in mols]
-      # this shouldn't throw an exception
-      unpickler = [pickle.loads(pickle.dumps(m)) for m in mols]
-    finally:
-      Chem.SetDefaultPickleProperties(props)
-
-  @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not build with MAEParser support")
-  def testMaeWriter(self):
-    mol = Chem.MolFromSmiles("C1CCCCC1")
-    self.assertTrue(mol)
-    title = "random test mol"
-    mol.SetProp('_Name', title)
-
-    ofile = os.path.join(RDConfig.RDBaseDir, 'Code', 'GraphMol', 'Wrap', 'test_data',
-                         'outMaeWriter.mae')
-    writer1 = Chem.MaeWriter(ofile)
-
-    osio = StringIO()
-    writer2 = Chem.MaeWriter(osio)
-
-    for writer in (writer1, writer2):
-      writer.write(mol)
-      writer.close()
-      del writer
-
-    with open(ofile) as f:
-      maefile = f.read()
-
-    self.assertEqual(maefile, osio.getvalue())
-
-    self.assertIn('s_m_m2io_version', maefile)
-
-    self.assertIn('f_m_ct', maefile)
-
-    self.assertIn('s_m_title', maefile)
-    self.assertIn(title, maefile)
-
-    self.assertIn(f' m_atom[{mol.GetNumAtoms()}] {{', maefile)
-
-    self.assertEqual(maefile.count("A0A0A0"), 6)  # 6 grey-colored heavy atoms
-
-    self.assertTrue(f' m_bond[{mol.GetNumBonds()}] {{', maefile)
-
-  @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not build with MAEParser support")
-  def testMaeWriterProps(self):
-    mol = Chem.MolFromSmiles("C1CCCCC1")
-    self.assertTrue(mol)
-
-    title = "random test mol"
-    mol.SetProp('_Name', title)
-
-    boolProp = False
-    intProp = 123454321
-    realProp = 2.718282  # Mae files have a predefined precision of 6 digits!
-    strProp = r"This is a dummy prop, yay!"
-
-    ignored_prop = 'ignored_prop'
-    str_dummy_prop = 'str_dummy_prop'
-    mol_prop = 'mol_prop'
-    atom_prop = 'atom_prop'
-    bond_prop = 'bond_prop'
-    exported_props = [str_dummy_prop, mol_prop, atom_prop, bond_prop]
-
-    mol.SetIntProp(mol_prop, intProp)
-    mol.SetProp(str_dummy_prop, strProp)
-    mol.SetProp(ignored_prop, ignored_prop)
-
-    atomIdx = 2
-    at = mol.GetAtomWithIdx(atomIdx)
-    at.SetDoubleProp(atom_prop, realProp)
-    at.SetProp(str_dummy_prop, strProp)
-    at.SetProp(ignored_prop, ignored_prop)
-
-    bondIdx = 4
-    b = mol.GetBondWithIdx(bondIdx)
-    b.SetBoolProp(bond_prop, boolProp)
-    b.SetProp(str_dummy_prop, strProp)
-    b.SetProp(ignored_prop, ignored_prop)
-
-    heavyAtomColor = "767676"
-
-    osio = StringIO()
-    with Chem.MaeWriter(osio) as w:
-      w.SetProps(exported_props)
-      w.write(mol, heavyAtomColor=heavyAtomColor)
-
-    maestr = osio.getvalue()
-
-    ctBlockStart = maestr.find('f_m_ct')
-    atomBlockStart = maestr.find(' m_atom[')
-    bondBlockStart = maestr.find(' m_bond[')
-
-    self.assertNotEqual(ctBlockStart, -1)
-    self.assertNotEqual(atomBlockStart, -1)
-    self.assertNotEqual(bondBlockStart, -1)
-
-    self.assertGreater(bondBlockStart, atomBlockStart)
-    self.assertGreater(atomBlockStart, ctBlockStart)
-
-    # structure properties
-    self.assertIn(mol_prop, maestr[ctBlockStart:atomBlockStart])
-    self.assertIn(str(intProp), maestr[ctBlockStart:atomBlockStart])
-
-    self.assertIn(str_dummy_prop, maestr[ctBlockStart:atomBlockStart])
-    self.assertIn(strProp, maestr[ctBlockStart:atomBlockStart])
-
-    self.assertNotIn(ignored_prop, maestr[ctBlockStart:atomBlockStart])
-
-    # atom properties
-    self.assertIn(atom_prop, maestr[atomBlockStart:bondBlockStart])
-    self.assertIn(str_dummy_prop, maestr[atomBlockStart:bondBlockStart])
-
-    self.assertNotIn(ignored_prop, maestr[atomBlockStart:bondBlockStart])
-
-    for line in maestr[atomBlockStart:bondBlockStart].split('\n'):
-      if line.strip().startswith(str(atomIdx + 1)):
-        break
-    self.assertIn(str(realProp), line)
-    self.assertIn(strProp, line)
-    self.assertIn(heavyAtomColor, line)
-
-    # bond properties
-    self.assertIn(bond_prop, maestr[bondBlockStart:])
-    self.assertIn(str_dummy_prop, maestr[bondBlockStart:])
-
-    self.assertNotIn(ignored_prop, maestr[bondBlockStart:])
-
-    for line in maestr[bondBlockStart:].split('\n'):
-      if line.strip().startswith(str(bondIdx + 1)):
-        break
-    self.assertIn(str(int(boolProp)), line)
-    self.assertIn(strProp, line)
-
-  @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not build with MAEParser support")
-  def testMaeWriterRoundtrip(self):
-    smiles = "C1CCCCC1"
-    mol = Chem.MolFromSmiles(smiles)
-    self.assertTrue(mol)
-
-    osio = StringIO()
-    with Chem.MaeWriter(osio) as w:
-      w.write(mol)
-
-    isio = BytesIO(osio.getvalue().encode())
-    with Chem.MaeMolSupplier(isio) as r:
-      roundtrip_mol = next(r)
-    self.assertTrue(roundtrip_mol)
-
-    self.assertEqual(Chem.MolToSmiles(roundtrip_mol), smiles)
-
-  @unittest.skipIf(not hasattr(Chem, 'MaeWriter'), "not build with MAEParser support")
-  def testMaeWriterGetText(self):
-    smiles = "C1CCCCC1"
-    mol = Chem.MolFromSmiles(smiles)
-    self.assertTrue(mol)
-
-    dummy_prop = 'dummy_prop'
-    another_dummy_prop = 'another_dummy_prop'
-    mol.SetProp(dummy_prop, dummy_prop)
-    mol.SetProp(another_dummy_prop, another_dummy_prop)
-
-    heavyAtomColor = "767676"
-
-    osio = StringIO()
-    with Chem.MaeWriter(osio) as w:
-      w.SetProps([dummy_prop])
-      w.write(mol, heavyAtomColor=heavyAtomColor)
-
-    iomae = osio.getvalue()
-
-    ctBlockStart = iomae.find('f_m_ct')
-    self.assertNotEqual(ctBlockStart, -1)
-
-    self.assertIn(dummy_prop, iomae)
-    self.assertNotIn(another_dummy_prop, iomae)
-
-    mae = Chem.MaeWriter.GetText(mol, heavyAtomColor, -1, [dummy_prop])
-
-    self.assertEqual(mae, iomae[ctBlockStart:])
-
   def test3dChiralMolFile(self):
     # FIX: these tests need to be made to work with the new stereochemistry perception
     origVal = Chem.GetUseLegacyStereoPerception()
@@ -8206,13 +8011,18 @@ M  END
     self.assertTrue(smi == smi2)
 
   def test_picklingWithAddedAttribs(self):
-    m = Chem.MolFromSmiles("C")
-    m.foo = 1
-    m.SetIntProp("bar", 2)
-    pkl = pickle.dumps(m)
-    nm = pickle.loads(pkl)
-    self.assertEqual(nm.GetIntProp("bar"), 2)
-    self.assertEqual(nm.foo, 1)
+    props = Chem.GetDefaultPickleProperties()
+    try:
+      Chem.SetDefaultPickleProperties(Chem.PropertyPickleOptions.AllProps)
+      m = Chem.MolFromSmiles("C")
+      m.foo = 1
+      m.SetIntProp("bar", 2)
+      pkl = pickle.dumps(m)
+      nm = pickle.loads(pkl)
+      self.assertEqual(nm.GetIntProp("bar"), 2)
+      self.assertEqual(nm.foo, 1)
+    finally:
+      Chem.SetDefaultPickleProperties(props)
 
   def testGithubIssue6306(self):
     # test of unpickling
@@ -8761,6 +8571,54 @@ M  END
     self.assertEqual(len(rings), 24)
     rings = Chem.GetSymmSSSR(m1, algorithm=Chem.SymmetrizeSSSRAlgorithm.RDL)
     self.assertEqual(len(rings), 70)
+
+  def testRWMolFromPickleKeepsProperties(self):
+    m = Chem.MolFromSmiles('CC')
+    m.SetIntProp('molProp', 42)
+    m.GetAtomWithIdx(0).SetIntProp('atomProp', 7)
+    flags = Chem.PropertyPickleOptions.AllProps
+    pkl = m.ToBinary(flags)
+    for cls in (Chem.Mol, Chem.RWMol):
+      unpickled = cls(pkl, flags)
+      self.assertEqual(unpickled.GetIntProp('molProp'), 42)
+      self.assertEqual(unpickled.GetAtomWithIdx(0).GetIntProp('atomProp'), 7)
+
+  def testMolToV3KMolFile(self):
+    m = Chem.MolFromSmiles('C[C@H](F)Cl')
+    params = Chem.MolWriterParams()
+    params.includeStereo = False
+    with tempfile.TemporaryDirectory() as tmpDir:
+      fName = os.path.join(tmpDir, 'out.mol')
+      Chem.MolToV3KMolFile(m, fName)
+      with open(fName) as inf:
+        self.assertEqual(inf.read(), Chem.MolToV3KMolBlock(m))
+      Chem.MolToV3KMolFile(m, fName, params)
+      with open(fName) as inf:
+        self.assertEqual(inf.read(), Chem.MolToV3KMolBlock(m, includeStereo=False))
+
+  def testDefaultConstructors(self):
+    params = Chem.MolWriterParams()
+    self.assertTrue(params.includeStereo)
+    self.assertTrue(params.kekulize)
+    self.assertFalse(params.forceV3000)
+    self.assertFalse(Chem.BondWedgingParameters().wedgeTwoBondsIfPossible)
+    info = Chem.StereoInfo()
+    self.assertEqual(info.type, Chem.StereoType.Unspecified)
+    self.assertEqual(info.centeredOn, Chem.Atom.NOATOM)
+
+  def testStereoInfoHasNoNOATOM(self):
+    self.assertFalse(hasattr(Chem.StereoInfo, 'NOATOM'))
+
+  def testEnumValuesAreNotModuleAttributes(self):
+    for enumType, names in (
+        (Chem.StereoType, ('Unspecified', 'Atom_Tetrahedral', 'Bond_Double')),
+        (Chem.StereoSpecified, ('Specified', 'Unknown')),
+        (Chem.StereoDescriptor, ('NoValue', 'Tet_CW', 'Bond_Cis')),
+        (Chem.AtomMonomerType, ('UNKNOWN', 'PDBRESIDUE', 'OTHER')),
+    ):
+      for name in names:
+        self.assertTrue(hasattr(enumType, name))
+        self.assertFalse(hasattr(Chem, name))
 
 
 if __name__ == '__main__':
