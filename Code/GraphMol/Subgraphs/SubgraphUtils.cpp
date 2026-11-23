@@ -32,6 +32,11 @@ ROMol *pathToSubmol(const ROMol &mol, const PATH_TYPE &path, bool useQuery,
   options.copyAsQuery = useQuery;
   options.copyCoordinates = true;
   options.method = SubsetMethod::BONDS;
+  // Clear molecule-level computed props (e.g. _StereochemDone) inherited
+  // from the parent: without this, MolToSmiles skips assignStereochemistry
+  // on the fragment and keeps chiral tags that are not stereocenters in
+  // the fragment. Restores the pre-2025.09.4 behaviour (Github #103, #9878).
+  options.clearComputedProps = true;
 
   std::vector<unsigned int> upath{path.begin(), path.end()};
   SubsetInfo subsetInfo;
