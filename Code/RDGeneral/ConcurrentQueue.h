@@ -53,6 +53,12 @@ class ConcurrentQueue {
   //! returns the value of the variable done
   bool getDone() const;
 
+  //! checks whether the ConcurrentQueue is empty and done
+  //! the two are read together under a single lock: reading them in
+  //! separate calls can report "empty and done" while a producer is
+  //! between pushing an element and setting done (github #9842)
+  bool isEmptyAndDone() const;
+
   //! sets the variable d_done = true
   void setDone();
 
@@ -113,6 +119,12 @@ template <typename E>
 bool ConcurrentQueue<E>::getDone() const {
   std::unique_lock<std::mutex> lk(d_lock);
   return d_done;
+}
+
+template <typename E>
+bool ConcurrentQueue<E>::isEmptyAndDone() const {
+  std::unique_lock<std::mutex> lk(d_lock);
+  return (d_head == d_tail && d_done);
 }
 
 template <typename E>
