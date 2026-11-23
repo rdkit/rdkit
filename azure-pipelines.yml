@@ -70,7 +70,7 @@ jobs:
 - job: macOS_x64
   timeoutInMinutes: 120
   pool:
-    vmImage: macos-14
+    vmImage: macos-15
   variables:
     compiler: clangxx_osx-64=18.1
     boost_version: 1.92
@@ -82,7 +82,7 @@ jobs:
 - job: macOS_x64_java
   timeoutInMinutes: 90
   pool:
-    vmImage: macos-14
+    vmImage: macos-15
   variables:
     compiler: clangxx_osx-64=18.1
     boost_version: 1.91

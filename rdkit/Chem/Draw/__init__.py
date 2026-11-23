@@ -142,7 +142,8 @@ def MolToFile(mol, filename, size=(300, 300), kekulize=True, wedgeBonds=True, im
     raise ValueError("unsupported output format")
   data = drawfn(mol, size, kwargs.get('highlightAtoms', []), kwargs.get('legend', ''),
                 highlightBonds=kwargs.get('highlightBonds', []), drawOptions=options,
-                kekulize=kekulize, wedgeBonds=wedgeBonds, returnPNG=True)
+                kekulize=kekulize, wedgeBonds=wedgeBonds, returnPNG=True,
+                highlightColor=kwargs.get('highlightColor', None))
   with open(filename, 'w+' + mode) as outf:
     outf.write(data)
     outf.close()
@@ -162,6 +163,7 @@ def MolToSVG(mol, size=(300, 300), kekulize=True, wedgeBonds=True, drawOptions=N
   if not mol:
     raise ValueError('Null molecule provided')
   return _moltoSVG(mol, size, kwargs.get('highlightAtoms', []), kwargs.get('legend', ''), kekulize,
+                   highlightColor=kwargs.get('highlightColor', None),
                    drawOptions=drawOptions, highlightBonds=kwargs.get('highlightBonds', []),
                    wedgeBonds=wedgeBonds)
 
@@ -296,6 +298,8 @@ def _moltoSVG(mol, sz, highlights, legend, kekulize, drawOptions=None, **kwargs)
   d2d = rdMolDraw2D.MolDraw2DSVG(sz[0], sz[1])
   if drawOptions is not None:
     d2d.SetDrawOptions(drawOptions)
+  if 'highlightColor' in kwargs and kwargs['highlightColor']:
+    d2d.drawOptions().setHighlightColour(kwargs['highlightColor'])
   # we already prepared the molecule:
   d2d.drawOptions().prepareMolsBeforeDrawing = False
   bondHighlights = kwargs.get('highlightBonds', None)

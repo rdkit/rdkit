@@ -2314,9 +2314,11 @@ TEST_CASE("getBondTypeAsDouble()") {
         {Bond::BondType::AROMATIC, 1.5},
         {Bond::BondType::DATIVEONE, 1.0},
         {Bond::BondType::DATIVE, 1.0},
-        {Bond::BondType::HYDROGEN, 0}
-
-    };
+        {Bond::BondType::DATIVEL, 1.0},
+        {Bond::BondType::DATIVER, 1.0},
+        {Bond::BondType::HYDROGEN, 0},
+        {Bond::BondType::THREECENTER, 0},
+        {Bond::BondType::OTHER, 0}};
     for (const auto &pr : vals) {
       Bond bnd(pr.first);
       CHECK(bnd.getBondType() == pr.first);
@@ -2333,9 +2335,9 @@ TEST_CASE("getBondTypeAsDouble()") {
         {Bond::BondType::THREEANDAHALF, 7}, {Bond::BondType::FOURANDAHALF, 9},
         {Bond::BondType::FIVEANDAHALF, 11}, {Bond::BondType::AROMATIC, 3},
         {Bond::BondType::DATIVEONE, 2},     {Bond::BondType::DATIVE, 2},
-        {Bond::BondType::HYDROGEN, 0}
-
-    };
+        {Bond::BondType::DATIVEL, 2},       {Bond::BondType::DATIVER, 2},
+        {Bond::BondType::HYDROGEN, 0},      {Bond::BondType::THREECENTER, 0},
+        {Bond::BondType::OTHER, 0}};
     for (const auto &pr : vals) {
       Bond bnd(pr.first);
       CHECK(bnd.getBondType() == pr.first);
@@ -5165,8 +5167,7 @@ TEST_CASE("github #9629: renumberAtoms drops ring families and ring type") {
   std::iota(perm.begin(), perm.end(), 0u);
   std::unique_ptr<ROMol> nmol(MolOps::renumberAtoms(*m, perm));
   REQUIRE(nmol->getRingInfo()->isInitialized());
-  CHECK(nmol->getRingInfo()->getRingType() ==
-        m->getRingInfo()->getRingType());
+  CHECK(nmol->getRingInfo()->getRingType() == m->getRingInfo()->getRingType());
   CHECK(nmol->getRingInfo()->areRingFamiliesInitialized());
   CHECK(nmol->getRingInfo()->numRingFamilies() ==
         m->getRingInfo()->numRingFamilies());

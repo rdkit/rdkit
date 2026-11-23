@@ -269,3 +269,11 @@ select tanimoto_sml(atompairbv_fp('O=C1CC(OC2=CC=CC=C12)C1=CC=CC=C1'::mol), atom
  0.571428571428571
 (1 row)
 
+-- comparing bitmap fingerprints of different lengths must raise an error
+-- instead of reading past the end of the shorter fingerprint
+select tanimoto_sml(rdkit_fp('c1ccccc1'::mol), maccs_fp('c1ccccc1'::mol));
+ERROR:  attempt to compare fingerprints of different length
+select dice_sml(rdkit_fp('c1ccccc1'::mol), maccs_fp('c1ccccc1'::mol));
+ERROR:  attempt to compare fingerprints of different length
+select tversky_sml(rdkit_fp('c1ccccc1'::mol), maccs_fp('c1ccccc1'::mol), 0.5, 0.5);
+ERROR:  attempt to compare fingerprints of different length

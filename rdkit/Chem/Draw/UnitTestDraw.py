@@ -416,6 +416,51 @@ class TestCase(unittest.TestCase):
     # this should run without generating an exception:
     Draw.DrawMorganBit(mol, bitId, info)
 
+  def testSVGHighlightColor(self):
+    mol = Chem.MolFromSmiles('CCC')
+    options = rdMolDraw2D.MolDrawOptions()
+    options.setHighlightColour((0, 0, 1))
+    with tempfile.TemporaryDirectory() as tmpdir:
+      filename = pathlib.Path(tmpdir) / 'mol.svg'
+      for useFile in (False, True):
+        for opts in (None, options):
+          defaultColor = '#FF7F7F' if opts is None else '#0000FF'
+          for kwargs, expected in (({}, defaultColor), ({'highlightColor': None}, defaultColor),
+                                   ({'highlightColor': (0, 1, 0)}, '#00FF00'),
+                                   ({'highlightColor': (0, 0, 0)}, '#000000')):
+            with self.subTest(useFile=useFile, options=opts is not None, kwargs=kwargs):
+              if useFile:
+                Draw.MolToFile(mol, filename, highlightAtoms=[0, 1], highlightBonds=[0],
+                               options=opts, **kwargs)
+                svg = filename.read_text()
+              else:
+                svg = Draw.MolToSVG(mol, highlightAtoms=[0, 1], highlightBonds=[0],
+                                   drawOptions=opts, **kwargs)
+              for atom in (0, 1):
+                self.assertRegex(svg, rf"<ellipse[^>]*class='atom-{atom}'[^>]*fill:{expected};")
+              self.assertRegex(svg, rf"<path class='bond-0 [^']+'[^>]*fill:{expected};")
+              self.assertEqual(tuple(options.getHighlightColour()), (0, 0, 1, 1))
+
+  @unittest.skipIf(not hasattr(rdMolDraw2D, 'MolDraw2DCairo'), 'Skipping cairo test')
+  def testPNGFileHighlightColor(self):
+    from PIL import Image
+
+    mol = Chem.MolFromSmiles('CCC')
+    options = rdMolDraw2D.MolDrawOptions()
+    options.setHighlightColour((0, 0, 1))
+    with tempfile.TemporaryDirectory() as tmpdir:
+      filename = pathlib.Path(tmpdir) / 'mol.png'
+      for kwargs in ({}, {'highlightColor': None}, {'highlightColor': (0, 1, 0)}):
+        with self.subTest(kwargs=kwargs):
+          Draw.MolToFile(mol, filename, highlightAtoms=[0, 1], highlightBonds=[0],
+                         options=options, **kwargs)
+          expected = Draw.MolToImage(mol, highlightAtoms=[0, 1], highlightBonds=[0],
+                                     options=options, **kwargs)
+          with Image.open(filename) as actual:
+            self.assertEqual(actual.size, expected.size)
+            self.assertEqual(actual.convert('RGB').tobytes(), expected.convert('RGB').tobytes())
+          self.assertEqual(tuple(options.getHighlightColour()), (0, 0, 1, 1))
+
   def testMolToSVG(self):
     smiles = "c1ccccc1"
     mol = Chem.MolFromSmiles(smiles)
