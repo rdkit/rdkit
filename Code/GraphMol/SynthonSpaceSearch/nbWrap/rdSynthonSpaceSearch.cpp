@@ -612,7 +612,7 @@ use 7 threads.  Default=1.)DOC")
  pruneRmsThresh=0.5.  If you assign an EmbedParameters object,
  all defaults are replaced by that object's values.  You can't alter values
  of embedParameters in place;  Set all required values in a new
- rdDistGeom.EmbedParameters object and assign)DOC")
+ rdDistGeom.EmbedParameters object and assign.)DOC")
       .def_rw("maxExcludedVolume",
               &SynthonSpaceSearch::SynthonSpaceSearchParams::maxExcludedVolume,
               "Maximum allowed excluded volume for a hit to be accepted."
