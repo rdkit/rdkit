@@ -188,7 +188,7 @@ The default value is 16384.")DOC")
     across runs we need to provide a random number seed:
 
     >>> m = Chem.MolFromSmiles('Br' + '[CH](Cl)' * 20 + 'F')
-    >>> opts = StereoEnumerationOptions(maxIsomers=3,rand=0xf00d)
+    >>> opts = StereoEnumerationOptions(maxIsomers=3,randomSeed=0xf00d)
     >>> isomers = StereoisomerEnumerator(m, options=opts)
     >>> for smi in isomers: #sorted(Chem.MolToSmiles(x, isomericSmiles=True) for x in isomers):
     ...     print(Chem.MolToSmiles(smi))
