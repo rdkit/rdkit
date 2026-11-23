@@ -49,6 +49,17 @@ class TestCase(unittest.TestCase):
     md = max(abs(fp1 - fp2))
     self.assertAlmostEqual(0.2, md, 4)
 
+  def testErGFingerprintIgnoresCachedDistanceMatrix(self):
+    # Github #9886: GetErGFingerprint must return the same fingerprint
+    # whether or not a distance matrix was cached on the molecule first.
+    smi = 'C=C/C(C)=C/C[C@H]1OC1(C)C'
+    fresh = rdRG.GetErGFingerprint(Chem.MolFromSmiles(smi))
+    m = Chem.MolFromSmiles(smi)
+    Chem.GetDistanceMatrix(m)
+    after = rdRG.GetErGFingerprint(m)
+    md = max(abs(fresh - after))
+    self.assertLess(md, 1e-4)
+
   def testCanRetrieveProp(self):
     m = Chem.MolFromSmiles('OCCc1ccccc1')
     mrg = rdRG.GenerateMolExtendedReducedGraph(m)
