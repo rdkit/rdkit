@@ -177,11 +177,24 @@ TopologicalTorsionEnvGenerator<OutputType>::getEnvironments(
       }
       if (pathCodes.size()) {
         OutputType code;
+        // A path that closes a ring (first atom == last atom) may have
+        // been enumerated starting at any atom of the ring, so
+        // canonicalize its code over the rotations of the ring to keep
+        // the fingerprint independent of atom ordering (github #9871).
+        const bool closesRing =
+            path.size() > 1 && path.front() == path.back();
         if (hashResults) {
-          code = getTopologicalTorsionHash(pathCodes);
+          code = closesRing
+                     ? getCanonicalCyclicTorsionHash(pathCodes)
+                     : getTopologicalTorsionHash(pathCodes);
         } else {
-          code = getTopologicalTorsionCode(
-              pathCodes, topologicalTorsionArguments->df_includeChirality);
+          code = closesRing
+                     ? getCanonicalCyclicTorsionCode(
+                           pathCodes,
+                           topologicalTorsionArguments->df_includeChirality)
+                     : getTopologicalTorsionCode(
+                           pathCodes,
+                           topologicalTorsionArguments->df_includeChirality);
         }
         result.push_back(new TopologicalTorsionAtomEnv<OutputType>(code, path));
       }
