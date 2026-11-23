@@ -119,10 +119,12 @@ def _ShortestFeatureDistance(atoms1, atoms2, dMat, minD, maxD):
       minSeen = min(minSeen, dMat[idx1, idx2])
       if minSeen == 0 or minSeen < minD:
         return None
+  if minSeen >= maxD:
+    return None
   # Bond-order-weighted paths can have fractional lengths. Fingerprints bin
   # their integer parts.
   dist = int(minSeen)
-  if dist == 0 or dist < minD or dist >= maxD:
+  if dist == 0 or dist < minD:
     return None
   return dist
 
