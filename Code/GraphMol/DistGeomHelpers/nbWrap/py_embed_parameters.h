@@ -25,7 +25,14 @@ struct PyEmbedParameters : public RDKit::DGeomHelpers::EmbedParameters {
  public:
   PyEmbedParameters() : RDKit::DGeomHelpers::EmbedParameters() {}
   PyEmbedParameters(const RDKit::DGeomHelpers::EmbedParameters &other)
-      : RDKit::DGeomHelpers::EmbedParameters(other) {}
+      : RDKit::DGeomHelpers::EmbedParameters(other) {
+    if (other.coordMap) {
+      d_coordMap.reset(new std::map<int, RDGeom::Point3D>());
+      for (const auto &item : *(other.coordMap)) {
+        d_coordMap->insert({item.first, item.second});
+      }
+    }
+  }
 
   void setCoordMap(const nb::dict &cmap) {
     d_coordMap.reset(new std::map<int, RDGeom::Point3D>());

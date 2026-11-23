@@ -1088,9 +1088,7 @@ std::unique_ptr<ROMol> SynthonSpaceShapeSearcher::buildHit(
     }
   }
   auto prod = details::buildProduct(shapeSynths);
-  auto dgParams = DGeomHelpers::ETKDGv3;
-  dgParams.randomSeed = getParams().randomSeed;
-  dgParams.timeout = getParams().timeOut;
+  auto dgParams = getParams().embedParameters;
   if (!prod) {
     // Try it with the plain synthons, which will obviously need coordinates
     // creating later on.

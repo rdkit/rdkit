@@ -46,8 +46,7 @@ SynthonSpaceSearcher::SynthonSpaceSearcher(
         std::random_device rd;
         d_randGen = std::make_unique<std::mt19937>(rd());
       } else {
-        d_randGen =
-            std::make_unique<std::mt19937>(d_params.embedParameters.randomSeed);
+        d_randGen = std::make_unique<std::mt19937>(d_params.randomSeed);
       }
     }
   }

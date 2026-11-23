@@ -375,7 +375,6 @@ class TestCase(unittest.TestCase):
     ssparams.fragSimilarityAdjuster = 0.2
     ssparams.approxSimilarityAdjuster = 0.2
     ssparams.numConformers = 10
-    ssparams.confRMSThreshold = 0.5
     ssparams.randomSeed = 0xdac
     ssparams.bestHit = True
     ssparams.similarityCutoff = 0.5
