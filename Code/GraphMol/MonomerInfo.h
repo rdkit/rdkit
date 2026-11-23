@@ -62,7 +62,9 @@ class RDKIT_GRAPHMOL_EXPORT AtomMonomerInfo {
   const std::string &getMonomerClass() const { return d_monomerClass; }
   void setMonomerClass(const std::string &val) { d_monomerClass = val; }
 
-  virtual AtomMonomerInfo *copy() const { return new AtomMonomerInfo(*this); }
+  //! A copy tagged PDBRESIDUE is always an AtomPDBResidueInfo, since code that
+  //! sees that tag casts to it
+  virtual AtomMonomerInfo *copy() const;
 
  private:
   AtomMonomerType d_monomerType{UNKNOWN};
