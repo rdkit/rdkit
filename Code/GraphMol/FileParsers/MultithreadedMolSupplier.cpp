@@ -210,7 +210,12 @@ void MultithreadedMolSupplier::startThreads() {
 }
 
 bool MultithreadedMolSupplier::atEnd() {
-  return (d_outputQueue->isEmpty() && d_outputQueue->getDone());
+  // NB: the queue being empty and the queue being done must be checked
+  // together under a single lock (isEmptyAndDone()). Checking them in two
+  // separate calls let a writer thread push the last molecule (and then
+  // set the queue done) between the two reads, which made atEnd() report
+  // the end while a molecule was still queued (github #9842).
+  return d_outputQueue->isEmptyAndDone();
 }
 
 unsigned int MultithreadedMolSupplier::getLastRecordId() const {

@@ -199,3 +199,38 @@ TEST_CASE("callbacks smiles") {
     }
   }
 }
+
+TEST_CASE("github #9842: multithreaded supplier returns every molecule") {
+  // Reading the same file many times with several writer threads used to
+  // occasionally end the first pass early: atEnd() read "empty" and "done"
+  // in two separate steps, so a writer pushing the last molecule (and then
+  // setting done) between the two reads made atEnd() report the end while
+  // a molecule was still queued. The leftovers only showed up on a second
+  // pass over the same supplier.
+  v2::FileParsers::MultithreadedMolSupplier::Parameters params;
+  params.numWriterThreads = 4;
+  std::string rdbase = getenv("RDBASE");
+  std::string sdpath = rdbase + "/Data/NCI/first_200.props.sdf";
+
+  for (unsigned int trial = 0; trial < 100; ++trial) {
+    auto suppl = v2::FileParsers::MultithreadedSDMolSupplier(sdpath, params);
+    unsigned int nMols = 0;
+    while (!suppl.atEnd()) {
+      auto mol = suppl.next();
+      if (mol) {
+        ++nMols;
+      }
+    }
+    CHECK(nMols == 200);
+    CHECK(suppl.atEnd());
+    // nothing may be left behind for a second pass
+    unsigned int nSecondPass = 0;
+    while (!suppl.atEnd()) {
+      auto mol = suppl.next();
+      if (mol) {
+        ++nSecondPass;
+      }
+    }
+    CHECK(nSecondPass == 0);
+  }
+}
