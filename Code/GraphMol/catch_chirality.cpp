@@ -6906,3 +6906,41 @@ TEST_CASE(
   // till we support cumulene stereochemistry
   CHECK(potentialStereo.size() == 0);
 }
+
+TEST_CASE("Github #9848: cleanupChirality keeps sulfonium stereochemistry",
+          "[chirality][bug]") {
+  // The S in an S-alkylthiophenium ion is SP2 (conjugated bonds) but is a
+  // pyramidal stereocenter: FindPotentialStereo reports it as a specified
+  // tetrahedral center. cleanupChirality used to strip its tag, making the
+  // two configurations indistinguishable.
+  auto cw = v2::SmilesParse::MolFromSmiles("C[s@+]1cccc1C");
+  auto ccw = v2::SmilesParse::MolFromSmiles("C[s@@+]1cccc1C");
+  REQUIRE(cw);
+  REQUIRE(ccw);
+
+  const Atom *sulfurCw = nullptr;
+  const Atom *sulfurCcw = nullptr;
+  for (const auto atom : cw->atoms()) {
+    if (atom->getAtomicNum() == 16) {
+      sulfurCw = atom;
+    }
+  }
+  for (const auto atom : ccw->atoms()) {
+    if (atom->getAtomicNum() == 16) {
+      sulfurCcw = atom;
+    }
+  }
+  REQUIRE(sulfurCw);
+  REQUIRE(sulfurCcw);
+  CHECK(sulfurCw->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
+  CHECK(sulfurCcw->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+  // the two configurations stay distinguishable through SMILES output
+  CHECK(MolToSmiles(*cw) != MolToSmiles(*ccw));
+
+  // ... and stereo perception agrees the center is specified:
+  const auto stereoInfo = Chirality::findPotentialStereo(*cw);
+  REQUIRE(stereoInfo.size() == 1);
+  CHECK(stereoInfo[0].type == Chirality::StereoType::Atom_Tetrahedral);
+  CHECK(stereoInfo[0].specified == Chirality::StereoSpecified::Specified);
+  CHECK(stereoInfo[0].centeredOn == sulfurCw->getIdx());
+}
