@@ -317,7 +317,13 @@ TEST_CASE("Github Issue103: stereochemistry and pathToSubmol") {
     PATH_TYPE pth = findAtomEnvironmentOfRadiusN(*mol, 2, 12);
     REQUIRE(pth.size() == 5);
     ROMol *frag = Subgraphs::pathToSubmol(*mol, pth, false);
+    // Github #9878: the fragment must not inherit _StereochemDone from the
+    // parent, or MolToSmiles keeps a chiral tag on a carbon with two
+    // identical vinyl neighbours. Compare the string directly: the old
+    // canon() round trip removed the tag and hid the regression.
+    REQUIRE(!frag->hasProp("_StereochemDone"));
     smiles = MolToSmiles(*frag, true);
+    REQUIRE(smiles == "C=CC(O)C=C");
     REQUIRE(canon(smiles) == canon("C=CC(O)C=C"));
     delete frag;
     delete mol;
