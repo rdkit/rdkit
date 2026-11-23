@@ -1353,7 +1353,7 @@ std::pair<bool, bool> hasQueryHs(const ROMol &mol) {
   bool queryHs = false;
 
   for (const auto atom : mol.atoms()) {
-    switch (isQueryH(atom, false)) {
+    switch (isQueryH(atom, /* warn= */ false)) {
       case HydrogenType::UnMergableQueryHydrogen:
         return std::make_pair(true, true);
       case HydrogenType::QueryHydrogen:
