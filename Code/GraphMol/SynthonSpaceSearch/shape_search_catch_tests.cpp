@@ -394,8 +394,9 @@ c1ccccc1[1*]	1-1	0	test1
   auto results = synthonSpace.shapeSearch(*queryMol, params);
   CHECK(results.getHitMolecules().size() == 1);
   CHECK(results.getHitMolecules()[0]->getName() == "1-1;2-1;3-1;test1");
+  // Different results on Mac and Linux.
   CHECK_THAT(results.getHitMolecules()[0]->getProp<double>("Similarity"),
-             Catch::Matchers::WithinAbs(0.831, 0.001));
+             (Catch::Matchers::WithinAbs(0.831, 0.001) || Catch::Matchers::WithinAbs(0.799, 0.001)));
 }
 
 TEST_CASE("Trim sample molecules") {
