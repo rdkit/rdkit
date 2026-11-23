@@ -343,6 +343,9 @@ def ConstrainedEmbed(mol, core, useTethers=True, coreConfId=-1, randomseed=2342,
     raise ValueError("molecule doesn't match the core")
   coordMap = {}
   coreConf = core.GetConformer(coreConfId)
+  if core is mol and kwargs.get('clearConfs', True):
+    # Keep the reference for alignment before embedding replaces the target's conformers.
+    core = rdchem.Mol(core, confId=coreConf.GetId())
   for i, idxI in enumerate(match):
     corePtI = coreConf.GetAtomPosition(i)
     coordMap[idxI] = corePtI
