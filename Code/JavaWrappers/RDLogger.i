@@ -32,6 +32,7 @@
 * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 %ignore boost::logging::rdLogger::SetTee(std::ostream &stream);
+%ignore boost::logging::rdLogger::df_enabled;
 %ignore rdAppLog;
 %ignore rdDebugLog;
 %ignore rdInfoLog;
@@ -65,6 +66,10 @@ boost::logging::rdLogger& getRdStatusLog() {
 }
 %}
 %include <RDGeneral/RDLog.h>
+%extend boost::logging::rdLogger {
+  bool getDf_enabled() { return $self->df_enabled; }
+  void setDf_enabled(bool enabled) { $self->df_enabled = enabled; }
+}
 
 boost::logging::rdLogger& getRdAppLog();
 boost::logging::rdLogger& getRdDebugLog();
