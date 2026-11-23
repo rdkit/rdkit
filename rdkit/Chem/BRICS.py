@@ -353,7 +353,7 @@ def BreakBRICSBonds(mol, bonds=None, sanitize=True, silent=True):
     if sanitize:
       Chem.SanitizeMol(res)
     return res
-  eMol = Chem.EditableMol(mol)
+  eMol = Chem.RWMol(mol)
   nAts = mol.GetNumAtoms()
 
   dummyPositions = []
@@ -361,6 +361,14 @@ def BreakBRICSBonds(mol, bonds=None, sanitize=True, silent=True):
     ia, ib = indices
     obond = mol.GetBondBetweenAtoms(ia, ib)
     bondType = obond.GetBondType()
+    for atomIdx, otherIdx in ((ia, ib), (ib, ia)):
+      atom = eMol.GetAtomWithIdx(atomIdx)
+      if atom.GetChiralTag() in (Chem.ChiralType.CHI_TETRAHEDRAL_CW,
+                                 Chem.ChiralType.CHI_TETRAHEDRAL_CCW):
+        # The dummy replaces otherIdx at the end of the current neighbor order.
+        neighbors = [nbr.GetIdx() for nbr in atom.GetNeighbors()]
+        if (len(neighbors) - 1 - neighbors.index(otherIdx)) % 2:
+          atom.InvertChirality()
     eMol.RemoveBond(ia, ib)
 
     da, db = dummyTypes
@@ -382,7 +390,7 @@ def BreakBRICSBonds(mol, bonds=None, sanitize=True, silent=True):
     if mol.GetNumConformers():
       dummyPositions.append((idxa, ib))
       dummyPositions.append((idxb, ia))
-  res = eMol.GetMol()
+  res = Chem.Mol(eMol)
   if sanitize:
     Chem.SanitizeMol(res)
   if mol.GetNumConformers():
@@ -1042,6 +1050,22 @@ M  END
       res = BreakBRICSBonds(m)
       self.assertEqual(Chem.MolToSmiles(res, isomericSmiles=True),
                        '[16*]c1ccccc1.[4*][C@H]([8*])C.[5*]NC')
+
+    def testExplicitBondChirality(self):
+      for smi, expected in [('C[C@H](OCC)F', '[3*]OCC.[4*][C@@H](C)F'),
+                            ('C[C@@H](OCC)F', '[3*]OCC.[4*][C@H](C)F')]:
+        with self.subTest(smi=smi):
+          mol = Chem.MolFromSmiles(smi)
+          res = BreakBRICSBonds(mol, [((2, 1), ('3', '4'))])
+          self.assertEqual(Chem.MolToSmiles(res), expected)
+
+      # Cutting two bonds at one stereocenter must also work in either order.
+      mol = Chem.MolFromSmiles('c1ccccc1[C@H](C)NC')
+      bonds = list(FindBRICSBonds(mol))
+      expected = Chem.MolToSmiles(BreakBRICSBonds(mol))
+      for cuts in (bonds, bonds[::-1]):
+        with self.subTest(cuts=cuts):
+          self.assertEqual(Chem.MolToSmiles(BreakBRICSBonds(mol, cuts)), expected)
 
   failed, tried = _test()
   if failed:
