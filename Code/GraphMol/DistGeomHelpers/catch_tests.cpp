@@ -3395,7 +3395,7 @@ TEST_CASE("providing additional chiral sets while embedding") {
     params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
         1, 0, 2, 3, 4, chiralVolumeMin, chiralVolumeMax));
     params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
-        5, 4, 6, 7, 8, chiralVolumeMin, chiralVolumeMax));
+        5, 4, 6, 7, 8, -chiralVolumeMax, -chiralVolumeMin));
     auto json = DGeomHelpers::embedParametersToJSON(params);
     CHECK(json.find("additionalChiralSets") != std::string::npos);
 
@@ -3418,10 +3418,18 @@ TEST_CASE("providing additional chiral sets while embedding") {
     CHECK(newParams.additionalChiralSets[1]->d_idx3 == 7);
     CHECK(newParams.additionalChiralSets[1]->d_idx4 == 8);
     CHECK(newParams.additionalChiralSets[1]->d_volumeLowerBound ==
-          chiralVolumeMin);
+          -chiralVolumeMax);
     CHECK(newParams.additionalChiralSets[1]->d_volumeUpperBound ==
-          chiralVolumeMax);
+          -chiralVolumeMin);
     CHECK(newParams.additionalChiralSets[1]->d_structureFlags == 0);
+
+    std::string updateJSON =
+        R"JSON({"additionalChiralSets":[{"d_idx0":"1","d_idx1":"0","d_idx2":"2","d_idx3":"3","d_idx4":"4",
+    "d_volumeLowerBound":"-5","d_volumeUpperBound":"-10","d_structureFlags":"0"}]
+    })JSON";
+    CHECK_THROWS_AS(
+        DGeomHelpers::updateEmbedParametersFromJSON(newParams, updateJSON),
+        std::invalid_argument);
   }
 }
 

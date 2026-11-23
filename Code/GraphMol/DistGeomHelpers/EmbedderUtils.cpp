@@ -113,14 +113,23 @@ void updateEmbedParametersFromJSON(EmbedParameters &params,
       if (const auto val = entry.second.get_optional<unsigned int>("d_idx4")) {
         chiralSet->d_idx4 = *val;
       }
+      bool checkVolumeBounds = false;
       if (const auto val =
               entry.second.get_optional<float>("d_volumeLowerBound")) {
         chiralSet->d_volumeLowerBound = *val;
+        checkVolumeBounds = true;
       }
       if (const auto val =
               entry.second.get_optional<float>("d_volumeUpperBound")) {
         chiralSet->d_volumeUpperBound = *val;
+        checkVolumeBounds = true;
       }
+      if (checkVolumeBounds &&
+          chiralSet->d_volumeLowerBound > chiralSet->d_volumeUpperBound) {
+        throw std::invalid_argument(
+            "Chiral set has inconsistent volume bounds.");
+      }
+
       if (const auto val =
               entry.second.get_optional<std::uint64_t>("d_structureFlags")) {
         chiralSet->d_structureFlags = *val;

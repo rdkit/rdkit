@@ -1961,13 +1961,24 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
                                  coordMap);
     if (molFrags.size() == 1 && !params.additionalChiralSets.empty()) {
       const unsigned int nAtoms = piece->getNumAtoms();
-      std::vector<std::set<unsigned int>> volumesThere;
+      auto compareChiralSets = [](const DistGeom::ChiralSet &a,
+                                  const DistGeom::ChiralSet &b) {
+        if (a.d_idx0 != b.d_idx0) {
+          return a.d_idx0 < b.d_idx0;
+        }
+        return std::set({a.d_idx1, a.d_idx2, a.d_idx3, a.d_idx4}) <
+               std::set({b.d_idx1, b.d_idx2, b.d_idx3, b.d_idx4});
+      };
+      std::set<DistGeom::ChiralSet, decltype(compareChiralSets)> volumesThere(
+          compareChiralSets);
+      // copy existing chiral centers into the set
       std::for_each(
           chiralCenters.begin(), chiralCenters.end(),
           [&volumesThere](const std::shared_ptr<DistGeom::ChiralSet> &cs) {
-            volumesThere.push_back(
-                {cs->d_idx0, cs->d_idx1, cs->d_idx2, cs->d_idx3, cs->d_idx4});
+            volumesThere.insert(*cs);
           });
+      // now check the additional chiral sets for duplicates and out-of-bounds
+      // indices
       std::for_each(
           params.additionalChiralSets.begin(),
           params.additionalChiralSets.end(),
@@ -1979,17 +1990,11 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
               throw ValueErrorException(
                   "additionalChiralSets contains indices that are out of bounds for the molecule.");
             }
-            if (std::find(volumesThere.begin(), volumesThere.end(),
-                          std::set<unsigned int>{
-                              cs->d_idx0, cs->d_idx1, cs->d_idx2, cs->d_idx3,
-                              cs->d_idx4}) != volumesThere.end()) {
+            if (volumesThere.find(*cs) != volumesThere.end()) {
               throw ValueErrorException(
                   "additionalChiralSets contains a duplicate of an existing chiral set.");
             }
-            // make sure we don't have duplicates in the additional chiral sets
-            // themselves
-            volumesThere.push_back(
-                {cs->d_idx0, cs->d_idx1, cs->d_idx2, cs->d_idx3, cs->d_idx4});
+            volumesThere.insert(*cs);
           });
       chiralCenters.insert(chiralCenters.end(),
                            params.additionalChiralSets.begin(),
