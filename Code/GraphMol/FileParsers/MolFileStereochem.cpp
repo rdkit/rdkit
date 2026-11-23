@@ -260,6 +260,11 @@ void markUnspecifiedStereoAsUnknown(ROMol &mol, int confId) {
                                                         resSoFar, noNbrs);
         auto bond = mol.getBondWithIdx(bndIdx);
         bond->setBondDir(Bond::UNKNOWN);
+        // a wiggly bond marks the atom at its beginning
+        if (bond->getBeginAtomIdx() != atom->getIdx()) {
+          bond->setEndAtomIdx(bond->getBeginAtomIdx());
+          bond->setBeginAtomIdx(atom->getIdx());
+        }
       }
     }
   }

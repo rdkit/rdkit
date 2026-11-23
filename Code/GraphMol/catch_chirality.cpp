@@ -7080,6 +7080,20 @@ TEST_CASE(
   }
 }
 
+TEST_CASE(
+    "markUnspecifiedStereoAsUnknown starts its wiggly bond at the center") {
+  // pickBondToWedge() prefers the bond to the methyl here, which begins at the
+  // methyl rather than at the center the wiggly bond has to mark.
+  auto m = "CC(F)Cl"_smiles;
+  REQUIRE(m);
+  RDDepict::compute2DCoords(*m);
+  markUnspecifiedStereoAsUnknown(*m);
+  const auto si = Chirality::findPotentialStereo(*m);
+  REQUIRE(si.size() == 1);
+  CHECK(si[0].centeredOn == 1);
+  CHECK(si[0].specified == Chirality::StereoSpecified::Unknown);
+}
+
 TEST_CASE("wiggly bonds are re-applied after clearSingleBondDirFlags") {
   // the re-wedging cycle used by depiction code: clear the wedging, then let
   // wedgeMolBonds() derive it again from the stereo annotations. A wiggly bond
