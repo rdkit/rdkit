@@ -14,7 +14,8 @@ rdkit_library(Descriptors
               USRDescriptor.cpp AtomFeat.cpp
               OxidationNumbers.cpp
               DCLV.cpp
-              GraphDescriptors.cpp EState.cpp MiscDescriptors.cpp
+              GraphDescriptors.cpp CharacteristicPolynomial.cpp EState.cpp
+              MiscDescriptors.cpp
               FragmentDescriptors.cpp QED.cpp SpacialScore.cpp
               ${DESC3D_SOURCES}
               LINK_LIBRARIES PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch MolTransforms

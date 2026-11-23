@@ -11,17 +11,17 @@
 #include <GraphMol/MolOps.h>
 #include "GraphDescriptors.h"
 #include <ML/InfoTheory/InfoGainFuncs.h>
+#include "CharacteristicPolynomial.h"
 
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <limits>
 #include <map>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
-#ifdef RDK_HAS_EIGEN3
-#include <Eigen/Eigenvalues>
-#endif
 
 namespace RDKit {
 namespace Descriptors {
@@ -222,72 +222,48 @@ double calcBertzCT(const ROMol &mol, unsigned int cutoff,
   return atomTypeIE + connectionIE;
 }
 
-#ifdef RDK_HAS_EIGEN3
-  
-namespace {
-// eigenvalues of the symmetric matrix a (n x n, row major)
-std::vector<double> symmetricEigenvalues(std::vector<double> a,
-                                         unsigned int n) {
-  if (n == 0) {
-    return {};
-  }
-  Eigen::Map<Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic,
-                           Eigen::RowMajor>>
-      m(a.data(), n, n);
-  Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> solver(
-      m, Eigen::EigenvaluesOnly);
-  const auto &ev = solver.eigenvalues();
-  return std::vector<double>(ev.data(), ev.data() + n);
-}
-}  // namespace
-
 double calcIpc(const ROMol &mol, bool avg, const double *distMat) {
   const unsigned int nAts = mol.getNumAtoms();
-  // adjacency matrix from the topological distance matrix (distance == 1)
-  std::vector<double> adj(nAts * nAts, 0.0);
-  if (nAts) {
-    const double *dMat =
-        distMat ? distMat : MolOps::getDistanceMat(mol, false, false, true);
-    for (unsigned int i = 0; i < nAts * nAts; ++i) {
-      if (dMat[i] == 1.0) {
-        adj[i] = 1.0;
+  // The adjacency matrix: the bonds, or the entries of distMat equal to 1. Of
+  // distMat only the lower triangle, diagonal included, is read, as the
+  // symmetric eigensolver used before did.
+  std::vector<std::pair<unsigned int, unsigned int>> edges;
+  std::vector<bool> loops(nAts, false);
+  if (distMat) {
+    for (unsigned int i = 0; i < nAts; ++i) {
+      for (unsigned int j = 0; j < i; ++j) {
+        if (distMat[i * nAts + j] == 1.0) {
+          edges.emplace_back(i, j);
+        }
       }
+      loops[i] = distMat[i * nAts + i] == 1.0;
+    }
+  } else {
+    for (const auto bond : mol.bonds()) {
+      edges.emplace_back(bond->getBeginAtomIdx(), bond->getEndAtomIdx());
     }
   }
 
-  // The characteristic polynomial is expanded from the eigenvalues, with the
-  // roots multiplied in order of increasing magnitude, as in
-  // rdkit.Chem.Graphs.CharacteristicPolynomial. The Le Verrier-Faddeev-Frame
-  // recursion used before loses all precision beyond about 80 atoms.
-  auto roots = symmetricEigenvalues(std::move(adj), nAts);
-  std::sort(roots.begin(), roots.end(), [](double x, double y) {
-    return std::fabs(x) < std::fabs(y);
-  });
-  std::vector<double> cPoly{1.0};
-  cPoly.reserve(nAts + 1);
-  for (auto r : roots) {
-    cPoly.push_back(0.0);
-    for (size_t i = cPoly.size() - 1; i > 0; --i) {
-      cPoly[i] -= r * cPoly[i - 1];
-    }
-  }
-  for (auto &v : cPoly) {
-    v = std::fabs(v);
+  // The coefficients are integers, computed exactly and rounded to double
+  // once; see CharacteristicPolynomial.h.
+  const auto cPoly =
+      detail::characteristicPolynomialMagnitudes(nAts, edges, loops);
+  if (!cPoly) {
+    return std::numeric_limits<double>::quiet_NaN();
   }
   if (avg) {
-    return RDInfoTheory::InfoEntropy(cPoly);
+    return RDInfoTheory::InfoEntropy(*cPoly);
   }
   double sum = 0.0;
-  for (auto v : cPoly) {
+  for (auto v : *cPoly) {
     sum += v;
   }
-  return sum * RDInfoTheory::InfoEntropy(cPoly);
+  return sum * RDInfoTheory::InfoEntropy(*cPoly);
 }
 
 double calcAvgIpc(const ROMol &mol, const double *distMat) {
   return calcIpc(mol, true, distMat);
 }
-#endif
 
 }  // namespace Descriptors
 }  // namespace RDKit
