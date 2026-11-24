@@ -194,6 +194,8 @@ NB_MODULE(rdNormalizedDescriptors, m) {
            "returns the tables in the text format read by LoadFromString")
       .def("__len__", &HistogramSet::size);
 
+   nb::module_::import_("rdkit.Chem.rdMolDescriptors");
+   
   nb::class_<NormalizedProperties, RDKit::Descriptors::Properties>(
       m, "NormalizedProperties",
       "Computes descriptors with the rdMolDescriptors.Properties registry and "

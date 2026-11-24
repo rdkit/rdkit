@@ -116,6 +116,12 @@ class TestCase(unittest.TestCase):
     with self.assertRaises(KeyError):
       rdnd.NormalizedProperties(['NotADescriptor'], rdnd.HistogramSet())
 
+    mol2 = Chem.MolFromSmiles('c1ccccc1C(=O)O')
+    print(dir(sub))
+    res = sub.ComputePropertiesForMols([mol, mol2])
+    self.assertEqual(list(res[0]), [0.5, 0.0])
+    self.assertEqual(list(res[1]), [0.5, 0.0])
+    
 
 if __name__ == '__main__':
   unittest.main()
