@@ -875,7 +875,9 @@ std::string MolFragmentToSmiles(const ROMol &mol,
   }
   int rootedAtAtom = params.rootedAtAtom;
 
-  ROMol tmol(mol, true);
+  // FragmentSmilesConstruct() kekulizes this copy in place, so it needs to be
+  // an RWMol
+  RWMol tmol(mol, true);
   if (params.doIsomericSmiles) {
     tmol.setProp(common_properties::_doIsoSmiles, 1);
   }

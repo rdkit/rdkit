@@ -968,7 +968,7 @@ std::map<T, std::unique_ptr<ROMol>> getTheFragsWithQuery(
     }
     assignments[i] = where;
     if (res.find(where) == res.end()) {
-      res[where] = std::unique_ptr<ROMol>(new ROMol());
+      res[where] = std::make_unique<RWMol>();
     }
     auto *frag = static_cast<RWMol *>(res[where].get());
     ids[i] = frag->addAtom(mol.getAtomWithIdx(i)->copy(), false, true);

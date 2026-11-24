@@ -259,13 +259,14 @@ std::vector<std::vector<size_t>> getHitSynthons(
 std::vector<std::shared_ptr<ROMol>> mergeFragments(
     size_t i, size_t one, size_t two, const std::vector<size_t> &others,
     const std::vector<std::shared_ptr<ROMol>> &fragSet) {
+  // extraSearchSetup() modifies the fragments in place as RWMols.
   std::vector<std::shared_ptr<ROMol>> retFrags;
-  retFrags.emplace_back(std::make_shared<ROMol>(*fragSet[i]));
+  retFrags.emplace_back(std::make_shared<RWMol>(*fragSet[i]));
   retFrags.emplace_back(
       std::unique_ptr<ROMol>(combineMols(*fragSet[one], *fragSet[two])));
   for (auto o : others) {
     if (o != one && o != two) {
-      retFrags.emplace_back(std::make_shared<ROMol>(*fragSet[o]));
+      retFrags.emplace_back(std::make_shared<RWMol>(*fragSet[o]));
     }
   }
   return retFrags;
@@ -274,7 +275,7 @@ std::vector<std::shared_ptr<ROMol>> mergeFragments(
     size_t i, size_t one, size_t two, size_t three, size_t four,
     const std::vector<std::shared_ptr<ROMol>> &fragSet) {
   std::vector<std::shared_ptr<ROMol>> retFrags;
-  retFrags.emplace_back(std::make_shared<ROMol>(*fragSet[i]));
+  retFrags.emplace_back(std::make_shared<RWMol>(*fragSet[i]));
   retFrags.emplace_back(
       std::unique_ptr<ROMol>(combineMols(*fragSet[one], *fragSet[two])));
   retFrags.emplace_back(

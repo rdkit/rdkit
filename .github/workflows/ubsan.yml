@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - .github/workflows/ubsan.yml
+      - .github/workflows/ubsan-suppressions.txt
   workflow_dispatch:
   schedule:
     # Saturday at 04:23 UTC.
@@ -42,10 +43,10 @@ jobs:
         run: |
           cmake -S . -B build/ubsan -G Ninja \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-            -DCMAKE_C_FLAGS="-fsanitize=undefined -fno-sanitize-merge -fno-omit-frame-pointer" \
-            -DCMAKE_CXX_FLAGS="-fsanitize=undefined -fno-sanitize-merge -fno-omit-frame-pointer" \
-            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=undefined -shared-libsan" \
-            -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=undefined -shared-libsan" \
+            -DCMAKE_C_FLAGS="-fsanitize=undefined,vptr -fno-sanitize-merge -fno-omit-frame-pointer" \
+            -DCMAKE_CXX_FLAGS="-fsanitize=undefined,vptr -fno-sanitize-merge -fno-omit-frame-pointer" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=undefined,vptr -shared-libsan" \
+            -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=undefined,vptr -shared-libsan" \
             -DPython_EXECUTABLE="$PYTHON_EXECUTABLE" \
             -DRDK_BUILD_CPP_TESTS=ON \
             -DRDK_BUILD_PYTHON_WRAPPERS=ON \
@@ -66,7 +67,8 @@ jobs:
 
       - name: Test
         env:
-          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1:external_symbolizer_path=/usr/bin/llvm-symbolizer-22
+          # ubsan-suppressions.txt explains each suppression.
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1:external_symbolizer_path=/usr/bin/llvm-symbolizer-22:suppressions=${{ github.workspace }}/.github/workflows/ubsan-suppressions.txt
           MPLBACKEND: Agg
           LD_LIBRARY_PATH: ${{ github.workspace }}/lib
           PYTHONPATH: ${{ github.workspace }}

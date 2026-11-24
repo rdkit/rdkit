@@ -222,8 +222,9 @@ static std::unique_ptr<SCSRMol> SCSRMolFromSCSRDataStream(
   // for writing them back out
 
   while (tempStr.substr(0, 8) == "TEMPLATE") {
-    res->addTemplate(std::unique_ptr<ROMol>(new ROMol()));
-    auto templateMol = (RWMol *)res->getTemplate(res->getTemplateCount() - 1);
+    auto newTemplate = std::make_unique<RWMol>();
+    auto *templateMol = newTemplate.get();
+    res->addTemplate(std::move(newTemplate));
 
     parseTemplateLine(templateMol, tempStr.c_str(), line);
 
