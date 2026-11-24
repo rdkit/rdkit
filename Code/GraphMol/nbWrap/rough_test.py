@@ -8651,6 +8651,18 @@ M  END
     rings = Chem.GetSymmSSSR(m1, algorithm=Chem.SymmetrizeSSSRAlgorithm.RDL)
     self.assertEqual(len(rings), 70)
 
+  def testBridgeheads(self):
+    m = Chem.MolFromSmiles('C1CC2CCC1C2')
+    bridgehead_atoms = Chem.FindBridgeheadAtoms(m)
+    self.assertEqual(len(bridgehead_atoms), 2)
+    self.assertEqual(bridgehead_atoms, [2, 5])
+    bridgeheads = Chem.FindBridgeheads(m)
+    self.assertEqual(len(bridgeheads), 1)
+    self.assertEqual(bridgeheads[0].atom1, 2)
+    self.assertEqual(bridgeheads[0].atom2, 5)
+    self.assertEqual(bridgeheads[0].ring1, [0, 1, 2, 6, 5])
+    self.assertEqual(bridgeheads[0].ring2, [2, 3, 4, 5, 6])
+
 if __name__ == '__main__':
   if "RDTESTCASE" in os.environ:
     suite = unittest.TestSuite()
