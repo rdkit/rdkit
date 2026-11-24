@@ -20,16 +20,52 @@
 
 using namespace RDKit;
 
+TEST_CASE("details") {
+  SECTION("Find ring pairs") {
+    std::vector<std::pair<std::string,
+                          std::vector<std::pair<unsigned int, unsigned int>>>>
+        testCases = {
+            {"C1CC2CCC1C2", {{0, 1}}},
+            {"C1CC1C1CC2CCC1C2", {{1, 2}}},
+            {"C1CCCC2C1CCC2", {}},
+        };
+    for (const auto &[smiles, expected] : testCases) {
+      INFO(smiles);
+      auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(mol);
+      auto ringPairs = RDKit::MolOps::details::findRingPairs(*mol);
+      CHECK(ringPairs == expected);
+    }
+  }
+  SECTION("Find ring pairs, change minCommonBonds") {
+    std::vector<std::pair<std::string,
+                          std::vector<std::pair<unsigned int, unsigned int>>>>
+        testCases = {
+            {"C1CC1C1CC2CCC1C2", {{1, 2}}},
+            {"C1CCCC2C1CCC2", {{0, 1}}},
+        };
+    for (const auto &[smiles, expected] : testCases) {
+      INFO(smiles);
+      auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+      REQUIRE(mol);
+      auto ringPairs = RDKit::MolOps::details::findRingPairs(*mol, 1);
+      CHECK(ringPairs == expected);
+    }
+  }
+}
+
 TEST_CASE("Bridgeheads") {
   SECTION("Simple bridgehead detection") {
     std::vector<std::pair<std::string, std::vector<MolOps::Bridgehead>>>
         testCases = {
             {"C1CC2CCC1C2", {{2, 5, {2, 1, 0, 5, 6}, {2, 3, 4, 5, 6}}}}};
     for (const auto &[smiles, expected] : testCases) {
+      INFO(smiles);
       auto mol = v2::SmilesParse::MolFromSmiles(smiles);
       REQUIRE(mol);
       auto bridgeheads = MolOps::findBridgeheads(*mol);
       CHECK(bridgeheads == expected);
+      std::cerr << "!!!!!" << bridgeheads[0] << std::endl;
     }
   }
 }
@@ -39,6 +75,7 @@ TEST_CASE("Bridgehead atoms") {
     std::vector<std::pair<std::string, std::vector<unsigned int>>> testCases = {
         {"C1CC2CCC1C2", {2, 5}}};
     for (const auto &[smiles, expected] : testCases) {
+      INFO(smiles);
       auto mol = v2::SmilesParse::MolFromSmiles(smiles);
       REQUIRE(mol);
       auto bridgeheads = MolOps::findBridgeheadAtoms(*mol);

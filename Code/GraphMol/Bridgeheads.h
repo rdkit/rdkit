@@ -11,7 +11,9 @@
 #ifndef RD_BRIDGEHEADS_H
 #define RD_BRIDGEHEADS_H
 
+#include <iosfwd>
 #include <vector>
+#include <limits>
 
 namespace RDKit {
 class ROMol;
@@ -26,6 +28,7 @@ struct RDKIT_GRAPHMOL_EXPORT Bridgehead {
   unsigned int atom2 = std::numeric_limits<unsigned int>::max();
   std::vector<unsigned int> ring1;
   std::vector<unsigned int> ring2;
+  Bridgehead() = default;
   Bridgehead(unsigned int a1, unsigned int a2,
              const std::vector<unsigned int> &r1,
              const std::vector<unsigned int> &r2)
@@ -46,7 +49,16 @@ RDKIT_GRAPHMOL_EXPORT std::vector<unsigned int> findBridgeheadAtoms(
     const ROMol &mol);
 RDKIT_GRAPHMOL_EXPORT std::vector<Bridgehead> findBridgeheads(const ROMol &mol);
 
+namespace details {
+// returns indices for all pairs of rings that share at least two bonds
+RDKIT_GRAPHMOL_EXPORT std::vector<std::pair<unsigned int, unsigned int>>
+findRingPairs(const ROMol &mol, unsigned int minCommonBonds = 2);
+}  // namespace details
 }  // namespace MolOps
 }  // namespace RDKit
+
+//! allows Bridgehead objects to be dumped to streams
+RDKIT_GRAPHMOL_EXPORT std::ostream &operator<<(
+    std::ostream &target, const RDKit::MolOps::Bridgehead &);
 
 #endif
