@@ -22,12 +22,16 @@ namespace MolOps {
 
 // a bridgehead is defined by two atom rings that share at least two bonds and
 // two bridgehead atoms that are members of those rings and which have at least
-// three ring bonds each
+// three ring bonds from the shared rings
 struct RDKIT_GRAPHMOL_EXPORT Bridgehead {
-  unsigned int atom1 = std::numeric_limits<unsigned int>::max();
-  unsigned int atom2 = std::numeric_limits<unsigned int>::max();
-  std::vector<unsigned int> ring1;
-  std::vector<unsigned int> ring2;
+  unsigned int atom1 =
+      std::numeric_limits<unsigned int>::max();  // index of the first
+                                                 // bridgehead atom
+  unsigned int atom2 =
+      std::numeric_limits<unsigned int>::max();  // index of the second
+                                                 // bridgehead atom
+  std::vector<unsigned int> ring1;               // one of the atom rings
+  std::vector<unsigned int> ring2;               // the other atom ring
   Bridgehead() = default;
   Bridgehead(unsigned int a1, unsigned int a2,
              const std::vector<unsigned int> &r1,
@@ -41,16 +45,28 @@ struct RDKIT_GRAPHMOL_EXPORT Bridgehead {
 
 //! finds bridgehead atoms in a molecule
 /*!
+ *  Bridgehead atoms are part of two rings that share at least two bonds and
+ *  have at least three ring bonds from these shared rings.
  *
  * @param mol the molecule to inspect
  * @return a vector of atom indices corresponding to bridgehead atoms
  */
 RDKIT_GRAPHMOL_EXPORT std::vector<unsigned int> findBridgeheadAtoms(
     const ROMol &mol);
+//! finds bridgeheads in a molecule
+/*!
+ *
+ * A bridgehead is defined by two atom rings that share at least two bonds and
+ * two bridgehead atoms that are members of those rings and which have at least
+ * three ring bonds from the shared rings.
+ *
+ * @param mol the molecule to inspect
+ * @return a vector of Bridgehead objects
+ */
 RDKIT_GRAPHMOL_EXPORT std::vector<Bridgehead> findBridgeheads(const ROMol &mol);
 
 namespace details {
-// returns indices for all pairs of rings that share at least two bonds along
+// returns indices for all pairs of rings that share at least two bonds, along
 // with the indices of the bonds shared between those rings
 RDKIT_GRAPHMOL_EXPORT
 std::vector<

@@ -63,9 +63,10 @@ std::vector<Bridgehead> findBridgeheads(const ROMol &mol) {
     MolOps::findSSSR(mol);
   }
 
-  const auto ringPairs = details::findRingPairs(mol);
+  // find pairs of rings that share at least two bonds:
+  const auto ringPairs = details::findRingPairs(mol, 2);
 
-  std::vector<Bridgehead> bridgeheads;
+  // mark all bonds that are part of the shared rings
   const auto ringinfo = mol.getRingInfo();
   boost::dynamic_bitset<> bondsAreInSharedRings(mol.getNumBonds());
   for (const auto &[pr, sharedBonds] : ringPairs) {
@@ -75,8 +76,9 @@ std::vector<Bridgehead> findBridgeheads(const ROMol &mol) {
       }
     }
   }
-  const auto atomRings = mol.getRingInfo()->atomRings();
+
   std::unordered_map<unsigned int, unsigned int> atomSharedRingBondCount;
+  // lambda to count the number of shared ring bonds for at atom
   auto getAtomSharedRingBondCount = [&atomSharedRingBondCount,
                                      &bondsAreInSharedRings,
                                      &mol](unsigned int ai) {
@@ -92,26 +94,36 @@ std::vector<Bridgehead> findBridgeheads(const ROMol &mol) {
     return atomSharedRingBondCount[ai];
   };
 
+  const auto atomRings = mol.getRingInfo()->atomRings();
+  std::vector<Bridgehead> bridgeheads;
   for (const auto &[pr, sharedBonds] : ringPairs) {
     const auto &[i, j] = pr;
     const auto &ringi = atomRings[i];
     const auto &ringj = atomRings[j];
-    // find atoms with at least three ring bonds that are common to both rings
-    std::vector<unsigned int> commonAtoms;
-    for (const auto ai : ringi) {
-      if (getAtomSharedRingBondCount(ai) < 3) {
-        continue;
-      }
-      if (std::ranges::find(ringj, ai) != ringj.end()) {
-        commonAtoms.push_back(ai);
-        continue;
+    // Find atoms with at least three ring bonds that are common to both rings.
+    // We know that these can only be involved in the shared bonds, so we can
+    // limit the atoms we consider to the atoms involved in those bonds.
+    std::set<unsigned int> commonAtoms;
+    for (const auto bi : sharedBonds) {
+      auto bondi = mol.getBondWithIdx(bi);
+      for (const auto ai : {bondi->getBeginAtomIdx(), bondi->getEndAtomIdx()}) {
+        if (getAtomSharedRingBondCount(ai) < 3) {
+          continue;
+        }
+        if (std::ranges::find(ringi, ai) != ringi.end() &&
+            std::ranges::find(ringj, ai) != ringj.end()) {
+          commonAtoms.insert(ai);
+        }
       }
     }
 
     if (commonAtoms.size() == 2) {
+      auto it = commonAtoms.begin();
+      unsigned int atom1 = *it;
+      ++it;
+      unsigned int atom2 = *it;
       bridgeheads.emplace_back(
-          commonAtoms[0], commonAtoms[1],
-          std::vector<unsigned int>(ringi.begin(), ringi.end()),
+          atom1, atom2, std::vector<unsigned int>(ringi.begin(), ringi.end()),
           std::vector<unsigned int>(ringj.begin(), ringj.end()));
     }
   }
