@@ -337,6 +337,19 @@ TEST_CASE("Ipc and AvgIpc come from the exact characteristic polynomial") {
     CHECK_THAT(calcIpc(*m, false, ones.data()),
                Catch::Matchers::WithinAbs(3 * ent, 1e-14));
   }
+  SECTION("AvgIpc stays finite where Ipc leaves the double range") {
+    // At 1476 atoms every coefficient fits in a double but their sum does
+    // not; at 1500 the largest coefficient does not fit either. The
+    // references are the entropies of the exact coefficients.
+    for (const auto &[atoms, avgIpc] :
+         std::vector<std::pair<unsigned int, double>>{
+             {1476, 5.5694031032603307}, {1500, 5.5810377528400275}}) {
+      std::unique_ptr<ROMol> m(SmilesToMol(std::string(atoms, 'C')));
+      REQUIRE(m);
+      CHECK_THAT(calcAvgIpc(*m), Catch::Matchers::WithinRel(avgIpc, 1e-13));
+      CHECK(std::isinf(calcIpc(*m)));
+    }
+  }
   SECTION("NaN past the table of primes") {
     // the coefficient bound of a 4000-atom chain is about 5,100 bits
     std::unique_ptr<ROMol> m(SmilesToMol(std::string(4000, 'C')));

@@ -13,8 +13,10 @@
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <cmath>
 #include <cstdint>
+#include <limits>
 
 #if defined(_MSC_VER) && !defined(__clang__) && \
     (defined(_M_X64) || defined(_M_ARM64))
@@ -374,8 +376,10 @@ double coefficientBitsBound(size_t n, size_t traceOfSquare) {
   return bound;
 }
 
-//! |value| rounded to the nearest double, ties to even.
-double magnitude(BigInt value) {
+//! |value| * 2^-exponent rounded to the nearest double, ties to even. With a
+//! nonzero exponent, only results too small to matter next to the largest
+//! coefficient can be rounded twice, on entering the subnormal range.
+double magnitude(BigInt value, int exponent) {
   if (value < 0) {
     value = -value;
   }
@@ -384,7 +388,8 @@ double magnitude(BigInt value) {
   }
   const unsigned int top = boost::multiprecision::msb(value);
   if (top < 64) {
-    return static_cast<double>(static_cast<std::uint64_t>(value));
+    return std::ldexp(static_cast<double>(static_cast<std::uint64_t>(value)),
+                      -exponent);
   }
   // Keep the leading 64 bits and fold every dropped bit into the lowest one:
   // that bit lies below double's rounding position, so the conversion still
@@ -394,18 +399,19 @@ double magnitude(BigInt value) {
   if (boost::multiprecision::lsb(value) < shift) {
     head |= 1u;
   }
-  return std::ldexp(static_cast<double>(head), static_cast<int>(shift));
+  return std::ldexp(static_cast<double>(head),
+                    static_cast<int>(shift) - exponent);
 }
 
 }  // namespace
 
-std::optional<std::vector<double>> characteristicPolynomialMagnitudes(
+std::optional<PolynomialMagnitudes> characteristicPolynomialMagnitudes(
     unsigned int numVertices,
     const std::vector<std::pair<unsigned int, unsigned int>> &edges,
     const std::vector<bool> &loops) {
   const size_t n = numVertices;
-  std::vector<double> result(n + 1, 0.0);
-  result[0] = 1.0;
+  PolynomialMagnitudes result{std::vector<double>(n + 1, 0.0)};
+  result.scaled[0] = 1.0;
   std::vector<size_t> rowSums(n, 0);
   size_t traceOfSquare = 0;  // tr A^2 = 2 |edges| + |loops|
   for (const auto &[a, b] : edges) {
@@ -447,7 +453,7 @@ std::optional<std::vector<double>> characteristicPolynomialMagnitudes(
     const std::uint64_t p = largePrimes[0];
     for (size_t k = 0; k <= n; ++k) {
       const std::uint64_t r = residues[n - k];  // c_k multiplies x^(n-k)
-      result[k] = static_cast<double>(r > p / 2 ? p - r : r);
+      result.scaled[k] = static_cast<double>(r > p / 2 ? p - r : r);
     }
     return result;
   }
@@ -472,9 +478,25 @@ std::optional<std::vector<double>> characteristicPolynomialMagnitudes(
     modulus *= p;
   }
   const BigInt half = modulus / 2;
+  unsigned int top = 0;
+  for (BigInt &x : exact) {
+    if (x > half) {
+      x = modulus - x;  // the magnitude of the symmetric residue
+    }
+    if (x != 0) {
+      top = std::max(top,
+                     static_cast<unsigned int>(boost::multiprecision::msb(x)));
+    }
+  }
+  // The n + 1 magnitudes sum to less than 2^(top + 1 + bit_width(n + 1)); keep
+  // that a factor of two inside the double range so that rounding cannot
+  // overflow either.
+  const int sumBits =
+      static_cast<int>(top) + 2 + static_cast<int>(std::bit_width(n + 1));
+  result.exponent =
+      std::max(0, sumBits - std::numeric_limits<double>::max_exponent);
   for (size_t k = 0; k <= n; ++k) {
-    const BigInt &x = exact[n - k];
-    result[k] = magnitude(x > half ? BigInt(x - modulus) : x);
+    result.scaled[k] = magnitude(exact[n - k], result.exponent);
   }
   return result;
 }

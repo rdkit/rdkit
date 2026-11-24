@@ -251,14 +251,17 @@ double calcIpc(const ROMol &mol, bool avg, const double *distMat) {
   if (!cPoly) {
     return std::numeric_limits<double>::quiet_NaN();
   }
+  // The common power-of-two scale leaves the entropy unchanged; Ipc is
+  // infinite once it leaves the double range.
   if (avg) {
-    return RDInfoTheory::InfoEntropy(*cPoly);
+    return RDInfoTheory::InfoEntropy(cPoly->scaled);
   }
   double sum = 0.0;
-  for (auto v : *cPoly) {
+  for (auto v : cPoly->scaled) {
     sum += v;
   }
-  return sum * RDInfoTheory::InfoEntropy(*cPoly);
+  return std::ldexp(sum * RDInfoTheory::InfoEntropy(cPoly->scaled),
+                    cPoly->exponent);
 }
 
 double calcAvgIpc(const ROMol &mol, const double *distMat) {
