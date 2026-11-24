@@ -58,7 +58,7 @@ TEST_CASE("Bridgeheads") {
   SECTION("Simple bridgehead detection") {
     std::vector<std::pair<std::string, std::vector<MolOps::Bridgehead>>>
         testCases = {
-            {"C1CC2CCC1C2", {{2, 5, {2, 1, 0, 5, 6}, {2, 3, 4, 5, 6}}}}};
+            {"C1CC2CCC1C2", {{2, 5, {0, 1, 2, 6, 5}, {2, 3, 4, 5, 6}}}}};
     for (const auto &[smiles, expected] : testCases) {
       INFO(smiles);
       auto mol = v2::SmilesParse::MolFromSmiles(smiles);

@@ -15,6 +15,7 @@
 #include <vector>
 #include <set>
 #include <algorithm>
+#include <unordered_map>
 
 namespace RDKit {
 namespace MolOps {
@@ -50,8 +51,56 @@ std::vector<Bridgehead> findBridgeheads(const ROMol &mol) {
   if (!mol.getRingInfo()->isSssrOrBetter()) {
     MolOps::findSSSR(mol);
   }
+
+  const auto ringPairs = details::findRingPairs(mol);
+
   std::vector<Bridgehead> bridgeheads;
-  bridgeheads.resize(mol.getNumAtoms());
+  const auto ringinfo = mol.getRingInfo();
+  boost::dynamic_bitset<> bondsAreInRings(mol.getNumBonds());
+  for (const auto &ring : ringinfo->bondRings()) {
+    for (const auto b : ring) {
+      bondsAreInRings.set(b);
+    }
+  }
+  const auto atomRings = mol.getRingInfo()->atomRings();
+  std::unordered_map<unsigned int, unsigned int> atomRingBondCount;
+  auto getAtomRingBondCount = [&atomRingBondCount, &bondsAreInRings,
+                               &mol](unsigned int ai) {
+    if (atomRingBondCount.find(ai) == atomRingBondCount.end()) {
+      unsigned int ringBondCount = 0;
+      for (const auto bnd : mol.atomBonds(mol.getAtomWithIdx(ai))) {
+        if (bondsAreInRings.test(bnd->getIdx())) {
+          ++ringBondCount;
+        }
+      }
+      atomRingBondCount[ai] = ringBondCount;
+    }
+    return atomRingBondCount[ai];
+  };
+
+  for (const auto &[i, j] : ringPairs) {
+    const auto &ringi = atomRings[i];
+    const auto &ringj = atomRings[j];
+    // find atoms with at least three ring bonds that are common to both rings
+    std::vector<unsigned int> commonAtoms;
+    for (const auto ai : ringi) {
+      if (getAtomRingBondCount(ai) < 3) {
+        continue;
+      }
+      if (std::ranges::find(ringj, ai) != ringj.end()) {
+        commonAtoms.push_back(ai);
+        continue;
+      }
+    }
+
+    if (commonAtoms.size() == 2) {
+      bridgeheads.emplace_back(
+          commonAtoms[0], commonAtoms[1],
+          std::vector<unsigned int>(ringi.begin(), ringi.end()),
+          std::vector<unsigned int>(ringj.begin(), ringj.end()));
+    }
+  }
+
   // Implementation for finding bridgeheads goes here
   return bridgeheads;
 }
