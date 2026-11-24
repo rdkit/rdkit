@@ -387,8 +387,8 @@ RDKIT_MOLALIGN_EXPORT double CalcRMS(ROMol &prbMol, const ROMol &refMol,
 /// the molecules contains queries, then the queries must also match exactly.
 /*!
   \param mol       The molecule of interest.
-  \param atomIds   vector of atoms to be used to generate the alignment.
-                   All atoms will be used is not specified
+  \param atomIds   atoms used for alignment and for calculating the RMS values.
+                   All atoms are used if not specified.
   \param confIds   vector of conformations to align - defaults to all
   \param weights   (optional) weights for each pair of atoms.
   \param reflect   toggles reflecting (about the origin) the alignment
