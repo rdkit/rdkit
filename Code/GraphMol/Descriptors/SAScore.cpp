@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2026 Greg Landrum and other RDKit contributors
+//  Copyright (C) 2026 RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -14,6 +14,7 @@
 #include <GraphMol/Fingerprints/MorganGenerator.h>
 #include <RDGeneral/BadFileException.h>
 #include <RDGeneral/Exceptions.h>
+#include <RDGeneral/Invariant.h>
 #include <RDGeneral/StreamOps.h>
 
 #include "MolDescriptors.h"
@@ -166,6 +167,8 @@ double calcSAScore(const ROMol &mol, const SAScoreFragmentTable &table) {
   const std::unique_ptr<SparseIntVect<std::uint32_t>> fp{
       sascoreFingerprintGenerator()->getSparseCountFingerprint(mol)};
   const auto &nonzeroElements = fp->getNonzeroElements();
+  CHECK_INVARIANT(!nonzeroElements.empty(),
+                  "no fingerprint bits set for molecule");
 
   double fragmentScore = 0.0;
   std::uint64_t nFragments = 0;
@@ -193,8 +196,9 @@ double calcSAScore(const ROMol &mol, const SAScoreFragmentTable &table) {
   // results when two or more macrocycles are present.
   const double macrocyclePenalty = nMacrocycles > 0 ? std::log10(2.0) : 0.0;
 
-  const double complexityScore = -sizePenalty - stereoPenalty - spiroPenalty -
-                                 bridgePenalty - macrocyclePenalty;
+  const double complexityScore =
+      -1 * (sizePenalty + stereoPenalty + spiroPenalty + bridgePenalty +
+            macrocyclePenalty);
 
   // not in the original publication; added to make highly symmetrical
   // molecules easier to synthesize
