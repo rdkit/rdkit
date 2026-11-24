@@ -16,7 +16,12 @@
 #include "BitVectUtils.h"
 #include "ExplicitBitVect.h"
 #include "SparseIntVect.h"
+#include "base64.h"
+#include <RDGeneral/Exceptions.h>
 #include <limits>
+#include <memory>
+#include <string>
+#include <vector>
 
 using namespace RDKit;
 
@@ -41,4 +46,34 @@ TEST_CASE("github #9033: tversky is 1 when no bits are set") {
   CHECK(BraunBlanquetSimilarity(bv1, bv2) == 0.0);
   CHECK(RusselSimilarity(bv1, bv2) == 0.0);
   CHECK(RogotGoldbergSimilarity(bv1, bv2) == 0.0);
+}
+
+TEST_CASE("Base64Decode and badly padded input") {
+  SECTION("properly padded input decodes") {
+    struct Case {
+      std::string in;
+      std::string out;
+    };
+    std::vector<Case> cases{{"", ""},
+                            {"TW==", "M"},
+                            {"TWE=", "Ma"},
+                            {"TWFu", "Man"},
+                            {"TWFuTWE=", "ManMa"},
+                            // 0xff is junk and has to be skipped: transTable
+                            // needs to be initialized all the way to 255
+                            {std::string("TW") + char(0xff) + "E=", "Ma"}};
+    for (const auto &c : cases) {
+      INFO(c.in);
+      unsigned int len = 0;
+      std::unique_ptr<char[]> res(Base64Decode(c.in.c_str(), &len));
+      CHECK(std::string(res.get(), len) == c.out);
+    }
+  }
+  SECTION("input which isn't properly padded throws") {
+    unsigned int len = 0;
+    for (const auto &in : {"T", "TW", "TWE", "TWFuTWE", "TWFu=", "TW="}) {
+      INFO(in);
+      CHECK_THROWS_AS(Base64Decode(in, &len), ValueErrorException);
+    }
+  }
 }
