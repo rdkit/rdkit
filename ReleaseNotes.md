@@ -28,7 +28,10 @@ Co5mos, İlker YILMAZ
 - The C++ functions `RingUtils::makeRingNeighborMap()` and
   `RingUtils::pickFusedRings()` have been deprecated, please use
   `RingUtils::findFusedRingSystems()` instead.
-
+- The pure-Python implementation for `EnumerateStereoisomers` has been
+  deprecated in favor of the Python wrappers for the C++ `StereoisomerEnumerator`
+  class. The replacement is almost a drop-in replacement, though the random
+  seed and the default max number of isomers to return are different.
 
 # Release_2026.09.1
 (Changes relative to Release_2026.03.1)
