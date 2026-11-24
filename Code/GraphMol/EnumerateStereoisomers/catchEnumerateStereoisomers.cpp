@@ -242,9 +242,9 @@ TEST_CASE("Enumeration removes wiggly bonds without an enumerable center") {
 }
 
 TEST_CASE("Enumeration preserves the defined neighbor of a wiggly bond") {
-  // The wiggly bond marks atom 1 as unknown, but stereo perception also reports
-  // the defined center at its other end, atom 3, as unknown. With
-  // onlyUnassigned, atom 3 must keep its configuration.
+  // The wiggly bond marks atom 1 as unknown and says nothing about the defined
+  // center at its other end, atom 3. With onlyUnassigned, atom 3 must keep its
+  // configuration.
   auto check = [](const ROMol &mol) {
     const auto tag = mol.getAtomWithIdx(3)->getChiralTag();
     REQUIRE(tag != Atom::CHI_UNSPECIFIED);
