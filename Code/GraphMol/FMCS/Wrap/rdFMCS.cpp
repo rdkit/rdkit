@@ -715,7 +715,9 @@ BOOST_PYTHON_MODULE(rdFMCS) {
                     "fraction of the dataset that must contain the MCS")
       .add_property("Timeout", &RDKit::PyMCSParameters::getTimeout,
                     &RDKit::PyMCSParameters::setTimeout,
-                    "timeout (in seconds) for the calculation")
+                    "timeout (in seconds) for the calculation; the default, 0, "
+                    "means no timeout (FindMCS(mols, ...) defaults to "
+                    "timeout=3600)")
       .add_property("Verbose", &RDKit::PyMCSParameters::getVerbose,
                     &RDKit::PyMCSParameters::setVerbose, "toggles verbose mode")
       .add_property("AtomCompareParameters",
