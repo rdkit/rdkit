@@ -253,8 +253,19 @@ SparseIntVect<boost::int64_t> *getTopologicalTorsionFingerprint(
         pathCodes.push_back(code);
       }
       if (pathCodes.size()) {
-        boost::int64_t code =
-            getTopologicalTorsionCode(pathCodes, includeChirality);
+        // A path that closes a ring (first atom == last atom) may have
+        // been enumerated starting at any atom of the ring, so
+        // canonicalize its code over the rotations of the ring to keep
+        // the fingerprint independent of atom ordering (github #9871).
+        const bool closesRing =
+            path.size() > 1 && path.front() == path.back();
+        boost::int64_t code;
+        if (closesRing) {
+          code = static_cast<boost::int64_t>(
+              getCanonicalCyclicTorsionCode(pathCodes, includeChirality));
+        } else {
+          code = getTopologicalTorsionCode(pathCodes, includeChirality);
+        }
         updateElement(*res, code);
       }
     }

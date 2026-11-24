@@ -81,6 +81,27 @@ RDKIT_FINGERPRINTS_EXPORT std::uint64_t getTopologicalTorsionCode(
 RDKIT_FINGERPRINTS_EXPORT std::uint32_t getTopologicalTorsionHash(
     const std::vector<std::uint32_t> &pathCodes);
 
+//! returns the canonical topological torsion code for a path that closes
+//! a ring (its first and last atoms are the same). Such a path may have
+//! been enumerated starting at any atom of the ring, so the code is the
+//! smallest one over all rotations of the ring; this keeps the
+//! fingerprint independent of atom ordering (github #9871).
+/*!
+  \param pathCodes  the atom codes along the cyclic path, with the first
+                    atom repeated at the end
+*/
+RDKIT_FINGERPRINTS_EXPORT std::uint64_t getCanonicalCyclicTorsionCode(
+    const std::vector<std::uint32_t> &pathCodes, bool includeChirality = false);
+
+//! returns the canonical topological torsion hash for a path that closes
+//! a ring, as above but for the hashed fingerprint
+/*!
+  \param pathCodes  the atom codes along the cyclic path, with the first
+                    atom repeated at the end
+*/
+RDKIT_FINGERPRINTS_EXPORT std::uint32_t getCanonicalCyclicTorsionHash(
+    const std::vector<std::uint32_t> &pathCodes);
+
 }  // namespace AtomPairs
 
 namespace MorganFingerprints {

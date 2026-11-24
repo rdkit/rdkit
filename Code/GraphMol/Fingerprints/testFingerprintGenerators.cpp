@@ -2366,6 +2366,80 @@ void testGitHubIssue811() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testGitHubIssue9871() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    Test GitHub Issue 9871: topological torsion "
+                           "fingerprint depends on atom order for molecules "
+                           "with a three-membered ring"
+                        << std::endl;
+  {
+    // the two SMILES from the issue describe the same molecule with a
+    // different atom order; the fingerprints must agree
+    FingerprintGenerator<std::uint64_t> *generator =
+        TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>();
+    ROMol *m1 = SmilesToMol("CN1CC1");
+    ROMol *m2 = SmilesToMol("C1CN1C");
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m2);
+
+    SparseIntVect<std::uint64_t> *fp1 =
+        generator->getSparseCountFingerprint(*m1);
+    SparseIntVect<std::uint64_t> *fp2 =
+        generator->getSparseCountFingerprint(*m2);
+    TEST_ASSERT(*fp1 == *fp2);
+    // the cyclic path around the ring still contributes a bit
+    TEST_ASSERT(fp1->getNonzeroElements().size() == 2);
+    delete fp1;
+    delete fp2;
+
+    // the folded (hashed) fingerprints must agree too
+    SparseIntVect<std::uint32_t> *cfp1 = generator->getCountFingerprint(*m1);
+    SparseIntVect<std::uint32_t> *cfp2 = generator->getCountFingerprint(*m2);
+    TEST_ASSERT(*cfp1 == *cfp2);
+    delete cfp1;
+    delete cfp2;
+
+    // the legacy fingerprint agrees with the generator
+    SparseIntVect<std::int64_t> *fpOld1 =
+        AtomPairs::getTopologicalTorsionFingerprint(*m1);
+    SparseIntVect<std::int64_t> *fpOld2 =
+        AtomPairs::getTopologicalTorsionFingerprint(*m2);
+    TEST_ASSERT(fpOld1->getNonzeroElements().size() == 2);
+    TEST_ASSERT(*fpOld1 == *fpOld2);
+    delete fpOld1;
+    delete fpOld2;
+
+    delete m1;
+    delete m2;
+    delete generator;
+  }
+  {
+    // a path of n atoms can go around a ring of size n - 1, so with a
+    // torsion atom count of 5 a four-membered ring is affected the same
+    // way
+    FingerprintGenerator<std::uint64_t> *generator =
+        TopologicalTorsion::getTopologicalTorsionGenerator<std::uint64_t>(
+            false, 5);
+    ROMol *m1 = SmilesToMol("CN1CCC1");
+    ROMol *m2 = SmilesToMol("C1CCN1C");
+    TEST_ASSERT(m1);
+    TEST_ASSERT(m2);
+
+    SparseIntVect<std::uint64_t> *fp1 =
+        generator->getSparseCountFingerprint(*m1);
+    SparseIntVect<std::uint64_t> *fp2 =
+        generator->getSparseCountFingerprint(*m2);
+    TEST_ASSERT(*fp1 == *fp2);
+    delete fp1;
+    delete fp2;
+
+    delete m1;
+    delete m2;
+    delete generator;
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 void testBulkFP() {
   BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
   BOOST_LOG(rdErrorLog)
@@ -2503,6 +2577,7 @@ int main(int argc, char *argv[]) {
   testGitHubIssue25();
   testGitHubIssue334();
   testGitHubIssue811();
+  testGitHubIssue9871();
   testBulkFP();
   testAtomPairFPDifference();
 
