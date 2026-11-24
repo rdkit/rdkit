@@ -376,9 +376,10 @@ std::vector<double> Properties::computeValues(const RDKit::ROMol &mol) const {
 std::vector<double> Properties::computeProperties(const RDKit::ROMol &mol,
                                                   bool annotate) const {
   auto res = computeValues(mol);
+  const auto &names = getPropertyNames();
   if (annotate) {
-    for (size_t i = 0; i < m_properties.size(); ++i) {
-      mol.setProp<double>(m_properties[i]->getName(), res[i]);
+    for (size_t i = 0; i < names.size(); ++i) {
+      mol.setProp<double>(names[i], res[i]);
     }
   }
   return res;

@@ -134,6 +134,9 @@ RDKIT_NORMALIZEDDESCRIPTORS_EXPORT const HistogramSet &getDefaultTables();
   the descriptors in rdkit.Chem.Descriptors._descList in the same order, and
   normalizes them with getDefaultTables().
 
+  Note that the names here in getPropertyNames are mapped to the ones
+  in _descList which are NOT the same as C++ registeres the properties.
+  
   Descriptors are named as in rdkit.Chem.Descriptors._descList. Where the
   property registry already had the descriptor under another name (e.g.
   "exactmw" for "ExactMolWt") that property is used, and its table is looked
@@ -170,7 +173,7 @@ class RDKIT_NORMALIZEDDESCRIPTORS_EXPORT NormalizedProperties
 
   //! the descriptor names (_descList names where there is one), in the order
   //! values are returned
-  const std::vector<std::string> &getDescriptorNames() const {
+  std::vector<std::string> getPropertyNames() const override {
     return d_descriptorNames;
   }
   const HistogramSet &getTables() const { return *d_tables; }

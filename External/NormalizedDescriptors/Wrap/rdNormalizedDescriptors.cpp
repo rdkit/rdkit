@@ -113,14 +113,6 @@ NormalizedProperties *makeNormalizedProperties(python::object names,
   return new NormalizedProperties(nameVect, tableSet);
 }
 
-python::tuple getDescriptorNames(const NormalizedProperties &props) {
-  python::list res;
-  for (const auto &name : props.getDescriptorNames()) {
-    res.append(name);
-  }
-  return python::tuple(res);
-}
-
 python::list computeRawHelper(const NormalizedProperties &props,
                               const RDKit::ROMol &mol) {
   return toList(props.computeRawProperties(mol));
@@ -223,14 +215,13 @@ BOOST_PYTHON_MODULE(rdNormalizedDescriptors) {
                                     python::default_call_policies(),
                                     (python::arg("names") = python::object(),
                                      python::arg("tables") = python::object())))
-      .def("GetDescriptorNames", getDescriptorNames, python::arg("self"),
-           "returns the descriptor names, in the order values are returned")
       .def("ComputeRawProperties", computeRawHelper,
            (python::arg("self"), python::arg("mol")),
            "returns the unnormalized descriptor values; failures are nan")
       .def("GetTables", &NormalizedProperties::getTables,
            python::return_internal_reference<1>(), python::arg("self"));
 
+  
   python::def("GetPropertyName", getPropertyName, python::arg("name"),
               "returns the name of the rdMolDescriptors property that computes "
               "a descriptor, e.g. 'exactmw' for 'ExactMolWt'");

@@ -203,7 +203,7 @@ TEST_CASE("calcNormalizedDescriptors matches rdkit.Chem.Descriptors") {
 
   const auto &tables = getDefaultTables();
   NormalizedProperties props;
-  REQUIRE(props.getDescriptorNames() == names);
+  REQUIRE(props.getPropertyNames() == names);
   unsigned int nMols = 0;
   while (std::getline(inStream, line)) {
     auto fields = splitTabs(line);
@@ -242,17 +242,19 @@ TEST_CASE("NormalizedProperties") {
     auto propNames = props.getPropertyNames();
     REQUIRE(propNames.size() == names.size());
     for (size_t i = 0; i < names.size(); ++i) {
-      CHECK(propNames[i] == getPropertyName(names[i]));
+      CHECK(propNames[i] == names[i]);
     }
     // each one is registered on its own, so it can be used on its own
     auto available = RDKit::Descriptors::Properties::getAvailableProperties();
     auto raw = props.computeRawProperties(*mol);
     for (size_t i = 0; i < names.size(); ++i) {
       INFO(names[i]);
-      CHECK(std::find(available.begin(), available.end(), propNames[i]) !=
+      auto propName = getPropertyName(propNames[i]);
+      CHECK(std::find(available.begin(), available.end(), propName) !=
             available.end());
+    std::cerr << propNames[i] << " " << propName << std::endl;
       auto single =
-          (*RDKit::Descriptors::Properties::getProperty(propNames[i]))(*mol);
+          (*RDKit::Descriptors::Properties::getProperty(propName))(*mol);
       CHECK_THAT(single, WithinAbs(raw[i], 1e-12));
     }
   }
@@ -260,10 +262,8 @@ TEST_CASE("NormalizedProperties") {
     HistogramSet tables;
     tables.addTable("ExactMolWt", CumulativeHistogram({0, 200}, {0.25, 0.5}));
     NormalizedProperties props({"ExactMolWt", "NumHDonors"}, tables);
-    CHECK(props.getDescriptorNames() ==
-          std::vector<std::string>{"ExactMolWt", "NumHDonors"});
     CHECK(props.getPropertyNames() ==
-          std::vector<std::string>{"exactmw", "NumHBD"});
+          std::vector<std::string>{"ExactMolWt", "NumHDonors"});
     auto raw = props.computeRawProperties(*mol);
     CHECK_THAT(raw[0], WithinAbs(122.0368, 1e-4));
     CHECK(raw[1] == 1.0);

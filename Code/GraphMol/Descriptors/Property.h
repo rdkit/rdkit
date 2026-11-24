@@ -125,7 +125,7 @@ class RDKIT_DESCRIPTORS_EXPORT Properties {
   Properties(const std::vector<std::string> &propNames);
   virtual ~Properties() = default;
 
-  std::vector<std::string> getPropertyNames() const;
+  virtual std::vector<std::string> getPropertyNames() const;
   //! computes the properties for \c mol
   /*!
     If a property's calculation throws a std::exception, its failureMode()

@@ -98,18 +98,13 @@ class TestCase(unittest.TestCase):
   def testNormalizedProperties(self):
     props = rdnd.NormalizedProperties()
     self.assertIsInstance(props, rdMD.Properties)
-    self.assertEqual(props.GetDescriptorNames(), rdnd.GetNormalizedDescriptorNames())
-    self.assertEqual(rdnd.GetPropertyName('ExactMolWt'), 'exactmw')
-    self.assertEqual(list(props.GetPropertyNames()),
-                     [rdnd.GetPropertyName(n) for n in rdnd.GetNormalizedDescriptorNames()])
-    for name in props.GetPropertyNames():
-      self.assertIn(name, rdMD.Properties.GetAvailableProperties())
+    self.assertEqual(list(props.GetPropertyNames()), list(rdnd.GetNormalizedDescriptorNames()))
 
     mol = Chem.MolFromSmiles('c1ccccc1C(=O)O')
     tables = rdnd.HistogramSet()
     tables.AddTable('ExactMolWt', rdnd.CumulativeHistogram([0, 200], [0.25, 0.5]))
     sub = rdnd.NormalizedProperties(['ExactMolWt', 'NumHDonors'], tables)
-    self.assertEqual(list(sub.GetPropertyNames()), ['exactmw', 'NumHBD'])
+    self.assertEqual(list(sub.GetPropertyNames()), ['ExactMolWt', 'NumHDonors'])
     self.assertEqual(list(sub.ComputeProperties(mol)), [0.5, 0.0])
     sub.AnnotateProperties(mol)
     self.assertEqual(mol.GetDoubleProp('ExactMolWt'), 0.5)

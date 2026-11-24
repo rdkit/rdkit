@@ -115,14 +115,6 @@ NormalizedProperties *makeNormalizedProperties(nb::object names,
   return new NormalizedProperties(nameVect, tableSet);
 }
 
-nb::tuple getDescriptorNames(const NormalizedProperties &props) {
-  nb::list res;
-  for (const auto &name : props.getDescriptorNames()) {
-    res.append(name);
-  }
-  return nb::tuple(res);
-}
-
 nb::list computeRawHelper(const NormalizedProperties &props,
                           const RDKit::ROMol &mol) {
   return toList(props.computeRawProperties(mol));
@@ -205,15 +197,10 @@ NB_MODULE(rdNormalizedDescriptors, m) {
       .def(nb::init<>())
       .def(nb::init<const std::vector<std::string> &, const HistogramSet &>(),
            "names"_a, "tables"_a = nb::none())
-      .def("GetDescriptorNames", getDescriptorNames,
-           "returns the descriptor names, in the order values are returned")
       .def("ComputeRawProperties", computeRawHelper, "mol"_a,
            "returns the unnormalized descriptor values; failures are nan")
       .def("GetTables", &NormalizedProperties::getTables);
 
-  m.def("GetPropertyName", getPropertyName, "name"_a,
-        "returns the name of the rdMolDescriptors property that computes "
-        "a descriptor, e.g. 'exactmw' for 'ExactMolWt'");
   m.def("GetDefaultTablePath", getDefaultTablePath,
         "returns the path of the default histogram tables");
   m.def("GetDefaultTables", getDefaultTables,
