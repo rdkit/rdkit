@@ -7094,6 +7094,20 @@ TEST_CASE(
   CHECK(si[0].specified == Chirality::StereoSpecified::Unknown);
 }
 
+TEST_CASE("markUnspecifiedStereoAsUnknown marks adjacent centers separately") {
+  // Both centers prefer the bond between them, which can only mark one.
+  auto m = "O=CC(C(=O)O)C(C=O)C(=O)N"_smiles;
+  REQUIRE(m);
+  RDDepict::compute2DCoords(*m);
+  markUnspecifiedStereoAsUnknown(*m);
+  const auto si = Chirality::findPotentialStereo(*m);
+  REQUIRE(si.size() == 2);
+  for (const auto &info : si) {
+    CAPTURE(info.centeredOn);
+    CHECK(info.specified == Chirality::StereoSpecified::Unknown);
+  }
+}
+
 TEST_CASE("wiggly bonds are re-applied after clearSingleBondDirFlags") {
   // the re-wedging cycle used by depiction code: clear the wedging, then let
   // wedgeMolBonds() derive it again from the stereo annotations. A wiggly bond

@@ -249,15 +249,20 @@ void markUnspecifiedStereoAsUnknown(ROMol &mol, int confId) {
     std::pair<bool, INT_VECT> retVal =
         Chirality::detail::countChiralNbrs(mol, noNbrs);
     INT_VECT nChiralNbrs = retVal.second;
+    // shared so that adjacent centers don't both pick the bond between them
+    std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>> resSoFar;
     for (auto i : si) {
       if (i.type == Chirality::StereoType::Atom_Tetrahedral &&
           i.specified == Chirality::StereoSpecified::Unspecified) {
         i.specified = Chirality::StereoSpecified::Unknown;
         auto atom = mol.getAtomWithIdx(i.centeredOn);
-        std::map<int, std::unique_ptr<RDKit::Chirality::WedgeInfoBase>>
-            resSoFar;
         int bndIdx = Chirality::detail::pickBondToWedge(atom, mol, nChiralNbrs,
                                                         resSoFar, noNbrs);
+        if (bndIdx < 0) {
+          continue;
+        }
+        resSoFar[bndIdx] =
+            std::make_unique<Chirality::WedgeInfoWiggly>(atom->getIdx());
         auto bond = mol.getBondWithIdx(bndIdx);
         bond->setBondDir(Bond::UNKNOWN);
         // a wiggly bond marks the atom at its beginning
