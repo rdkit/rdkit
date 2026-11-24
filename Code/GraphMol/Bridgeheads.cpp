@@ -21,9 +21,11 @@ namespace RDKit {
 namespace MolOps {
 
 namespace details {
-// returns indices for all pairs of rings that share at least two bonds
-std::vector<std::pair<unsigned int, unsigned int>> findRingPairs(
-    const ROMol &mol, unsigned int minCommonBonds) {
+// returns indices for all pairs of rings that share at least two bonds along
+// with the shared bond indices
+std::vector<
+    std::pair<std::pair<unsigned int, unsigned int>, std::vector<unsigned int>>>
+findRingPairs(const ROMol &mol, unsigned int minCommonBonds) {
   const auto &ringInfo = mol.getRingInfo();
   const auto &rings = ringInfo->bondRings();
   std::vector<boost::dynamic_bitset<>> ringMasks(rings.size());
@@ -33,13 +35,22 @@ std::vector<std::pair<unsigned int, unsigned int>> findRingPairs(
       ringMasks[i].set(b);
     }
   }
-  std::vector<std::pair<unsigned int, unsigned int>> ringPairs;
+  std::vector<std::pair<std::pair<unsigned int, unsigned int>,
+                        std::vector<unsigned int>>>
+      ringPairs;
   for (size_t i = 0; i < rings.size(); ++i) {
     for (size_t j = i + 1; j < rings.size(); ++j) {
       auto commonBonds = ringMasks[i] & ringMasks[j];
-      if (commonBonds.count() >= minCommonBonds) {
-        ringPairs.emplace_back(i, j);
+      if (commonBonds.count() < minCommonBonds) {
+        continue;
       }
+      std::vector<unsigned int> sharedBonds;
+      size_t pos = commonBonds.find_first();
+      while (pos != boost::dynamic_bitset<>::npos) {
+        sharedBonds.push_back(pos);
+        pos = commonBonds.find_next(pos);
+      }
+      ringPairs.emplace_back(std::make_pair(i, j), sharedBonds);
     }
   }
   return ringPairs;
@@ -56,35 +67,39 @@ std::vector<Bridgehead> findBridgeheads(const ROMol &mol) {
 
   std::vector<Bridgehead> bridgeheads;
   const auto ringinfo = mol.getRingInfo();
-  boost::dynamic_bitset<> bondsAreInRings(mol.getNumBonds());
-  for (const auto &ring : ringinfo->bondRings()) {
-    for (const auto b : ring) {
-      bondsAreInRings.set(b);
+  boost::dynamic_bitset<> bondsAreInSharedRings(mol.getNumBonds());
+  for (const auto &[pr, sharedBonds] : ringPairs) {
+    for (const auto pri : {pr.first, pr.second}) {
+      for (const auto bi : ringinfo->bondRings()[pri]) {
+        bondsAreInSharedRings.set(bi);
+      }
     }
   }
   const auto atomRings = mol.getRingInfo()->atomRings();
-  std::unordered_map<unsigned int, unsigned int> atomRingBondCount;
-  auto getAtomRingBondCount = [&atomRingBondCount, &bondsAreInRings,
-                               &mol](unsigned int ai) {
-    if (atomRingBondCount.find(ai) == atomRingBondCount.end()) {
+  std::unordered_map<unsigned int, unsigned int> atomSharedRingBondCount;
+  auto getAtomSharedRingBondCount = [&atomSharedRingBondCount,
+                                     &bondsAreInSharedRings,
+                                     &mol](unsigned int ai) {
+    if (atomSharedRingBondCount.find(ai) == atomSharedRingBondCount.end()) {
       unsigned int ringBondCount = 0;
       for (const auto bnd : mol.atomBonds(mol.getAtomWithIdx(ai))) {
-        if (bondsAreInRings.test(bnd->getIdx())) {
+        if (bondsAreInSharedRings.test(bnd->getIdx())) {
           ++ringBondCount;
         }
       }
-      atomRingBondCount[ai] = ringBondCount;
+      atomSharedRingBondCount[ai] = ringBondCount;
     }
-    return atomRingBondCount[ai];
+    return atomSharedRingBondCount[ai];
   };
 
-  for (const auto &[i, j] : ringPairs) {
+  for (const auto &[pr, sharedBonds] : ringPairs) {
+    const auto &[i, j] = pr;
     const auto &ringi = atomRings[i];
     const auto &ringj = atomRings[j];
     // find atoms with at least three ring bonds that are common to both rings
     std::vector<unsigned int> commonAtoms;
     for (const auto ai : ringi) {
-      if (getAtomRingBondCount(ai) < 3) {
+      if (getAtomSharedRingBondCount(ai) < 3) {
         continue;
       }
       if (std::ranges::find(ringj, ai) != ringj.end()) {

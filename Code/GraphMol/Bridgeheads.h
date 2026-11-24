@@ -50,9 +50,13 @@ RDKIT_GRAPHMOL_EXPORT std::vector<unsigned int> findBridgeheadAtoms(
 RDKIT_GRAPHMOL_EXPORT std::vector<Bridgehead> findBridgeheads(const ROMol &mol);
 
 namespace details {
-// returns indices for all pairs of rings that share at least two bonds
-RDKIT_GRAPHMOL_EXPORT std::vector<std::pair<unsigned int, unsigned int>>
+// returns indices for all pairs of rings that share at least two bonds along
+// with the indices of the bonds shared between those rings
+RDKIT_GRAPHMOL_EXPORT
+std::vector<
+    std::pair<std::pair<unsigned int, unsigned int>, std::vector<unsigned int>>>
 findRingPairs(const ROMol &mol, unsigned int minCommonBonds = 2);
+
 }  // namespace details
 }  // namespace MolOps
 }  // namespace RDKit
