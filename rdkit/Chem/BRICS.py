@@ -1067,6 +1067,20 @@ M  END
         with self.subTest(cuts=cuts):
           self.assertEqual(Chem.MolToSmiles(BreakBRICSBonds(mol, cuts)), expected)
 
+    def testBuildAfterExplicitBondCuts(self):
+      for smi in ('C[C@H](OCC)F', 'C[C@@H](OCC)F', 'CC(OCC)F', 'c1ccccc1[C@H](C)NC'):
+        with self.subTest(smi=smi):
+          mol = Chem.MolFromSmiles(smi)
+          bonds = list(FindBRICSBonds(mol))
+          cut = BreakBRICSBonds(mol, bonds)
+          fragments = Chem.GetMolFrags(cut, asMols=True)
+          products = BRICSBuild(fragments, scrambleReagents=False)
+          # BRICS can also build other molecules from the same fragments.
+          skeleton = Chem.MolToSmiles(mol, isomericSmiles=False)
+          rebuilt = {Chem.MolToSmiles(p) for p in products
+                     if Chem.MolToSmiles(p, isomericSmiles=False) == skeleton}
+          self.assertEqual(rebuilt, {Chem.MolToSmiles(mol)})
+
   failed, tried = _test()
   if failed:
     sys.exit(failed)
