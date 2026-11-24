@@ -2248,7 +2248,7 @@ Use cases
 The initial target is to not lose data on an ``V3k mol -> RDKit -> V3k mol`` round trip. Manipulation and depiction are future goals.
 
 It is possible to enumerate the elements of a ``StereoGroup`` using the function
-:py:func:`rdkit.Chem.EnumerateStereoisomers.EumerateStereoisomers`. Note that
+:py:func:`rdkit.Chem.rdEnumerateStereoisomers.StereoisomerEnumerator`. Note that
 this removes the ``StereoGroup`` information from the products since they now
 correspond to specific molecules:
 
@@ -2263,11 +2263,31 @@ correspond to specific molecules:
   rdkit.Chem.rdchem.StereoGroupType.STEREO_AND
   >>> [x.GetIdx() for x in m.GetStereoGroups()[1].GetAtoms()]
   [1]
-  >>> from rdkit.Chem.EnumerateStereoisomers import EnumerateStereoisomers
-  >>> [Chem.MolToCXSmiles(x) for x in EnumerateStereoisomers(m)]
+  >>> from rdkit.Chem.rdEnumerateStereoisomers import StereoisomerEnumerator
+  >>> [Chem.MolToCXSmiles(x) for x in StereoisomerEnumerator(m)]
   ['C[C@@H](F)C[C@H](O)Cl', 'C[C@H](F)C[C@H](O)Cl']
 
-Reactions also preserve ``StereoGroup``s. Product atoms are included in the ``StereoGroup`` as long as the reaction doesn't create or destroy chirality at the atom.
+If the molecule to enumerate contains ring systems, it is possible that some of the enumerated stereo isomers require a combination of stereochemistries
+that is not possible in 3D space. The ``StereoisomerEnumerator`` will, by default, attempt to identify and discard such impossible stereo isomers,
+returning only the stereo isomers that are possible in 3D space.
+
+.. image:: images/enumerate_stereoisomers_1.png
+
+This filtering feature is based on a series of patterns which are known to be impossible in 3D, so not all of these stereo isomers may be identified.
+This feature can be disabled by creating a ``StereoEnumerationOptions`` object, setting ``useRingSystemFilter = False`` on it, and then passing the
+options object to the ``StereoisomerEnumerator``:
+
+.. doctest ::
+
+  >>> from rdkit.Chem.rdEnumerateStereoisomers import StereoisomerEnumerator, StereoEnumerationOptions
+  >>> m = Chem.MolFromSmiles('C1CC2CCC1C2') # Norbornane
+  >>> [Chem.MolToCXSmiles(x) for x in StereoisomerEnumerator(m)]
+  ['C1C[C@H]2CC[C@@H]1C2']
+  >>> opts = StereoEnumerationOptions(useRingSystemFilter=False)
+  >>> [Chem.MolToCXSmiles(x) for x in StereoisomerEnumerator(m, opts)]
+  ['C1C[C@H]2CC[C@@H]1C2', 'C1C[C@H]2CC[C@H]1C2']
+
+Reactions also preserve ``StereoGroup``\ s. Product atoms are included in the ``StereoGroup`` as long as the reaction doesn't create or destroy chirality at the atom.
 
 .. doctest ::
 
@@ -2277,6 +2297,7 @@ Reactions also preserve ``StereoGroup``s. Product atoms are included in the ``St
   ...   for key in atom.GetPropsAsDict():
   ...    atom.ClearProp(key)
   ...
+  >>> m = Chem.MolFromSmiles('C[C@H](F)C[C@H](O)Cl |a:4,&1:1|')
   >>> rxn = AllChem.ReactionFromSmarts('[C:1]F >> [C:1]Br')
   >>> ps=rxn.RunReactants([m])
   >>> clearAllAtomProps(ps[0][0])

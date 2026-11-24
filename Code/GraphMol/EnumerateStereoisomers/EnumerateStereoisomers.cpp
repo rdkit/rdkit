@@ -46,7 +46,7 @@ StereoisomerEnumerator::StereoisomerEnumerator(
   } else {
     d_mol.setProp<std::string>("_MolFileChiralFlag", "1");
     try {
-      d_totalPoss = boost::numeric_cast<unsigned long>(std::pow(
+      d_totalPoss = boost::numeric_cast<uint64_t>(std::pow(
           std::uint64_t(2), static_cast<std::uint64_t>(d_flippers.size())));
     } catch (boost::numeric::positive_overflow &e) {
       d_totalPoss = std::numeric_limits<std::uint64_t>::max();

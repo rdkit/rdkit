@@ -3,14 +3,12 @@ import unittest
 
 from rdkit import Chem
 from rdkit.Chem import (BRICS, AllChem, Descriptors, EnumerateHeterocycles,
-                        EnumerateStereoisomers, FragmentMatcher, MACCSkeys,
-                        PropertyMol, Recap, SaltRemover, TemplateAlign,
-                        rdDepictor)
+                        FragmentMatcher, MACCSkeys, PropertyMol, Recap,
+                        SaltRemover, TemplateAlign, rdDepictor)
 
 
 def load_tests(loader, tests, ignore):  # pylint: disable=unused-argument
   """ Add the Doctests from the module """
-  tests.addTests(doctest.DocTestSuite(EnumerateStereoisomers, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(EnumerateHeterocycles, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(FragmentMatcher, optionflags=doctest.ELLIPSIS))
   tests.addTests(doctest.DocTestSuite(MACCSkeys, optionflags=doctest.ELLIPSIS))
