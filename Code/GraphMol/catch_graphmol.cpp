@@ -5303,3 +5303,38 @@ TEST_CASE("batch removal of many atoms preserves stereochemistry",
   }
   CHECK(MolToSmiles(batch) == MolToSmiles(sequential));
 }
+
+TEST_CASE("removeHs inside a batch edit", "[removeHs][editing]") {
+  // Removing Hs while a batch edit is in progress isn't supported, by any of
+  // the removeHs() and removeAllHs() overloads.
+  auto m = "C/C=C/[C@H](N)[C@@H](O)C(=O)O"_smiles;
+  REQUIRE(m);
+  MolOps::addHs(*m);
+  const auto smilesBefore = MolToSmiles(*m);
+  const auto numAtomsBefore = m->getNumAtoms();
+  const MolOps::RemoveHsParameters ps;
+
+  m->beginBatchEdit();
+  CHECK(m->isInBatchEdit());
+  CHECK_THROWS_AS(MolOps::removeHs(*m, ps), ValueErrorException);
+  CHECK_THROWS_AS(MolOps::removeHs(*m, ps, false), ValueErrorException);
+  CHECK_THROWS_AS(MolOps::removeAllHs(*m), ValueErrorException);
+  const ROMol &constMol = *m;
+  CHECK_THROWS_AS(std::unique_ptr<ROMol>(MolOps::removeHs(constMol, ps)),
+                  ValueErrorException);
+  CHECK_THROWS_AS(std::unique_ptr<ROMol>(MolOps::removeAllHs(constMol)),
+                  ValueErrorException);
+
+  // the molecule wasn't modified, and the batch edit is still in progress
+  CHECK(m->isInBatchEdit());
+  CHECK(m->getNumAtoms() == numAtomsBefore);
+  CHECK(MolToSmiles(*m) == smilesBefore);
+
+  // Hs can be removed once the batch edit is committed
+  m->commitBatchEdit();
+  CHECK(!m->isInBatchEdit());
+  MolOps::removeHs(*m, ps);
+  auto expected = "C/C=C/[C@H](N)[C@@H](O)C(=O)O"_smiles;
+  REQUIRE(expected);
+  CHECK(MolToSmiles(*m) == MolToSmiles(*expected));
+}

@@ -15,6 +15,7 @@
 #include "Chirality.h"
 #include <Geometry/Transform3D.h>
 #include <Geometry/point.h>
+#include <RDGeneral/Exceptions.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/range/iterator_range.hpp>
@@ -138,10 +139,29 @@ std::map<unsigned int, std::vector<unsigned int>> getIsoMap(const ROMol &mol) {
   return isoMap;
 }
 
-bool may_need_extra_H(const ROMol &mol, const Atom *atom) {
+// Returns whether an atom has already been removed by removeHs(), which
+// removes atoms in a batch edit, so that they remain in the molecule until it
+// is committed. Code removing Hs must ignore them to get the same results as
+// if they had been removed immediately. Since the Hs are removed in order of
+// decreasing index, when removing the H with index currentIdx, the atoms
+// already removed are the Hs to be removed with a higher index.
+struct RemovedAtoms {
+  const boost::dynamic_bitset<> &atomsToRemove;
+  unsigned int currentIdx;
+
+  bool operator()(const Atom *atom) const {
+    return atom->getIdx() > currentIdx && atomsToRemove[atom->getIdx()];
+  }
+};
+
+bool may_need_extra_H(const ROMol &mol, const Atom *atom,
+                      const RemovedAtoms &isRemoved) {
   unsigned single_bonds = 0;
   unsigned aromatic_bonds = 0;
   for (auto bond : mol.atomBonds(atom)) {
+    if (isRemoved(bond->getOtherAtom(atom))) {
+      continue;
+    }
     if (bond->getBondType() == Bond::SINGLE) {
       ++single_bonds;
     } else if (bond->getBondType() == Bond::AROMATIC) {
@@ -641,14 +661,28 @@ void addHs(RWMol &mol, const AddHsParameters &params,
 }
 
 namespace {
+// the number of bonds of an atom to atoms that haven't been removed (see
+// RemovedAtoms)
+unsigned int getRemainingDegree(const ROMol &mol, const Atom *atom,
+                                const RemovedAtoms &isRemoved) {
+  unsigned int degree = 0;
+  for (const auto nbr : mol.atomNeighbors(atom)) {
+    if (!isRemoved(nbr)) {
+      ++degree;
+    }
+  }
+  return degree;
+}
+
 // returns whether or not an adjustment was made, in case we want that info
 bool adjustStereoAtomsIfRequired(RWMol &mol, const Atom *atom,
-                                 const Atom *heavyAtom) {
+                                 const Atom *heavyAtom,
+                                 const RemovedAtoms &isRemoved) {
   PRECONDITION(atom != nullptr, "bad atom");
   PRECONDITION(heavyAtom != nullptr, "bad heavy atom");
   // nothing we can do if the degree is only 2 (and we should have covered
   // that earlier anyway)
-  if (heavyAtom->getDegree() == 2) {
+  if (getRemainingDegree(mol, heavyAtom, isRemoved) == 2) {
     return false;
   }
   const auto &cbnd =
@@ -671,7 +705,8 @@ bool adjustStereoAtomsIfRequired(RWMol &mol, const Atom *atom,
         for (const auto &nbri :
              boost::make_iterator_range(mol.getAtomNeighbors(heavyAtom))) {
           const auto &nbr = mol[nbri];
-          if (nbr->getIdx() == dblNbrIdx || nbr->getIdx() == atom->getIdx()) {
+          if (nbr->getIdx() == dblNbrIdx || nbr->getIdx() == atom->getIdx() ||
+              isRemoved(nbr)) {
             continue;
           }
           *sAtomIt = nbr->getIdx();
@@ -696,11 +731,17 @@ bool adjustStereoAtomsIfRequired(RWMol &mol, const Atom *atom,
   return false;
 }
 
-void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
+void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount,
+                const RemovedAtoms &isRemoved) {
   auto atom = mol.getAtomWithIdx(idx);
   PRECONDITION(atom->getAtomicNum() == 1, "idx corresponds to a non-Hydrogen");
   for (const auto bond : mol.atomBonds(atom)) {
     Atom *heavyAtom = bond->getOtherAtom(atom);
+    // (the neighbor can be an H that has already been removed, such as the
+    // other atom in [H][H])
+    if (isRemoved(heavyAtom)) {
+      continue;
+    }
     int heavyAtomNum = heavyAtom->getAtomicNum();
 
     // we'll update the neighbor's explicit H count if we were told to
@@ -721,7 +762,7 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
       const INT_VECT &defaultVs =
           PeriodicTable::getTable()->getValenceList(heavyAtomNum);
       if (((heavyAtomNum == 7 || heavyAtomNum == 15 ||
-            may_need_extra_H(mol, heavyAtom)) &&
+            may_need_extra_H(mol, heavyAtom, isRemoved)) &&
            isAromaticAtom(*heavyAtom)) ||
           (std::find(defaultVs.begin() + 1, defaultVs.end(),
                      heavyAtom->getTotalValence()) != defaultVs.end())) {
@@ -735,14 +776,22 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
     // atom.  We deal with that by explicitly checking here:
     if (heavyAtom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
       INT_LIST neighborIndices;
+      INT_LIST remainingBonds;
       for (const auto &nbnd : mol.atomBonds(heavyAtom)) {
+        if (isRemoved(nbnd->getOtherAtom(heavyAtom))) {
+          continue;
+        }
+        remainingBonds.push_back(nbnd->getIdx());
         if (nbnd->getIdx() != bond->getIdx()) {
           neighborIndices.push_back(nbnd->getIdx());
         }
       }
       neighborIndices.push_back(bond->getIdx());
 
-      int nSwaps = heavyAtom->getPerturbationOrder(neighborIndices);
+      // (like heavyAtom->getPerturbationOrder(), but ignoring the bonds to
+      // removed atoms)
+      int nSwaps = static_cast<int>(
+          countSwapsToInterconvert(neighborIndices, remainingBonds));
       // std::cerr << "H: "<<atom->getIdx()<<" hvy:
       // "<<heavyAtom->getIdx()<<" swaps: " << nSwaps<<std::endl;
       if (nSwaps % 2) {
@@ -752,9 +801,9 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
 
     // If we are removing a H atom that defines bond stereo (e.g. imines),
     // Then also remove the bond stereo information, as it is no longer valid.
-    if (heavyAtom->getDegree() == 2) {
+    if (getRemainingDegree(mol, heavyAtom, isRemoved) == 2) {
       for (auto &nbnd : mol.atomBonds(heavyAtom)) {
-        if (nbnd != bond) {
+        if (nbnd != bond && !isRemoved(nbnd->getOtherAtom(heavyAtom))) {
           if (nbnd->getStereo() > Bond::STEREOANY) {
             nbnd->setStereo(Bond::STEREONONE);
             nbnd->getStereoAtoms().clear();
@@ -783,6 +832,7 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
            boost::make_iterator_range(mol.getAtomBonds(heavyAtom))) {
         Bond *nbnd = mol[nbri];
         if (nbnd->getIdx() != bond->getIdx() &&
+            !isRemoved(nbnd->getOtherAtom(heavyAtom)) &&
             nbnd->getBondType() == Bond::SINGLE) {
           if (nbnd->getBondDir() == Bond::NONE) {
             oBond = nbnd;
@@ -805,12 +855,12 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
       // if this atom is one of the stereoatoms for a double bond we need
       // to switch the stereo atom on this end to be the other neighbor
       // This was part of github #1810
-      adjustStereoAtomsIfRequired(mol, atom, heavyAtom);
+      adjustStereoAtomsIfRequired(mol, atom, heavyAtom, isRemoved);
     } else {
       // if this atom is one of the stereoatoms for a double bond we need
       // to switch the stereo atom on this end to be the other neighbor
       // This was part of github #1810
-      adjustStereoAtomsIfRequired(mol, atom, heavyAtom);
+      adjustStereoAtomsIfRequired(mol, atom, heavyAtom, isRemoved);
     }
 
     // remove the bond from any SGroups that might include it.
@@ -1003,9 +1053,22 @@ void filter_sgroup_emptying_hydrogens(const ROMol &mol,
   }
 }
 
+// Removing Hs while a batch edit is in progress isn't supported: the Hs
+// wouldn't be removed until the batch edit is committed, but the heavy atoms
+// they are bound to would be modified immediately (and a copy of the molecule
+// wouldn't include the pending deletions).
+void checkNotInBatchEdit(const ROMol &mol) {
+  const auto rwmol = dynamic_cast<const RWMol *>(&mol);
+  if (rwmol && rwmol->isInBatchEdit()) {
+    throw ValueErrorException(
+        "Hs can't be removed from a molecule with a batch edit in progress");
+  }
+}
+
 }  // end of anonymous namespace
 
 void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
+  checkNotInBatchEdit(mol);
   if (ps.removeAndTrackIsotopes) {
     // if there are any non-isotopic Hs remove them first
     // to make sure chirality is preserved
@@ -1046,14 +1109,28 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
     filter_sgroup_emptying_hydrogens(mol, atomsToRemove);
   }
 
-  // now that we know which atoms need to be removed, go ahead and remove them
-  // NOTE: there's too much complexity around stereochemistry here
-  // to be able to safely use batch editing.
-  for (int idx = mol.getNumAtoms() - 1; idx >= 0; --idx) {
-    if (atomsToRemove[idx]) {
-      molRemoveH(mol, idx, ps.updateExplicitCount);
+  // now that we know which atoms need to be removed, go ahead and remove them.
+  // Removing them one at a time would be quadratic in the number of atoms, so
+  // they are removed in a batch edit. Since they are removed in order of
+  // decreasing index, the atoms already removed when removing an H are those to
+  // be removed with a higher index; molRemoveH() ignores them, which gives the
+  // same results as if they had been removed immediately.
+  mol.beginBatchEdit();
+  try {
+    for (int idx = mol.getNumAtoms() - 1; idx >= 0; --idx) {
+      if (atomsToRemove[idx]) {
+        const RemovedAtoms isRemoved{atomsToRemove,
+                                     static_cast<unsigned int>(idx)};
+        molRemoveH(mol, idx, ps.updateExplicitCount, isRemoved);
+      }
     }
+  } catch (...) {
+    // don't leave the molecule in a batch edit, where any atoms removed
+    // later would only be marked for removal
+    mol.rollbackBatchEdit();
+    throw;
   }
+  mol.commitBatchEdit();
   mol.clearComputedProps(true);
   //
   //  If we didn't only remove implicit Hs, which are guaranteed to
@@ -1061,12 +1138,18 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
   //  This can screw up derived properties (such as ring members), so
   //  do some checks:
   //
+  //  NOTE: atomsToRemove.empty() is only true for a molecule without atoms;
+  //  it doesn't check whether any Hs were removed. Don't change it to
+  //  atomsToRemove.any(): callers rely on removeHs() sanitizing the molecule
+  //  even when there are no Hs to remove (for example, SmilesToMol() calls
+  //  removeHs() instead of sanitizeMol()).
+  //
   if (!atomsToRemove.empty() && ps.removeNonimplicit && sanitize) {
     sanitizeMol(mol);
   }
 
   // if we removed Hs and any chiral atoms now have more than 1 explict H,
-  // remove those
+  // remove those (this is done for any non-empty molecule; see above)
   if (!atomsToRemove.empty()) {
     for (auto atom : mol.atoms()) {
       if (!atom->getNoImplicit() &&
@@ -1081,6 +1164,7 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
   }
 }
 ROMol *removeHs(const ROMol &mol, const RemoveHsParameters &ps, bool sanitize) {
+  checkNotInBatchEdit(mol);
   auto *res = new RWMol(mol);
   try {
     removeHs(*res, ps, sanitize);
@@ -1099,6 +1183,7 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
 };
 ROMol *removeHs(const ROMol &mol, bool implicitOnly, bool updateExplicitCount,
                 bool sanitize) {
+  checkNotInBatchEdit(mol);
   auto *res = new RWMol(mol);
   RemoveHsParameters ps;
   ps.removeNonimplicit = !implicitOnly;
@@ -1130,6 +1215,7 @@ void removeAllHs(RWMol &mol, bool sanitize) {
   removeHs(mol, ps, sanitize);
 };
 ROMol *removeAllHs(const ROMol &mol, bool sanitize) {
+  checkNotInBatchEdit(mol);
   auto *res = new RWMol(mol);
   try {
     removeAllHs(*res, sanitize);

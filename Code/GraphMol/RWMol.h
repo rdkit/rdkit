@@ -218,12 +218,18 @@ class RDKIT_GRAPHMOL_EXPORT RWMol : public ROMol {
     numBonds = 0;
   }
 
+  //! starts a batch edit: atoms and bonds removed until the batch edit is
+  //! committed are only marked for removal, and are removed all at once by
+  //! commitBatchEdit(). Hs can't be removed with MolOps::removeHs() or
+  //! MolOps::removeAllHs() while a batch edit is in progress.
   void beginBatchEdit();
   void rollbackBatchEdit() {
     dp_delAtoms.reset();
     dp_delBonds.reset();
   }
   void commitBatchEdit();
+  //! returns whether a batch edit is in progress
+  bool isInBatchEdit() const { return dp_delAtoms || dp_delBonds; }
 
  private:
   void batchRemoveBonds();
