@@ -570,11 +570,13 @@ class TestCase(unittest.TestCase):
     with self.assertRaises(TypeError):
       props.ComputeProperties(None)
 
-    # failures in C++ calculators become NaN instead of raising
+    # failures in C++ calculators become NaN instead of raising, for single
+    # molecules and batches alike
     m = Chem.MolFromSmiles('CCO', sanitize=False)
     hbdProps = rdMD.Properties(['NumHeavyAtoms', 'lipinskiHBD'])
-    with self.assertRaises(RuntimeError):
-      hbdProps.ComputeProperties(m)
+    single = hbdProps.ComputeProperties(m)
+    self.assertEqual(single[0], 3)
+    self.assertTrue(np.isnan(single[1]))
     res = hbdProps.ComputeProperties([m])
     self.assertEqual(res[0, 0], 3)
     self.assertTrue(np.isnan(res[0, 1]))

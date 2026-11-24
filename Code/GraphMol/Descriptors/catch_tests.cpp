@@ -1184,6 +1184,22 @@ TEST_CASE("computePropertiesForMols failure modes", "[2D][Properties]") {
       CHECK(res[1][1] == 2);
       CHECK(res[1][2] == 2);
     }
+    // computeProperties() follows the same rules, and DEFAULT_NAN gives the
+    // failure value
+    auto single = p.computeProperties(*m1);
+    CHECK(single[0] == 0.0);
+    CHECK(std::isnan(single[1]));
+  }
+
+  SECTION("computeProperties rethrows for THROW and bad_alloc") {
+    auto m = "CC"_smiles;
+    REQUIRE(m);
+    PropertiesFromFunctors throwing({boost::shared_ptr<
+        Descriptors::PropertyFunctor>(new ThrowModeProperty)});
+    CHECK_THROWS_AS(throwing.computeProperties(*m), ValueErrorException);
+    PropertiesFromFunctors badAlloc({boost::shared_ptr<
+        Descriptors::PropertyFunctor>(new BadAllocProperty)});
+    CHECK_THROWS_AS(badAlloc.computeProperties(*m), std::bad_alloc);
   }
 
   SECTION("bad_alloc ignores the failure mode") {
@@ -1330,3 +1346,44 @@ TEST_CASE("computePropertiesForMols parallel vs serial", "[2D][Properties]") {
   }
 }
 #endif
+
+TEST_CASE("Property registry") {
+  using namespace RDKit::Descriptors;
+  auto mol = "c1ccccc1C(=O)NCCCl"_smiles;
+  REQUIRE(mol);
+  SECTION("chi2 properties use the chi2 functions") {
+    Properties props({"chi2v", "chi2n"});
+    auto res = props.computeProperties(*mol);
+    CHECK(res[0] == calcChi2v(*mol));
+    CHECK(res[1] == calcChi2n(*mol));
+  }
+  SECTION("vector descriptors are registered element by element") {
+    Properties props(
+        {"PEOE_VSA1", "PEOE_VSA14", "SlogP_VSA2", "fr_amide", "BCUT2D_MRLOW"});
+    auto res = props.computeProperties(*mol);
+    auto peoe = calcPEOE_VSA(*mol);
+    CHECK(res[0] == peoe[0]);
+    CHECK(res[1] == peoe[13]);
+    CHECK(res[2] == calcSlogP_VSA(*mol)[1]);
+    CHECK(res[3] == calcFragmentDescriptor(*mol, "fr_amide"));
+    CHECK(res[4] == BCUT2D(*mol)[7]);
+    // on their own too
+    CHECK((*Properties::getProperty("PEOE_VSA14"))(*mol) == peoe[13]);
+    std::unique_ptr<PROP_RANGE_QUERY> query(
+        makePropertyRangeQuery("fr_amide", 0.5, 1.5));
+    CHECK(query->Match(*mol));
+  }
+  SECTION("failures give the failure value") {
+    struct Failing : public PropertyFunctor {
+      Failing() : PropertyFunctor("_testAlwaysFails", "1.0.0") {}
+      double operator()(const RDKit::ROMol &) const override {
+        throw ValueErrorException("failed");
+      }
+    };
+    Properties::registerProperty(new Failing());
+    Properties props({"_testAlwaysFails", "NumHeavyAtoms"});
+    auto res = props.computeProperties(*mol);
+    CHECK(std::isnan(res[0]));
+    CHECK(res[1] == 12.0);
+  }
+}
