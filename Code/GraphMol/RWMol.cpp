@@ -22,6 +22,8 @@
 #include "RingInfo.h"
 #include "SubstanceGroup.h"
 
+#include <algorithm>
+
 namespace RDKit {
 
 namespace {
@@ -689,16 +691,23 @@ void RWMol::batchRemoveBonds() {
   }
 
   auto &delBonds = *dp_delBonds;
+  // Collect the bonds to remove in one pass over the edges, since
+  // getBondWithIdx() has to iterate over the edges, and calling it for each
+  // removed bond would make removing many bonds quadratic. The bonds are then
+  // removed in order of decreasing index, as before.
+  std::vector<Bond *> bondsToRemove;
+  for (auto *bond : bonds()) {
+    if (bond->getIdx() < delBonds.size() && delBonds[bond->getIdx()]) {
+      bondsToRemove.push_back(bond);
+    }
+  }
+  std::sort(bondsToRemove.begin(), bondsToRemove.end(),
+            [](const Bond *lhs, const Bond *rhs) {
+              return lhs->getIdx() > rhs->getIdx();
+            });
   unsigned int min_idx = getNumBonds();
-  for (unsigned int i = rdcast<unsigned int>(delBonds.size()); i > 0; --i) {
-    if (!delBonds[i - 1]) {
-      continue;
-    }
-    unsigned int idx = rdcast<unsigned int>(i - 1);
-    Bond *bnd = getBondWithIdx(idx);
-    if (!bnd) {
-      continue;
-    }
+  for (auto *bnd : bondsToRemove) {
+    unsigned int idx = bnd->getIdx();
 
     min_idx = idx;
     // remove any bookmarks which point to this bond:
@@ -775,6 +784,16 @@ void RWMol::batchRemoveAtoms() {
   for (auto *atom : atoms()) {
     oldIndices[atom->getIdx()] = atom;
   }
+  // The bonds with an ENDPTS property that may need updating below. Looking
+  // for them once, instead of checking every bond for each removed atom,
+  // avoids making the removal of many atoms quadratic. (The bonds of the
+  // removed atoms have already been removed by batchRemoveBonds().)
+  std::vector<Bond *> endPtsBonds;
+  for (auto *bond : bonds()) {
+    if (bond->hasProp(RDKit::common_properties::_MolFileBondEndPts)) {
+      endPtsBonds.push_back(bond);
+    }
+  }
 
   auto &delAtoms = *dp_delAtoms;
   for (unsigned int i = rdcast<unsigned int>(delAtoms.size()); i > 0; --i) {
@@ -806,11 +825,8 @@ void RWMol::batchRemoveAtoms() {
     //   their end indices may need to be decremented and their
     //   indices will need to be handled and if they have an
     //   ENDPTS prop that includes idx, it will need updating.
-    EDGE_ITER beg, end;
-    boost::tie(beg, end) = getEdges();
     std::string sprop;
-    while (beg != end) {
-      Bond *bond = d_graph[*beg++];
+    for (auto *bond : endPtsBonds) {
       if (bond->getPropIfPresent(RDKit::common_properties::_MolFileBondEndPts,
                                  sprop)) {
         // This would ideally use ParseV3000Array but I'm buggered if I can
@@ -860,14 +876,35 @@ void RWMol::batchRemoveAtoms() {
     removeAtomFromGroups(atom, d_stereo_groups);
     atom->setOwningMol(nullptr);
 
-    // remove all connections to the atom:
-    MolGraph::vertex_descriptor vd = boost::vertex(idx, d_graph);
-    boost::clear_vertex(vd, d_graph);
-    // finally remove the vertex itself
-    boost::remove_vertex(vd, d_graph);
+    // the vertex itself is removed below, when rebuilding the graph
     delete atom;
     oldIndices[idx] = nullptr;
   }
+
+  // Rebuild the graph without the removed atoms. Removing their vertices one
+  // at a time with boost::remove_vertex() would renumber the remaining
+  // vertices and edges each time, which is quadratic when removing many atoms.
+  // Vertices and edges are added in their original order, so that the order
+  // of the bonds around each atom, which chiral tags refer to, is preserved.
+  // Any edges still connected to removed atoms are dropped, as
+  // boost::clear_vertex() did.
+  MolGraph newGraph;
+  std::vector<MolGraph::vertex_descriptor> newVertices(oldIndices.size());
+  for (unsigned int i = 0; i < oldIndices.size(); ++i) {
+    if (oldIndices[i]) {
+      newVertices[i] = boost::add_vertex(oldIndices[i], newGraph);
+    }
+  }
+  for (auto [edge, edgesEnd] = boost::edges(d_graph); edge != edgesEnd;
+       ++edge) {
+    const auto source = boost::source(*edge, d_graph);
+    const auto target = boost::target(*edge, d_graph);
+    if (oldIndices[source] && oldIndices[target]) {
+      boost::add_edge(newVertices[source], newVertices[target], d_graph[*edge],
+                      newGraph);
+    }
+  }
+  d_graph.swap(newGraph);
 
   // reassign atom indices
   for (unsigned int i = 0; i < getNumAtoms(); i++) {
