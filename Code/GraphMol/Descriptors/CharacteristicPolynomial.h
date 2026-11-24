@@ -23,9 +23,10 @@ namespace detail {
 
 //! |c_0| .. |c_n| of a characteristic polynomial, as scaled[k] * 2^exponent.
 /*!
-  The exponent is 0 unless the sum of the magnitudes would overflow a double.
-  Then every magnitude is divided by the same power of two, which leaves their
-  ratios, and so the entropy behind AvgIpc, unchanged.
+  The exponent is 0 when a bound on the sum of the magnitudes guarantees that
+  it fits in a double. Otherwise every magnitude is divided by the same power
+  of two, which leaves their ratios, and so the entropy behind AvgIpc,
+  unchanged.
 */
 struct PolynomialMagnitudes {
   std::vector<double> scaled;  //!< leading coefficient first
