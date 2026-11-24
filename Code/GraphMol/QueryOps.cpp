@@ -1,5 +1,5 @@
 //
-// Copyright (C) 2003-2021 Greg Landrum and other RDKit contributors
+// Copyright (C) 2003-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include "QueryOps.h"
+#include "Bridgeheads.h"
 #include <algorithm>
 #include <RDGeneral/types.h>
 #include <GraphMol/QueryAtom.h>
@@ -27,66 +28,18 @@ int queryIsAtomBridgehead(Atom const *at) {
   // rings" because of structures like CC12CCN(CC1)C2 where there are only two
   // SSSRs
   PRECONDITION(at, "no atom");
-  if (at->getDegree() < 3) {
-    return 0;
-  }
-  const auto &mol = at->getOwningMol();
-  const auto ri = mol.getRingInfo();
-  if (!ri || !ri->isInitialized()) {
-    return 0;
-  }
-  // track which ring bonds involve this atom
-  boost::dynamic_bitset<> atomRingBonds(mol.getNumBonds());
-  for (const auto bnd : mol.atomBonds(at)) {
-    if (ri->numBondRings(bnd->getIdx())) {
-      atomRingBonds.set(bnd->getIdx());
-    }
-  }
-  if (atomRingBonds.count() < 3) {
+  if (!at->hasOwningMol() || at->getDegree() < 3) {
     return 0;
   }
 
-  boost::dynamic_bitset<> bondsInRingI(mol.getNumBonds());
-  boost::dynamic_bitset<> ringsOverlap(ri->numRings());
-  const auto bondRings = ri->bondRings();
-  for (unsigned int i = 0; i < bondRings.size(); ++i) {
-    bondsInRingI.reset();
-    bool atomInRingI = false;
-    const auto ringI = bondRings[i];
-    for (const auto bidx : ringI) {
-      bondsInRingI.set(bidx);
-      if (atomRingBonds[bidx]) {
-        atomInRingI = true;
-      }
-    }
-    if (!atomInRingI) {
-      continue;
-    }
-    for (unsigned int j = i + 1; j < bondRings.size(); ++j) {
-      unsigned int overlap = 0;
-      bool atomInRingJ = false;
-      const auto ringJ = bondRings[j];
-      for (const auto bidx : ringJ) {
-        if (atomRingBonds[bidx]) {
-          atomInRingJ = true;
-        }
-        if (bondsInRingI[bidx]) {
-          ++overlap;
-        }
-        if (overlap >= 2 && atomInRingJ) {
-          // we have two rings containing the atom which share at least two
-          // bonds:
-          ringsOverlap.set(i);
-          ringsOverlap.set(j);
-          break;
-        }
-      }
-    }
-    if (!ringsOverlap[i]) {
-      return 0;
+  auto bridgeheads = MolOps::findBridgeheads(at->getOwningMol());
+  for (const auto &bh : bridgeheads) {
+    if (bh.atom1 == at->getIdx() || bh.atom2 == at->getIdx()) {
+      return 1;
     }
   }
-  return 1;
+
+  return 0;
 }
 
 //! returns a Query for matching atoms with a particular number of ring bonds
