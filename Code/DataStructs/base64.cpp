@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <cstring>
+#include <RDGeneral/Exceptions.h>
 #include "base64.h"
 // Encoding table from RFC 2045
 //
@@ -101,9 +102,9 @@ char *Base64Decode(const char *inText, unsigned int *size) {
   transTable[static_cast<int>('+')] = 62;
   transTable[static_cast<int>('/')] = 63;
 
-  // each complete 4-char block yields 3 bytes, and a trailing partial block
-  // writes up to 3 more below
-  size_t outLen = 3 * (inLen / 4) + 3;
+  // each complete block of 4 input characters decodes to 3 bytes; the extra
+  // byte holds the trailing NULL and also covers empty input
+  size_t outLen = 3 * (inLen / 4) + 1;
   auto *res = new char[outLen];
   res[outLen - 1] = 0;
   size_t pos = 0;
@@ -111,11 +112,14 @@ char *Base64Decode(const char *inText, unsigned int *size) {
   // decode 4 bytes at a time
   unsigned char block[4];
   int nInBlock = 0;
+  int nPad = 0;
   while (i < inLen) {
     unsigned char c = inText[i];
 
-    // above we set 0x80 as the junk marker in the translation table
-    if (!(transTable[c] & 0x80)) {
+    if (c == '=') {
+      nPad++;
+    } else if (!(transTable[c] & 0x80)) {
+      // above we set 0x80 as the junk marker in the translation table
       block[nInBlock++] = transTable[c];
       if (nInBlock == 4) {
         // finished a block
@@ -126,6 +130,13 @@ char *Base64Decode(const char *inText, unsigned int *size) {
       }
     }
     i++;
+  }
+
+  // a trailing partial block has to have been padded out to 4 characters,
+  //  and 3 characters of padding can never be correct
+  if (nInBlock + nPad != 0 && (nInBlock + nPad != 4 || nInBlock < 2)) {
+    delete[] res;
+    throw ValueErrorException("Base64Decode: input is not properly padded");
   }
 
   // okay, now there can be 2 or 3 chars remaining to be processed
