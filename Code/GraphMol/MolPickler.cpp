@@ -410,11 +410,16 @@ void pickleJointRingQ(std::ostream &ss, const Atom *atom) {  // TODO implemnt
     return;
   }
   streamWrite(ss, MolPickler::QUERY_JOINTRINGS);
-  streamWrite(ss, DTags::VecUIntTag);
   streamWriteVec(ss, rdvalue_cast<std::vector<unsigned int>>(elem.jointAtoms));
-  streamWrite(ss, DTags::VecUIntTag);
   streamWriteVec(ss,
                  rdvalue_cast<std::vector<unsigned int>>(elem.excludedAtoms));
+}
+
+void unpickleJointRingQ(std::istream &ss, Atom *atom, int version) {
+  JointRingConstraint elem;
+  streamReadVec(ss, elem.jointAtoms);
+  streamReadVec(ss, elem.excludedAtoms);
+  atom->setProp(common_properties::_CXJointRingIDs, std::move(elem));
 }
 
 template <class T>
@@ -1979,6 +1984,10 @@ Atom *MolPickler::_addAtomFromPickle(std::istream &ss, ROMol *mol,
     }
     static_cast<QueryAtom *>(atom)->setQuery(unpickleQuery(ss, atom, version));
     streamRead(ss, tag, version);
+    if (version >= 16050 && tag == QUERY_JOINTRINGS) {
+      unpickleJointRingQ(ss, atom, version);
+      streamRead(ss, tag, version);
+    }
     if (tag != ENDQUERY) {
       throw MolPicklerException("Bad pickle format: ENDQUERY tag not found.");
     }

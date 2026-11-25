@@ -493,7 +493,7 @@ inline bool streamWriteProps(
   STR_VECT propsToSave = props.getPropList(savePrivate, saveComputed);
   std::unordered_set<std::string> propnames;
   for (const auto &pn : propsToSave) {
-    if (ignore.empty() || ignore.find(pn) == ignore.end() ||
+    if ((ignore.empty() || ignore.find(pn) == ignore.end()) &&
         pn != common_properties::_CXJointRingIDs) {
       propnames.insert(pn);
     }
