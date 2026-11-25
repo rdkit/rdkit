@@ -201,6 +201,10 @@ NB_MODULE(rdNormalizedDescriptors, m) {
            "returns the unnormalized descriptor values; failures are nan")
       .def("GetTables", &NormalizedProperties::getTables);
 
+  m.def("GetPropertyName", getPropertyName, "name"_a,
+              "returns the name of the rdMolDescriptors property that computes "
+              "a descriptor, e.g. 'exactmw' for 'ExactMolWt'");
+
   m.def("GetDefaultTablePath", getDefaultTablePath,
         "returns the path of the default histogram tables");
   m.def("GetDefaultTables", getDefaultTables,
