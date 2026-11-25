@@ -141,8 +141,14 @@ struct ringinfo_wrapper {
         .def("BondRingSizes", bondRingSizes, "idx"_a)
         .def("NumRingFamilies", &RingInfo::numRingFamilies)
         .def("NumRelevantCycles", &RingInfo::numRelevantCycles)
-        .def("AtomRingFamilies", atomRingFamilies)
-        .def("BondRingFamilies", bondRingFamilies)
+        .def("AtomRingFamilies", atomRingFamilies,
+             R"DOC(Returns the atom ring families. The order of families, and of
+atoms within each family, is unspecified and may differ between a freshly
+sanitized molecule and an unpickled one.)DOC")
+        .def("BondRingFamilies", bondRingFamilies,
+             R"DOC(Returns the bond ring families. The order of families, and of
+bonds within each family, is unspecified and may differ between a freshly
+sanitized molecule and an unpickled one.)DOC")
         .def("AreRingFamiliesInitialized",
              &RingInfo::areRingFamiliesInitialized)
         .def(

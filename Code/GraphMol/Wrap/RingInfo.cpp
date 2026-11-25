@@ -130,8 +130,14 @@ struct ringinfo_wrapper {
              python::args("self"))
         .def("NumRelevantCycles", &RingInfo::numRelevantCycles,
              python::args("self"))
-        .def("AtomRingFamilies", atomRingFamilies, python::args("self"))
-        .def("BondRingFamilies", bondRingFamilies, python::args("self"))
+        .def("AtomRingFamilies", atomRingFamilies, python::args("self"),
+             "Returns the atom ring families. The order of families, and of "
+             "atoms within each family, is unspecified and may differ between "
+             "a freshly sanitized molecule and an unpickled one.")
+        .def("BondRingFamilies", bondRingFamilies, python::args("self"),
+             "Returns the bond ring families. The order of families, and of "
+             "bonds within each family, is unspecified and may differ between "
+             "a freshly sanitized molecule and an unpickled one.")
         .def("AreRingFamiliesInitialized",
              &RingInfo::areRingFamiliesInitialized, python::args("self"))
         .def("AddRing", addRing,

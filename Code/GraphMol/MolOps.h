@@ -1492,6 +1492,10 @@ RDKIT_GRAPHMOL_EXPORT bool isAttachmentPoint(const Atom *atom,
 RDKIT_GRAPHMOL_EXPORT bool ringComparer(const std::vector<int> &v1,
                                         const std::vector<int> &v2);
 
+//! populates ring families from stored rings when they uniquely determine the
+//! ring families and relevant cycles, otherwise falls back to findRingFamilies
+void initRingFamiliesFromRings(ROMol &mol);
+
 }  // namespace details
 
 }  // namespace MolOps

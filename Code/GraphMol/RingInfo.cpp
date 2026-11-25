@@ -440,7 +440,10 @@ unsigned int RingInfo::numRingFamilies() const {
 
 unsigned int RingInfo::numRelevantCycles() const {
   PRECONDITION(df_init, "RingInfo not initialized");
-  PRECONDITION(dp_urfData, "Ring families not initialized");
+  PRECONDITION(areRingFamiliesInitialized(), "Ring families not initialized");
+  if (!dp_urfData) {
+    return rdcast<unsigned int>(d_atomRingFamilies.size());
+  }
   auto nURF = RDL_getNofURF(dp_urfData.get());
   // RDL counts the cycles as a double, which can be far larger than an
   // unsigned int (and is RDL_INVALID_RC_COUNT on failure). Check the range
@@ -464,10 +467,17 @@ unsigned int RingInfo::addRingFamily(const INT_VECT &atomIndices,
   return rdcast<unsigned int>(d_atomRingFamilies.size());
 }
 
+void RingInfo::markRingFamiliesInitializedFromRings() {
+  PRECONDITION(df_init, "RingInfo not initialized");
+  dp_urfData.reset();
+  df_ringFamiliesInit = true;
+}
+
 void RingInfo::resetRingFamilies() {
   d_atomRingFamilies.clear();
   d_bondRingFamilies.clear();
   dp_urfData.reset();
+  df_ringFamiliesInit = false;
 }
 
 void RingInfo::initialize(RDKit::FIND_RING_TYPE ringType) {
@@ -560,7 +570,15 @@ std::vector<std::vector<int>> truncatedRelevantCycles(
 
 std::vector<std::vector<int>> RingInfo::atomRelevantCycles() const {
   PRECONDITION(df_init, "RingInfo not initialized");
-  PRECONDITION(dp_urfData, "Ring families not initialized");
+  PRECONDITION(areRingFamiliesInitialized(), "Ring families not initialized");
+
+  if (!dp_urfData) {
+    // Ring families were initialized directly from stored rings where each
+    // singleton family holds its normalized cycle in traversal order.
+    std::vector<std::vector<int>> res = d_atomRingFamilies;
+    std::ranges::sort(res, MolOps::details::ringComparer);
+    return res;
+  }
 
   size_t nURF = RDL_getNofURF(dp_urfData.get());
   auto nRC = RDL_getNofRC(dp_urfData.get());

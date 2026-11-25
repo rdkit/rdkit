@@ -748,3 +748,190 @@ TEST_CASE("OOB read in depickling") {
     }
   }
 }
+
+TEST_CASE("unpickle ring families fast path and RDL fallback") {
+  auto compareFamilies = [](const RingInfo &a, const RingInfo &b) {
+    CHECK(a.areRingFamiliesInitialized() == b.areRingFamiliesInitialized());
+    CHECK(a.numRingFamilies() == b.numRingFamilies());
+    CHECK(a.numRelevantCycles() == b.numRelevantCycles());
+    CHECK(a.atomRelevantCycles() == b.atomRelevantCycles());
+
+    auto sortedFamilies = [](const RingInfo::VECT_INT_VECT &fams) {
+      RingInfo::VECT_INT_VECT res;
+      res.reserve(fams.size());
+      for (const auto &f : fams) {
+        auto copy = f;
+        std::ranges::sort(copy);
+        res.push_back(std::move(copy));
+      }
+      std::ranges::sort(res);
+      return res;
+    };
+    CHECK(sortedFamilies(a.atomRingFamilies()) ==
+          sortedFamilies(b.atomRingFamilies()));
+    CHECK(sortedFamilies(a.bondRingFamilies()) ==
+          sortedFamilies(b.bondRingFamilies()));
+  };
+
+  // Molecules where stored rings uniquely determine families/relevant cycles
+  // (fast path skips RDL, so dp_urfData stays null).
+  const std::vector<std::string> verifiedFastPathSmiles = {
+      "",
+      "CCCCO",
+      "c1ccccc1",
+      "C1CC1.C1CCC1",
+      "C1CCC2(CC1)CCCCC2",
+      "c1ccc2ccccc2c1",
+      "c1ccc2cc3ccccc3cc2c1",
+      "c1ccc2c(c1)ccc1ccccc12",
+      "CC12CCC3C(C1CCC2O)CCC4=CC(=O)CCC34C",
+      "C1CC2CCC1C2",     // norbornane (bicyclo[2.2.1]): 5-rings share 2 bonds
+      "C1CC2CCC(C1)C2",  // bicyclo[3.2.1]octane: 5- and 6-ring share 2 bonds
+  };
+
+  for (const auto &smi : verifiedFastPathSmiles) {
+    INFO("fast path smiles: " << smi);
+    auto mol = v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(mol);
+    std::string pkl;
+    MolPickler::pickleMol(*mol, pkl);
+    ROMol unpickled(pkl);
+
+    REQUIRE(unpickled.getRingInfo()->areRingFamiliesInitialized());
+    CHECK(unpickled.getRingInfo()->dp_urfData == nullptr);
+    compareFamilies(*mol->getRingInfo(), *unpickled.getRingInfo());
+
+    // Copy preserves initialized state without RDL data.
+    ROMol copied(unpickled);
+    CHECK(copied.getRingInfo()->areRingFamiliesInitialized());
+    CHECK(copied.getRingInfo()->dp_urfData == nullptr);
+    compareFamilies(*mol->getRingInfo(), *copied.getRingInfo());
+
+    // Subsequent findSSSR and symmetrizeSSSR still work cleanly.
+    {
+      RWMol mForSssr(unpickled);
+      VECT_INT_VECT sssr;
+      MolOps::findSSSR(mForSssr, sssr);
+      CHECK(mForSssr.getRingInfo()->areRingFamiliesInitialized());
+      compareFamilies(*mol->getRingInfo(), *mForSssr.getRingInfo());
+    }
+    {
+      RWMol mForSymm(unpickled);
+      VECT_INT_VECT symm;
+      MolOps::symmetrizeSSSR(mForSymm, symm);
+      CHECK(mForSymm.getRingInfo()->areRingFamiliesInitialized());
+      compareFamilies(*mol->getRingInfo(), *mForSymm.getRingInfo());
+    }
+    {
+      RWMol mForSymmNoRecalc(unpickled);
+      RWMol mFresh(*mol);
+      VECT_INT_VECT symmUnpk;
+      VECT_INT_VECT symmFresh;
+      MolOps::symmetrizeSSSR(mForSymmNoRecalc, symmUnpk,
+                             MolOps::SymmetrizeSSSRAlgorithm::RDL, false);
+      MolOps::symmetrizeSSSR(mFresh, symmFresh,
+                             MolOps::SymmetrizeSSSRAlgorithm::RDL, false);
+      auto sortedRings = [](VECT_INT_VECT rings) {
+        for (auto &r : rings) {
+          std::ranges::sort(r);
+        }
+        std::ranges::sort(rings);
+        return rings;
+      };
+      CHECK(sortedRings(symmUnpk) == sortedRings(symmFresh));
+      CHECK(mForSymmNoRecalc.getRingInfo()->areRingFamiliesInitialized());
+      compareFamilies(*mFresh.getRingInfo(), *mForSymmNoRecalc.getRingInfo());
+    }
+  }
+
+  // Molecules that must fall back to RDL (bridged/cage/cyclic ring-adjacency
+  // systems where relevant cycles or URFs are not uniquely determined by a
+  // tree-fused strict-inequality basis).
+  const std::vector<std::string> rdlFallbackSmiles = {
+      "C1CC2CCC1CC2",                   // bicyclo[2.2.2]octane
+      "C1C2CC3CC1CC(C2)C3",             // adamantane
+      "C12C3C4C1C5C2C3C45",             // cubane
+      "c1cc2ccc3cccc4ccc(c1)c2c34",     // pyrene
+      "C1CC2CCC1CC1CCC(CC1)CC1CCC(CC1)CC1CCC(CC1)C2",
+  };
+
+  for (const auto &smi : rdlFallbackSmiles) {
+    INFO("RDL fallback smiles: " << smi);
+    auto mol = v2::SmilesParse::MolFromSmiles(smi);
+    REQUIRE(mol);
+    std::string pkl;
+    MolPickler::pickleMol(*mol, pkl);
+    ROMol unpickled(pkl);
+
+    REQUIRE(unpickled.getRingInfo()->areRingFamiliesInitialized());
+    CHECK(unpickled.getRingInfo()->dp_urfData != nullptr);
+    compareFamilies(*mol->getRingInfo(), *unpickled.getRingInfo());
+  }
+
+  // Dative bond forming a ring (not included by default findRingFamilies):
+  // unpickling must match default findRingFamilies(*mol).
+  {
+    auto mol = v2::SmilesParse::MolFromSmiles("C1CC->N1");
+    REQUIRE(mol);
+    std::string pkl;
+    MolPickler::pickleMol(*mol, pkl);
+    ROMol unpickled(pkl);
+    REQUIRE(unpickled.getRingInfo()->areRingFamiliesInitialized());
+    compareFamilies(*mol->getRingInfo(), *unpickled.getRingInfo());
+  }
+
+  // Pickle created from a molecule with FastFindRings must NOT initialize
+  // ring families on unpickle (matches existing behavior).
+  {
+    auto mol = v2::SmilesParse::MolFromSmiles("c1ccccc1");
+    REQUIRE(mol);
+    MolOps::fastFindRings(*mol);
+    std::string pkl;
+    MolPickler::pickleMol(*mol, pkl);
+    ROMol unpickled(pkl);
+    CHECK(!unpickled.getRingInfo()->areRingFamiliesInitialized());
+  }
+
+  // Depickling into a non-empty molecule must reset existing ring families
+  // instead of duplicating them.
+  {
+    auto m1 = v2::SmilesParse::MolFromSmiles("C1CC1");
+    auto m2 = v2::SmilesParse::MolFromSmiles("C1COC1");
+    REQUIRE(m1);
+    REQUIRE(m2);
+    ROMol combined;
+    std::string pkl;
+    MolPickler::pickleMol(*m1, pkl);
+    MolPickler::molFromPickle(pkl, combined);
+    MolPickler::pickleMol(*m2, pkl);
+    MolPickler::molFromPickle(pkl, combined);
+
+    const auto *ri = combined.getRingInfo();
+    REQUIRE(ri->areRingFamiliesInitialized());
+    CHECK(ri->numRingFamilies() == ri->numRings());
+    CHECK(ri->numRelevantCycles() == ri->atomRelevantCycles().size());
+
+    ROMol fresh(combined);
+    fresh.getRingInfo()->resetRingFamilies();
+    MolOps::findRingFamilies(fresh);
+    compareFamilies(*fresh.getRingInfo(), *ri);
+  }
+
+  // Without RDL data, atomRelevantCycles() must derive from ring families
+  // rather than drifting when stored rings are mutated via addRing().
+  {
+    auto mol = v2::SmilesParse::MolFromSmiles("C1CC1.CCC");
+    REQUIRE(mol);
+    std::string pkl;
+    MolPickler::pickleMol(*mol, pkl);
+    ROMol unpickled(pkl);
+    auto *ri = unpickled.getRingInfo();
+    REQUIRE(ri->areRingFamiliesInitialized());
+    REQUIRE(ri->dp_urfData == nullptr);
+    const auto expectedRC = ri->atomRelevantCycles();
+    const RingInfo::INT_VECT extraRing = {3, 4, 5};
+    ri->addRing(extraRing, extraRing);
+    CHECK(ri->numRelevantCycles() == 1);
+    CHECK(ri->atomRelevantCycles() == expectedRC);
+  }
+}

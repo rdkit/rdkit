@@ -2293,6 +2293,29 @@ CAS<~>
     self.assertEqual(sorted(ri.AtomRingFamilies()), [(0, 1, 2, 3), (2, 3, 4)])
     self.assertEqual(sorted(ri.BondRingFamilies()), [(0, 1, 2, 4), (2, 3, 5)])
 
+    # pickle round trip preserves ring families and relevant cycle counts
+    for test_smi in (
+        'CNC',
+        'c1ccccc1',
+        'c1ccc2ccccc2c1',
+        'c1ccc2cc3ccccc3cc2c1',
+        'C1CC2CCC1C2',
+        'C1C2CC3CC1CC(C2)C3',
+    ):
+      orig = Chem.MolFromSmiles(test_smi)
+      unpk = Chem.Mol(orig.ToBinary())
+      ori = orig.GetRingInfo()
+      uri = unpk.GetRingInfo()
+      self.assertTrue(uri.AreRingFamiliesInitialized())
+      self.assertEqual(uri.NumRingFamilies(), ori.NumRingFamilies())
+      self.assertEqual(uri.NumRelevantCycles(), ori.NumRelevantCycles())
+      self.assertEqual(
+          sorted(tuple(sorted(f)) for f in uri.AtomRingFamilies()),
+          sorted(tuple(sorted(f)) for f in ori.AtomRingFamilies()))
+      self.assertEqual(
+          sorted(tuple(sorted(f)) for f in uri.BondRingFamilies()),
+          sorted(tuple(sorted(f)) for f in ori.BondRingFamilies()))
+
   def test46ReplaceCore(self):
     """ test the ReplaceCore functionality
 

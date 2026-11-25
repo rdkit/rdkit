@@ -1444,7 +1444,7 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
     // findSSSR now initializes ring families, so make sure
     // unpickled mols have done this to prevent issues with
     // code that expects ring families to be initialized.
-    MolOps::findRingFamilies(*mol);
+    MolOps::details::initRingFamiliesFromRings(*mol);
   }
 
   // -------------------

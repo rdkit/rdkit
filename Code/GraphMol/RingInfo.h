@@ -25,6 +25,13 @@
 
 namespace RDKit {
 
+class ROMol;
+namespace MolOps {
+namespace details {
+void initRingFamiliesFromRings(ROMol &mol);
+}
+}  // namespace MolOps
+
 constexpr size_t MAX_SYMMETRIZED_RINGS = 10000;
 
 //! A class to store information about a molecule's rings
@@ -40,6 +47,7 @@ enum FIND_RING_TYPE {
 
 class RDKIT_GRAPHMOL_EXPORT RingInfo {
   friend class MolPickler;
+  friend void MolOps::details::initRingFamiliesFromRings(ROMol &mol);
 
  public:
   using MemberType = std::vector<int>;
@@ -413,6 +421,9 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   /*!
     <b>Notes:</b>
       - the object must be initialized before calling this
+      - the order of families, and of atoms within each family, is unspecified
+        and may differ between a freshly sanitized molecule and an unpickled
+        one
   */
   const VECT_INT_VECT &atomRingFamilies() const { return d_atomRingFamilies; }
   VECT_INT_VECT atomRelevantCycles() const;
@@ -421,11 +432,16 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   /*!
     <b>Notes:</b>
       - the object must be initialized before calling this
+      - the order of families, and of bonds within each family, is unspecified
+        and may differ between a freshly sanitized molecule and an unpickled
+        one
   */
   const VECT_INT_VECT &bondRingFamilies() const { return d_bondRingFamilies; }
 
   //! check if the ring families have been initialized
-  bool areRingFamiliesInitialized() const { return dp_urfData != nullptr; }
+  bool areRingFamiliesInitialized() const {
+    return df_ringFamiliesInit || dp_urfData != nullptr;
+  }
 
   //! reset ring family information
   void resetRingFamilies();
@@ -461,7 +477,9 @@ class RDKIT_GRAPHMOL_EXPORT RingInfo {
   void initFusedRings();
   void rebuildMemberships();
   void invalidateFusedRings();
+  void markRingFamiliesInitializedFromRings();
   bool df_init{false};
+  bool df_ringFamiliesInit{false};
   FIND_RING_TYPE df_find_type_type{FIND_RING_TYPE_OTHER_OR_UNKNOWN};
   std::vector<uint32_t> d_atomRingBegins{0};
   std::vector<uint32_t> d_atomMembershipBegins{0};

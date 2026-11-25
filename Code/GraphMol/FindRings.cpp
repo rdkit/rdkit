@@ -17,6 +17,8 @@
 #include <vector>
 #include <set>
 #include <algorithm>
+#include <numeric>
+#include <utility>
 #include <boost/dynamic_bitset.hpp>
 #include <cstdint>
 #include <queue>
@@ -928,7 +930,208 @@ namespace details {
     }
     return v1.size() < v2.size();
   }
+
+namespace {
+bool canSkipRdlForUnpickledRings(const ROMol &mol, const RingInfo &ringInfo) {
+  const auto nRings = ringInfo.numRings();
+  const auto nAtoms = mol.getNumAtoms();
+  const auto nBonds = mol.getNumBonds();
+
+  // Compute the cyclomatic number of the active bond graph (the exact bonds
+  // passed to RDL by MolOps::findRingFamilies with default flags: excluding
+  // zero-order, dative and hydrogen bonds). Also check whether any stored
+  // ring uses an excluded bond type; if so, fall back to RDL so unpickling
+  // matches MolOps::findRingFamilies(*mol) with default flags.
+  std::vector<unsigned int> parent(nAtoms);
+  std::iota(parent.begin(), parent.end(), 0u);
+  auto findRoot = [&parent](unsigned int x) {
+    while (parent[x] != x) {
+      parent[x] = parent[parent[x]];
+      x = parent[x];
+    }
+    return x;
+  };
+
+  unsigned int activeBonds = 0;
+  unsigned int merges = 0;
+  for (const auto *bond : mol.bonds()) {
+    const auto bt = bond->getBondType();
+    if (bt == Bond::ZERO || isDative(bt) || bt == Bond::HYDROGEN) {
+      if (ringInfo.numBondRings(bond->getIdx()) > 0) {
+        return false;
+      }
+      continue;
+    }
+    ++activeBonds;
+    const auto rx = findRoot(bond->getBeginAtomIdx());
+    const auto ry = findRoot(bond->getEndAtomIdx());
+    if (rx != ry) {
+      parent[rx] = ry;
+      ++merges;
+    }
+  }
+  const unsigned int cyclomatic = activeBonds - merges;
+  if (nRings == 0) {
+    return cyclomatic == 0;
+  }
+  if (cyclomatic != nRings) {
+    return false;
+  }
+
+  // Verify that stored rings uniquely determine all ring families and relevant
+  // cycles:
+  //   1. Each stored ring is a valid simple cycle of length >= 3 (no repeated
+  //      atoms, consecutive atoms linked by the corresponding bond) using only
+  //      active bonds.
+  //   2. Every active bond belongs to at most 2 stored rings.
+  //   3. The ring-adjacency graph G_R (edge between r0 and r1 iff they share
+  //      k > 0 bonds) is a forest.
+  //   4. Every edge (r0, r1) of G_R satisfies 2*k < min(|r0|, |r1|).
+  //
+  // Proof: In any nonempty subset S of rings, the forest G_R[S] has a leaf u
+  // sharing < |u|/2 bonds with at most one neighbor in S, so XOR(S) != 0.
+  // Hence the nRings == cyclomatic stored rings form a GF(2) cycle basis.
+  // Because every bond belongs to <= 2 rings, for any S with |S| >= 2 and any
+  // r0 in S, rooting the tree component of r0 at r0 gives
+  //   |XOR(S)| - |r0| >= sum_{u != r0} (|u| - 2*k(u, parent(u))) > 0.
+  // Thus every cycle outside the basis is an XOR of strictly shorter basis
+  // cycles (not relevant), and no basis cycle can be written as an XOR of
+  // strictly shorter cycles (every basis cycle is relevant and forms a
+  // singleton URF).
+
+  // Check each stored ring is a valid simple cycle of length >= 3:
+  // distinct in-range atoms and bonds, and bond[j] connects atom[j] to
+  // atom[(j + 1) % len]. Pickles with version >= 7000 reconstruct bonds from
+  // atom order, while older pickles read bonds independently.
+  const auto atomRings = ringInfo.atomRings();
+  const auto bondRings = ringInfo.bondRings();
+
+  std::vector<unsigned int> atomSeen(nAtoms, 0);
+  for (unsigned int r = 0; r < nRings; ++r) {
+    const auto ar = atomRings[r];
+    const auto br = bondRings[r];
+    if (ar.size() < 3 || br.size() != ar.size()) {
+      return false;
+    }
+    // Check each atom appears once and bond[j] connects atom[j] to
+    // atom[(j + 1) % len] (which also ensures all bonds in the ring are
+    // distinct, since len >= 3 and every unordered atom pair is unique).
+    const unsigned int mark = r + 1;
+    const size_t len = ar.size();
+    for (size_t j = 0; j < len; ++j) {
+      const int a = ar[j];
+      if (a < 0 || static_cast<unsigned int>(a) >= nAtoms ||
+          atomSeen[static_cast<unsigned int>(a)] == mark) {
+        return false;
+      }
+      atomSeen[static_cast<unsigned int>(a)] = mark;
+
+      const int b = br[j];
+      if (b < 0 || static_cast<unsigned int>(b) >= nBonds) {
+        return false;
+      }
+      const auto *bond = mol.getBondWithIdx(static_cast<unsigned int>(b));
+      const unsigned int u = static_cast<unsigned int>(a);
+      const unsigned int v = static_cast<unsigned int>(ar[(j + 1) % len]);
+      const unsigned int bu = bond->getBeginAtomIdx();
+      const unsigned int bv = bond->getEndAtomIdx();
+      if (!((bu == u && bv == v) || (bu == v && bv == u))) {
+        return false;
+      }
+    }
+  }
+
+  // Collect shared-bond counts between pairs of rings. Since each bond belongs
+  // to <= 2 rings, the total number of (r1, r2) increments across all bonds is
+  // at most nBonds.
+  std::vector<std::pair<unsigned int, unsigned int>> sharedPairs;
+  for (unsigned int bIdx = 0; bIdx < nBonds; ++bIdx) {
+    const auto members = ringInfo.bondMembers(bIdx);
+    if (members.size() > 2) {
+      return false;
+    }
+    if (members.size() == 2) {
+      unsigned int r0 = static_cast<unsigned int>(members[0]);
+      unsigned int r1 = static_cast<unsigned int>(members[1]);
+      if (r0 == r1) {
+        return false;
+      }
+      if (r0 > r1) {
+        std::swap(r0, r1);
+      }
+      sharedPairs.emplace_back(r0, r1);
+    }
+  }
+
+  if (sharedPairs.empty()) {
+    // Every stored ring is bond-disjoint from all others (isolated/spiro).
+    return true;
+  }
+
+  std::ranges::sort(sharedPairs);
+
+  // Check that the ring-adjacency graph is a forest and every adjacent pair
+  // (r0, r1) satisfies 2 * sharedBonds < min(|r0|, |r1|).
+  std::vector<unsigned int> ringParent(nRings);
+  std::iota(ringParent.begin(), ringParent.end(), 0u);
+  auto findRingRoot = [&ringParent](unsigned int x) {
+    while (ringParent[x] != x) {
+      ringParent[x] = ringParent[ringParent[x]];
+      x = ringParent[x];
+    }
+    return x;
+  };
+
+  for (size_t i = 0; i < sharedPairs.size();) {
+    const auto [r0, r1] = sharedPairs[i];
+    size_t j = i + 1;
+    while (j < sharedPairs.size() && sharedPairs[j] == sharedPairs[i]) {
+      ++j;
+    }
+    const size_t sharedBonds = j - i;
+    if (2 * sharedBonds >= bondRings[r0].size() ||
+        2 * sharedBonds >= bondRings[r1].size()) {
+      return false;
+    }
+    const auto root0 = findRingRoot(r0);
+    const auto root1 = findRingRoot(r1);
+    if (root0 == root1) {
+      // Cycle in the ring-adjacency graph -> fall back to RDL.
+      return false;
+    }
+    ringParent[root0] = root1;
+    i = j;
+  }
+  return true;
 }
+}  // namespace
+
+void initRingFamiliesFromRings(ROMol &mol) {
+  auto *ringInfo = mol.getRingInfo();
+  ringInfo->resetRingFamilies();
+  if (!canSkipRdlForUnpickledRings(mol, *ringInfo)) {
+    MolOps::findRingFamilies(mol);
+    return;
+  }
+
+  const auto nRings = ringInfo->numRings();
+  const auto atomRings = ringInfo->atomRings();
+  const auto bondRings = ringInfo->bondRings();
+  for (unsigned int i = 0; i < nRings; ++i) {
+    const auto ar = atomRings[i];
+    const auto br = bondRings[i];
+    RingInfo::INT_VECT atoms(ar.begin(), ar.end());
+    RingInfo::INT_VECT bonds(br.begin(), br.end());
+    // Keep atoms in cycle traversal order (normalized) so atomRelevantCycles()
+    // can derive relevant cycles directly from d_atomRingFamilies without
+    // reading the mutable stored rings or rebuilding RDL data.
+    RingUtils::normalizeRing(atoms);
+    std::ranges::sort(bonds);
+    ringInfo->addRingFamily(atoms, bonds);
+  }
+  ringInfo->markRingFamiliesInitializedFromRings();
+}
+}  // namespace details
 
 void setUseLegacyRingFinding(bool val) {
   if (val) {
@@ -961,6 +1164,11 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
   }
   ringInfo->initialize(FIND_RING_TYPE_SSSR);
 
+  if (ringInfo->areRingFamiliesInitialized() && !ringInfo->dp_urfData) {
+    // Families were populated directly from stored rings without RDL; build
+    // RDL data now because findSSSR uses RDL_getSSSR below.
+    ringInfo->resetRingFamilies();
+  }
   ringInfo->preallocate(mol.getNumAtoms(), mol.getNumBonds());
   findRingFamilies(mol, includeDativeBonds, includeHydrogenBonds);
   auto urfdata = mol.getRingInfo()->dp_urfData.get();
@@ -1100,7 +1308,11 @@ int symmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res,
   }
 
   if (algorithm != SymmetrizeSSSRAlgorithm::LEGACY) {
-    if (!ringInfo->areRingFamiliesInitialized()) {
+    if (!ringInfo->dp_urfData) {
+      // Families were either uninitialized or populated directly from stored
+      // rings without RDL; ensure RDL data is built so symmetrizeSSSR reflects
+      // the current graph.
+      ringInfo->resetRingFamilies();
       ringInfo->preallocate(mol.getNumAtoms(), mol.getNumBonds());
       findRingFamilies(mol, includeDativeBonds, includeHydrogenBonds);
     }
