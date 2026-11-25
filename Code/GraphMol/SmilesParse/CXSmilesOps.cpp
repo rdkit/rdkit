@@ -589,28 +589,21 @@ bool parse_unsaturation(Iterator &first, Iterator last, RDKit::RWMol &mol,
 
 template <typename Iterator>
 bool parse_atoms_in_joint_rings(Iterator &first, Iterator last,
-                                RDKit::RWMol &mol, unsigned int startAtomIdx) {
-  // these look like this: |jr1:0,2,-3| meaning that atom 0 and 2 should be in
+                                RDKit::RWMol &mol,
+                                const unsigned int startAtomIdx,
+                                unsigned int &jrCounter) {
+  // these look like this: |jr:0,2,-3| meaning that atom 0 and 2 should be in
   // the same ring but not -3
   if (first >= last || *first != 'j' || first + 1 >= last ||
       *(first + 1) != 'r') {
     return false;
   }
   first += 2;
-  if (first >= last || *first < '0' || *first > '9') {
-    return false;
-  }
-  unsigned int rindId;
-  if (!read_int(first, last, rindId)) {
-    return false;
-  }
   // check that we can read at least two more characters:
   if (first >= last || *first != ':') {
     return false;
   }
   ++first;
-
-  JointRingConstraint element;
 
   while (first < last && ((*first >= '0' && *first <= '9') || *first == '-')) {
     bool excludeAtom = false;
@@ -623,30 +616,29 @@ bool parse_atoms_in_joint_rings(Iterator &first, Iterator last,
       return false;
     }
 
-    if (!VALID_ATIDX(atomIdx)) {
-      return false;
-    }
-
-    if (excludeAtom) {
-      element.excludedAtoms.emplace_back(atomIdx - startAtomIdx);
-    } else {
+    if (VALID_ATIDX(atomIdx)) {
       auto atom = mol.getAtomWithIdx(atomIdx - startAtomIdx);
       if (!atom->hasQuery()) {
         atom = QueryOps::replaceAtomWithQueryAtom(&mol, atom);
       }
       atom->expandQuery(makeAtomInRingQuery(), Queries::COMPOSITE_AND);
-      element.jointAtoms.emplace_back(atomIdx - startAtomIdx);
+
+      JointRingConstraint element;
+      atom->getPropIfPresent(common_properties::_CXJointRingIDs, element);
+
+      if (excludeAtom) {
+        element.excludedAtoms.emplace_back(jrCounter);
+      } else {
+        element.jointAtoms.emplace_back(jrCounter);
+      }
+      atom->setProp(common_properties::_CXJointRingIDs, element);
     }
 
     if (first < last && *first == ',') {
       ++first;
     }
   }
-
-  std::vector<JointRingConstraint> jointRings;
-  mol.getPropIfPresent(common_properties::_CXJointRingAtoms, jointRings);
-  jointRings.emplace_back(element);
-  mol.setProp(common_properties::_CXJointRingAtoms, jointRings);
+  ++jrCounter;
   return true;
 }
 
@@ -1493,6 +1485,7 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol,
   ++first;
   unsigned int nSGroups = 0;
   unsigned int confIndex = 0;
+  unsigned int jrCounter = 0;
   while (first < last && *first != '|') {
     typename Iterator::difference_type length = std::distance(first, last);
     if (*first == '(') {
@@ -1566,7 +1559,8 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol,
         return false;
       }
     } else if (*first == 'j' && first + 1 < last && first[1] == 'r') {
-      if (!parse_atoms_in_joint_rings(first, last, mol, startAtomIdx)) {
+      if (!parse_atoms_in_joint_rings(first, last, mol, startAtomIdx,
+                                      jrCounter)) {
         return false;
       }
     } else if (*first == 's') {
@@ -1722,16 +1716,13 @@ std::string quote_string(const std::string &txt,
 
 std::string get_joint_ring_atoms(const ROMol &mol,
                                  const std::vector<unsigned int> &atomOrder) {
-  std::vector<JointRingConstraint> jointRings;
-  if (!mol.getPropIfPresent(common_properties::_CXJointRingAtoms, jointRings)) {
-    return "";
-  }
+  std::vector<JointRingConstraint> jointRings = collectJointRings(mol);
   std::stringstream res;
   for (auto i : std::views::iota(0u, jointRings.size())) {
     res << "jr" << i << ":";
     const auto &[joint, excluded] = jointRings[i];
     if (joint.size()) {
-      res << *joint.begin();
+      res << atomOrder[*joint.begin()];
       for (auto atmIdx : joint | std::views::drop(1)) {
         res << "," << atomOrder[atmIdx];
       }
@@ -1740,7 +1731,7 @@ std::string get_joint_ring_atoms(const ROMol &mol,
       }
     }
     if (excluded.size()) {
-      res << "-" << *excluded.begin();
+      res << "-" << atomOrder[*excluded.begin()];
       for (auto atmIdx : excluded | std::views::drop(1)) {
         res << ",-" << atomOrder[atmIdx];
       }

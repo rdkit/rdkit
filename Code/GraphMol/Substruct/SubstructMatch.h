@@ -44,6 +44,9 @@ struct JointRingConstraint {
   std::vector<unsigned int> excludedAtoms;
 };
 
+std::vector<JointRingConstraint> collectJointRings(
+    const ROMol &mol);  // TODO move to details
+
 struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
   bool useChirality = false;  //!< Use chirality in determining whether or not
                               //!< atoms/bonds match
@@ -282,7 +285,6 @@ class RDKIT_SUBSTRUCTMATCH_EXPORT MolMatchFinalCheckFunctor {
   std::vector<JointRingConstraint> d_jointRingAtoms;
   std::vector<boost::dynamic_bitset<>> d_ringMasks;
   boost::dynamic_bitset<> d_initializedMasked;
-  bool d_useJointRingAtoms = false;
 
 #ifdef RDK_INTERNAL_BITSET_HAS_HASH
   // Boost 1.71 added support for std::hash with dynamic_bitset.
