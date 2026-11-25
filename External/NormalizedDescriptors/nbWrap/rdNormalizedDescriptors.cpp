@@ -194,13 +194,23 @@ NB_MODULE(rdNormalizedDescriptors, m) {
       "normalizes them with histogram tables.\n"
       "names defaults to GetNormalizedDescriptorNames() and tables to "
       "GetDefaultTables(). ComputeProperties returns normalized values;")
-      .def(nb::init<>())
-      .def(nb::init<const std::vector<std::string> &, const HistogramSet &>(),
-           "names"_a, "tables"_a = nb::none())
-      .def("ComputeRawProperties", computeRawHelper, "mol"_a,
-           "returns the unnormalized descriptor values; failures are nan")
-      .def("GetTables", &NormalizedProperties::getTables);
-
+    .def(nb::init<>())
+    .def("__init__", [](NormalizedProperties *self) {
+      new (self) NormalizedProperties(getNormalizedDescriptorNames(), getDefaultTables());
+    })
+    .def("__init__", [](NormalizedProperties *self,
+			const std::vector<std::string> &names) {
+      new (self) NormalizedProperties(names, getDefaultTables());
+    }, "names"_a)
+    .def("__init__", [](NormalizedProperties *self,
+			const std::vector<std::string> &names, const HistogramSet &tables) {
+      new (self) NormalizedProperties(names, tables);
+    },
+	 "names"_a, "tables"_a = nb::none())
+    .def("ComputeRawProperties", computeRawHelper, "mol"_a,
+	 "returns the unnormalized descriptor values; failures are nan")
+    .def("GetTables", &NormalizedProperties::getTables);
+  
   m.def("GetPropertyName", getPropertyName, "name"_a,
               "returns the name of the rdMolDescriptors property that computes "
               "a descriptor, e.g. 'exactmw' for 'ExactMolWt'");
