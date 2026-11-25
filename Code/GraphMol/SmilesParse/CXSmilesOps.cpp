@@ -22,6 +22,7 @@
 #include "SmilesParse.h"
 #include "SmilesParseOps.h"
 #include <GraphMol/MolEnumerator/LinkNode.h>
+#include "GraphMol/Substruct/SubstructMatch.h"
 
 #include <algorithm>
 #include <array>
@@ -583,6 +584,69 @@ bool parse_unsaturation(Iterator &first, Iterator last, RDKit::RWMol &mol,
       ++first;
     }
   }
+  return true;
+}
+
+template <typename Iterator>
+bool parse_atoms_in_joint_rings(Iterator &first, Iterator last,
+                                RDKit::RWMol &mol, unsigned int startAtomIdx) {
+  // these look like this: |jr1:0,2,-3| meaning that atom 0 and 2 should be in
+  // the same ring but not -3
+  if (first >= last || *first != 'j' || first + 1 >= last ||
+      *(first + 1) != 'r') {
+    return false;
+  }
+  first += 2;
+  if (first >= last || *first < '0' || *first > '9') {
+    return false;
+  }
+  unsigned int rindId;
+  if (!read_int(first, last, rindId)) {
+    return false;
+  }
+  // check that we can read at least two more characters:
+  if (first >= last || *first != ':') {
+    return false;
+  }
+  ++first;
+
+  JointRingConstraint element;
+
+  while (first < last && ((*first >= '0' && *first <= '9') || *first == '-')) {
+    bool excludeAtom = false;
+    if (*first == '-') {
+      excludeAtom = true;
+      first++;
+    }
+    unsigned int atomIdx;
+    if (!read_int(first, last, atomIdx)) {
+      return false;
+    }
+
+    if (!VALID_ATIDX(atomIdx)) {
+      return false;
+    }
+
+    if (excludeAtom) {
+      element.excludedAtoms.emplace_back(atomIdx - startAtomIdx);
+    } else {
+      auto atom = mol.getAtomWithIdx(atomIdx - startAtomIdx);
+      if (!atom->hasQuery()) {
+        atom = QueryOps::replaceAtomWithQueryAtom(&mol, atom);
+      }
+      atom->expandQuery(makeAtomInRingQuery(), Queries::COMPOSITE_AND);
+      element.jointAtoms.emplace_back(atomIdx - startAtomIdx);
+    }
+
+    if (first < last && *first == ',') {
+      ++first;
+    }
+  }
+
+  std::vector<JointRingConstraint> jointRings;
+  mol.getPropIfPresent(common_properties::_CXJointRingAtoms, jointRings);
+  jointRings.emplace_back(element);
+  mol.setProp(common_properties::_CXJointRingAtoms, jointRings);
   return true;
 }
 
@@ -1501,6 +1565,10 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol,
       if (!parse_unsaturation(first, last, mol, startAtomIdx)) {
         return false;
       }
+    } else if (*first == 'j' && first + 1 < last && first[1] == 'r') {
+      if (!parse_atoms_in_joint_rings(first, last, mol, startAtomIdx)) {
+        return false;
+      }
     } else if (*first == 's') {
       if (!parse_substitution(first, last, mol, startAtomIdx)) {
         return false;
@@ -1650,6 +1718,35 @@ std::string quote_string(const std::string &txt,
     }
   }
   return res;
+}
+
+std::string get_joint_ring_atoms(const ROMol &mol,
+                                 const std::vector<unsigned int> &atomOrder) {
+  std::vector<JointRingConstraint> jointRings;
+  if (!mol.getPropIfPresent(common_properties::_CXJointRingAtoms, jointRings)) {
+    return "";
+  }
+  std::stringstream res;
+  for (auto i : std::views::iota(0u, jointRings.size())) {
+    res << "jr" << i << ":";
+    const auto &[joint, excluded] = jointRings[i];
+    if (joint.size()) {
+      res << *joint.begin();
+      for (auto atmIdx : joint | std::views::drop(1)) {
+        res << "," << atomOrder[atmIdx];
+      }
+      if (excluded.size()) {
+        res << ",";
+      }
+    }
+    if (excluded.size()) {
+      res << "-" << *excluded.begin();
+      for (auto atmIdx : excluded | std::views::drop(1)) {
+        res << ",-" << atomOrder[atmIdx];
+      }
+    }
+  }
+  return res.str();
 }
 
 std::string get_enhanced_stereo_block(
@@ -2589,6 +2686,10 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
   if (flags & SmilesWrite::CXSmilesFields::CX_ATOM_PROPS) {
     const auto atomblock = get_atom_props_block(mol, atomOrder);
     appendToCXExtension(atomblock, res);
+  }
+
+  if (flags & SmilesWrite::CXSmilesFields::CX_JOINT_RING_ATOMS) {
+    appendToCXExtension(get_joint_ring_atoms(mol, atomOrder), res);
   }
 
   const Conformer *conf = nullptr;

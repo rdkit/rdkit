@@ -70,6 +70,7 @@ BETTER_ENUM(CXSmilesFields, uint32_t,  // clang-format off
   CX_COORDINATE_BONDS = 1 << 11,
   CX_HYDROGEN_BONDS = 1 << 12,
   CX_ZERO_BONDS = 1 << 13,
+  CX_JOINT_RING_ATOMS = 1 << 14,
   CX_ALL = 0x7fffffff,
   CX_ALL_BUT_COORDS = CX_ALL ^ CX_COORDS
 );

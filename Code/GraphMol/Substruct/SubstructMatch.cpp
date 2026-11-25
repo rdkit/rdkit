@@ -171,6 +171,16 @@ typedef std::vector<
 
 }  // namespace detail
 
+namespace {
+inline void populateMask(auto &mask, const auto &rings) {
+  mask.reset();  // we assume here that the bitset has the right size, we won't
+                 // do the check here to save computation time
+  for (const auto x : rings) {
+    mask.set(x);
+  }
+};
+}  // namespace
+
 MolMatchFinalCheckFunctor::MolMatchFinalCheckFunctor(
     const ROMol &query, const ROMol &mol, const SubstructMatchParameters &ps)
     : d_query(query), d_mol(mol), d_params(ps) {
@@ -184,6 +194,64 @@ MolMatchFinalCheckFunctor::MolMatchFinalCheckFunctor(
       }
     }
   }
+  if (d_query.getPropIfPresent(common_properties::_CXJointRingAtoms,
+                               d_jointRingAtoms)) {
+    d_useJointRingAtoms = true;
+    d_initializedMasked = boost::dynamic_bitset<>(mol.getNumAtoms());
+    d_ringMasks = std::vector<boost::dynamic_bitset<>>(
+        mol.getNumAtoms(),
+        boost::dynamic_bitset<>(mol.getRingInfo()->numRings()));
+  }
+}
+
+bool MolMatchFinalCheckFunctor::checkJointRings(
+    const std::vector<std::uint32_t> queryToMolAtomIndices) {
+  auto rInfo = d_mol.getRingInfo();
+  const auto atomRings = [&rInfo,
+                          &queryToMolAtomIndices](unsigned int qAtomIdx) {
+    return rInfo->atomMembers(queryToMolAtomIndices[qAtomIdx]);
+  };  // ring indices of the atom in mol where aAtomIdx would be mapped to
+
+  boost::dynamic_bitset<> ringIntersect(rInfo->numRings());
+
+  for (auto &[joint, excluded] : d_jointRingAtoms) {
+    // 1. The intersection of rings for all joint atoms must NOT be empty:
+    // $J_i$: $R_i:=\bigcap_{a_j\in A_i}SSR(a_j)$
+    // we can do this with bit-logic => \cap <=> &
+    if (joint.empty()) {
+      continue;
+    }
+
+    populateMask(ringIntersect, atomRings(*joint.begin()));
+
+    for (auto atmIdx : joint | std::views::drop(1)) {
+      auto &mask = d_ringMasks[queryToMolAtomIndices[atmIdx]];
+      if (!d_initializedMasked[queryToMolAtomIndices[atmIdx]]) {
+        populateMask(mask, atomRings(atmIdx));
+      }
+      ringIntersect &= mask;
+
+      if (ringIntersect.none()) {
+        return false;
+      }
+    }
+
+    // 2. The intersetion between the rings of every excluded atom and the
+    // joint rings must BE empty:
+    // $\neg J_i$: \forall a_i \in J_i: $R_i \cap SSR(a_j)=\emptyset$
+    auto intersects = [&ringIntersect](const auto &other) {
+      return std::ranges::any_of(other, [&ringIntersect](const auto id) {
+        return ringIntersect.test(id);
+      });
+    };
+    auto excludedAtomIntersects =
+        std::ranges::any_of(excluded, intersects, atomRings);
+
+    if (excludedAtomIntersects) {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
@@ -195,6 +263,16 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
       return false;
     }
     if (d_params.extraFinalCheck && !d_params.extraFinalCheck(d_mol, aids)) {
+      return false;
+    }
+  }
+
+  if (d_useJointRingAtoms) {
+    std::vector<std::uint32_t> queryToMol(d_query.getNumAtoms());
+    for (std::uint32_t i = 0; i < d_query.getNumAtoms(); ++i) {
+      queryToMol[q_c[i]] = m_c[i];
+    }
+    if (!checkJointRings(queryToMol)) {
       return false;
     }
   }

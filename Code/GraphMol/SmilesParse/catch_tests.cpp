@@ -991,6 +991,44 @@ TEST_CASE("Github #4319 add CXSMARTS support") {
     }
   }
 
+  SECTION("parser, confirm joint ring atoms is working") {
+    auto mol = "CCCC |jr0:0,1,2,3|"_smarts;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 4);
+    CHECK(MolToSmarts(*mol) == "[C&R][C&R][C&R][C&R]");
+    CHECK(MolToCXSmarts(*mol) == "[C&R][C&R][C&R][C&R] |jr0:0,1,2,3|");
+
+    {
+      auto smol = "C1C2C1C2"_smiles;
+      REQUIRE(smol);
+      CHECK(SubstructMatch(*smol, *mol).empty());
+    }
+    {
+      auto smol = "C1CCC2C1CC2"_smiles;
+      REQUIRE(smol);
+      SubstructMatchParameters sssparams;
+      sssparams.useEnhancedStereo = true;
+      sssparams.useChirality = true;
+      CHECK(SubstructMatch(*smol, *mol, sssparams).size() == 6);
+    }
+  }
+
+  SECTION("parser, confirm joint ring atoms is working with excluction") {
+    auto mol = "CCCC |jr0:0,1,2,-3|"_smarts;
+    REQUIRE(mol);
+    REQUIRE(mol->getNumAtoms() == 4);
+    CHECK(MolToSmarts(*mol) == "[C&R][C&R][C&R]C");
+    CHECK(MolToCXSmarts(*mol) == "[C&R][C&R][C&R]C |jr0:0,1,2,-3|");
+    {
+      auto smol = "C1CCC2C1CCC2"_smiles;
+      REQUIRE(smol);
+      SubstructMatchParameters sssparams;
+      sssparams.useEnhancedStereo = true;
+      sssparams.useChirality = true;
+      CHECK(SubstructMatch(*smol, *mol, sssparams).size() == 6);
+    }
+  }
+
   SECTION("CXSMARTS parsing bug") {
     {  // no cxsmarts
       auto mol = "C[C@H]([F,Cl,Br])[C@H](C)[C@@H](C)Br"_smarts;
@@ -2990,8 +3028,9 @@ TEST_CASE("Remove CX extension from SMILES", "[cxsmiles]") {
   }
 }
 
-TEST_CASE("Github #9701: SMILES round trip preserves pseudoasymmetric ring stereo",
-          "[SMILES][bug]") {
+TEST_CASE(
+    "Github #9701: SMILES round trip preserves pseudoasymmetric ring stereo",
+    "[SMILES][bug]") {
   UseLegacyStereoPerceptionFixture resetStereoPerception(false);
   SmilesWriteParams writeParams;
   writeParams.canonical = GENERATE(true, false);
