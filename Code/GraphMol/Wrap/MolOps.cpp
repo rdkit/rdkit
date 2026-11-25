@@ -1167,6 +1167,24 @@ ROMol *copyMolSubsetHelper4(const ROMol &mol, python::object path,
   return copyMolSubset(mol, *pathvect, selectionInfo, options).release();
 }
 
+std::vector<unsigned int> findBridgeheadAtomsHelper(
+    const ROMol &mol, python::object onlyWithAtoms) {
+  auto onlyWithAtomsVect = pythonObjectToVect<unsigned int>(onlyWithAtoms);
+  if (!onlyWithAtomsVect.get()) {
+    onlyWithAtomsVect = std::make_unique<std::vector<unsigned int>>();
+  }
+  return MolOps::findBridgeheadAtoms(mol, *onlyWithAtomsVect);
+}
+
+std::vector<MolOps::Bridgehead> findBridgeheadsHelper(
+    const ROMol &mol, python::object onlyWithAtoms) {
+  auto onlyWithAtomsVect = pythonObjectToVect<unsigned int>(onlyWithAtoms);
+  if (!onlyWithAtomsVect.get()) {
+    onlyWithAtomsVect = std::make_unique<std::vector<unsigned int>>();
+  }
+  return MolOps::findBridgeheads(mol, *onlyWithAtomsVect);
+}
+
 struct molops_wrapper {
   static void wrap() {
     std::string docString;
@@ -3598,10 +3616,14 @@ ARGUMENTS:\n\
     bool noproxy = true;
     RegisterVectorConverter<MolOps::Bridgehead>("BridgeheadList", noproxy);
 
-    python::def("FindBridgeheads", &MolOps::findBridgeheads,
-                (python::arg("mol")), "Find bridgehead atoms in a molecule");
-    python::def("FindBridgeheadAtoms", &MolOps::findBridgeheadAtoms,
-                (python::arg("mol")), "Find bridgehead atoms in a molecule");
+    python::def(
+        "FindBridgeheads", findBridgeheadsHelper,
+        (python::arg("mol"), python::arg("onlyWithAtoms") = python::object()),
+        "Find bridgehead atoms in a molecule");
+    python::def(
+        "FindBridgeheadAtoms", findBridgeheadAtomsHelper,
+        (python::arg("mol"), python::arg("onlyWithAtoms") = python::object()),
+        "Find bridgehead atoms in a molecule");
   }
 };
 }  // namespace RDKit

@@ -32,8 +32,8 @@ int queryIsAtomBridgehead(Atom const *at) {
       queryAtomRingBondCount(at) < 3) {
     return 0;
   }
-
-  auto bridgeheads = MolOps::findBridgeheads(at->getOwningMol());
+  std::vector<unsigned int> onlyWithAtoms{at->getIdx()};
+  auto bridgeheads = MolOps::findBridgeheads(at->getOwningMol(), onlyWithAtoms);
   for (const auto &bh : bridgeheads) {
     if (bh.atom1 == at->getIdx() || bh.atom2 == at->getIdx()) {
       return 1;

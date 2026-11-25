@@ -3400,10 +3400,11 @@ ARGUMENTS:\n\
                 "first ring involved in the bridgehead")
         .def_ro("ring2", &MolOps::Bridgehead::ring2,
                 "second ring involved in the bridgehead");
-    m.def("FindBridgeheadAtoms", &MolOps::findBridgeheadAtoms,
+    m.def("FindBridgeheadAtoms", &MolOps::findBridgeheadAtoms, "mol"_a,
+          "onlyWithAtoms"_a = nb::list(),
           "Find bridgehead atoms in a molecule");
-    m.def("FindBridgeheads", &MolOps::findBridgeheads,
-          "Find bridgeheads in a molecule");
+    m.def("FindBridgeheads", &MolOps::findBridgeheads, "mol"_a,
+          "onlyWithAtoms"_a = nb::list(), "Find bridgeheads in a molecule");
   }
 };
 

@@ -49,10 +49,12 @@ struct RDKIT_GRAPHMOL_EXPORT Bridgehead {
  *  have at least three ring bonds from these shared rings.
  *
  * @param mol the molecule to inspect
+ * @param onlyWithAtoms a list of atom indices to consider for bridgehead
+ * detection; if empty, all atoms are considered
  * @return a vector of atom indices corresponding to bridgehead atoms
  */
 RDKIT_GRAPHMOL_EXPORT std::vector<unsigned int> findBridgeheadAtoms(
-    const ROMol &mol);
+    const ROMol &mol, const std::vector<unsigned int> &onlyWithAtoms = {});
 //! finds bridgeheads in a molecule
 /*!
  *
@@ -61,9 +63,13 @@ RDKIT_GRAPHMOL_EXPORT std::vector<unsigned int> findBridgeheadAtoms(
  * three ring bonds from the shared rings.
  *
  * @param mol the molecule to inspect
+ * @param onlyWithAtoms a list of atom indices to consider for bridgehead
+ * detection; if empty, all atoms are considered. If this is provided, all
+ * bridgeheads involving atoms from the list will be returned.
  * @return a vector of Bridgehead objects
  */
-RDKIT_GRAPHMOL_EXPORT std::vector<Bridgehead> findBridgeheads(const ROMol &mol);
+RDKIT_GRAPHMOL_EXPORT std::vector<Bridgehead> findBridgeheads(
+    const ROMol &mol, const std::vector<unsigned int> &onlyWithAtoms = {});
 
 namespace details {
 // returns indices for all pairs of rings that share at least two bonds, along
@@ -71,7 +77,8 @@ namespace details {
 RDKIT_GRAPHMOL_EXPORT
 std::vector<
     std::pair<std::pair<unsigned int, unsigned int>, std::vector<unsigned int>>>
-findRingPairs(const ROMol &mol, unsigned int minCommonBonds = 2);
+findRingPairs(const ROMol &mol, unsigned int minCommonBonds = 2,
+              const std::vector<unsigned int> &onlyWithAtoms = {});
 
 }  // namespace details
 }  // namespace MolOps

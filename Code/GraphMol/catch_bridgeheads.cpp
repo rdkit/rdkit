@@ -26,15 +26,33 @@ TEST_CASE("details") {
         std::pair<std::string,
                   std::vector<std::pair<std::pair<unsigned int, unsigned int>,
                                         std::vector<unsigned int>>>>>
-        testCases{{"C1CC2CCC1C2", {{{0, 1}, {5, 7}}}},
-                  {"C1CC1C1CC2CCC1C2", {{{1, 2}, {8, 11}}}},
-                  {"C1CCCC2C1CCC2", {}},
-                  {"C1CC2CCC1C23CCC3", {{{1, 2}, {5, 10}}}}};
+        testCases{
+            {"C1CC2CCC1C2", {{{0, 1}, {5, 7}}}},
+            {"C1CC1C1CC2CCC1C2", {{{1, 2}, {8, 11}}}},
+            {"C1CCCC2C1CCC2", {}},
+            {"C1CC2CCC1C23CCC3", {{{1, 2}, {5, 10}}}},
+            {"C1CC2CCC1C2-C1CC2CCC1C2",
+             {
+                 {{0, 1}, {5, 15}},
+                 {{2, 3}, {12, 16}},
+             }},
+        };
     for (const auto &[smiles, expected] : testCases) {
       INFO(smiles);
       auto mol = v2::SmilesParse::MolFromSmiles(smiles);
       REQUIRE(mol);
       auto ringPairs = RDKit::MolOps::details::findRingPairs(*mol);
+      if (ringPairs != expected) {
+        for (const auto &pair : ringPairs) {
+          std::cerr << "Ring pair: " << pair.first.first << ","
+                    << pair.first.second << std::endl;
+          std::cerr << "Atoms: ";
+          for (auto atom : pair.second) {
+            std::cerr << atom << " ";
+          }
+          std::cerr << std::endl;
+        }
+      }
       CHECK(ringPairs == expected);
     }
   }
@@ -47,15 +65,24 @@ TEST_CASE("details") {
             {"C1CC1C1CC2CCC1C2", {{{1, 2}, {8, 11}}}},
             {"C1CCCC2C1CCC2", {{{0, 1}, {4}}}},
         };
-    //          = {
-    //     {"C1CC1C1CC2CCC1C2", {{{1, 2}, std::vector<unsigned int>{8, 11}}}},
-    //     {"C1CCCC2C1CCC2", {{{0, 1}, std::vector<unsigned int>{4}}}},
-    // };
     for (const auto &[smiles, expected] : testCases) {
       INFO(smiles);
       auto mol = v2::SmilesParse::MolFromSmiles(smiles);
       REQUIRE(mol);
       auto ringPairs = RDKit::MolOps::details::findRingPairs(*mol, 1);
+      CHECK(ringPairs == expected);
+    }
+  }
+  SECTION("Find ring pairs, change considered atoms") {
+    auto mol = "C1CC2CCC1C2-C1CC2CCC1C2"_smiles;
+    REQUIRE(mol);
+    {
+      auto onlyWithAtoms = std::vector<unsigned int>{5};
+      auto expected =
+          std::vector<std::pair<std::pair<unsigned int, unsigned int>,
+                                std::vector<unsigned int>>>{{{0, 1}, {5, 15}}};
+      auto ringPairs =
+          RDKit::MolOps::details::findRingPairs(*mol, 2, onlyWithAtoms);
       CHECK(ringPairs == expected);
     }
   }
@@ -83,21 +110,29 @@ TEST_CASE("Bridgeheads") {
             },
             // norbornane with a spiro link on the bridge
             {"C1CC2CCC1C23CCC3", {{2, 5, {0, 1, 2, 6, 5}, {2, 3, 4, 5, 6}}}},
+            // two spiro-linked norbornanes
+            {"C12(C3CCC1CC3)C1CCC2CC1",
+             {{1, 4, {0, 1, 2, 3, 4}, {0, 1, 6, 5, 4}},
+              {7, 10, {0, 7, 8, 9, 10}, {0, 7, 12, 11, 10}}}},
+            // cubane doesn't have any bridgeheads
+            {"C12C3C4C1C5C2C3C45", {}},
         };
     for (const auto &[smiles, expected] : testCases) {
       INFO(smiles);
       auto mol = v2::SmilesParse::MolFromSmiles(smiles);
       REQUIRE(mol);
       auto bridgeheads = MolOps::findBridgeheads(*mol);
-      std::cerr << "Bridgeheads, N=" << bridgeheads.size() << std::endl;
-      for (const auto &bh : bridgeheads) {
-        std::cerr << "\t" << bh << std::endl;
-      }
-      std::cerr << std::endl;
       CHECK(bridgeheads == expected);
-      if (!bridgeheads.empty()) {
-        std::cerr << "!!!!!" << bridgeheads[0] << std::endl;
-      }
+    }
+  }
+  SECTION("test onlyWithAtoms parameter") {
+    auto m = "C1C3CC2CC(CC1C2)C3"_smiles;
+    REQUIRE(m);
+    std::vector<unsigned int> onlyWithAtoms = {1, 5};
+    auto bridgeheads = MolOps::findBridgeheads(*m, onlyWithAtoms);
+    CHECK(bridgeheads.size() == 5);
+    for (const auto &bh : bridgeheads) {
+      CHECK((bh.atom1 == 1 || bh.atom1 == 5 || bh.atom2 == 1 || bh.atom2 == 5));
     }
   }
 }
@@ -117,5 +152,13 @@ TEST_CASE("Bridgehead atoms") {
       auto bridgeheads = MolOps::findBridgeheadAtoms(*mol);
       CHECK(bridgeheads == expected);
     }
+  }
+  SECTION("test onlyWithAtoms parameter") {
+    // adamantane
+    auto m = "C1C3CC2CC(CC1C2)C3"_smiles;
+    REQUIRE(m);
+    std::vector<unsigned int> onlyWithAtoms = {1, 5};
+    auto bridgeheads = MolOps::findBridgeheadAtoms(*m, onlyWithAtoms);
+    CHECK(bridgeheads == onlyWithAtoms);
   }
 }

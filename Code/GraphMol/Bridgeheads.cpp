@@ -25,12 +25,28 @@ namespace details {
 // with the shared bond indices
 std::vector<
     std::pair<std::pair<unsigned int, unsigned int>, std::vector<unsigned int>>>
-findRingPairs(const ROMol &mol, unsigned int minCommonBonds) {
+findRingPairs(const ROMol &mol, unsigned int minCommonBonds,
+              const std::vector<unsigned int> &onlyWithAtoms) {
   const auto &ringInfo = mol.getRingInfo();
   const auto &rings = ringInfo->bondRings();
+
   std::vector<boost::dynamic_bitset<>> ringMasks(rings.size());
   for (auto i = 0u; i < rings.size(); ++i) {
     ringMasks[i].resize(mol.getNumBonds());
+    bool hasAtom = onlyWithAtoms.empty();
+    if (!onlyWithAtoms.empty()) {
+      hasAtom = std::ranges::any_of(rings[i], [&mol, &onlyWithAtoms](auto b) {
+        const auto bnd = mol.getBondWithIdx(b);
+        const auto begIdx = bnd->getBeginAtomIdx();
+        const auto endIdx = bnd->getEndAtomIdx();
+        return std::ranges::any_of(onlyWithAtoms, [&begIdx, &endIdx](auto ai) {
+          return begIdx == ai || endIdx == ai;
+        });
+      });
+    }
+    if (!hasAtom) {
+      continue;
+    }
     for (auto b : rings[i]) {
       ringMasks[i].set(b);
     }
@@ -57,14 +73,15 @@ findRingPairs(const ROMol &mol, unsigned int minCommonBonds) {
 }
 }  // namespace details
 
-std::vector<Bridgehead> findBridgeheads(const ROMol &mol) {
+std::vector<Bridgehead> findBridgeheads(
+    const ROMol &mol, const std::vector<unsigned int> &onlyWithAtoms) {
   // FIX: verify that SSSR is actually sufficient for bridgehead detection
   if (!mol.getRingInfo()->isSssrOrBetter()) {
     MolOps::findSSSR(mol);
   }
 
   // find pairs of rings that share at least two bonds:
-  const auto ringPairs = details::findRingPairs(mol, 2);
+  const auto ringPairs = details::findRingPairs(mol, 2, onlyWithAtoms);
 
   // mark all bonds that are part of the shared rings
   const auto ringinfo = mol.getRingInfo();
@@ -79,20 +96,21 @@ std::vector<Bridgehead> findBridgeheads(const ROMol &mol) {
 
   std::unordered_map<unsigned int, unsigned int> atomSharedRingBondCount;
   // lambda to count the number of shared ring bonds for at atom
-  auto getAtomSharedRingBondCount = [&atomSharedRingBondCount,
-                                     &bondsAreInSharedRings,
-                                     &mol](unsigned int ai) {
-    if (atomSharedRingBondCount.find(ai) == atomSharedRingBondCount.end()) {
-      unsigned int ringBondCount = 0;
-      for (const auto bnd : mol.atomBonds(mol.getAtomWithIdx(ai))) {
-        if (bondsAreInSharedRings.test(bnd->getIdx())) {
-          ++ringBondCount;
+  auto getAtomSharedRingBondCount =
+      [&atomSharedRingBondCount, &bondsAreInSharedRings, &mol](
+          unsigned int ai, unsigned int i, unsigned int j) {
+        const auto &ringi = mol.getRingInfo()->bondRings()[i];
+        const auto &ringj = mol.getRingInfo()->bondRings()[j];
+        unsigned int ringBondCount = 0;
+        for (const auto bnd : mol.atomBonds(mol.getAtomWithIdx(ai))) {
+          if (bondsAreInSharedRings.test(bnd->getIdx()) &&
+              (std::ranges::find(ringi, bnd->getIdx()) != ringi.end() ||
+               std::ranges::find(ringj, bnd->getIdx()) != ringj.end())) {
+            ++ringBondCount;
+          }
         }
-      }
-      atomSharedRingBondCount[ai] = ringBondCount;
-    }
-    return atomSharedRingBondCount[ai];
-  };
+        return ringBondCount;
+      };
 
   const auto atomRings = mol.getRingInfo()->atomRings();
   std::vector<Bridgehead> bridgeheads;
@@ -107,7 +125,7 @@ std::vector<Bridgehead> findBridgeheads(const ROMol &mol) {
     for (const auto bi : sharedBonds) {
       auto bondi = mol.getBondWithIdx(bi);
       for (const auto ai : {bondi->getBeginAtomIdx(), bondi->getEndAtomIdx()}) {
-        if (getAtomSharedRingBondCount(ai) < 3) {
+        if (getAtomSharedRingBondCount(ai, i, j) < 3) {
           continue;
         }
         if (std::ranges::find(ringi, ai) != ringi.end() &&
@@ -122,6 +140,12 @@ std::vector<Bridgehead> findBridgeheads(const ROMol &mol) {
       unsigned int atom1 = *it;
       ++it;
       unsigned int atom2 = *it;
+      if (!onlyWithAtoms.empty()) {
+        if (std::ranges::find(onlyWithAtoms, atom1) == onlyWithAtoms.end() &&
+            std::ranges::find(onlyWithAtoms, atom2) == onlyWithAtoms.end()) {
+          continue;
+        }
+      }
       bridgeheads.emplace_back(
           atom1, atom2, std::vector<unsigned int>(ringi.begin(), ringi.end()),
           std::vector<unsigned int>(ringj.begin(), ringj.end()));
@@ -132,16 +156,25 @@ std::vector<Bridgehead> findBridgeheads(const ROMol &mol) {
   return bridgeheads;
 }
 
-std::vector<unsigned int> findBridgeheadAtoms(const ROMol &mol) {
-  auto bridgeheads = findBridgeheads(mol);
+std::vector<unsigned int> findBridgeheadAtoms(
+    const ROMol &mol, const std::vector<unsigned int> &onlyWithAtoms) {
+  auto bridgeheads = findBridgeheads(mol, onlyWithAtoms);
   std::set<unsigned int> bridgeheadAtoms;
   for (const auto &bh : bridgeheads) {
-    bridgeheadAtoms.insert(bh.atom1);
-    bridgeheadAtoms.insert(bh.atom2);
+    if (!onlyWithAtoms.empty()) {
+      if (std::ranges::find(onlyWithAtoms, bh.atom1) != onlyWithAtoms.end()) {
+        bridgeheadAtoms.insert(bh.atom1);
+      }
+      if (std::ranges::find(onlyWithAtoms, bh.atom2) != onlyWithAtoms.end()) {
+        bridgeheadAtoms.insert(bh.atom2);
+      }
+    } else {
+      bridgeheadAtoms.insert(bh.atom1);
+      bridgeheadAtoms.insert(bh.atom2);
+    }
   }
   std::vector<unsigned int> result(bridgeheadAtoms.begin(),
                                    bridgeheadAtoms.end());
-  // Implementation for finding bridgehead atoms goes here
   return result;
 }
 
