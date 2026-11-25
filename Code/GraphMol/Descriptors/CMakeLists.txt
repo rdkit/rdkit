@@ -16,6 +16,7 @@ rdkit_library(Descriptors
               DCLV.cpp
               GraphDescriptors.cpp EState.cpp MiscDescriptors.cpp
               FragmentDescriptors.cpp QED.cpp SpacialScore.cpp
+              SAScore.cpp
               ${DESC3D_SOURCES}
               LINK_LIBRARIES PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch MolTransforms
                  ChemTransforms Fingerprints GraphMol EigenSolvers RDGeneral)
@@ -33,6 +34,7 @@ rdkit_headers(Crippen.h BCUT.h Lipinski.h
               DCLV.h
               GraphDescriptors.h EState.h MiscDescriptors.h
               FragmentDescriptors.h QED.h SpacialScore.h
+              SAScore.h
               ${DESC3D_HDRS}
               DEST GraphMol/Descriptors)
 
