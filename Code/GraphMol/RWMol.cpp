@@ -705,6 +705,15 @@ void RWMol::batchRemoveBonds() {
             [](const Bond *lhs, const Bond *rhs) {
               return lhs->getIdx() > rhs->getIdx();
             });
+  // Remove the SubstanceGroups referencing any of the bonds all at once, since
+  // doing it for each bond would be quadratic.
+  std::vector<unsigned int> bondIndices;
+  bondIndices.reserve(bondsToRemove.size());
+  for (auto it = bondsToRemove.rbegin(); it != bondsToRemove.rend(); ++it) {
+    bondIndices.push_back((*it)->getIdx());
+  }
+  removeSubstanceGroupsReferencingBonds(*this, bondIndices);
+
   unsigned int min_idx = getNumBonds();
   for (auto *bnd : bondsToRemove) {
     unsigned int idx = bnd->getIdx();
@@ -750,7 +759,6 @@ void RWMol::batchRemoveBonds() {
       }
     }
 
-    removeSubstanceGroupsReferencingBond(*this, idx);
     // Remove this bond from any stereo group
     removeBondFromGroups(bnd, d_stereo_groups);
 
@@ -796,6 +804,16 @@ void RWMol::batchRemoveAtoms() {
   }
 
   auto &delAtoms = *dp_delAtoms;
+  // Remove the SubstanceGroups referencing any of the atoms all at once, since
+  // doing it for each atom would be quadratic.
+  std::vector<unsigned int> atomIndices;
+  for (unsigned int i = 0; i < delAtoms.size(); ++i) {
+    if (delAtoms[i]) {
+      atomIndices.push_back(i);
+    }
+  }
+  removeSubstanceGroupsReferencingAtoms(*this, atomIndices);
+
   for (unsigned int i = rdcast<unsigned int>(delAtoms.size()); i > 0; --i) {
     if (!delAtoms[i - 1]) {
       continue;
@@ -869,8 +887,6 @@ void RWMol::batchRemoveAtoms() {
         }
       }
     }
-
-    removeSubstanceGroupsReferencingAtom(*this, idx);
 
     // Remove this atom from any stereo group
     removeAtomFromGroups(atom, d_stereo_groups);

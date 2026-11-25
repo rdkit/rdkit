@@ -8,6 +8,10 @@
 //  of the RDKit source tree.
 //
 #include "RDKitBase.h"
+#include <algorithm>
+#include <cstdint>
+#include <functional>
+#include <limits>
 #include <list>
 #include "QueryAtom.h"
 #include "QueryOps.h"
@@ -862,33 +866,229 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount,
       // This was part of github #1810
       adjustStereoAtomsIfRequired(mol, atom, heavyAtom, isRemoved);
     }
-
-    // remove the bond from any SGroups that might include it.
-    for (auto &sg : getSubstanceGroups(mol)) {
-      sg.removeBondWithIdx(bond->getIdx());
-    }
   }
 
-  // Finally, remove the atom from any SGroups that might include it, so that
-  // the SGroups don't get removed in removeAtom(). Since we allow removing
-  // SGroup SAP lvidx H atoms, we need to check for those and update them.
-  for (auto &sg : getSubstanceGroups(mol)) {
-    sg.removeAtomWithIdx(idx);
-    sg.removeParentAtomWithIdx(idx);
+  // (the H and its bonds are removed from any SGroups by
+  // removeHsFromSubstanceGroups())
 
-    for (auto &sap : sg.getAttachPoints()) {
-      if (sap.lvIdx == static_cast<int>(idx)) {
-        sap.lvIdx = -1;
-      }
-    }
-  }
   // computed properties will be cleared after all hydrogens are removed
   bool clearProps = false;
   mol.removeAtom(atom, clearProps);
 }
 
+// Removes the Hs to be removed, and their bonds, from any SGroups that include
+// them, so that the SGroups don't get removed when the atoms are removed. Since
+// we allow removing SGroup SAP lvidx H atoms, we need to check for those and
+// update them. This is done for all the Hs at once, since doing it for each H
+// would be quadratic.
+void removeHsFromSubstanceGroups(RWMol &mol,
+                                 const boost::dynamic_bitset<> &atomsToRemove) {
+  auto &sgs = getSubstanceGroups(mol);
+  if (sgs.empty()) {
+    return;
+  }
+  boost::dynamic_bitset<> bondsToRemove(mol.getNumBonds());
+  for (auto atom : mol.atoms()) {
+    if (atomsToRemove[atom->getIdx()]) {
+      for (auto bond : mol.atomBonds(atom)) {
+        bondsToRemove.set(bond->getIdx());
+      }
+    }
+  }
+  // Like SubstanceGroup::remove{Atom,ParentAtom,Bond}WithIdx() for each
+  // index, this only removes the first occurrence of each index. seen is
+  // scratch space for it, which is all false between calls; it's allocated
+  // once, since allocating it for each SGroup would be quadratic.
+  boost::dynamic_bitset<> seen(std::max(mol.getNumAtoms(), mol.getNumBonds()));
+  auto removeIndices = [&seen](const std::vector<unsigned int> &indices,
+                               const boost::dynamic_bitset<> &toRemove,
+                               std::vector<unsigned int> &remaining) {
+    bool changed = false;
+    for (auto idx : indices) {
+      if (idx < toRemove.size() && toRemove[idx] && !seen[idx]) {
+        seen.set(idx);
+        changed = true;
+      } else {
+        remaining.push_back(idx);
+      }
+    }
+    for (auto idx : indices) {
+      if (idx < seen.size()) {
+        seen.reset(idx);
+      }
+    }
+    return changed;
+  };
+  for (auto &sg : sgs) {
+    std::vector<unsigned int> remaining;
+    if (removeIndices(sg.getBonds(), bondsToRemove, remaining)) {
+      sg.setBonds(std::move(remaining));
+    }
+    remaining.clear();
+    if (removeIndices(sg.getAtoms(), atomsToRemove, remaining)) {
+      sg.setAtoms(std::move(remaining));
+    }
+    remaining.clear();
+    if (removeIndices(sg.getParentAtoms(), atomsToRemove, remaining)) {
+      sg.setParentAtoms(std::move(remaining));
+    }
+    for (auto &sap : sg.getAttachPoints()) {
+      if (sap.lvIdx >= 0 &&
+          static_cast<unsigned int>(sap.lvIdx) < atomsToRemove.size() &&
+          atomsToRemove[sap.lvIdx]) {
+        sap.lvIdx = -1;
+      }
+    }
+  }
+}
+
+// Determines which H atoms can't be removed because of SGroups. This is
+// computed once, when constructed, instead of looking at all the SGroups for
+// each H, which would be quadratic (or worse, since looking up a bond by index
+// is linear in the number of bonds).
+//
+// With removeInSGroups, H atoms with special roles in an SGroup can't be
+// removed; this checks the SGroups' bonds, attach points and CStates in the
+// same order as before, and a malformed SGroup (with a bond index out of
+// range, or a bond with neither atom in the SGroup) only causes an exception
+// when checking an H that isn't found to have a special role before reaching
+// it, as before. Otherwise, H atoms included in any SGroup can't be removed.
+class SGroupHChecker {
+ public:
+  SGroupHChecker(const ROMol &mol, const RemoveHsParameters &ps) : d_mol(mol) {
+    if (!getSubstanceGroups(mol).empty()) {
+      init(ps.removeInSGroups);
+    }
+  }
+
+  // returns whether the H atom can't be removed because of the SGroups
+  bool isProtected(const Atom *atom) const {
+    if (getSubstanceGroups(d_mol).empty()) {
+      return false;
+    }
+    if (d_firstRole[atom->getIdx()] < d_firstInvalid) {
+      return true;
+    }
+    if (d_throwInvalid) {
+      d_throwInvalid();
+    }
+    return false;
+  }
+
+ private:
+  static constexpr auto none = std::numeric_limits<std::uint64_t>::max();
+
+  void init(bool removeInSGroups) {
+    const auto numAtoms = d_mol.getNumAtoms();
+    d_firstRole.assign(numAtoms, none);
+    std::uint64_t position = 0;
+    auto setRole = [this, &position, numAtoms](unsigned int idx) {
+      if (idx < numAtoms && d_firstRole[idx] == none) {
+        d_firstRole[idx] = position;
+      }
+    };
+    if (!removeInSGroups) {
+      for (const auto &sg : getSubstanceGroups(d_mol)) {
+        // like SubstanceGroup::includesAtom()
+        for (auto idx : sg.getAtoms()) {
+          setRole(idx);
+        }
+        for (auto idx : sg.getParentAtoms()) {
+          setRole(idx);
+        }
+        for (const auto &sap : sg.getAttachPoints()) {
+          setRole(sap.aIdx);
+          if (sap.lvIdx >= 0) {
+            setRole(sap.lvIdx);
+          }
+        }
+      }
+      return;
+    }
+
+    std::vector<const Bond *> bonds(d_mol.getNumBonds());
+    for (const auto bond : d_mol.bonds()) {
+      bonds[bond->getIdx()] = bond;
+    }
+    boost::dynamic_bitset<> inSGroup(numAtoms);
+    for (const auto &sg : getSubstanceGroups(d_mol)) {
+      for (auto idx : sg.getAtoms()) {
+        if (idx < numAtoms) {
+          inSGroup.set(idx);
+        }
+      }
+      // The H atom is one of the "caps" of the SGroup. Technically,
+      // it's not part of the group, but it defines its boundaries.
+      for (auto bondIdx : sg.getBonds()) {
+        if (bondIdx >= bonds.size()) {
+          // getBondType() throws
+          setInvalid(position, [&sg, bondIdx] { sg.getBondType(bondIdx); });
+          break;
+        }
+        const auto bond = bonds[bondIdx];
+        const bool beginIn = inSGroup[bond->getBeginAtomIdx()];
+        const bool endIn = inSGroup[bond->getEndAtomIdx()];
+        if (!beginIn && !endIn) {
+          // getBondType() throws
+          setInvalid(position, [&sg, bondIdx] { sg.getBondType(bondIdx); });
+          break;
+        }
+        if (beginIn != endIn) {  // an XBOND
+          setRole(bond->getBeginAtomIdx());
+          setRole(bond->getEndAtomIdx());
+        }
+        ++position;
+      }
+      for (auto idx : sg.getAtoms()) {
+        if (idx < numAtoms) {
+          inSGroup.reset(idx);
+        }
+      }
+      if (d_throwInvalid) {
+        return;
+      }
+
+      // The H atoms is an attach point. This would be weird, but is possible.
+      // (if it is a 'leaving atom' we don't care, though)
+      for (const auto &sap : sg.getAttachPoints()) {
+        setRole(sap.aIdx);
+        ++position;
+      }
+
+      // The bond to the H atom defines a CState
+      for (const auto &cs : sg.getCStates()) {
+        if (cs.bondIdx >= bonds.size()) {
+          // getBondWithIdx() throws
+          const auto bondIdx = cs.bondIdx;
+          setInvalid(position,
+                     [this, bondIdx] { d_mol.getBondWithIdx(bondIdx); });
+          return;
+        }
+        setRole(bonds[cs.bondIdx]->getBeginAtomIdx());
+        setRole(bonds[cs.bondIdx]->getEndAtomIdx());
+        ++position;
+      }
+    }
+  }
+
+  void setInvalid(std::uint64_t position, std::function<void()> throwIt) {
+    d_firstInvalid = position;
+    d_throwInvalid = std::move(throwIt);
+  }
+
+  const ROMol &d_mol;
+  // for each atom, the position, in the order in which the SGroups are
+  // checked, at which it's first found to have a special role
+  std::vector<std::uint64_t> d_firstRole;
+  // the position of the first malformed SGroup bond, and a function throwing
+  // the exception it caused before
+  std::uint64_t d_firstInvalid = none;
+  std::function<void()> d_throwInvalid;
+};
+
 bool shouldRemoveH(const RWMol &mol, const Atom *atom,
-                   const RemoveHsParameters &ps) {
+                   const RemoveHsParameters &ps,
+                   const SGroupHChecker &sgroupChecker) {
   if (atom->getAtomicNum() != 1) {
     return false;
   }
@@ -916,43 +1116,10 @@ bool shouldRemoveH(const RWMol &mol, const Atom *atom,
     return false;
   }
 
-  if (ps.removeInSGroups) {
-    // If removing H in SGroups, do not remove H atoms in special
-    // roles in the SGroup
-    for (const auto &sg : getSubstanceGroups(mol)) {
-      // The H atom is one of the "caps" of the SGroup. Technically,
-      // it's not part of the group, but it defines its boundaries.
-      for (const auto &bond_idx : sg.getBonds()) {
-        if (sg.getBondType(bond_idx) == SubstanceGroup::BondType::XBOND) {
-          auto bond = mol.getBondWithIdx(bond_idx);
-          if (bond->getBeginAtom() == atom || bond->getEndAtom() == atom) {
-            return false;
-          }
-        }
-      }
-
-      for (const auto &sap : sg.getAttachPoints()) {
-        // The H atoms is an attach point. This would be weird, but is possible.
-        // (if it is a 'leaving atom' we don't care, though)
-        if (sap.aIdx == atom->getIdx()) {
-          return false;
-        }
-      }
-
-      for (const auto &cs : sg.getCStates()) {
-        // The bond to the H atom defines a CState
-        auto bond = mol.getBondWithIdx(cs.bondIdx);
-        if (bond->getBeginAtom() == atom || bond->getEndAtom() == atom) {
-          return false;
-        }
-      }
-    }
-  } else {
-    for (const auto &sg : getSubstanceGroups(mol)) {
-      if (sg.includesAtom(atom->getIdx())) {
-        return false;
-      }
-    }
+  // If removing H in SGroups, do not remove H atoms in special roles in the
+  // SGroup; otherwise, do not remove H atoms in SGroups
+  if (sgroupChecker.isProtected(atom)) {
+    return false;
   }
   if (!ps.removeHydrides && atom->getFormalCharge() == -1) {
     return false;
@@ -1097,8 +1264,9 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
   }
   boost::dynamic_bitset<> atomsToRemove{mol.getNumAtoms(), 0};
 
+  const SGroupHChecker sgroupChecker(mol, ps);
   for (auto atom : mol.atoms()) {
-    if (shouldRemoveH(mol, atom, ps)) {
+    if (shouldRemoveH(mol, atom, ps, sgroupChecker)) {
       atomsToRemove.set(atom->getIdx());
     }
   }  // end of the loop over atoms
@@ -1117,6 +1285,7 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
   // same results as if they had been removed immediately.
   mol.beginBatchEdit();
   try {
+    removeHsFromSubstanceGroups(mol, atomsToRemove);
     for (int idx = mol.getNumAtoms() - 1; idx >= 0; --idx) {
       if (atomsToRemove[idx]) {
         const RemovedAtoms isRemoved{atomsToRemove,
