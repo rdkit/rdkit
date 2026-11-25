@@ -8,6 +8,7 @@
 //  of the RDKit source tree.
 //
 #include <string>
+#include <boost/numeric/conversion/cast.hpp>
 #include <catch2/catch_all.hpp>
 #include "Dict.h"
 #include "RDProps.h"
@@ -120,7 +121,8 @@ TEST_CASE("streamReadStringVec rejects element counts that do not fit in size_t"
     // after which the read loop ran past the end of the vector
     SECTION("count that wraps around on 32-bit platforms") {
       auto ss = makeStream((std::uint64_t(1) << 32) + 1);
-      CHECK_THROWS(RDKit::streamReadStringVec(ss, v, 0));
+      CHECK_THROWS_AS(RDKit::streamReadStringVec(ss, v, 0),
+                      boost::numeric::bad_numeric_cast);
     }
   }
 }
