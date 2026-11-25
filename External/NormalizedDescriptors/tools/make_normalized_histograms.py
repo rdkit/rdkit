@@ -58,6 +58,7 @@ import bisect
 import gzip
 import math
 import multiprocessing
+import operator
 import os
 import sys
 
@@ -77,6 +78,35 @@ def log(*args):
   print(*args, file=sys.stderr, flush=True)
 
 
+def safe_literal_eval(txt):
+  node = ast.parse(txt, mode='eval').body
+
+  def _eval(n):
+      if isinstance(n, ast.Constant):
+          return n.value
+      elif isinstance(n, ast.Name):
+          low = n.id.lower()
+          if low == 'nan':
+              return float('nan')
+          elif low == 'inf':
+              return float('inf')
+      elif isinstance(n, ast.UnaryOp) and isinstance(n.op, (ast.UAdd, ast.USub)):
+          operand = _eval(n.operand)
+          if isinstance(operand, (int, float)):
+              return +operand if isinstance(n.op, ast.UAdd) else -operand
+      elif isinstance(n, ast.List):
+          return [_eval(x) for x in n.elts]
+      elif isinstance(n, ast.Tuple):
+          return tuple(_eval(x) for x in n.elts)
+      elif isinstance(n, ast.Set):
+          return {_eval(x) for x in n.elts}
+      elif isinstance(n, ast.Dict):
+          return {_eval(k): _eval(v) for k, v in zip(n.keys, n.values)}
+
+      raise ValueError(f"Unsupported syntax: {ast.dump(n)}")
+
+  return _eval(node)
+
 # ---------------------------------------------------------------------------
 # samples (descriptastorus data/d_descriptors format: gzipped python list)
 
@@ -84,11 +114,9 @@ def log(*args):
 def read_sample(path):
   with gzip.open(path, "rt") as f:
     txt = f.read()
-  try:
-    vals = ast.literal_eval(txt)
-  except ValueError:
-    # older files can contain bare inf / nan
-    vals = eval(txt, {"__builtins__": {}}, {"inf": math.inf, "nan": math.nan})
+
+  vals = safe_literal_eval(txt)
+
   vals = np.asarray(vals, dtype=float)
   return vals[np.isfinite(vals)]
 
