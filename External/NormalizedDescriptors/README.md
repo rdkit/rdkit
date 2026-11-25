@@ -50,7 +50,7 @@ C++:
 
 using namespace RDKit::NormalizedDescriptors;
 NormalizedProperties props;  // reuse it; construction looks up the registry
-const auto &names = props.getDescriptorNames();
+const auto &names = props.getPropertyNames();
 std::vector<double> vals = props.computeProperties(mol);   // normalized
 std::vector<double> raw = props.computeRawProperties(mol); // NaN on failure
 
@@ -67,7 +67,7 @@ from rdkit.Chem import rdNormalizedDescriptors as rdnd
 props = rdnd.NormalizedProperties()
 mol = Chem.MolFromSmiles('c1ccccc1O')
 vals = props.ComputeProperties(mol)
-names = props.GetDescriptorNames()
+names = props.GetPropertyNames()
 rdnd.NormalizeDescriptor('MolLogP', 2.5)
 ```
 
