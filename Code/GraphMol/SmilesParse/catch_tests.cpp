@@ -992,11 +992,11 @@ TEST_CASE("Github #4319 add CXSMARTS support") {
   }
 
   SECTION("parser, confirm joint ring atoms is working") {
-    auto mol = "CCCC |jr0:0,1,2,3|"_smarts;
+    auto mol = "CCCC |jr:0,1,2,3|"_smarts;
     REQUIRE(mol);
     REQUIRE(mol->getNumAtoms() == 4);
     CHECK(MolToSmarts(*mol) == "[C&R][C&R][C&R][C&R]");
-    CHECK(MolToCXSmarts(*mol) == "[C&R][C&R][C&R][C&R] |jr0:0,1,2,3|");
+    CHECK(MolToCXSmarts(*mol) == "[C&R][C&R][C&R][C&R] |jr:0,1,2,3|");
 
     {
       auto smol = "C1C2C1C2"_smiles;
@@ -1014,11 +1014,11 @@ TEST_CASE("Github #4319 add CXSMARTS support") {
   }
 
   SECTION("parser, confirm joint ring atoms is working with excluction") {
-    auto mol = "CCCC |jr0:0,1,2,-3|"_smarts;
+    auto mol = "CCCC |jr:0,1,2,-3|"_smarts;
     REQUIRE(mol);
     REQUIRE(mol->getNumAtoms() == 4);
-    CHECK(MolToSmarts(*mol) == "[C&R][C&R][C&R]C");
-    CHECK(MolToCXSmarts(*mol) == "[C&R][C&R][C&R]C |jr0:0,1,2,-3|");
+    CHECK(MolToSmarts(*mol) == "[C&R][C&R][C&R][C&R]");
+    CHECK(MolToCXSmarts(*mol) == "[C&R][C&R][C&R][C&R] |jr:0,1,2,-3|");
     {
       auto smol = "C1CCC2C1CCC2"_smiles;
       REQUIRE(smol);

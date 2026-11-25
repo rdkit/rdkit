@@ -44,9 +44,6 @@ struct JointRingConstraint {
   std::vector<unsigned int> excludedAtoms;
 };
 
-std::vector<JointRingConstraint> collectJointRings(
-    const ROMol &mol);  // TODO move to details
-
 struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
   bool useChirality = false;  //!< Use chirality in determining whether or not
                               //!< atoms/bonds match

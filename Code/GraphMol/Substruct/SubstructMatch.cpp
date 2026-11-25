@@ -34,7 +34,33 @@
 #include "vf2.hpp"
 
 namespace RDKit {
+
 namespace detail {
+
+std::vector<JointRingConstraint> collectJointRings(const ROMol &mol) {
+  std::vector<JointRingConstraint> jrToAtomIdx;
+  auto transfer = [&jrToAtomIdx](const auto &b, const auto value,
+                                 const bool exclude = false) {
+    for (const auto idx : b) {
+      if (idx >= jrToAtomIdx.size()) {
+        jrToAtomIdx.resize(idx + 1u);
+      }
+      if (exclude) {
+        jrToAtomIdx[idx].excludedAtoms.emplace_back(value);
+      } else {
+        jrToAtomIdx[idx].jointAtoms.emplace_back(value);
+      }
+    }
+  };
+  for (const auto atom : mol.atoms()) {
+    JointRingConstraint jrIndices;
+    if (atom->getPropIfPresent(common_properties::_CXJointRingIDs, jrIndices)) {
+      transfer(jrIndices.jointAtoms, atom->getIdx());
+      transfer(jrIndices.excludedAtoms, atom->getIdx(), true);
+    }
+  }
+  return jrToAtomIdx;
+}
 
 namespace {
 bool hasChiralLabel(const Atom *at) {
@@ -121,31 +147,6 @@ typedef struct {
   const SubstructMatchParameters &params;
 } ResSubstructMatchHelperArgs_;
 
-std::vector<JointRingConstraint> collectJointRings(const ROMol &mol) {
-  std::vector<JointRingConstraint> jrToAtomIdx;
-  auto transfer = [&jrToAtomIdx](const auto &b, const auto value,
-                                 const bool exclude = false) {
-    for (const auto idx : b) {
-      if (idx >= jrToAtomIdx.size()) {
-        jrToAtomIdx.resize(idx + 1u);
-      }
-      if (exclude) {
-        jrToAtomIdx[idx].excludedAtoms.emplace_back(value);
-      } else {
-        jrToAtomIdx[idx].jointAtoms.emplace_back(value);
-      }
-    }
-  };
-  for (const auto atom : mol.atoms()) {
-    JointRingConstraint jrIndices;
-    if (atom->getPropIfPresent(common_properties::_CXJointRingIDs, jrIndices)) {
-      transfer(jrIndices.jointAtoms, atom->getIdx());
-      transfer(jrIndices.excludedAtoms, atom->getIdx(), true);
-    }
-  }
-  return jrToAtomIdx;
-}
-
 bool insertIfNeeded(std::set<MatchVectType> &matches, const MatchVectType &m) {
   bool shouldInsert = true;
   std::unordered_set<int> matchAsSet;
@@ -219,7 +220,7 @@ MolMatchFinalCheckFunctor::MolMatchFinalCheckFunctor(
       }
     }
   }
-  d_jointRingAtoms = collectJointRings(mol);
+  d_jointRingAtoms = detail::collectJointRings(query);
   if (d_jointRingAtoms.size()) {
     d_initializedMasked = boost::dynamic_bitset<>(mol.getNumAtoms());
     d_ringMasks = std::vector<boost::dynamic_bitset<>>(

@@ -1714,30 +1714,50 @@ std::string quote_string(const std::string &txt,
   return res;
 }
 
+// TODO move somewhere shared
+std::vector<JointRingConstraint> collectJointRings(const ROMol &mol) {
+  std::vector<JointRingConstraint> jrToAtomIdx;
+  auto transfer = [&jrToAtomIdx](const auto &b, const auto value,
+                                 const bool exclude = false) {
+    for (const auto idx : b) {
+      if (idx >= jrToAtomIdx.size()) {
+        jrToAtomIdx.resize(idx + 1u);
+      }
+      if (exclude) {
+        jrToAtomIdx[idx].excludedAtoms.emplace_back(value);
+      } else {
+        jrToAtomIdx[idx].jointAtoms.emplace_back(value);
+      }
+    }
+  };
+  for (const auto atom : mol.atoms()) {
+    JointRingConstraint jrIndices;
+    if (atom->getPropIfPresent(common_properties::_CXJointRingIDs, jrIndices)) {
+      transfer(jrIndices.jointAtoms, atom->getIdx());
+      transfer(jrIndices.excludedAtoms, atom->getIdx(), true);
+    }
+  }
+  return jrToAtomIdx;
+}
+
 std::string get_joint_ring_atoms(const ROMol &mol,
                                  const std::vector<unsigned int> &atomOrder) {
   std::vector<JointRingConstraint> jointRings = collectJointRings(mol);
   std::stringstream res;
-  for (auto i : std::views::iota(0u, jointRings.size())) {
-    res << "jr" << i << ":";
-    const auto &[joint, excluded] = jointRings[i];
-    if (joint.size()) {
-      res << atomOrder[*joint.begin()];
-      for (auto atmIdx : joint | std::views::drop(1)) {
-        res << "," << atomOrder[atmIdx];
-      }
-      if (excluded.size()) {
-        res << ",";
-      }
+  for (const auto &[joint, excluded] : jointRings) {
+    res << "jr" << ":";
+    for (auto atmIdx : joint) {
+      res << atomOrder[atmIdx] << ",";
     }
-    if (excluded.size()) {
-      res << "-" << atomOrder[*excluded.begin()];
-      for (auto atmIdx : excluded | std::views::drop(1)) {
-        res << ",-" << atomOrder[atmIdx];
-      }
+    for (auto atmIdx : excluded) {
+      res << "-" << atomOrder[atmIdx] << ",";
     }
   }
-  return res.str();
+  std::string resStr = res.str();
+  if (!resStr.empty() && resStr.back() == ',') {
+    resStr.pop_back();
+  }
+  return resStr;
 }
 
 std::string get_enhanced_stereo_block(
