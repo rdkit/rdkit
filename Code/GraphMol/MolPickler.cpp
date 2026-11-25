@@ -24,6 +24,7 @@
 #include <cstdint>
 #include <string_view>
 #include <boost/algorithm/string.hpp>
+#include <GraphMol/Substruct/SubstructMatch.h>
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
@@ -35,7 +36,7 @@ using std::uint32_t;
 namespace RDKit {
 
 constexpr int32_t MolPickler::versionMajor = 16;
-constexpr int32_t MolPickler::versionMinor = 4;
+constexpr int32_t MolPickler::versionMinor = 5;
 constexpr int32_t MolPickler::versionPatch = 0;
 constexpr int32_t MolPickler::endianId = 0xDEADBEEF;
 
@@ -402,6 +403,20 @@ template RDKIT_GRAPHMOL_EXPORT QueryDetails getQueryDetails<RDKit::Bond>(
 }  // namespace PicklerOps
 
 namespace {
+
+void pickleJointRingQ(std::ostream &ss, const Atom *atom) {  // TODO implemnt
+  JointRingConstraint elem;
+  if (!atom->getPropIfPresent(common_properties::_CXJointRingIDs, elem)) {
+    return;
+  }
+  streamWrite(ss, MolPickler::QUERY_JOINTRINGS);
+  streamWrite(ss, DTags::VecUIntTag);
+  streamWriteVec(ss, rdvalue_cast<std::vector<unsigned int>>(elem.jointAtoms));
+  streamWrite(ss, DTags::VecUIntTag);
+  streamWriteVec(ss,
+                 rdvalue_cast<std::vector<unsigned int>>(elem.excludedAtoms));
+}
+
 template <class T>
 void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
   PRECONDITION(query, "no query");
@@ -1775,6 +1790,7 @@ void MolPickler::_pickleAtom(std::ostream &ss, const Atom *atom) {
   if (atom->hasQuery()) {
     streamWrite(ss, BEGINQUERY);
     pickleQuery(ss, static_cast<const QueryAtom *>(atom)->getQuery());
+    pickleJointRingQ(ss, atom);
     streamWrite(ss, ENDQUERY);
   }
   if (getAtomMapNumber(atom, tmpInt)) {

@@ -154,6 +154,7 @@ class RDKIT_GRAPHMOL_EXPORT MolPickler {
     ATOM_MONOMER_INFO_CHAINID,
     ATOM_MONOMER_INFO_MONOMERCLASS,
     END_ATOM_MONOMER_INFO,
+    QUERY_JOINTRINGS,
     // add new entries above here
     INVALID_TAG = 255
   } Tags;

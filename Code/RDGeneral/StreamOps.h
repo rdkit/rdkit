@@ -106,8 +106,7 @@ inline signed char EndianSwapBytes(signed char value) {
 // --------------------------------------
 
 //! Packs an integer and outputs it to a stream
-inline void appendPackedIntToStream(std::stringstream &ss,
-                                    std::uint32_t num) {
+inline void appendPackedIntToStream(std::stringstream &ss, std::uint32_t num) {
   int nbytes, bix;
   unsigned int val, res;
   char tc;
@@ -494,7 +493,8 @@ inline bool streamWriteProps(
   STR_VECT propsToSave = props.getPropList(savePrivate, saveComputed);
   std::unordered_set<std::string> propnames;
   for (const auto &pn : propsToSave) {
-    if (ignore.empty() || ignore.find(pn) == ignore.end()) {
+    if (ignore.empty() || ignore.find(pn) == ignore.end() ||
+        pn != common_properties::_CXJointRingIDs) {
       propnames.insert(pn);
     }
   }
