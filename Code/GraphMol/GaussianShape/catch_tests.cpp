@@ -1159,7 +1159,7 @@ TEST_CASE("Bad Best Tversky Similarity : Github 9918") {
   auto bestScores = shape1.bestSimilarity(shape2, bestThisShape, bestFitShape,
                                           bestXform, 0.7, overlayOpts);
   MolTransforms::transformConformer(mol2->getConformer(), bestXform);
-  CHECK(bestScores[0] >= -0.5);
+  CHECK(bestScores[0] > -0.5);
   // Because the optimiser works on shape only, it finds a slightly better shape
   // score than the input, but the combo score is significantly worse (~0.8)
   // because the color score goes down a lot.  Optimising with SHAPE_AND_COLOR
