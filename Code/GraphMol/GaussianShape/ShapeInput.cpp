@@ -522,7 +522,7 @@ std::array<double, 3> ShapeInput::bestSimilarity(
   bestThisShape = -1;
   bestFitShape = -1;
   std::array<double, 3> bestSim{-1.0, -1.0, -1.0};
-  if (maxPossibleSimilarity(fitShape) < threshold) {
+  if (maxPossibleSimilarity(fitShape, overlayOpts) < threshold) {
     return bestSim;
   }
 
@@ -564,10 +564,10 @@ double ShapeInput::maxPossibleSimilarity(
   double maxSim = 0.0;
   for (unsigned int i = 0; i < getNumShapes(); i++) {
     for (unsigned int j = 0; j < fitShape.getNumShapes(); j++) {
-      const auto sim = maxScore(fitShape.d_selfOverlapShapeVols[j],
-                                d_selfOverlapShapeVols[i],
-                                fitShape.d_selfOverlapColorVols[j],
-                                d_selfOverlapColorVols[i], overlayOpts);
+      const auto sim = maxScore(
+          d_selfOverlapShapeVols[i], fitShape.d_selfOverlapShapeVols[j],
+          d_selfOverlapColorVols[i], fitShape.d_selfOverlapColorVols[j],
+          overlayOpts);
       if (sim > maxSim) {
         maxSim = sim;
       }
