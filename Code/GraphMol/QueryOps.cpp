@@ -28,7 +28,8 @@ int queryIsAtomBridgehead(Atom const *at) {
   // rings" because of structures like CC12CCN(CC1)C2 where there are only two
   // SSSRs
   PRECONDITION(at, "no atom");
-  if (!at->hasOwningMol() || at->getDegree() < 3) {
+  if (!at->hasOwningMol() || at->getDegree() < 3 ||
+      queryAtomRingBondCount(at) < 3) {
     return 0;
   }
 
