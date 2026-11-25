@@ -19,3 +19,10 @@ endif()
 if(RDK_BUILD_NANOBIND_WRAPPERS)
   add_subdirectory(nbWrap)
 endif()
+
+if(NOT RDK_INSTALL_INTREE)
+  install(DIRECTORY data DESTINATION
+      ${RDKit_ShareDir}/External/NormalizedDescriptors
+      COMPONENT data
+      )
+endif(NOT RDK_INSTALL_INTREE)
