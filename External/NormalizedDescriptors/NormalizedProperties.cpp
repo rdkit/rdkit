@@ -10,6 +10,7 @@
 #include "NormalizedDescriptors.h"
 
 #include <GraphMol/ROMol.h>
+#include <GraphMol/Descriptors/Property.h>
 #include <GraphMol/Descriptors/FragmentDescriptors.h>
 
 #include <algorithm>
@@ -163,18 +164,6 @@ const std::vector<std::string> descriptorNames = {
     "MolMR",
 };
 
-const std::vector<std::string> &allNames() {
-  static const std::vector<std::string> names = [] {
-    auto res = descriptorNames;
-    // _descList sorts the fragment descriptors by name
-    auto frags = Descriptors::getFragmentDescriptorNames();
-    std::sort(frags.begin(), frags.end());
-    res.insert(res.end(), frags.begin(), frags.end());
-    return res;
-  }();
-  return names;
-}
-
 // _descList names of descriptors the property registry has under other names
 const std::unordered_map<std::string, std::string> propertyAliases = {
     {"MolWt", "amw"},
@@ -228,8 +217,23 @@ const std::vector<std::string> &getNormalizedDescriptorNames() {
     auto frags = Descriptors::getFragmentDescriptorNames();
     std::sort(frags.begin(), frags.end());
     res.insert(res.end(), frags.begin(), frags.end());
+
+    // Prune unregistered entities (this is normally needed if EIGEN isn't available)
+    //  Force registration of properties if not already done
+    auto available = Descriptors::Properties::getAvailableProperties(); 
+                                                                       
+    std::unordered_set<std::string> lookup(available.begin(), available.end());
+    std::erase_if(res, [&lookup](const std::string &x) {
+      bool found = lookup.contains(getPropertyName(x));
+      if(!found) {
+	BOOST_LOG(rdWarningLog) << std::string("NormalizedDescriptors: unregistered descriptor skipped ") << getPropertyName(x);
+      }
+      return !found;
+    });
+    
     return res;
   }();
+
   return names;
 }
 
