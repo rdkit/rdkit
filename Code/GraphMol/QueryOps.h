@@ -310,16 +310,12 @@ static inline int queryBondMinRingSize(Bond const *bond) {
 };
 
 static inline int queryAtomRingBondCount(Atom const *at) {
-  // EFF: cache this result
+  const auto &mol = at->getOwningMol();
   int res = 0;
-  ROMol::OBOND_ITER_PAIR atomBonds = at->getOwningMol().getAtomBonds(at);
-  while (atomBonds.first != atomBonds.second) {
-    unsigned int bondIdx =
-        at->getOwningMol().getTopology()[*atomBonds.first]->getIdx();
-    if (at->getOwningMol().getRingInfo()->numBondRings(bondIdx)) {
+  for (const auto bond : mol.atomBonds(at)) {
+    if (mol.getRingInfo()->numBondRings(bond->getIdx())) {
       res++;
     }
-    ++atomBonds.first;
   }
   return res;
 }
