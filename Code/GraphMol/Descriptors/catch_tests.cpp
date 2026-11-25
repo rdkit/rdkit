@@ -1387,6 +1387,9 @@ TEST_CASE("Property registry") {
     auto res = props.computeProperties(*mol);
     CHECK(std::isnan(res[0]));
     CHECK(res[1] == 12.0);
+  }
+}
+
 TEST_CASE("SA score") {
   const auto tablePath =
       std::string(getenv("RDBASE")) + "/Data/SA_Score/fpscores.bin";
