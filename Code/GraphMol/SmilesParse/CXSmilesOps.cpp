@@ -1747,10 +1747,14 @@ std::string get_joint_ring_atoms(const ROMol &mol,
   for (const auto &[joint, excluded] : jointRings) {
     res << "jr" << ":";
     for (auto atmIdx : joint) {
-      res << atomOrder[atmIdx] << ",";
+      if (atmIdx < atomOrder.size()) {
+        res << atomOrder[atmIdx] << ",";
+      }
     }
     for (auto atmIdx : excluded) {
-      res << "-" << atomOrder[atmIdx] << ",";
+      if (atmIdx < atomOrder.size()) {
+        res << "-" << atomOrder[atmIdx] << ",";
+      }
     }
   }
   std::string resStr = res.str();
