@@ -21,6 +21,10 @@ Co5mos, İlker YILMAZ
   invalidated when the `RingInfo` is modified. `RingInfo::addRing()` now takes
   `std::span<const int>` arguments. The Python, Java, and C# APIs are unchanged.
 - `Flippers.h` has been removed from the installed headers.
+- The algorithm used to identify bridgehead atoms has changed slightly. The
+  function CalcNumBridgeheadAtoms() may now return different results for some
+  molecules. To reflect this, the version number of that descriptor has been
+  increased from 2.0 to 3.0.
 
 ## Code removed in this release:
 

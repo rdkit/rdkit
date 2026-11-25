@@ -1,5 +1,5 @@
 //
-//  Copyright (C) 2011-2013 Greg Landrum
+//  Copyright (C) 2011-2026 Greg Landrum and other RDKit contributors
 //
 //   @@ All Rights Reserved @@
 //  This file is part of the RDKit.
@@ -10,6 +10,7 @@
 
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/MolPickler.h>
+#include <GraphMol/Bridgeheads.h>
 #include <GraphMol/Descriptors/MolDescriptors.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
@@ -465,48 +466,18 @@ unsigned int calcNumSpiroAtoms(const ROMol &mol,
   return atoms->size();
 }
 
-const std::string NumBridgeheadAtomsVersion = "2.0.0";
+const std::string NumBridgeheadAtomsVersion = "3.0.0";
 unsigned int calcNumBridgeheadAtoms(const ROMol &mol,
                                     std::vector<unsigned int> *atoms) {
   if (!mol.getRingInfo() || !mol.getRingInfo()->isSssrOrBetter()) {
+    // FIX: this may not be good enough?
     MolOps::findSSSR(mol);
   }
-  const RingInfo *rInfo = mol.getRingInfo();
-  std::vector<unsigned int> lAtoms;
-  if (!atoms) {
-    atoms = &lAtoms;
+  auto res = MolOps::findBridgeheadAtoms(mol);
+  if (atoms) {
+    atoms->insert(atoms->end(), res.begin(), res.end());
   }
-
-  const auto bondRings = rInfo->bondRings();
-  for (unsigned int i = 0; i < bondRings.size(); ++i) {
-    const auto &ri = bondRings[i];
-    for (unsigned int j = i + 1; j < bondRings.size(); ++j) {
-      const auto &rj = bondRings[j];
-      // EFF: using intersect here does more work and memory allocation than is
-      // required
-      INT_VECT inter;
-      for (const auto bondIdx : ri) {
-        if (std::find(rj.begin(), rj.end(), bondIdx) != rj.end()) {
-          inter.push_back(bondIdx);
-        }
-      }
-      if (inter.size() > 1) {
-        INT_VECT atomCounts(mol.getNumAtoms(), 0);
-        for (auto ii : inter) {
-          atomCounts[mol.getBondWithIdx(ii)->getBeginAtomIdx()] += 1;
-          atomCounts[mol.getBondWithIdx(ii)->getEndAtomIdx()] += 1;
-        }
-        for (unsigned int ti = 0; ti < atomCounts.size(); ++ti) {
-          if (atomCounts[ti] == 1) {
-            if (std::find(atoms->begin(), atoms->end(), ti) == atoms->end()) {
-              atoms->push_back(ti);
-            }
-          }
-        }
-      }
-    }
-  }
-  return atoms->size();
+  return res.size();
 }
 
 namespace {
