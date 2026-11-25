@@ -1743,25 +1743,35 @@ std::vector<JointRingConstraint> collectJointRings(const ROMol &mol) {
 std::string get_joint_ring_atoms(const ROMol &mol,
                                  const std::vector<unsigned int> &atomOrder) {
   std::vector<JointRingConstraint> jointRings = collectJointRings(mol);
-  std::stringstream res;
+
+  std::vector<unsigned int> revOrder(mol.getNumAtoms(), atomOrder.size());
+  for (unsigned int i = 0; i < atomOrder.size(); ++i) {
+    revOrder[atomOrder[i]] = i;
+  }
+
+  std::string res;
   for (const auto &[joint, excluded] : jointRings) {
-    res << "jr" << ":";
-    for (auto atmIdx : joint) {
-      if (atmIdx < atomOrder.size()) {
-        res << atomOrder[atmIdx] << ",";
+    std::vector<std::string> atoms;
+    const auto addAtomStrings = [&](const auto &indices, bool excluded = false) {
+      for (auto atomIdx : indices) {
+        if (atomIdx < revOrder.size() && revOrder[atomIdx] < atomOrder.size()) {
+          atoms.push_back((excluded ? "-" : "") +
+                          std::to_string(revOrder[atomIdx]));
+        }
       }
-    }
-    for (auto atmIdx : excluded) {
-      if (atmIdx < atomOrder.size()) {
-        res << "-" << atomOrder[atmIdx] << ",";
+    };
+    addAtomStrings(joint);
+    addAtomStrings(excluded, true);
+    if (atoms.size()){
+      res += "jr:";
+      for (const auto &str : atoms) {
+        res += str + ",";
       }
-    }
+  }}
+  if (!res.empty()) {
+    res.pop_back();
   }
-  std::string resStr = res.str();
-  if (!resStr.empty() && resStr.back() == ',') {
-    resStr.pop_back();
-  }
-  return resStr;
+  return res;
 }
 
 std::string get_enhanced_stereo_block(
