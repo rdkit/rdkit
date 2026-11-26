@@ -995,6 +995,49 @@ class TestCase(unittest.TestCase):
     rmsd = rdMolAlign.GetBestRMS(Chem.RemoveHs(mol), Chem.RemoveHs(mol2))
     self.assertLess(rmsd, 1e-5)
 
+  def testSetChiralSets(self):
+    ps = rdDistGeom.ETKDGv4()
+    ps.randomSeed = 0xf00d
+
+    mol = Chem.MolFromSmiles("I[C](Cl)(Br)O[C](F)(Cl)Br")
+    chiral_set = rdDistGeom.ChiralSet(1, 0, 2, 3, 4, -100.0, -5.0)
+    ps.SetAdditionalChiralSets([chiral_set])
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, ps), 0)
+    Chem.AssignStereochemistryFrom3D(mol)
+    self.assertEqual(mol.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CW)
+
+    mol = Chem.MolFromSmiles("I[C](Cl)(Br)O[C](F)(Cl)Br")
+    chiral_set = rdDistGeom.ChiralSet(1, 0, 2, 3, 4, 5.0, 100.0)
+    ps.SetAdditionalChiralSets([chiral_set])
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, ps), 0)
+    Chem.AssignStereochemistryFrom3D(mol)
+    self.assertEqual(mol.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
+
+    mol = Chem.MolFromSmiles("I[C](Cl)(Br)O[C](F)(Cl)Br")
+    chiral_set = rdDistGeom.ChiralSet(1, 0, 2, 3, 4, 5.0, 100.0)
+    ps.SetAdditionalChiralSets([chiral_set])
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, ps), 0)
+    Chem.AssignStereochemistryFrom3D(mol)
+    self.assertEqual(mol.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
+
+    # make sure that we have copied the object
+    mol = Chem.MolFromSmiles("I[C](Cl)(Br)O[C](F)(Cl)Br")
+    chiral_set.volumeLowerBound = -100.0
+    chiral_set.volumeUpperBound = -5.0
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, ps), 0)
+    Chem.AssignStereochemistryFrom3D(mol)
+    self.assertEqual(mol.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
+
+    # two chiral sets
+    mol = Chem.MolFromSmiles("I[C](Cl)(Br)O[C](F)(Cl)Br")
+    chiral_set = rdDistGeom.ChiralSet(1, 0, 2, 3, 4, 5.0, 100.0)
+    chiral_set2 = rdDistGeom.ChiralSet(5, 4, 6, 7, 8, 5.0, 100.0)
+    ps.SetAdditionalChiralSets([chiral_set, chiral_set2])
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, ps), 0)
+    Chem.AssignStereochemistryFrom3D(mol)
+    self.assertEqual(mol.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
+    self.assertEqual(mol.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
+
 
 if __name__ == '__main__':
   unittest.main()

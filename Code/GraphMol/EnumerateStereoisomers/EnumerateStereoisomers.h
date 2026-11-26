@@ -51,20 +51,35 @@ struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoEnumerationOptions {
                                  // with the molecule.
   bool unique{true};  // If true, only stereoisomers that differ in canonical
                       // SMILES will be returned.
-  std::uint64_t maxIsomers{0};  // The maximum number of isomers to yield.
-                                // If the number of possible isomers is
-                                // greater than maxIsomers, a random subset
-                                // will be yielded.  If 0, all isomers are
-                                // yielded.  Since every additional
-                                // stereocenter doubles the number of results
-                                // (and execution time) it's important to
-                                // keep an eye on this.
-  int randomSeed{-1};  // Seed for random number generator.  -1 means don't
-                       // seed.
+  std::uint64_t maxIsomers{16384};  // The maximum number of isomers to yield.
+                                    // If the number of possible isomers is
+                                    // greater than maxIsomers, a random subset
+                                    // will be yielded.  If 0, all isomers are
+                                    // yielded.  Since every additional
+                                    // stereocenter doubles the number of
+                                    // results (and execution time) it's
+                                    // important to keep an eye on this.
+  int randomSeed{0xC0FFEE};  // Seed for random number generator.  -1 means
+                             // don't seed. Default is 0xC0FFEE so the
+                             // enumerator is deterministic by default.
 
   bool useRingSystemFilter{
       true};  // filter out stereoisomers containing ring systems that
               // are known to be impossible in 3D space
+
+  StereoEnumerationOptions(bool tryEmbedding = false,
+                           bool onlyUnassigned = true,
+                           bool onlyStereoGroups = false, bool unique = true,
+                           std::uint64_t maxIsomers = 16384,
+                           int randomSeed = 0xC0FFEE,
+                           bool useRingSystemFilter = true)
+      : tryEmbedding{tryEmbedding},
+        onlyUnassigned{onlyUnassigned},
+        onlyStereoGroups{onlyStereoGroups},
+        unique{unique},
+        maxIsomers{maxIsomers},
+        randomSeed{randomSeed},
+        useRingSystemFilter{useRingSystemFilter} {}
 };
 
 // Class that enumerates the stereoisomers of a molecule.  Acts like a

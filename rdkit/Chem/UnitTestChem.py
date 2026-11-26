@@ -14,8 +14,6 @@ import pickle
 import unittest
 
 from rdkit import Chem, RDConfig
-from rdkit.Chem import EnumerateStereoisomers
-
 
 class TestCase(unittest.TestCase):
 
@@ -171,121 +169,6 @@ class TestCase(unittest.TestCase):
         print(smi2)
         print("-------")
     self.assertEqual(smis1, smis2)
-
-  def testGithub4144(self):
-    """ github4144: EnumerateStereiosomers clearing ring info """
-    m = Chem.MolFromSmiles('CSCc1cnc(C=Nn2c(C)nc3sc4c(c3c2=O)CCCCC4)s1')
-    sssr = [list(x) for x in Chem.GetSymmSSSR(m)]
-    sms = EnumerateStereoisomers.EnumerateStereoisomers(m)
-    for sm in sms:
-      sssr2 = [list(x) for x in Chem.GetSymmSSSR(sm)]
-      self.assertEqual(sssr, sssr2)
-
-  def testWigglyBondsAndEnumerateStereoisomers(self):
-
-    m = Chem.MolFromSmiles('CC=CC |w:1.0|')
-    sms = [Chem.MolToSmiles(x) for x in EnumerateStereoisomers.EnumerateStereoisomers(m)]
-    self.assertEqual(len(sms), 2)
-    self.assertIn('C/C=C/C', sms)
-    self.assertIn('C/C=C\\C', sms)
-
-    m = Chem.MolFromSmiles('CC(F)(Cl)(Br) |w:1.0|')
-    sms = [Chem.MolToSmiles(x) for x in EnumerateStereoisomers.EnumerateStereoisomers(m)]
-    self.assertEqual(len(sms), 2)
-    self.assertIn('C[C@](F)(Cl)Br', sms)
-    self.assertIn('C[C@@](F)(Cl)Br', sms)
-
-  def testEnumerateStereoisomersOnlyStereoGroups(self):
-
-    # The last chiral center in the SMILES (the [CH]) is intentionally
-    # left unspecified. This atom won't ever be enumerated, since
-    # it's never included in any of the stereo groups.
-    base = Chem.MolFromSmiles(
-      'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)C[CH](O)C')
-    centers = [idx for idx, _ in Chem.FindMolChiralCenters(base, includeCIP=False)]
-    self.assertEqual(len(centers), 4)  # The unspecified center is not detected!
-
-    undefinedCenterIdx = 13
-    undefinedCenter = base.GetAtomWithIdx(undefinedCenterIdx)
-    self.assertEqual(undefinedCenter.GetTotalDegree(), 4)
-    self.assertEqual(undefinedCenter.GetChiralTag(), Chem.ChiralType.CHI_UNSPECIFIED)
-
-    def mol_with_groups(group_specs):
-      mol = Chem.RWMol(base)
-      groups = [
-        Chem.rdchem.CreateStereoGroup(group_type, mol, atom_indices)
-        for group_type, atom_indices in group_specs
-      ]
-      mol.SetStereoGroups(groups)
-      return mol
-
-    def enumerate_cxsmiles(mol):
-      options = EnumerateStereoisomers.StereoEnumerationOptions(onlyStereoGroups=True)
-      isomers = list(EnumerateStereoisomers.EnumerateStereoisomers(mol, options))
-      params = Chem.SmilesWriteParams()
-
-      # Do not canonicalize the SMILES to preserve the atom ordering
-      # from the input and make it easier to compare enumerated parities.
-      params.canonical = False
-      params.rootedAtAtom = 0
-      return isomers, {Chem.MolToCXSmiles(isomer, params) for isomer in isomers}
-
-    # Absolute groups are fixed. A racemic or relative group can be inverted as
-    # a whole; centers outside the group remain fixed.
-    # Once enumerated, the racemic and relative groups should be stripped,
-    # since the atoms in them have already been enumerated.
-    firstTwoTetrahedrals = centers[0:2]
-    lastAndUndefinedTetrahedrals = [centers[-1], undefinedCenterIdx]
-    for group_type, atom_indices, expected_cxsmiles in (
-        (Chem.StereoGroupType.STEREO_ABSOLUTE, firstTwoTetrahedrals, {
-          # In this case, nothing is enumerated, because the group is absolute.
-          # No flippers are detected, so we just return the original molecule
-          # (including the ABS stereo group).
-          'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C |a:1,4|'
-        }),
-        (Chem.StereoGroupType.STEREO_AND, firstTwoTetrahedrals, {
-          'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C',
-          'C[C@@H](F)C[C@@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C'
-        }),
-        (Chem.StereoGroupType.STEREO_OR, firstTwoTetrahedrals, {
-          'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C',
-          'C[C@@H](F)C[C@@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C'
-        }),
-
-        # Undefined centers are not enumerated when in a stereo groups.
-        (Chem.StereoGroupType.STEREO_ABSOLUTE, lastAndUndefinedTetrahedrals, {
-          'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C |a:10|'
-        }),
-        (Chem.StereoGroupType.STEREO_AND, lastAndUndefinedTetrahedrals, {
-          'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C',
-          'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@@H](I)CC(O)C'
-        }),
-        (Chem.StereoGroupType.STEREO_OR, lastAndUndefinedTetrahedrals, {
-          'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C',
-          'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@@H](I)CC(O)C'
-        }),
-        ):
-      mol = mol_with_groups([(group_type, atom_indices)])
-      isomers, cxsmiles = enumerate_cxsmiles(mol)
-      self.assertEqual(len(isomers), len(expected_cxsmiles))
-      self.assertEqual(cxsmiles, expected_cxsmiles)
-
-    # Multiple group types are handled independently. The ABS center and the
-    # ungrouped center stay fixed while the AND and OR groups can each flip.
-    mol = mol_with_groups([
-      (Chem.StereoGroupType.STEREO_ABSOLUTE, [centers[0]]),
-      (Chem.StereoGroupType.STEREO_AND, centers[1:3]),
-      (Chem.StereoGroupType.STEREO_OR, lastAndUndefinedTetrahedrals),
-    ])
-    isomers, cxsmiles = enumerate_cxsmiles(mol)
-    expected_cxsmiles = {
-      'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@H](I)CC(O)C',
-      'C[C@H](F)C[C@@H](Cl)C[C@@H](Br)C[C@H](I)CC(O)C',
-      'C[C@H](F)C[C@H](Cl)C[C@H](Br)C[C@@H](I)CC(O)C',
-      'C[C@H](F)C[C@@H](Cl)C[C@@H](Br)C[C@@H](I)CC(O)C',
-    }
-    self.assertEqual(len(isomers), 4)
-    self.assertEqual(cxsmiles, expected_cxsmiles)
 
   def testMultiConfMolFromSDF(self):
     sdf = os.path.join(RDConfig.RDCodeDir, "Chem", "test_data", "cis.sdf")

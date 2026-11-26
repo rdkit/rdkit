@@ -35,6 +35,8 @@ RDKIT_DATASTRUCTS_EXPORT char *Base64Encode(const char *, const unsigned int);
 /*!
    <b>Note:</b> The caller is responsible for calling \c delete[] on the
      char array returned by this function.
+
+   Throws a \c ValueErrorException if the input isn't properly padded.
  */
 RDKIT_DATASTRUCTS_EXPORT char *Base64Decode(const char *, unsigned int *);
 

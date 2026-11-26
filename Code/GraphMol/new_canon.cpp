@@ -351,15 +351,18 @@ void rankWithFunctor(T &ftor, bool breakTies, std::vector<int> &order,
   unsigned symRingAtoms = 0;
   unsigned ringAtoms = 0;
   bool branchingRingAtom = false;
-  RingInfo *ringInfo = mol.getRingInfo();
+  const auto *ringInfo = mol.getRingInfo();
+  const bool haveRings = ringInfo->isInitialized();
   for (unsigned i = 0; i < nAts; ++i) {
-    if (ringInfo->isInitialized() && ringInfo->numAtomRings(order[i])) {
-      if (count[order[i]] > 2) {
-        symRingAtoms += count[order[i]];
+    const auto numRings = haveRings ? ringInfo->numAtomRings(i) : 0;
+    if (numRings) {
+      // A partition can contain atoms with different ring memberships.
+      const auto partitionSize = count[order[atoms[i].index]];
+      if (partitionSize > 2) {
+        ++symRingAtoms;
       }
-      ringAtoms++;
-      if (ringInfo->isInitialized() && ringInfo->numAtomRings(order[i]) > 1 &&
-          count[order[i]] > 1) {
+      ++ringAtoms;
+      if (numRings > 1 && partitionSize > 1) {
         branchingRingAtom = true;
       }
     }
@@ -831,8 +834,17 @@ void updateAtomNeighborNumSwapsImpl(
         }
       }
 
+      std::span<const bondholder> orderedBonds = atoms[nbrIdx].bonds;
+      BondholderVector rankedBonds;
+      if (!tooManySimilarNbrs) {
+        // Use the same ranks for parity as for tie detection, without changing
+        // the chiral neighbor's cached order.
+        rankedBonds = atoms[nbrIdx].bonds;
+        updateAtomNeighborIndex(atoms, rankedBonds);
+        orderedBonds = rankedBonds;
+      }
       probe.push_back(atomIdx);
-      for (auto &bond : atoms[nbrIdx].bonds) {
+      for (const auto &bond : orderedBonds) {
         if (bond.nbrIdx != atomIdx) {
           probe.push_back(bond.nbrIdx);
         }

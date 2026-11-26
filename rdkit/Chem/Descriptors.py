@@ -206,6 +206,20 @@ _du.setDescriptorVersion('1.0.0')(FpDensityMorgan1)
 _du.setDescriptorVersion('1.0.0')(FpDensityMorgan2)
 _du.setDescriptorVersion('1.0.0')(FpDensityMorgan3)
 
+
+def SAScore(mol):
+  """ The synthetic accessibility score of Ertl and Schuffenhauer, from 1 (easy
+    to make) to 10 (hard to make)
+
+    >>> SAScore(Chem.MolFromSmiles('CC(=O)Oc1ccccc1C(=O)O'))
+    1.58...
+
+    """
+  return rdMolDescriptors.CalcSAScore(mol)
+
+
+SAScore.version = "1.0.0"
+
 if hasattr(rdMolDescriptors, 'BCUT2D'):
   names = [
     "BCUT2D_%s" % s
