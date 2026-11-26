@@ -5,10 +5,134 @@
 (Note: I'm no longer attempting to manually curate names. If you would like to
 see your contribution acknowledged with your name, please set your name in
 GitHub)
-Co5mos, İlker YILMAZ
+
+Jakub Adamczyk, Angus Barlow, Kevin Boyd, Lukas Geiger, Dor Genosar, Zarko
+Ivkovic, Aleksander Jóźwik, Brian Kelley, Piotr Kubaj, Evan Li, Jahnavi
+Malhotra, Garrett A Meek, Yakov Pechersky, Davis Rens, Emily Rhodes, Paul
+Thiessen, Ricardo Rodriguez, Wonseok Shin, İlker YILMAZ, Co5mos,
+braydonsprojects, Besty, michaelvlevine, AlexMax, zul5050, MherMatevosyan,
+jiaodu1307
+
 
 ## Backwards incompatible changes:
 - `Flippers.h` has been removed from the installed headers.
+
+## New Features and Enhancements:
+  - MacroMol Global Library
+ (github pull #9487 from emilyrrhodes)
+  - Port SAScore to C++ and fix a numerical bug
+ (github pull #9501 from gratus907)
+  - Add ring system 3D-feasibility filter to Enumeratestereoisomer
+ (github pull #9659 from ricrogz)
+  - Allow chiral volume constraints to be provided to the conformer generator
+ (github pull #9740 from greglandrum)
+  - Port of python descriptors to c++
+ (github pull #9754 from bp-kelley)
+  - Make the C++ Stereoisomer enumerator iterable and deprecate the pure Python enumerator
+ (github issue #9762 from ricrogz)
+  - Speed up and reduce memory usage of fused ring system detection in Kekulize
+ (github pull #9769 from lgeiger)
+  - Speed up distance geometry embedding (DG)
+ (github pull #9786 from bp-kelley)
+  - Expose FreeSASA's test-point and slice counts in SASAOpts
+ (github pull #9789 from OlaszPL)
+  - Make the C++ StereoisomerEnumerator (and its Python wrappers)  iterable
+ (github pull #9832 from ricrogz)
+  - Preserve floating-point precision when writing SDF properties
+ (github pull #9851 from jiaodu1307)
+
+## Documentation:
+  - Fix overly broad donor SMARTS in the pharmacophore tutorial
+ (github pull #9792 from davrens101)
+
+## Bug Fixes:
+  - GarethUtil::RandomUtil is not thread safe
+ (github issue #5216 from ricrogz)
+  - Enrichment factor returns empty list
+ (github issue #7981 from j-adamczyk)
+  - Weird dip in SAscore normalization
+ (github issue #8251 from MherMatevosyan)
+  - Fix molecule lifetime in nanobind batch fingerprinting
+ (github pull #9585 from lgeiger)
+  - CalcNumAtomStereoCenters() changes after identity RenumberAtoms() on bicyclic amines
+ (github issue #9629 from braydonsprojects)
+  - Bridgehead stereocenter with two ring-closure digits as first SMILES atom inverts CIP parity on MolToSmiles/MolFromSmiles round-trip (legacy stereo perception)
+ (github issue #9646 from miglioremd-gh)
+  - Limit the max number of symmetric rings
+ (github pull #9782 from greglandrum)
+  - Fix binary receive functions in PostgreSQL cartridge
+ (github pull #9790 from jahnavi2k)
+  - Drop unused SimDivPickers dependency from SynthonSpaceSearch
+ (github pull #9794 from pkubaj)
+  - Fix a problem with generating conformers of highly strained chiral centers
+ (github pull #9801 from greglandrum)
+  - lock emsdk version
+ (github pull #9802 from greglandrum)
+  - MinimalLib JS builds fail with emsdk v7.0
+ (github issue #9803 from greglandrum)
+  - EnumerateStereoisomers is non-deterministic when tryEmbedding=true
+ (github issue #9812 from greglandrum)
+  - EnumerateStereoisomers should just use DG when `tryEmbedding=true`
+ (github issue #9813 from greglandrum)
+  - Fix static builds with maeparser
+ (github pull #9814 from ricrogz)
+  - FPBReader overflows heap buffers when converting nonstandard fingerprints
+ (github issue #9815 from scal444)
+  - Add UBSAN Weekly CI and fix UBSAN errors
+ (github pull #9818 from scal444)
+  - Resolve embedding defaults before starting conformer workers
+ (github pull #9820 from scal444)
+  - Fix thread safety in parallel RNG for embedding
+ (github pull #9821 from scal444)
+  - Fix thread safety in conformer tracking
+ (github pull #9822 from scal444)
+  - Synchronize best-hit scores in parallel synthon fingerprint search
+ (github pull #9823 from scal444)
+  - Fix races in signal handling via atomics
+ (github pull #9826 from scal444)
+  - Preserve fixed points when copying force fields
+ (github pull #9833 from zarkoivkovicc)
+  - SubstructLibrary: Make TrustedSmiles more Ring robust.  Note limitations in TrustedSmilesMolHolder
+ (github pull #9837 from bp-kelley)
+  - symmetrizeSSSR does not return rings sorted by size in molecules with disconnected fragments
+ (github issue #9838 from greglandrum)
+  - Ensure symmetrizeSSSR() always returns all SSSR rings.
+ (github pull #9839 from greglandrum)
+  - atomRelevantCycles() does not return rings sorted by contents
+ (github issue #9841 from greglandrum)
+  - unhandled cases in Bond::getBondTypeAsDouble()
+ (github issue #9843 from PaulThiessen)
+  - GaussianShape SHAPE_PLUS_COLOR alignment uses wrong color gradients
+ (github issue #9844 from scal444)
+  - CalcPBF gives wrong results on multi-conformer molecules
+ (github issue #9846 from scal444)
+  - `setLowerBoundVDW` skips atom 0 when populating H-bond donor/acceptor flags, making `GetMoleculeBoundsMatrix` depend on atom order
+ (github issue #9850 from michaelvlevine)
+  - Handle pandas numeric extension dtypes when writing SDF properties
+ (github pull #9852 from jiaodu1307)
+  - Honor styles and conformer IDs in IPython 3D drawing helpers
+ (github pull #9853 from jiaodu1307)
+  - Fix out-of-bounds read when comparing bfps of different sizes
+ (github pull #9857 from zul5050)
+  - Implement onlyStereoGroups in C++ StereoisomerEnumerator, add tests
+ (github pull #9858 from ricrogz)
+  - fix an oob read in the MolPickler
+ (github pull #9862 from greglandrum)
+  - Honor highlightColor in molecule SVG and file output
+ (github pull #9866 from jiaodu1307)
+  - Fix canonical SMILES round-trips with modern stereo perception
+ (github pull #9869 from lgeiger)
+  - fix heap buffer overflow in Base64Decode on unpadded input
+ (github pull #9875 from zul5050)
+  - PathToSubmol fragments inherit _StereochemDone since 2025.09.4 (regression of #103)
+ (github issue #9878 from garrettameek)
+  - Unpickling sanitized molecules is ~2.4x slower in 2026.09: `_depickle` recomputes ring families
+ (github issue #9912 from pechersky)
+
+## Cleanup work:
+  - Report multithreaded test assertions after joining workers
+ (github pull #9824 from scal444)
+
 
 ## Deprecated code (to be removed in a future release):
 - The C++ functions `RingUtils::makeRingNeighborMap()` and
