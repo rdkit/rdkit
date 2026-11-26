@@ -618,13 +618,15 @@ bool parse_atoms_in_joint_rings(Iterator &first, Iterator last,
 
     if (VALID_ATIDX(atomIdx)) {
       auto atom = mol.getAtomWithIdx(atomIdx - startAtomIdx);
-      if (!atom->hasQuery()) {
-        atom = QueryOps::replaceAtomWithQueryAtom(&mol, atom);
-      }
-      atom->expandQuery(makeAtomInRingQuery(), Queries::COMPOSITE_AND);
 
       JointRingConstraint element;
-      atom->getPropIfPresent(common_properties::_CXJointRingIDs, element);
+      if (!atom->getPropIfPresent(common_properties::_CXJointRingIDs,
+                                  element)) {
+        if (!atom->hasQuery()) {
+          atom = QueryOps::replaceAtomWithQueryAtom(&mol, atom);
+        }
+        atom->expandQuery(makeAtomInRingQuery(), Queries::COMPOSITE_AND);
+      }
 
       if (excludeAtom) {
         element.excludedAtoms.emplace_back(jrCounter);
@@ -1752,7 +1754,8 @@ std::string get_joint_ring_atoms(const ROMol &mol,
   std::string res;
   for (const auto &[joint, excluded] : jointRings) {
     std::vector<std::string> atoms;
-    const auto addAtomStrings = [&](const auto &indices, bool excluded = false) {
+    const auto addAtomStrings = [&](const auto &indices,
+                                    bool excluded = false) {
       for (auto atomIdx : indices) {
         if (atomIdx < revOrder.size() && revOrder[atomIdx] < atomOrder.size()) {
           atoms.push_back((excluded ? "-" : "") +
@@ -1762,12 +1765,13 @@ std::string get_joint_ring_atoms(const ROMol &mol,
     };
     addAtomStrings(joint);
     addAtomStrings(excluded, true);
-    if (atoms.size()){
+    if (atoms.size()) {
       res += "jr:";
       for (const auto &str : atoms) {
         res += str + ",";
       }
-  }}
+    }
+  }
   if (!res.empty()) {
     res.pop_back();
   }

@@ -1013,6 +1013,30 @@ TEST_CASE("Github #4319 add CXSMARTS support") {
     }
   }
 
+  SECTION("multiple joint rings") {
+    auto smol = "C1CCC1C2CCC2"_smiles;
+    REQUIRE(smol);
+    {
+      auto mol = "CCCC |jr:0,1,jr:2,3|"_smarts;
+      REQUIRE(mol);
+      CHECK(MolToCXSmarts(*mol) == "[C&R][C&R][C&R][C&R] |jr:0,1,jr:2,3|");
+      CHECK(SubstructMatch(*smol, *mol).size() == 6);
+    }
+    {
+      auto mol = "CCCC |jr:0,1,-2,-3,jr:2,3|"_smarts;
+      REQUIRE(mol);
+      CHECK(MolToCXSmarts(*mol) ==
+            "[C&R][C&R][C&R][C&R] |jr:0,1,-2,-3,jr:2,3|");
+      CHECK(SubstructMatch(*smol, *mol).size() == 4);
+    }
+  }
+
+  SECTION("parser, write fragments") {
+    auto mol = "CCCC |jr:0,3|"_smarts;
+    REQUIRE(mol);
+    CHECK(MolFragmentToCXSmarts(*mol, {2, 3}) == "C[C&R] |jr:1|");
+  }
+
   SECTION("parser, confirm joint ring atoms is working with excluction") {
     auto mol = "CCCC |jr:0,1,2,-3|"_smarts;
     REQUIRE(mol);
