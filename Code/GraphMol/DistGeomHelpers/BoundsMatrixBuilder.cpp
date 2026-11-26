@@ -400,7 +400,7 @@ void setLowerBoundVDW(const ROMol &mol, DistGeom::BoundsMatPtr mmat, bool,
 
   boost::dynamic_bitset<> hinHBondDonors(mol.getNumAtoms());
   boost::dynamic_bitset<> hBondAcceptors(mol.getNumAtoms());
-  for (unsigned int i = 1; i < npt; i++) {
+  for (unsigned int i = 0; i < npt; i++) {
     const auto atomI = mol.getAtomWithIdx(i);
     auto vw1 = PeriodicTable::getTable()->getRvdw(atomI->getAtomicNum());
     if (isHinHBondDonor(atomI, mol)) {

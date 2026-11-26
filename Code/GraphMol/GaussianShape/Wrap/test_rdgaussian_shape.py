@@ -1,7 +1,10 @@
+import math
 import unittest
 
+import numpy as np
+
 from rdkit import Chem
-from rdkit.Chem import rdGaussianShape
+from rdkit.Chem import rdDistGeom, rdGaussianShape, rdMolTransforms
 from rdkit import RDConfig
 from rdkit.Geometry import Point3D
 
@@ -217,7 +220,36 @@ class TestCase(unittest.TestCase):
     self.assertEqual(stuff[1], 8)
     self.assertEqual(stuff[2], 3)
     self.assertAlmostEqual(stuff[0][8][3], 0.449, places=3)
-    
+
+  def test11_colorGradients(self):
+    # Optimizing a moved copy of a molecule back onto itself needs the
+    # color gradients to be right.
+    ref = Chem.AddHs(Chem.MolFromSmiles('CC(=O)Nc1ccc(O)cc1C(=O)N'))
+    self.assertEqual(rdDistGeom.EmbedMolecule(ref, randomSeed=42), 0)
+
+    def rotation(axis, angle):
+      c, s = math.cos(angle), math.sin(angle)
+      i, j = [(1, 2), (2, 0), (0, 1)][axis]
+      xform = np.identity(4)
+      xform[i, i] = xform[j, j] = c
+      xform[i, j] = -s
+      xform[j, i] = s
+      return xform
+
+    shift = np.identity(4)
+    shift[0, 3] = 0.5
+    for xform, optParam in ((rotation(0, 0.5), 0.5), (rotation(2, 0.2), 0.5),
+                            (shift, 0.9)):
+      fit = Chem.Mol(ref)
+      rdMolTransforms.TransformConformer(fit.GetConformer(), xform)
+      opts = rdGaussianShape.ShapeOverlayOptions()
+      opts.startMode = rdGaussianShape.StartMode.ROTATE_0
+      opts.normalize = False
+      opts.optimMode = rdGaussianShape.OptimMode.SHAPE_PLUS_COLOR
+      opts.optParam = optParam
+      tpl = rdGaussianShape.AlignMol(ref, fit, overlayOpts=opts)
+      self.assertGreater(tpl[0], 0.98)
+
 
 if __name__ == '__main__':
   unittest.main()

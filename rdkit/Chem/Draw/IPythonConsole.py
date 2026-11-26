@@ -67,8 +67,11 @@ Returns
 -------
 None'''
   if mol.GetNumAtoms() >= 999 or drawAs == 'cartoon':
+    # The PDB writer interprets a negative ID as a request for all conformers.
+    if confId < 0 and mol.GetNumConformers():
+      confId = mol.GetConformer().GetId()
     # py3DMol is happier with TER and MASTER records present
-    pdb = Chem.MolToPDBBlock(mol, flavor=0x20 | 0x10)
+    pdb = Chem.MolToPDBBlock(mol, confId=confId, flavor=0x20 | 0x10)
     view.addModel(pdb, 'pdb')
   else:
     # py3Dmol does not currently support v3k mol files, so
@@ -164,13 +167,15 @@ the py3Dmol.view object containing the drawing'''
 
   if drawAs is None:
     drawAs = ['stick'] * len(mols)
+  elif isinstance(drawAs, str):
+    drawAs = [drawAs] * len(mols)
   if confIds is None:
     confIds = [-1] * len(mols)
 
-  for m, confId in zip(mols, confIds):
+  for i, (m, confId) in enumerate(zip(mols, confIds)):
     if removeHs:
       m = Chem.RemoveHs(m)
-    addMolToView(m, view, confId)
+    addMolToView(m, view, confId, drawAs[i])
   for i in range(len(mols)):
     style = {'colorscheme': colors[i % len(colors)]}
     if drawAs[i] == "sphere":

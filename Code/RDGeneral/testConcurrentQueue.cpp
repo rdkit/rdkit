@@ -7,8 +7,63 @@
 #include <sstream>
 
 #include "ConcurrentQueue.h"
+#include "ControlCHandler.h"
 
 using namespace RDKit;
+
+namespace {
+volatile std::sig_atomic_t previousSigIntCount = 0;
+
+void countPreviousSigInt(int) {
+  previousSigIntCount = previousSigIntCount + 1;
+}
+
+void exerciseControlCHandler(std::atomic<bool> &start) {
+  while (!start.load()) {
+    std::this_thread::yield();
+  }
+  for (unsigned int i = 0; i < 1000; ++i) {
+    ControlCHandler handler;
+    ControlCHandler::signalHandler(SIGINT);
+    (void)ControlCHandler::getGotSignal();
+    ControlCHandler::reset();
+  }
+}
+}  // namespace
+
+TEST_CASE("ControlCHandler records SIGINT and reset rearms it") {
+  previousSigIntCount = 0;
+  const auto original = std::signal(SIGINT, countPreviousSigInt);
+  {
+    ControlCHandler handler;
+    std::raise(SIGINT);
+    CHECK(ControlCHandler::getGotSignal());
+    std::raise(SIGINT);
+    CHECK(previousSigIntCount == 1);
+    ControlCHandler::reset();
+    CHECK_FALSE(ControlCHandler::getGotSignal());
+    std::raise(SIGINT);
+    CHECK(ControlCHandler::getGotSignal());
+  }
+  const auto restored = std::signal(SIGINT, original);
+  CHECK(restored == countPreviousSigInt);
+  CHECK_FALSE(ControlCHandler::getGotSignal());
+}
+
+TEST_CASE("ControlCHandler shared state supports concurrent access") {
+  const auto original = std::signal(SIGINT, countPreviousSigInt);
+  std::atomic<bool> start{false};
+  std::vector<std::thread> workers;
+  for (unsigned int i = 0; i < 8; ++i) {
+    workers.emplace_back(exerciseControlCHandler, std::ref(start));
+  }
+  start.store(true);
+  for (auto &worker : workers) {
+    worker.join();
+  }
+  std::signal(SIGINT, original);
+  CHECK_FALSE(ControlCHandler::getGotSignal());
+}
 
 TEST_CASE("testPushAndPop") {
   ConcurrentQueue<int> *q = new ConcurrentQueue<int>(4);

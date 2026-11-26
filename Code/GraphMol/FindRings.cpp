@@ -9,6 +9,7 @@
 //
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/Rings.h>
+#include <GraphMol/MolOps.h>
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/Exceptions.h>
 
@@ -26,13 +27,6 @@ using RINGINVAR_INT_VECT_MAP = std::map<RINGINVAR, std::vector<int>>;
 
 namespace {
 using namespace RDKit;
-
-bool ringComparer(const std::vector<int> &v1, const std::vector<int> &v2) {
-  if (v1.size() == v2.size()) {
-    return v1 < v2;
-  }
-  return v1.size() < v2.size();
-}
 
 void _DFS(const ROMol &mol, const Atom *atom, INT_VECT &atomColors,
           std::vector<const Atom *> &traversalOrder, VECT_INT_VECT &res,
@@ -920,12 +914,21 @@ void findRingsFigueras(const ROMol &mol, VECT_INT_VECT &res,
   }  // done with all fragments
 
   std::ranges::for_each(res, RingUtils::normalizeRing);
-  std::ranges::sort(res, ringComparer);
+  std::ranges::sort(res, MolOps::details::ringComparer);
 }
 }  // namespace FindRings
 
 namespace RDKit {
 namespace MolOps {
+
+namespace details {
+  bool ringComparer(const std::vector<int> &v1, const std::vector<int> &v2) {
+    if (v1.size() == v2.size()) {
+      return v1 < v2;
+    }
+    return v1.size() < v2.size();
+  }
+}
 
 void setUseLegacyRingFinding(bool val) {
   if (val) {
@@ -975,7 +978,7 @@ int findSSSR(const ROMol &mol, VECT_INT_VECT &res, bool includeDativeBonds,
   }
   RDL_deleteCycles(sssr, sssrSize);
 
-  std::ranges::sort(res, ringComparer);
+  std::ranges::sort(res, details::ringComparer);
 
   FindRings::storeRingsInfo(mol, res);
 
@@ -1006,7 +1009,7 @@ void legacySymmetrizeSSSR(ROMol &mol, VECT_INT_VECT &res,
   std::set_difference(std::make_move_iterator(figuerasRings.begin()),
                       std::make_move_iterator(figuerasRings.end()),
                       res.cbegin(), res.cend(), std::back_inserter(extras),
-                      ringComparer);
+                      details::ringComparer);
 
   if (extras.empty()) {
     // no extra rings, nothing to be done

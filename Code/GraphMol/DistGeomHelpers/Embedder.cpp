@@ -39,6 +39,7 @@
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <boost/dynamic_bitset.hpp>
 #include <RDGeneral/RDThreads.h>
+#include <boost/dynamic_bitset/dynamic_bitset.hpp>
 #include <cmath>
 #include <cstddef>
 #include <memory>
@@ -109,6 +110,13 @@ namespace DGeomHelpers {
 
 namespace {
 
+#ifdef RDK_BUILD_THREADSAFE_SSS
+std::mutex &getEmbeddingRngMutex() {
+  static std::mutex mutex;
+  return mutex;
+}
+#endif
+
 // The random source for a single conformer: a locally seeded generator when
 // seed > -1, otherwise the global source.
 class EmbedRng {
@@ -128,6 +136,16 @@ class EmbedRng {
   RDKit::double_source_type &get() {
     return d_source ? *d_source : RDKit::getDoubleRandomSource();
   }
+
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  std::unique_lock<std::mutex> lockGlobalSource() const {
+    std::unique_lock<std::mutex> lock(getEmbeddingRngMutex(), std::defer_lock);
+    if (!d_source) {
+      lock.lock();
+    }
+    return lock;
+  }
+#endif
 
  private:
   std::unique_ptr<RDKit::rng_type> d_generator;
@@ -227,15 +245,15 @@ namespace detail {
 namespace cf = ForceFields::CrystalFF;
 
 struct EmbedArgs {
-  boost::dynamic_bitset<> *confsOk;
+  std::vector<unsigned char> *confsOk;
   bool fourD;
   INT_VECT *fragMapping;
   std::vector<std::unique_ptr<Conformer>> *confs;
   unsigned int fragIdx;
   DistGeom::BoundsMatPtr mmat;
   DistGeom::ZMatPtr zmat;
-  DistGeom::VECT_CHIRALSET const *chiralCenters;
-  DistGeom::VECT_CHIRALSET const *tetrahedralCarbons;
+  std::vector<std::shared_ptr<DistGeom::ChiralSet>> const *chiralCenters;
+  std::vector<std::shared_ptr<DistGeom::ChiralSet>> const *tetrahedralCarbons;
   std::vector<std::tuple<unsigned int, unsigned int, unsigned int>> const
       *doubleBondEnds;
   std::vector<std::pair<std::vector<unsigned int>, int>> const
@@ -322,14 +340,26 @@ bool _sameSide(const RDGeom::Point3D &v1, const RDGeom::Point3D &v2,
                const RDGeom::Point3D &v3, const RDGeom::Point3D &v4,
                const RDGeom::Point3D &p0, double tol = 0.1) {
   RDGeom::Point3D normal = (v2 - v1).crossProduct(v3 - v1);
-  double d1 = normal.dotProduct(v4 - v1);
-  double d2 = normal.dotProduct(p0 - v1);
-  // std::cerr << "     " << d1 << " - " << d2 << std::endl;
-  if (fabs(d1) < tol || fabs(d2) < tol) {
+  normal.normalize();
+  auto v41 = v4 - v1;
+  v41.normalize();
+  auto p01 = p0 - v1;
+  p01.normalize();
+  double d1 = normal.dotProduct(v41);
+  // make sure that there's actually a volume to be inside:
+  if (fabs(d1) < tol) {
     return false;
   }
-  return !((d1 < 0.) ^ (d2 < 0.));
+  // now make sure that the point is inside the volume
+  // if the point is too close to the plane, consider it inside the volume
+  // Changing the tolerance here by a factor of 2 is an empirical adjustment
+  double d2 = normal.dotProduct(p01);
+  if (fabs(d2) < tol / 2) {
+    return true;
+  }
+  return d1 * d2 > 0;
 }
+
 bool _centerInVolume(unsigned int idx0, unsigned int idx1, unsigned int idx2,
                      unsigned int idx3, unsigned int idx4,
                      const RDGeom::PointPtrVect &positions, double tol,
@@ -344,6 +374,7 @@ bool _centerInVolume(unsigned int idx0, unsigned int idx1, unsigned int idx2,
                      (*positions[idx3])[2]);
   RDGeom::Point3D p4((*positions[idx4])[0], (*positions[idx4])[1],
                      (*positions[idx4])[2]);
+
   // RDGeom::Point3D centroid = (p1+p2+p3+p4)/4.;
   if (verbose) {
     std::cerr << _sameSide(p1, p2, p3, p4, p0, tol) << " "
@@ -355,11 +386,12 @@ bool _centerInVolume(unsigned int idx0, unsigned int idx1, unsigned int idx2,
              _sameSide(p2, p3, p4, p1, p0, tol) &&
              _sameSide(p3, p4, p1, p2, p0, tol) &&
              _sameSide(p4, p1, p2, p3, p0, tol);
+  // return true;
   return res;
 }
 
 bool _centerInVolume(const DistGeom::ChiralSetPtr &chiralSet,
-                     const RDGeom::PointPtrVect &positions, double tol = 0.1,
+                     const RDGeom::PointPtrVect &positions, double tol = 0.10,
                      bool verbose = false) {
   if (chiralSet->d_idx0 ==
       chiralSet->d_idx4) {  // this happens for three-coordinate centers
@@ -481,7 +513,14 @@ bool generateInitialCoords(RDGeom::PointPtrVect *positions,
                            const detail::EmbedArgs &eargs,
                            const EmbedParameters &embedParams,
                            RDNumeric::DoubleSymmMatrix &distMat,
-                           RDKit::double_source_type *rng) {
+                           EmbedRng &embedRng) {
+#ifdef RDK_BUILD_THREADSAFE_SSS
+  // Default-seed calls share the global stream. Only the phase consuming it
+  // is serialized: callbacks may reenter embedding, and minimization should
+  // remain parallel. Explicitly seeded conformers own their sources.
+  auto rngLock = embedRng.lockGlobalSource();
+#endif
+  auto *rng = &embedRng.get();
   bool gotCoords = false;
 
   switch (embedParams.initialEmbeddingMode) {
@@ -977,21 +1016,9 @@ bool embedPoints(RDGeom::PointPtrVect *positions,
                  const detail::EmbedArgs &eargs, EmbedParameters &embedParams,
                  int seed, TimePoint *end_time) {
   PRECONDITION(positions, "bogus positions");
-  if (embedParams.maxIterations == 0) {
-    embedParams.maxIterations = 10 * positions->size();
-  }
   RDNumeric::DoubleSymmMatrix distMat(positions->size(), 0.0);
 
-  // The basin threshold just gets us into trouble when we're using
-  // random coordinates since it ends up ignoring 1-4 (and higher)
-  // interactions. This causes us to get folded-up (and self-penetrating)
-  // conformations for large flexible molecules
-  if (embedParams.useRandomCoords) {
-    embedParams.basinThresh = 1e8;
-  }
-
   EmbedRng embedRng(seed);
-  auto *rng = &embedRng.get();
 
   bool gotCoords = false;
   unsigned int iter = 0;
@@ -1003,7 +1030,7 @@ bool embedPoints(RDGeom::PointPtrVect *positions,
     gotCoords = embedParams.optimizeConfWithId.has_value()
                     ? EmbeddingOps::setInitialCoords(positions, embedParams)
                     : EmbeddingOps::generateInitialCoords(
-                          positions, eargs, embedParams, distMat, rng);
+                          positions, eargs, embedParams, distMat, embedRng);
 
     if (!gotCoords) {
       recordFailure(embedParams, EmbedFailureCauses::INITIAL_COORDS);
@@ -1098,15 +1125,8 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions,
                     EmbedParameters &embedParams, int seed,
                     TimePoint *end_time) {
   PRECONDITION(positions, "bogus positions");
-  if (embedParams.maxIterations == 0) {
-    embedParams.maxIterations = 10 * positions->size();
-  }
-  if (embedParams.useRandomCoords) {
-    embedParams.basinThresh = 1e8;
-  }
   RDNumeric::DoubleSymmMatrix distMat(positions->size(), 0.0);
   EmbedRng embedRng(seed);
-  auto *rng = &embedRng.get();
 
   bool gotCoords = false;
   unsigned int iter = 0;
@@ -1122,7 +1142,7 @@ bool embedPointsAIO(RDGeom::PointPtrVect *positions,
     gotCoords = embedParams.optimizeConfWithId
                     ? EmbeddingOps::setInitialCoords(positions, embedParams)
                     : EmbeddingOps::generateInitialCoords(
-                          positions, eargs, embedParams, distMat, rng);
+                          positions, eargs, embedParams, distMat, embedRng);
 
     if (!gotCoords) {
       recordFailure(embedParams, EmbedFailureCauses::INITIAL_COORDS);
@@ -1390,9 +1410,11 @@ bool setupInitialBoundsMatrix(
   return true;
 }
 
-void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
-                    DistGeom::VECT_CHIRALSET &tetrahedralCenters,
-                    const std::map<int, RDGeom::Point3D> *coordMap) {
+void findChiralSets(
+    const ROMol &mol,
+    std::vector<std::shared_ptr<DistGeom::ChiralSet>> &chiralCenters,
+    std::vector<std::shared_ptr<DistGeom::ChiralSet>> &tetrahedralCenters,
+    const std::map<int, RDGeom::Point3D> *coordMap) {
   const auto ringInfo = mol.getRingInfo();
   const auto atomRings = ringInfo->atomRings();
   for (const auto &atom : mol.atoms()) {
@@ -1447,17 +1469,13 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
         // volume
         if (chiralType == Atom::CHI_TETRAHEDRAL_CCW) {
           // positive chiral volume
-          auto *cset = new DistGeom::ChiralSet(atom->getIdx(), nbrs[0], nbrs[1],
-                                               nbrs[2], nbrs[3], volLowerBound,
-                                               volUpperBound, structureFlags);
-          DistGeom::ChiralSetPtr cptr(cset);
-          chiralCenters.push_back(cptr);
+          chiralCenters.push_back(std::make_shared<DistGeom::ChiralSet>(
+              atom->getIdx(), nbrs[0], nbrs[1], nbrs[2], nbrs[3], volLowerBound,
+              volUpperBound, structureFlags));
         } else if (chiralType == Atom::CHI_TETRAHEDRAL_CW) {
-          auto *cset = new DistGeom::ChiralSet(atom->getIdx(), nbrs[0], nbrs[1],
-                                               nbrs[2], nbrs[3], -volUpperBound,
-                                               -volLowerBound, structureFlags);
-          DistGeom::ChiralSetPtr cptr(cset);
-          chiralCenters.push_back(cptr);
+          chiralCenters.push_back(std::make_shared<DistGeom::ChiralSet>(
+              atom->getIdx(), nbrs[0], nbrs[1], nbrs[2], nbrs[3],
+              -volUpperBound, -volLowerBound, structureFlags));
         } else {
           if ((coordMap && coordMap->find(atom->getIdx()) != coordMap->end()) ||
               (mol.getRingInfo()->isInitialized() &&
@@ -1467,11 +1485,9 @@ void findChiralSets(const ROMol &mol, DistGeom::VECT_CHIRALSET &chiralCenters,
             // the coordMap
             // there's no sense doing 3-rings because those are a nightmare
           } else {
-            auto *cset = new DistGeom::ChiralSet(atom->getIdx(), nbrs[0],
-                                                 nbrs[1], nbrs[2], nbrs[3], 0.0,
-                                                 0.0, structureFlags);
-            DistGeom::ChiralSetPtr cptr(cset);
-            tetrahedralCenters.push_back(cptr);
+            tetrahedralCenters.push_back(std::make_shared<DistGeom::ChiralSet>(
+                atom->getIdx(), nbrs[0], nbrs[1], nbrs[2], nbrs[3], 0.0, 0.0,
+                structureFlags));
           }
         }
       }  // if block -chirality check
@@ -1841,8 +1857,9 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     }
   }
 
-  boost::dynamic_bitset<> confsOk(numConfs);
-  confsOk.set();
+  // Each worker owns different conformers. Byte flags give those writes
+  // separate memory locations; packed bits would share read-modify-write words.
+  std::vector<unsigned char> confsOk(numConfs, 1);
 
   boost::dynamic_bitset<> constrainedAtoms(mol.getNumAtoms());
   if (coordMap) {
@@ -1868,6 +1885,13 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
         << std::endl;
     coordMap = nullptr;  // FIXME not directly related to ETKDG, but here I
                          // think it should be params.boundsMat = nullptr
+  }
+  if (molFrags.size() > 1 && !params.additionalChiralSets.empty()) {
+    BOOST_LOG(rdWarningLog)
+        << "Conformer generation using a user-provided chiral sets "
+           "does not work with molecules that have multiple fragments. The "
+           "chiral sets will be ignored."
+        << std::endl;
   }
 
   // we will generate conformations for each fragment in the molecule
@@ -1931,10 +1955,51 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
 
     // find all the chiral centers in the molecule
     MolOps::assignStereochemistry(*piece);
-    DistGeom::VECT_CHIRALSET chiralCenters;
-    DistGeom::VECT_CHIRALSET tetrahedralCarbons;
+    std::vector<std::shared_ptr<DistGeom::ChiralSet>> chiralCenters;
+    std::vector<std::shared_ptr<DistGeom::ChiralSet>> tetrahedralCarbons;
     EmbeddingOps::findChiralSets(*piece, chiralCenters, tetrahedralCarbons,
                                  coordMap);
+    if (molFrags.size() == 1 && !params.additionalChiralSets.empty()) {
+      const unsigned int nAtoms = piece->getNumAtoms();
+      auto compareChiralSets = [](const DistGeom::ChiralSet &a,
+                                  const DistGeom::ChiralSet &b) {
+        if (a.d_idx0 != b.d_idx0) {
+          return a.d_idx0 < b.d_idx0;
+        }
+        return std::set({a.d_idx1, a.d_idx2, a.d_idx3, a.d_idx4}) <
+               std::set({b.d_idx1, b.d_idx2, b.d_idx3, b.d_idx4});
+      };
+      std::set<DistGeom::ChiralSet, decltype(compareChiralSets)> volumesThere(
+          compareChiralSets);
+      // copy existing chiral centers into the set
+      std::for_each(
+          chiralCenters.begin(), chiralCenters.end(),
+          [&volumesThere](const std::shared_ptr<DistGeom::ChiralSet> &cs) {
+            volumesThere.insert(*cs);
+          });
+      // now check the additional chiral sets for duplicates and out-of-bounds
+      // indices
+      std::for_each(
+          params.additionalChiralSets.begin(),
+          params.additionalChiralSets.end(),
+          [nAtoms,
+           &volumesThere](const std::shared_ptr<DistGeom::ChiralSet> &cs) {
+            if (cs->d_idx0 >= nAtoms || cs->d_idx1 >= nAtoms ||
+                cs->d_idx2 >= nAtoms || cs->d_idx3 >= nAtoms ||
+                cs->d_idx4 >= nAtoms) {
+              throw ValueErrorException(
+                  "additionalChiralSets contains indices that are out of bounds for the molecule.");
+            }
+            if (volumesThere.find(*cs) != volumesThere.end()) {
+              throw ValueErrorException(
+                  "additionalChiralSets contains a duplicate of an existing chiral set.");
+            }
+            volumesThere.insert(*cs);
+          });
+      chiralCenters.insert(chiralCenters.end(),
+                           params.additionalChiralSets.begin(),
+                           params.additionalChiralSets.end());
+    }
 
     DistGeom::ZMatPtr zmat = std::make_shared<DistGeom::ZMatrix>(nAtoms);
     if (params.initialEmbeddingMode ==
@@ -1962,6 +2027,16 @@ void EmbedMultipleConfs(ROMol &mol, INT_VECT &res, unsigned int numConfs,
     }
     int numThreads =
         getNumThreadsToUse(params.optimizeConfWithId ? 1 : params.numThreads);
+
+    // Workers share params, so resolve defaults before any worker reads them.
+    if (params.maxIterations == 0) {
+      params.maxIterations = 10 * nAtoms;
+    }
+    if (params.useRandomCoords) {
+      // Random starts need a large basin threshold to avoid self-penetrating
+      // conformations in large flexible molecules.
+      params.basinThresh = 1e8;
+    }
 
     ControlCHandler hdlr;
 

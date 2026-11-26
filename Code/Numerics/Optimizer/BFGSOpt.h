@@ -155,6 +155,35 @@ void linearSearch(unsigned int dim, double *oldPt, double oldVal, double *grad,
   }
 }
 
+/*!
+   Computes res = mat * vect (or res = -mat * vect if negate is set) for a
+   dense, exactly symmetric dim x dim matrix.
+
+   Because mat is symmetric, res[i] = sum_j mat[j][i] * vect[j], so we can
+   walk the matrix one row at a time and update every element of res. The
+   terms contributing to each res[i] are accumulated in the same order
+   (j = 0, 1, ...) as in a conventional row-by-row dot product, so the result
+   is bit-for-bit identical, but the inner loop has no serial dependency and
+   reads memory contiguously.
+*/
+inline void symmMatVecMul(unsigned int dim, const double *mat,
+                          const double *vect, double *res, bool negate) {
+  std::fill(res, res + dim, 0.0);
+  for (unsigned int j = 0; j < dim; ++j) {
+    const double *row = mat + static_cast<std::size_t>(j) * dim;
+    const double vj = vect[j];
+    if (negate) {
+      for (unsigned int i = 0; i < dim; ++i) {
+        res[i] -= row[i] * vj;
+      }
+    } else {
+      for (unsigned int i = 0; i < dim; ++i) {
+        res[i] += row[i] * vj;
+      }
+    }
+  }
+}
+
 //! Do a BFGS minimization of a function.
 /*!
    See Numerical Recipes in C, Section 10.7 for a description of the algorithm.
@@ -195,6 +224,11 @@ int minimize(unsigned int dim, double *pos, double gradTol,
   std::vector<double> hessDGrad(dim);
   std::vector<double> xi(dim);
   std::vector<double> invHessian(dim * dim, 0);
+  // scratch space for the scalar inverse Hessian update
+  std::vector<double> scaledXi(dim);
+  std::vector<double> scaledHessDGrad(dim);
+  std::vector<double> scaledDGrad(dim);
+  std::vector<double> newXi(dim);
   std::unique_ptr<double[]> newPos(new double[dim]);
   snapshotFreq = std::min(snapshotFreq, maxIts);
 
@@ -279,6 +313,7 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     }
 
     // BFGS inverse Hessian update.
+    bool haveNewDirection = false;
     double fac = 0, fae = 0, sumDGrad = 0, sumXi = 0;
 #ifdef RDK_SVE_AVAILABLE
     if (cpuHasSVE()) {
@@ -290,17 +325,16 @@ int minimize(unsigned int dim, double *pos, double gradTol,
     } else
 #endif
     {
-      // Scalar path: fused matrix-vector multiply and dot-product accumulation.
-      // Pointer arithmetic (++ivh, ++dgj) avoids repeated index computations
-      // and helps the compiler generate efficient load sequences.
+      // Scalar path: matrix-vector multiply followed by the dot products.
+      // The inverse Hessian is exactly symmetric, so we can sweep it row by
+      // row (accumulating into all elements of hessDGrad at once) instead of
+      // computing one long dot product per row. Each element of hessDGrad
+      // still sees its terms added in the same order, so the result is
+      // bit-for-bit identical, but the inner loop is now free of a serial
+      // dependency chain and can be vectorized.
+      symmMatVecMul(dim, invHessian.data(), dGrad.data(), hessDGrad.data(),
+                    false);
       for (unsigned int i = 0; i < dim; i++) {
-        double *ivh = &(invHessian[i * dim]);
-        double &hdgradi = hessDGrad[i];
-        double *dgj = dGrad.data();
-        hdgradi = 0.0;
-        for (unsigned int j = 0; j < dim; ++j, ++ivh, ++dgj) {
-          hdgradi += *ivh * *dgj;
-        }
         fac += dGrad[i] * xi[i];
         fae += dGrad[i] * hessDGrad[i];
         sumDGrad += dGrad[i] * dGrad[i];
@@ -323,37 +357,51 @@ int minimize(unsigned int dim, double *pos, double gradTol,
       } else
 #endif
       {
-        // Scalar path: upper-triangle-only update (j >= i) followed by
-        // explicit symmetrisation. This halves the number of Hessian writes
-        // at the cost of one additional pass over a row to mirror elements.
+        // Scalar path: element (i, j) of the update is computed with the
+        // factors of row min(i, j), exactly as the upper-triangle-plus-mirror
+        // formulation does, so the matrix stays exactly symmetric and the
+        // results are unchanged. Writing each row contiguously avoids the
+        // cache-unfriendly column writes of the mirror step.
+        // While each updated row is still in cache we also accumulate its
+        // contribution to the new search direction (-invHessian * grad, see
+        // symmMatVecMul), which saves a full pass over the matrix.
         for (unsigned int i = 0; i < dim; i++) {
-          unsigned int itab = i * dim;
-          double pxi = fac * xi[i], hdgi = fad * hessDGrad[i],
-                 dgi = fae * dGrad[i];
-          double *pxj = &(xi[i]), *hdgj = &(hessDGrad[i]), *dgj = &(dGrad[i]);
-          for (unsigned int j = i; j < dim; ++j, ++pxj, ++hdgj, ++dgj) {
-            invHessian[itab + j] += pxi * *pxj - hdgi * *hdgj + dgi * *dgj;
-            invHessian[j * dim + i] = invHessian[itab + j];
+          scaledXi[i] = fac * xi[i];
+          scaledHessDGrad[i] = fad * hessDGrad[i];
+          scaledDGrad[i] = fae * dGrad[i];
+        }
+        std::fill(newXi.begin(), newXi.end(), 0.0);
+        for (unsigned int i = 0; i < dim; i++) {
+          double *row = &(invHessian[i * dim]);
+          const double xii = xi[i], hdgradi = hessDGrad[i], dgradi = dGrad[i];
+          for (unsigned int j = 0; j < i; ++j) {
+            row[j] += scaledXi[j] * xii - scaledHessDGrad[j] * hdgradi +
+                      scaledDGrad[j] * dgradi;
+          }
+          const double pxi = scaledXi[i], hdgi = scaledHessDGrad[i],
+                       dgi = scaledDGrad[i];
+          for (unsigned int j = i; j < dim; ++j) {
+            row[j] += pxi * xi[j] - hdgi * hessDGrad[j] + dgi * dGrad[j];
+          }
+          const double gradi = grad[i];
+          for (unsigned int j = 0; j < dim; ++j) {
+            newXi[j] -= row[j] * gradi;
           }
         }
+        xi.swap(newXi);
+        haveNewDirection = true;
       }
     }
 
+    if (!haveNewDirection) {
 #ifdef RDK_SVE_AVAILABLE
-    if (cpuHasSVE()) {
-      sveHessianVecMulNeg(dim, invHessian.data(), grad.data(), xi.data());
-    } else
+      if (cpuHasSVE()) {
+        sveHessianVecMulNeg(dim, invHessian.data(), grad.data(), xi.data());
+      } else
 #endif
-    {
-      for (unsigned int i = 0; i < dim; i++) {
-        unsigned int itab = i * dim;
-        xi[i] = 0.0;
-        double &pxi = xi[i];
-        double *ivh = &(invHessian[itab]);
-        double *gj = grad.data();
-        for (unsigned int j = 0; j < dim; ++j, ++ivh, ++gj) {
-          pxi -= *ivh * *gj;
-        }
+      {
+        // xi = -invHessian * grad, see the comment on symmMatVecMul
+        symmMatVecMul(dim, invHessian.data(), grad.data(), xi.data(), true);
       }
     }
     if (snapshotVect && snapshotFreq && !(iter % snapshotFreq)) {

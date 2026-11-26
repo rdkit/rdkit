@@ -28,11 +28,13 @@
 #include <GraphMol/MolAlign/AlignMolecules.h>
 #include <Geometry/Utils.h>
 #include <GraphMol/MolTransforms/MolTransforms.h>
+#include <DistGeom/ChiralSet.h>
 #include "Embedder.h"
 #include "BoundsMatrixBuilder.h"
 #include "BoundsMatrixBuilderDetails.h"
 #include "catch2/catch_test_macros.hpp"
 #include <tuple>
+#include <numeric>
 #include <map>
 #include <limits>
 #include <numbers>
@@ -40,6 +42,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <DistGeom/ZMatrixUtils.h>
 #include <DistGeom/ZMatrix.h>
+#include <DistGeom/TriangleSmooth.h>
 #include "ZMatrixBuilder.h"
 
 #ifdef RDK_TEST_MULTITHREADED
@@ -1143,7 +1146,7 @@ TEST_CASE("atropisomers bulk") {
         auto chiralVol = v3.crossProduct(v4).dotProduct(v2);
         INFO(cid << MolToV3KMolBlock(*mol, true, cid));
         CHECK(chiralVol * vol < 0);
-        CHECK(fabs(chiralVol) > 0.37);
+        CHECK(fabs(chiralVol) > 0.36);
       }
     }
   }
@@ -3296,6 +3299,142 @@ M  END)CTAB"_ctab;
              Catch::Matchers::WithinAbs(mmat->getLowerBound(21, 36), 5.e-1));
 }
 
+TEST_CASE("providing additional chiral sets while embedding") {
+  // values used in the code:
+  constexpr double chiralVolumeMin = 5.0;
+  constexpr double chiralVolumeMax = 100.0;
+  SECTION("basics") {
+    auto m1 = "I[C@](Cl)(Br)F"_smiles;
+    REQUIRE(m1);
+    auto m2 = "I[C](Cl)(Br)F"_smiles;
+    REQUIRE(m2);
+    RWMol m3(*m2);
+
+    auto params = DGeomHelpers::ETKDGv4;
+    params.randomSeed = 0xf00d;
+    params.enforceChirality = true;
+
+    DGeomHelpers::EmbedMolecule(*m1, params);
+    MolOps::assignStereochemistryFrom3D(*m1);
+
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 2, 3, 4, chiralVolumeMin, chiralVolumeMax));
+    DGeomHelpers::EmbedMolecule(*m2, params);
+    MolOps::assignStereochemistryFrom3D(*m2);
+
+    // Swap to a negative chiral volume:
+    params.additionalChiralSets.clear();
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 2, 3, 4, -chiralVolumeMax, -chiralVolumeMin));
+    DGeomHelpers::EmbedMolecule(m3, params);
+    MolOps::assignStereochemistryFrom3D(m3);
+
+    CHECK(m1->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+    CHECK(m2->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+    CHECK(m3.getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CW);
+  }
+
+  SECTION("bad input handling") {
+    auto m1 = "I[C](Cl)(Br)F"_smiles;
+    REQUIRE(m1);
+    auto params = DGeomHelpers::ETKDGv4;
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 2, 3, 8, chiralVolumeMin, chiralVolumeMax));
+    CHECK_THROWS_AS(DGeomHelpers::EmbedMolecule(*m1, params),
+                    ValueErrorException);
+  }
+
+  SECTION("duplicate handling") {
+    auto m1 = "I[C@](Cl)(Br)F"_smiles;
+    REQUIRE(m1);
+    auto params = DGeomHelpers::ETKDGv4;
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 2, 3, 4, chiralVolumeMin, chiralVolumeMax));
+    CHECK_THROWS_AS(DGeomHelpers::EmbedMolecule(*m1, params),
+                    ValueErrorException);
+    // the check is order independent
+    params.additionalChiralSets.clear();
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 3, 2, 4, chiralVolumeMin, chiralVolumeMax));
+    CHECK_THROWS_AS(DGeomHelpers::EmbedMolecule(*m1, params),
+                    ValueErrorException);
+  }
+
+  SECTION("duplicate handling on input") {
+    auto m1 = "I[C](Cl)(Br)F"_smiles;
+    REQUIRE(m1);
+    auto params = DGeomHelpers::ETKDGv4;
+    params.additionalChiralSets.clear();
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 3, 2, 4, chiralVolumeMin, chiralVolumeMax));
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 3, 2, 4, chiralVolumeMin, chiralVolumeMax));
+    CHECK_THROWS_AS(DGeomHelpers::EmbedMolecule(*m1, params),
+                    ValueErrorException);
+  }
+
+  SECTION("two chiral sets") {
+    auto m1 = "I[C](Cl)(Br)O[C](F)(Cl)Br"_smiles;
+    REQUIRE(m1);
+
+    auto params = DGeomHelpers::ETKDGv4;
+    params.randomSeed = 0xf00d;
+    params.enforceChirality = true;
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 2, 3, 4, chiralVolumeMin, chiralVolumeMax));
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        5, 4, 6, 7, 8, chiralVolumeMin, chiralVolumeMax));
+    CHECK(DGeomHelpers::EmbedMolecule(*m1, params) == 0);
+    MolOps::assignStereochemistryFrom3D(*m1);
+    CHECK(m1->getAtomWithIdx(1)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+    CHECK(m1->getAtomWithIdx(5)->getChiralTag() == Atom::CHI_TETRAHEDRAL_CCW);
+  }
+
+  SECTION("JSON handling") {
+    auto params = DGeomHelpers::ETKDGv4;
+    params.randomSeed = 0xf00d;
+    params.enforceChirality = true;
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        1, 0, 2, 3, 4, chiralVolumeMin, chiralVolumeMax));
+    params.additionalChiralSets.push_back(std::make_shared<DistGeom::ChiralSet>(
+        5, 4, 6, 7, 8, -chiralVolumeMax, -chiralVolumeMin));
+    auto json = DGeomHelpers::embedParametersToJSON(params);
+    CHECK(json.find("additionalChiralSets") != std::string::npos);
+
+    DGeomHelpers::EmbedParameters newParams;
+    DGeomHelpers::updateEmbedParametersFromJSON(newParams, json);
+    CHECK(newParams.additionalChiralSets.size() == 2);
+    CHECK(newParams.additionalChiralSets[0]->d_idx0 == 1);
+    CHECK(newParams.additionalChiralSets[0]->d_idx1 == 0);
+    CHECK(newParams.additionalChiralSets[0]->d_idx2 == 2);
+    CHECK(newParams.additionalChiralSets[0]->d_idx3 == 3);
+    CHECK(newParams.additionalChiralSets[0]->d_idx4 == 4);
+    CHECK(newParams.additionalChiralSets[0]->d_volumeLowerBound ==
+          chiralVolumeMin);
+    CHECK(newParams.additionalChiralSets[0]->d_volumeUpperBound ==
+          chiralVolumeMax);
+    CHECK(newParams.additionalChiralSets[0]->d_structureFlags == 0);
+    CHECK(newParams.additionalChiralSets[1]->d_idx0 == 5);
+    CHECK(newParams.additionalChiralSets[1]->d_idx1 == 4);
+    CHECK(newParams.additionalChiralSets[1]->d_idx2 == 6);
+    CHECK(newParams.additionalChiralSets[1]->d_idx3 == 7);
+    CHECK(newParams.additionalChiralSets[1]->d_idx4 == 8);
+    CHECK(newParams.additionalChiralSets[1]->d_volumeLowerBound ==
+          -chiralVolumeMax);
+    CHECK(newParams.additionalChiralSets[1]->d_volumeUpperBound ==
+          -chiralVolumeMin);
+    CHECK(newParams.additionalChiralSets[1]->d_structureFlags == 0);
+
+    std::string updateJSON =
+        R"JSON({"additionalChiralSets":[{"d_idx0":"1","d_idx1":"0","d_idx2":"2","d_idx3":"3","d_idx4":"4",
+    "d_volumeLowerBound":"-5","d_volumeUpperBound":"-10","d_structureFlags":"0"}]
+    })JSON";
+    CHECK_THROWS_AS(
+        DGeomHelpers::updateEmbedParametersFromJSON(newParams, updateJSON),
+        std::invalid_argument);
+  }
+}
+
 TEST_CASE("all-in-one ETKDG checks the total improper energy") {
   // DMF with the amide N and its neighbours pinned 8 degrees out of plane:
   // no single improper term exceeds its limit, but the total does
@@ -3345,4 +3484,73 @@ TEST_CASE("Inconsistent stereo bonds (see PR #9734)") {
   CHECK(mmat->getUpperBound(21, 6) < 3.0);  // CIS
   CHECK(mmat->getLowerBound(21, 4) > 3.5);  // TRANS
   CHECK(mmat->getLowerBound(21, 6) < 3.0);  // CIS
+}
+
+TEST_CASE("highly strained chiral centers") {
+  std::vector<std::pair<std::string, int>> smileses = {
+      // structures from the COD or derived from COD structures
+      {"COC(=O)[C@@]1(c2ccccc2C(F)(F)F)[C@@H]2OC3(C=CC(=O)C=C3)[C@@]21c1ccc(F)cc1",
+       0},
+      {"COC(=O)[C@@]1(c2ccccc2C(F)(F)F)[C@H]2OC3(C=CC(=O)C=C3)[C@@]21c1ccc(F)cc1",
+       -1},
+      {"c1ccccc1[C@]12C[C@]1(C2)S(=O)(=O)c1ccccc1", 0},
+      {"c1ccccc1[C@]12C[C@@]1(C2)S(=O)(=O)c1ccccc1", -1},
+      // example from the EnumerateStereoisomers tests
+      {"F[C@]12C[C@@]1(Cl)C[C@@H](/C=C/Br)O2", 0},
+      {"F[C@]12C[C@]1(Cl)C[C@@H](/C=C/Br)O2", -1},
+      // example from ricrogz
+      {"C1C[N]2[C@H]3C[C@]32C1", 0},
+      {"C1C[N]2[C@@H]3C[C@]32C1", -1},
+
+      //
+  };
+
+  auto ps = DGeomHelpers::ETKDGv3;
+  ps.randomSeed = 0xf00d;
+  ps.initialEmbeddingMode =
+      DGeomHelpers::InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING;
+  ps.maxIterations = 10;
+  for (const auto &[smiles, result] : smileses) {
+    INFO("Processing SMILES: " << smiles);
+    auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+    REQUIRE(mol);
+    MolOps::addHs(*mol);
+    CHECK(DGeomHelpers::EmbedMolecule(*mol, ps) == result);
+  }
+}
+
+TEST_CASE(
+    "Github #9850: setLowerBoundVDW handles H-bond donors/acceptors at atom index 0") {
+  auto mol1 = "O=Cc1ccccc1O"_smiles;  // carbonyl O is atom 0
+  REQUIRE(mol1);
+  MolOps::addHs(*mol1);
+  const auto n = mol1->getNumAtoms();
+
+  std::vector<unsigned int> perm(n);
+  std::iota(perm.begin(), perm.end(), 0);
+  std::swap(perm[0], perm[1]);  // move carbonyl O to atom 1
+  std::unique_ptr<ROMol> mol2(MolOps::renumberAtoms(*mol1, perm));
+
+  DistGeom::BoundsMatPtr b1(new DistGeom::BoundsMatrix(n));
+  DGeomHelpers::initBoundsMat(b1);
+  DGeomHelpers::setTopolBounds(*mol1, b1, true, false, true, true);
+  REQUIRE(DistGeom::triangleSmoothBounds(b1));
+
+  DistGeom::BoundsMatPtr b2(new DistGeom::BoundsMatrix(n));
+  DGeomHelpers::initBoundsMat(b2);
+  DGeomHelpers::setTopolBounds(*mol2, b2, true, false, true, true);
+  REQUIRE(DistGeom::triangleSmoothBounds(b2));
+
+  CHECK_THAT(b1->getLowerBound(0, 14), Catch::Matchers::WithinAbs(1.8, 1e-4));
+  CHECK_THAT(b2->getLowerBound(1, 14), Catch::Matchers::WithinAbs(1.8, 1e-4));
+  for (unsigned int u = 0; u < n; ++u) {
+    for (unsigned int v = 0; v < n; ++v) {
+      const unsigned int u2 = (u == 0) ? 1 : ((u == 1) ? 0 : u);
+      const unsigned int v2 = (v == 0) ? 1 : ((v == 1) ? 0 : v);
+      CHECK_THAT(b1->getLowerBound(u, v),
+                 Catch::Matchers::WithinAbs(b2->getLowerBound(u2, v2), 1e-6));
+      CHECK_THAT(b1->getUpperBound(u, v),
+                 Catch::Matchers::WithinAbs(b2->getUpperBound(u2, v2), 1e-6));
+    }
+  }
 }

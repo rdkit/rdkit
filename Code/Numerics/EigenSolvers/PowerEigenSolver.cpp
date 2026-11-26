@@ -12,10 +12,48 @@
 #include <Numerics/Matrix.h>
 #include <Numerics/SymmMatrix.h>
 #include <RDGeneral/Invariant.h>
+#include <algorithm>
 #include <ctime>
+#include <vector>
 
 namespace RDNumeric {
 namespace EigenSolvers {
+namespace {
+// copy the packed lower triangle of a symmetric matrix into full storage
+void fillDense(const DoubleSymmMatrix &mat, std::vector<double> &dense) {
+  const unsigned int N = mat.numRows();
+  const double *data = mat.getData();
+  for (unsigned int i = 0; i < N; i++) {
+    const unsigned int id = i * (i + 1) / 2;
+    for (unsigned int j = 0; j <= i; j++) {
+      dense[static_cast<std::size_t>(i) * N + j] = data[id + j];
+      dense[static_cast<std::size_t>(j) * N + i] = data[id + j];
+    }
+  }
+}
+
+// y = A*x for a symmetric matrix A in full storage.
+// This produces exactly the same result as RDNumeric::multiply() on the packed
+// matrix: because A is symmetric, y[i] = sum_j A[j][i] * x[j], and every y[i]
+// receives its terms in the same order (j = 0, 1, ...). Sweeping the matrix
+// row by row means the inner loop reads memory contiguously and has no serial
+// dependency, so it is much faster.
+void denseSymmMultiply(const std::vector<double> &dense, const DoubleVector &x,
+                       DoubleVector &y) {
+  const unsigned int N = x.size();
+  const double *xData = x.getData();
+  double *yData = y.getData();
+  std::fill(yData, yData + N, 0.0);
+  for (unsigned int j = 0; j < N; j++) {
+    const double *row = dense.data() + static_cast<std::size_t>(j) * N;
+    const double xj = xData[j];
+    for (unsigned int i = 0; i < N; i++) {
+      yData[i] += (row[i] * xj);
+    }
+  }
+}
+}  // namespace
+
 bool powerEigenSolver(unsigned int numEig, DoubleSymmMatrix &mat,
                       DoubleVector &eigenValues, DoubleMatrix *eigenVectors,
                       int seed) {
@@ -42,6 +80,9 @@ bool powerEigenSolver(unsigned int numEig, DoubleSymmMatrix &mat,
   unsigned int i, j, id, iter, evalId;
 
   DoubleVector v(N), z(N);
+  // A dense (full storage) copy of mat. Multiplying with it is much faster
+  // than multiplying with the packed symmetric storage, see denseSymmMultiply.
+  std::vector<double> dense(static_cast<std::size_t>(N) * N);
   if (seed <= 0) {
     seed = clock();
   }
@@ -49,11 +90,12 @@ bool powerEigenSolver(unsigned int numEig, DoubleSymmMatrix &mat,
     eigVal = -HUGE_EIGVAL;
     seed += ei;
     v.setToRandom(seed);
+    fillDense(mat, dense);
 
     converged = false;
     for (iter = 0; iter < MAX_ITERATIONS; iter++) {
       // z = mat*v
-      multiply(mat, v, z);
+      denseSymmMultiply(dense, v, z);
       prevVal = eigVal;
       evalId = z.largestAbsValId();
       eigVal = z.getVal(evalId);

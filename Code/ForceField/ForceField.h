@@ -242,9 +242,13 @@ class RDKIT_FORCEFIELD_EXPORT ForceField {
 
  protected:
   unsigned int d_dimension;
-  bool df_init{false};               //!< whether or not we've been initialized
-  unsigned int d_numPoints{0};       //!< the number of active points
-  double *dp_distMat{nullptr};       //!< our internal distance matrix
+  bool df_init{false};          //!< whether or not we've been initialized
+  unsigned int d_numPoints{0};  //!< the number of active points
+  double *dp_distMat{nullptr};  //!< our internal distance matrix
+  //! set when the cached distances need to be cleared before they are next
+  //! used. This lets calcEnergy() avoid an O(N^2) reset on every call when
+  //! none of the contribs use the distance cache.
+  bool df_distMatNeedsReset{false};
   RDGeom::PointPtrVect d_positions;  //!< pointers to the points we're using
   ContribPtrVect d_contribs;         //!< contributions to the energy
   INT_VECT d_fixedPoints;

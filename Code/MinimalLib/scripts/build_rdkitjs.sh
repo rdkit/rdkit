@@ -3,7 +3,6 @@
 set -e
 
 GET_SRC=${GET_SRC:-copy}
-NPM_VERSION=${NPM_VERSION:-0.0.0}
 
 # Set buildkit to false to force sequential docker compilation
 export DOCKER_BUILDKIT=0
@@ -20,8 +19,7 @@ mkdir -p $MINIMALLIB_OUTPUT_PATH
 # Build distribution files
 if [ "$GET_SRC" = copy ]; then
     echo "Building distribution files from local source tree"
-    docker compose -f docker/docker_compose_build_minimallib.yml build \
-        --build-arg "VERSION=${NPM_VERSION}"
+    docker compose -f docker/docker_compose_build_minimallib.yml build
 else
     RDKIT_BRANCH=${1:-master}
     RDKIT_GIT_URL=${2:-"https://github.com/rdkit/rdkit.git"}

@@ -1439,16 +1439,13 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
   // -------------------
   streamRead(ss, tag, version);
   bool ringFound = false;
-  bool ringFamiliesFound = false;
   FIND_RING_TYPE ringType =
       RDKit::FIND_RING_TYPE::FIND_RING_TYPE_OTHER_OR_UNKNOWN;
   if (tag == BEGINSSSR) {
     ringFound = true;
-    ringFamiliesFound = true;
     ringType = FIND_RING_TYPE::FIND_RING_TYPE_SSSR;
   } else if (tag == BEGINSYMMSSSR) {
     ringFound = true;
-    ringFamiliesFound = true;
     ringType = FIND_RING_TYPE::FIND_RING_TYPE_SYMM_SSSR;
   } else if (tag == BEGINFASTFIND) {
     ringFound = true;
@@ -1460,12 +1457,6 @@ void MolPickler::_depickle(std::istream &ss, ROMol *mol, int version,
   if (ringFound) {
     _addRingInfoFromPickle<T>(ss, mol, version, directMap, ringType);
     streamRead(ss, tag, version);
-  }
-  if (ringFamiliesFound) {
-    // findSSSR now initializes ring families, so make sure
-    // unpickled mols have done this to prevent issues with
-    // code that expects ring families to be initialized.
-    MolOps::findRingFamilies(*mol);
   }
 
   // -------------------
@@ -2311,8 +2302,8 @@ void MolPickler::_addRingInfoFromPickle(std::istream &ss, ROMol *mol,
       T tmpT;
       T ringSize;
       streamRead(ss, ringSize, version);
-      if (ringSize < 0) {
-        throw MolPicklerException("negative ring size");
+      if (ringSize <= 0) {
+        throw MolPicklerException("invalid ring size");
       }
       INT_VECT atoms(static_cast<int>(ringSize));
       INT_VECT bonds(static_cast<int>(ringSize));
@@ -2345,11 +2336,18 @@ void MolPickler::_addRingInfoFromPickle(std::istream &ss, ROMol *mol,
         }
       } else {
         for (unsigned int j = 1; j < static_cast<unsigned int>(ringSize); ++j) {
-          bonds[j - 1] =
-              mol->getBondBetweenAtoms(atoms[j - 1], atoms[j])->getIdx();
+          const auto bond = mol->getBondBetweenAtoms(atoms[j - 1], atoms[j]);
+          if (!bond) {
+            throw MolPicklerException("ring-bond not found");
+          }
+          bonds[j - 1] = bond->getIdx();
         }
-        bonds[ringSize - 1] =
-            mol->getBondBetweenAtoms(atoms[0], atoms[ringSize - 1])->getIdx();
+        const auto bond =
+            mol->getBondBetweenAtoms(atoms[0], atoms[ringSize - 1]);
+        if (!bond) {
+          throw MolPicklerException("ring-bond not found");
+        }
+        bonds[ringSize - 1] = bond->getIdx();
       }
       atomRings.push_back(std::move(atoms));
       bondRings.push_back(std::move(bonds));
