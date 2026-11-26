@@ -1481,6 +1481,17 @@ RDKIT_GRAPHMOL_EXPORT unsigned int addExplicitAttachmentPoint(
 RDKIT_GRAPHMOL_EXPORT bool isAttachmentPoint(const Atom *atom,
                                              bool markedOnly = true);
 
+//! comparator for rings based on size and lexicographical order
+/*!
+ * Rings are compared first by size, then lexicographically by their atom
+ * indices.
+ *
+ * @param v1 the first ring
+ * @param v2 the second ring
+ */
+RDKIT_GRAPHMOL_EXPORT bool ringComparer(const std::vector<int> &v1,
+                                        const std::vector<int> &v2);
+
 }  // namespace details
 
 }  // namespace MolOps

@@ -197,6 +197,40 @@ TEST_CASE("double bond stereo and canonicalization") {
     Canon::rankMolAtoms(*mol, ranks, breakTies);
     CHECK(ranks[0] < ranks[9]);
   }
+  SECTION("fragment ranking ignores excluded ligands") {
+    UseLegacyStereoPerceptionFixture modernStereo(false);
+    auto mol = R"(C/C(F)=C/C=C(\C)Cl)"_smiles;
+    REQUIRE(mol);
+    boost::dynamic_bitset<> atoms(mol->getNumAtoms());
+    boost::dynamic_bitset<> bonds(mol->getNumBonds());
+    atoms.set();
+    bonds.set();
+    SECTION("ligand atoms excluded") {
+      atoms.reset(2);  // F
+      atoms.reset(7);  // Cl
+    }
+    SECTION("ligand bonds excluded") {
+      bonds.reset(mol->getBondBetweenAtoms(1, 2)->getIdx());
+      bonds.reset(mol->getBondBetweenAtoms(5, 7)->getIdx());
+    }
+
+    auto leftEndRanksFirst = [&]() {
+      std::vector<unsigned int> ranks;
+      Canon::rankFragmentAtoms(*mol, ranks, atoms, bonds, nullptr, false);
+      REQUIRE(ranks[0] != ranks[6]);  // Alkene geometry distinguishes the ends.
+      return ranks[0] < ranks[6];
+    };
+    const auto before = leftEndRanksFirst();
+    mol->getAtomWithIdx(2)->setAtomMapNum(1);
+    CHECK(leftEndRanksFirst() == before);
+
+    // Re-express the same geometry using the excluded F as a reference.
+    auto *leftBond = mol->getBondBetweenAtoms(1, 3);
+    leftBond->setStereoAtoms(2, 4);
+    leftBond->setStereo(Bond::STEREOCIS);
+    const auto afterReferenceSwap = leftEndRanksFirst();
+    CHECK(afterReferenceSwap == before);
+  }
 }
 
 TEST_CASE("enhanced stereo canonicalization") {
@@ -1589,9 +1623,9 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
       {R"smi(CC1=C/[C@H]2O[C@@H](C/C=C/C=C/C(=O)O[C@@H]3C[C@@H](/C=C/C/C=C/1)O[C@@H](C/C=C\C[C@@H](O)C(=O)O)[C@]3(C)CO)C[C@H](O)[C@H]2C)smi",
        true, true},  // #8089
       {R"smi(c1ccc2/c3[nH]/c(c2c1)=N\c1ccc(cc1)-c1nc2cc(ccc2o1)/N=c1/[nH]/c(c2ccccc12)=N/c1ccc2nc(oc2c1)-c1ccc(cc1)/N=3)smi",
-       true, false},  // #8089
+       true, true},  // #8089
       {R"smi(c1ccc2/c3[nH]/c(c2c1)=N\c1ccc(cc1)-c1nc2ccc(cc2o1)/N=c1/[nH]/c(c2ccccc12)=N/c1ccc2nc(oc2c1)-c1ccc(cc1)/N=3)smi",
-       true, false},  // #8089
+       true, true},  // #8089
       {R"smi(CC1=C/[C@@H](C)C[C@]2(C)CC[C@H](O2)[C@]23CC[C@](C)(C[C@H](O2)[C@@H]2O[C@@](C)(CC2=O)[C@@H](O)[C@H]2CC[C@@]4(CCC[C@@H](O4)[C@H](C)C(=O)O[C@H]4C[C@H]([C@]5(O)OCC[C@H](C)[C@@H]5O)O[C@H]4\C=C/1)O2)O3)smi",
        true, true},  // #8089
       {R"smi(CC1=C/[C@@H](C)C[C@]2(C)CC[C@H](O2)[C@]23CC[C@](C(=O)O)(C[C@H](O2)[C@@H]2O[C@@](C)(CC2=O)[C@@H](O)[C@H]2CC[C@@]4(CCC[C@@H](O4)[C@H](C)C(=O)O[C@H]4C[C@H]([C@]5(O)OCC[C@H](C)[C@@H]5O)O[C@H]4\C=C/1)O2)O3)smi",
@@ -1729,9 +1763,9 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
       {R"smi(C/C=C1/C(=C\Cl)/C(=C\F)/C(=C\N)/C/1=C\O)smi", true,
        true},  // #8965
       {R"smi(C1(=C/O)\C(=C/N)\C(=C/C)\C(=C/O)\C(=C/N)\C\1=C/C)smi", true,
-       false},  // #8965
+       true},  // #8965
       {R"smi(C1(=C/O)\C(=C/N)\C(=C/C)\C(=C/F)\C(=C/N)\C(=C/O)\C(=C/C)\C\1=C/F)smi",
-       true, false},  // #8965
+       true, true},  // #8965
       {R"smi(C/C/1=C/CC\2CCO/C2=C/C=C1/C=O)smi", true,
        true},  // pubchem 101176040
       {R"smi(CCCSNC1=C(C(=C(C=C1)F)C(=O)/C/2=C/NCN/C=C(\C=C2/C)/C3=CC=C(C=C3)C=O)F)smi",
@@ -1753,6 +1787,7 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
        true, true},  // pubchem 153584538
       {R"smi(C=C1C(=C/C)/C(=C\C)C(=C)C1C)smi", true,
        true},  // pubchem 144493365
+      {R"smi(CC/C(F)=C/C=C(\C)CC)smi", true, true},
 
   };
 

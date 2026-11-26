@@ -75,6 +75,7 @@ SearchResults SynthonSpaceSearcher::search(const ThreadMode threadMode) {
   if (!timedOut && !ControlCHandler::getGotSignal() && d_params.buildHits) {
     buildHits(allHits, endTime, timedOut, results);
   }
+  timedOut = timedOut || details::checkTimeOut(endTime);
   return SearchResults{std::move(results), std::move(d_bestHitFound), totHits,
                        timedOut, ControlCHandler::getGotSignal()};
 }
@@ -576,14 +577,13 @@ bool SynthonSpaceSearcher::quickVerify(
 
 void SynthonSpaceSearcher::updateBestHitSoFar(const ROMol &possBest,
                                               const double sim) {
+  // Readers and the comparison must use the same mutex as the update. A
+  // preliminary unlocked comparison races with other search workers.
+  std::lock_guard lock{d_bestHitsMutex};
   if (sim > d_bestSimilarity) {
-    std::unique_lock lock1{d_bestHitsMutex};
-    // In case another thread changed it in the meantime.
-    if (sim > d_bestSimilarity) {
-      d_bestSimilarity = sim;
-      d_bestHitFound.reset(new ROMol(possBest));
-      d_bestHitFound->setProp<double>("Similarity", sim);
-    }
+    d_bestSimilarity = sim;
+    d_bestHitFound.reset(new ROMol(possBest));
+    d_bestHitFound->setProp<double>("Similarity", sim);
   }
 }
 
@@ -891,7 +891,7 @@ void SynthonSpaceSearcher::processToTrySet(
   // There are possibly duplicate entries in toTry, because 2
   // different fragmentations might produce overlapping synthon lists in
   // the same reaction. The duplicates need to be removed.
-  details::sortAndUniquifyToTry(toTry);
+  details::uniquifyToTry(toTry);
 
   if (d_params.randomSample) {
     std::shuffle(toTry.begin(), toTry.end(), *d_randGen);

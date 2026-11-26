@@ -161,6 +161,8 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedMolHolder : public MolHolderBase {
     reduced speed it should be used in conjunction with a pattern
     fingerprinter.
 
+    Note:  To use CXSmiles you must use addSmiles, not addMol
+             addMol currently stores only non cxsmiles
     See RDKit::FPHolder
 */
 class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedSmilesMolHolder
@@ -213,6 +215,17 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedSmilesMolHolder
     fingerprinter.
 
     See RDKit::FPHolder
+	
+    Note: TrustedSmiles currently does not support CXSmiles
+          use CachedSmilesMolHolder::addSmiles for cxsmiles support
+	  or use MolHolder or CachedMolHolder.
+	  
+    Consequences of Trusted smiles:
+      - Because sanitization is not done on the molecule, this means that radical counts,
+         hybridization and conjugation are not supported for query.
+      - In such cases use MolHolder, CachedMolHolder or CachedSmilesMolHolder
+
+
 */
 class RDKIT_SUBSTRUCTLIBRARY_EXPORT CachedTrustedSmilesMolHolder
     : public MolHolderBase {
@@ -514,6 +527,10 @@ class RDKIT_SUBSTRUCTLIBRARY_EXPORT KeyFromPropHolder : public KeyHolderBase {
      auto key = lib.getKeys().getKey(idx);
      auto keys = lib.getKeys().getKeys(lib.GetMatch(query));
      \endcode
+
+     Note: to support CXSmiles, you must use MolHolder, CachedMolHolder
+     or CachedSmilesMolHolder with the addSmiles method
+     See the MolHolder docs for more details
 
 */
 class RDKIT_SUBSTRUCTLIBRARY_EXPORT SubstructLibrary {

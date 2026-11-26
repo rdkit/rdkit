@@ -1,0 +1,99 @@
+name: AddressSanitizer
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/asan.yml
+  workflow_dispatch:
+  schedule:
+    # Sunday at 04:23 UTC.
+    - cron: '23 4 * * 0'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  asan:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 180
+    env:
+      CC: clang-22
+      CXX: clang++-22
+      PYTHON_EXECUTABLE: /usr/bin/python3
+      ASAN_SYMBOLIZER_PATH: /usr/bin/llvm-symbolizer-22
+
+    steps:
+      - name: Check out RDKit
+        uses: actions/checkout@v7
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends \
+            clang-22 libclang-rt-22-dev llvm-22 ninja-build \
+            libboost-all-dev libcairo2-dev libeigen3-dev libfreetype6-dev \
+            python3-dev python3-matplotlib python3-numpy python3-pandas \
+            python3-pil python3-pytest
+
+      - name: Configure
+        run: |
+          cmake -S . -B build/asan -G Ninja \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_C_FLAGS="-fsanitize=address -fsanitize-address-use-after-scope -fno-omit-frame-pointer" \
+            -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize-address-use-after-scope -fno-omit-frame-pointer" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address -shared-libasan" \
+            -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=address -shared-libasan" \
+            -DPython_EXECUTABLE="$PYTHON_EXECUTABLE" \
+            -DRDK_BUILD_CPP_TESTS=ON \
+            -DRDK_BUILD_PYTHON_WRAPPERS=ON \
+            -DRDK_BUILD_BOOST_PYTHON_WRAPPERS=ON \
+            -DRDK_BUILD_NANOBIND_WRAPPERS=OFF \
+            -DRDK_BUILD_CAIRO_SUPPORT=ON \
+            -DRDK_BUILD_FREETYPE_SUPPORT=ON \
+            -DRDK_BUILD_CHEMDRAW_SUPPORT=OFF \
+            -DRDK_BUILD_COORDGEN_SUPPORT=OFF \
+            -DRDK_BUILD_MAEPARSER_SUPPORT=OFF \
+            -DRDK_BUILD_PUBCHEMSHAPE_SUPPORT=OFF \
+            -DRDK_BUILD_XYZ2MOL_SUPPORT=ON \
+            -DRDK_INSTALL_INTREE=ON \
+            -DRDK_INSTALL_STATIC_LIBS=OFF
+
+      - name: Build and install
+        run: cmake --build build/asan --parallel 4 --target install
+
+      - name: Test
+        env:
+          ASAN_OPTIONS: detect_leaks=0:halt_on_error=1
+          MPLBACKEND: Agg
+          LD_LIBRARY_PATH: ${{ github.workspace }}/lib
+          PYTHONPATH: ${{ github.workspace }}
+          RDBASE: ${{ github.workspace }}
+        run: |
+          asan_runtime=$("$CXX" --print-file-name=libclang_rt.asan-x86_64.so)
+          test -f "$asan_runtime"
+          # Python is not instrumented; load ASan before importing RDKit modules.
+          export LD_PRELOAD="$asan_runtime"
+          ctest --test-dir build/asan \
+            --parallel 2 \
+            --timeout 600 \
+            --no-tests=error \
+            --output-on-failure \
+            --output-junit "$GITHUB_WORKSPACE/build/asan-results.xml"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: asan-results-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            build/asan-results.xml
+            build/asan/Testing/Temporary/LastTest.log
+            build/asan/Testing/Temporary/LastTestsFailed.log
+            build/asan/CMakeCache.txt
+            build/asan/CMakeFiles/CMakeConfigureLog.yaml

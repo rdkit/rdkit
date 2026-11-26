@@ -251,5 +251,25 @@ EndFeature
     feats = [f for f in cfac.GetFeaturesForMol(m) if f.GetFamily() == 'Acceptor']
     self.assertEqual(len(feats), 0)
 
+  def testMinimalFeatureDonors(self):
+    cfac = ChemicalFeatures.BuildFeatureFactory(
+      os.path.join(RDConfig.RDBaseDir, 'Docs', 'Book', 'data', 'MinimalFeatures.fdef'))
+    cases = [
+      ('C', []),
+      ('CC', []),
+      ('COC', []),
+      ('CO', [(1,)]),
+      ('CN', [(1,)]),
+      ('CS', [(1,)]),
+      ('[NH4+]', [(0,)]),
+      ('c1cc[nH]c1', [(3,)]),
+      ('CC(=O)O', []),
+    ]
+    for smiles, expected in cases:
+      with self.subTest(smiles=smiles):
+        mol = Chem.MolFromSmiles(smiles)
+        donors = cfac.GetFeaturesForMol(mol, includeOnly='Donor')
+        self.assertEqual([feat.GetAtomIds() for feat in donors], expected)
+
 if __name__ == '__main__':
   unittest.main()

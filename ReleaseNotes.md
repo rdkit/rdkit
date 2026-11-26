@@ -6,6 +6,8 @@
 see your contribution acknowledged with your name, please set your name in
 GitHub)
 
+Co5mos, İlker YILMAZ
+
 ## Highlights
 
 ## Backwards incompatible changes:
@@ -18,11 +20,18 @@ GitHub)
   `std::span<const int>` instead of `const INT_VECT &`. These views are
   invalidated when the `RingInfo` is modified. `RingInfo::addRing()` now takes
   `std::span<const int>` arguments. The Python, Java, and C# APIs are unchanged.
+- `Flippers.h` has been removed from the installed headers.
 
 ## Code removed in this release:
 
 ## Deprecated code (to be removed in a future release):
-
+- The C++ functions `RingUtils::makeRingNeighborMap()` and
+  `RingUtils::pickFusedRings()` have been deprecated, please use
+  `RingUtils::findFusedRingSystems()` instead.
+- The pure-Python implementation for `EnumerateStereoisomers` has been
+  deprecated in favor of the Python wrappers for the C++ `StereoisomerEnumerator`
+  class. The replacement is almost a drop-in replacement, though the random
+  seed and the default max number of isomers to return are different.
 
 # Release_2026.09.1
 (Changes relative to Release_2026.03.1)

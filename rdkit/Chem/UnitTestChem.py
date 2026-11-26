@@ -15,7 +15,6 @@ import unittest
 
 from rdkit import Chem, RDConfig
 
-
 class TestCase(unittest.TestCase):
 
   def setUp(self):
@@ -170,30 +169,6 @@ class TestCase(unittest.TestCase):
         print(smi2)
         print("-------")
     self.assertEqual(smis1, smis2)
-
-  def testGithub4144(self):
-    """ github4144: EnumerateStereiosomers clearing ring info """
-    from rdkit.Chem import EnumerateStereoisomers
-    m = Chem.MolFromSmiles('CSCc1cnc(C=Nn2c(C)nc3sc4c(c3c2=O)CCCCC4)s1')
-    sssr = [list(x) for x in Chem.GetSymmSSSR(m)]
-    sms = EnumerateStereoisomers.EnumerateStereoisomers(m)
-    for sm in sms:
-      sssr2 = [list(x) for x in Chem.GetSymmSSSR(sm)]
-      self.assertEqual(sssr, sssr2)
-
-  def testWigglyBondsAndEnumerateStereoisomers(self):
-    from rdkit.Chem import EnumerateStereoisomers
-    m = Chem.MolFromSmiles('CC=CC |w:1.0|')
-    sms = [Chem.MolToSmiles(x) for x in EnumerateStereoisomers.EnumerateStereoisomers(m)]
-    self.assertEqual(len(sms), 2)
-    self.assertIn('C/C=C/C', sms)
-    self.assertIn('C/C=C\\C', sms)
-    from rdkit.Chem import EnumerateStereoisomers
-    m = Chem.MolFromSmiles('CC(F)(Cl)(Br) |w:1.0|')
-    sms = [Chem.MolToSmiles(x) for x in EnumerateStereoisomers.EnumerateStereoisomers(m)]
-    self.assertEqual(len(sms), 2)
-    self.assertIn('C[C@](F)(Cl)Br', sms)
-    self.assertIn('C[C@@](F)(Cl)Br', sms)
 
   def testMultiConfMolFromSDF(self):
     sdf = os.path.join(RDConfig.RDCodeDir, "Chem", "test_data", "cis.sdf")

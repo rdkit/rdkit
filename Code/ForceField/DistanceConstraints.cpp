@@ -14,6 +14,23 @@
 #include <RDGeneral/Invariant.h>
 
 namespace ForceFields {
+namespace {
+// equivalent to ForceField::distance2(), but inlined and without the
+// precondition checks, since this is called for every contrib on every
+// energy/gradient evaluation
+inline double distance2(unsigned int idx1, unsigned int idx2, const double *pos,
+                        unsigned int dim) {
+  const double *p1 = &pos[dim * idx1];
+  const double *p2 = &pos[dim * idx2];
+  double res = 0.0;
+  for (unsigned int i = 0; i < dim; ++i) {
+    const double tmp = p1[i] - p2[i];
+    res += tmp * tmp;
+  }
+  return res;
+}
+}  // namespace
+
 DistanceConstraintContribs::DistanceConstraintContribs(ForceField *owner) {
   PRECONDITION(owner, "bad owner");
   dp_forceField = owner;
@@ -52,9 +69,10 @@ double DistanceConstraintContribs::getEnergy(double *pos) const {
   PRECONDITION(pos, "bad vector");
 
   double accum = 0.0;
+  const unsigned int dim = dp_forceField->dimension();
   for (const auto &contrib : d_contribs) {
     const auto distance2 =
-        dp_forceField->distance2(contrib.idx1, contrib.idx2, pos);
+        ForceFields::distance2(contrib.idx1, contrib.idx2, pos, dim);
     double difference = 0.0;
     if (distance2 < contrib.minLen * contrib.minLen) {
       difference = contrib.minLen - std::sqrt(distance2);
@@ -77,7 +95,7 @@ void DistanceConstraintContribs::getGrad(double *pos, double *grad) const {
     double preFactor = 0.0;
     double distance = 0.0;
     const auto distance2 =
-        dp_forceField->distance2(contrib.idx1, contrib.idx2, pos);
+        ForceFields::distance2(contrib.idx1, contrib.idx2, pos, dim);
     if (distance2 < contrib.minLen * contrib.minLen) {
       distance = std::sqrt(distance2);
       preFactor = distance - contrib.minLen;

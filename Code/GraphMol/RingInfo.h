@@ -24,6 +24,9 @@
 #include <RingDecomposerLib.h>
 
 namespace RDKit {
+
+constexpr size_t MAX_SYMMETRIZED_RINGS = 10000;
+
 //! A class to store information about a molecule's rings
 /*!
 

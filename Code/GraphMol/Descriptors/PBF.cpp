@@ -95,8 +95,10 @@ bool getBestFitPlane(const Conformer &conf,
 
   Eigen::Matrix3d evects;
   Eigen::Vector3d evals;
-  MolTransforms::computePrincipalAxesAndMomentsFromGyrationMatrix(
-      conf, evects, evals, false, weights);
+  if (!MolTransforms::computePrincipalAxesAndMomentsFromGyrationMatrix(
+          conf, evects, evals, /*ignoreHs=*/false, /*force=*/true, weights)) {
+    return false;
+  }
   RDGeom::Point3D normal;
   normal.x = evects(0, 0);
   normal.y = evects(1, 0);

@@ -432,7 +432,64 @@ void testPDB() {
   BOOST_LOG(rdInfoLog) << "Done" << std::endl;
 }
 
+void testResolution() {
+  BOOST_LOG(rdInfoLog)
+      << "-----------------------\n Testing FreeSASA resolution options"
+      << std::endl;
+
+  std::string rdbase = getenv("RDBASE");
+  std::string fName = rdbase += "/External/FreeSASA/test_data/1d3z.pdb";
+
+  ROMol *m;
+  {
+    const bool sanitize = true;
+    const bool removeHs = true;
+    m = PDBFileToMol(fName, sanitize, removeHs);
+  }
+  std::vector<double> radii;
+  FreeSASA::classifyAtoms(*m, radii);
+
+  {
+    FreeSASA::SASAOpts opts;
+    TEST_ASSERT(opts.shrakeRupleyNumPoints == 100);
+    TEST_ASSERT(opts.leeRichardsNumSlices == 20);
+  }
+  {
+    FreeSASA::SASAOpts opts;
+    opts.algorithm = FreeSASA::SASAOpts::ShrakeRupley;
+    opts.shrakeRupleyNumPoints = 1000;
+    double sasa = FreeSASA::calcSASA(*m, radii, -1, nullptr, opts);
+    TEST_ASSERT(fabs(sasa - 4993.916324) < 1e-5);
+  }
+  {
+    FreeSASA::SASAOpts opts;
+    opts.algorithm = FreeSASA::SASAOpts::LeeRichards;
+    opts.leeRichardsNumSlices = 40;
+    double sasa = FreeSASA::calcSASA(*m, radii, -1, nullptr, opts);
+    TEST_ASSERT(fabs(sasa - 4998.810558) < 1e-5);
+  }
+  for (auto algorithm :
+       {FreeSASA::SASAOpts::ShrakeRupley, FreeSASA::SASAOpts::LeeRichards}) {
+    FreeSASA::SASAOpts opts;
+    opts.algorithm = algorithm;
+    opts.shrakeRupleyNumPoints = 0;
+    opts.leeRichardsNumSlices = 0;
+    bool ok = false;
+    try {
+      FreeSASA::calcSASA(*m, radii, -1, nullptr, opts);
+    } catch (const ValueErrorException &) {
+      ok = true;
+    }
+    TEST_ASSERT(ok);
+  }
+
+  delete m;
+
+  BOOST_LOG(rdInfoLog) << "Done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
   testPDB();
+  testResolution();
 }

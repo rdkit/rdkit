@@ -15,9 +15,10 @@
 #ifndef RD_ENUMERATESTEREOISOMERS_H
 #define RD_ENUMERATESTEREOISOMERS_H
 
-#include <GraphMol/EnumerateStereoisomers/Flippers.h>
-
+#include <iterator>
+#include <memory>
 #include <random>
+#include <set>
 #include <unordered_set>
 
 #include <boost/dynamic_bitset/dynamic_bitset.hpp>
@@ -28,6 +29,9 @@
 
 namespace RDKit {
 namespace EnumerateStereoisomers {
+namespace details {
+struct Flipper;
+}  // namespace details
 
 struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoEnumerationOptions {
   bool tryEmbedding{false};   // If true, the process attempts to generate
@@ -47,16 +51,35 @@ struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoEnumerationOptions {
                                  // with the molecule.
   bool unique{true};  // If true, only stereoisomers that differ in canonical
                       // SMILES will be returned.
-  std::uint64_t maxIsomers{0};  // The maximum number of isomers to yield.
-                                // If the number of possible isomers is
-                                // greater than maxIsomers, a random subset
-                                // will be yielded.  If 0, all isomers are
-                                // yielded.  Since every additional
-                                // stereocenter doubles the number of results
-                                // (and execution time) it's important to
-                                // keep an eye on this.
-  int randomSeed{-1};  // Seed for random number generator.  -1 means don't
-                       // seed.
+  std::uint64_t maxIsomers{16384};  // The maximum number of isomers to yield.
+                                    // If the number of possible isomers is
+                                    // greater than maxIsomers, a random subset
+                                    // will be yielded.  If 0, all isomers are
+                                    // yielded.  Since every additional
+                                    // stereocenter doubles the number of
+                                    // results (and execution time) it's
+                                    // important to keep an eye on this.
+  int randomSeed{0xC0FFEE};  // Seed for random number generator.  -1 means
+                             // don't seed. Default is 0xC0FFEE so the
+                             // enumerator is deterministic by default.
+
+  bool useRingSystemFilter{
+      true};  // filter out stereoisomers containing ring systems that
+              // are known to be impossible in 3D space
+
+  StereoEnumerationOptions(bool tryEmbedding = false,
+                           bool onlyUnassigned = true,
+                           bool onlyStereoGroups = false, bool unique = true,
+                           std::uint64_t maxIsomers = 16384,
+                           int randomSeed = 0xC0FFEE,
+                           bool useRingSystemFilter = true)
+      : tryEmbedding{tryEmbedding},
+        onlyUnassigned{onlyUnassigned},
+        onlyStereoGroups{onlyStereoGroups},
+        unique{unique},
+        maxIsomers{maxIsomers},
+        randomSeed{randomSeed},
+        useRingSystemFilter{useRingSystemFilter} {}
 };
 
 // Class that enumerates the stereoisomers of a molecule.  Acts like a
@@ -64,6 +87,33 @@ struct RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoEnumerationOptions {
 // it can produce.
 class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
  public:
+  class RDKIT_ENUMERATESTEREOISOMERS_EXPORT iterator {
+   public:
+    using iterator_category = std::input_iterator_tag;
+    using iterator_concept = std::input_iterator_tag;
+    using value_type = ROMol;
+    using difference_type = std::ptrdiff_t;
+    using reference = const ROMol &;
+    using pointer = const ROMol *;
+
+    iterator() = default;
+    reference operator*() const;
+    pointer operator->() const { return &operator*(); }
+    iterator &operator++();
+    iterator operator++(int);
+    bool operator==(const iterator &other) const;
+    bool operator!=(const iterator &other) const { return !(*this == other); }
+
+   private:
+    friend class StereoisomerEnumerator;
+    iterator(StereoisomerEnumerator *owner, std::uint64_t position,
+             std::unique_ptr<ROMol> value)
+        : d_owner(owner), d_position(position), d_current(std::move(value)) {}
+    StereoisomerEnumerator *d_owner{nullptr};
+    std::uint64_t d_position{0};
+    std::shared_ptr<ROMol> d_current;
+  };
+
   StereoisomerEnumerator() = delete;
   StereoisomerEnumerator(
       const ROMol &mol,
@@ -71,7 +121,7 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
       bool verbose = false);
   StereoisomerEnumerator(const StereoisomerEnumerator &other) = delete;
   StereoisomerEnumerator(StereoisomerEnumerator &&other) = delete;
-  ~StereoisomerEnumerator() = default;
+  ~StereoisomerEnumerator();
   StereoisomerEnumerator &operator=(const StereoisomerEnumerator &other) =
       delete;
   StereoisomerEnumerator &operator=(StereoisomerEnumerator &&other) = delete;
@@ -81,7 +131,14 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
   // Return another stereoisomer, or an empty unique_ptr if we're done.
   std::unique_ptr<ROMol> next();
 
+  iterator begin();
+  iterator end();
+
  private:
+  // Whether the generated stereoisomer is considered valid based
+  // on the ring systems patterns
+  bool passesRingPatternsCheck(const ROMol &mol) const;
+
   RWMol d_mol;
   const StereoEnumerationOptions d_options;
   bool d_verbose;
@@ -106,8 +163,15 @@ class RDKIT_ENUMERATESTEREOISOMERS_EXPORT StereoisomerEnumerator {
   // The stereo orientations we've already made
   std::unordered_set<boost::dynamic_bitset<>> d_seen;
 
+  // For the ring systems patterns. We check if pairs of parities
+  // are same/opposite instead of individual CW/CCW because the
+  // configurations can mirrored and still be valid.
+  std::set<std::pair<unsigned int, unsigned int>> d_pattern_same_parity;
+  std::set<std::pair<unsigned int, unsigned int>> d_pattern_opposite_parity;
+
   void buildFlippers();
   std::unique_ptr<ROMol> generateRandomIsomer();
+  std::unique_ptr<ROMol> buildIsomer(const boost::dynamic_bitset<> &config);
   bool embeddable(ROMol &isomer);
 };
 }  // namespace EnumerateStereoisomers

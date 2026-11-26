@@ -36,7 +36,7 @@ A `StereoGroup` contains an enum with the type as well as pointers to the atoms 
 
 ## Enumeration
 
-The Python-only function `rdkit.Chem.EnumerateStereoisomers.EnumerateStereoisomers` can be used to enumerate
+The Python class `rdkit.Chem.rdEnumerateStereoisomers.StereoisomerEnumerator` can be used to enumerate
 all stereoisomers represented by the StereoGroups. It is possible to enumerate _only_ the Stereo Groups,
 ignoring other unspecified centers. 
 
