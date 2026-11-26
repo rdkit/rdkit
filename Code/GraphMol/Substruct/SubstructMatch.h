@@ -27,6 +27,7 @@
 #endif
 
 #include <GraphMol/StereoGroup.h>
+#include <GraphMol/JointRing.h>
 
 namespace RDKit {
 class ROMol;
@@ -38,11 +39,6 @@ class MolBundle;
 //! \brief used to return matches from substructure searching,
 //!   The format is (queryAtomIdx, molAtomIdx)
 typedef std::vector<std::pair<int, int>> MatchVectType;
-
-struct JointRingConstraint {
-  std::vector<unsigned int> jointAtoms;
-  std::vector<unsigned int> excludedAtoms;
-};
 
 struct RDKIT_SUBSTRUCTMATCH_EXPORT SubstructMatchParameters {
   bool useChirality = false;  //!< Use chirality in determining whether or not
@@ -280,8 +276,6 @@ class RDKIT_SUBSTRUCTMATCH_EXPORT MolMatchFinalCheckFunctor {
   std::unordered_map<unsigned int, StereoGroup const *> d_molStereoGroups;
 
   std::vector<JointRingConstraint> d_jointRingAtoms;
-  std::vector<boost::dynamic_bitset<>> d_ringMasks;
-  boost::dynamic_bitset<> d_initializedMasked;
 
 #ifdef RDK_INTERNAL_BITSET_HAS_HASH
   // Boost 1.71 added support for std::hash with dynamic_bitset.
@@ -292,7 +286,8 @@ class RDKIT_SUBSTRUCTMATCH_EXPORT MolMatchFinalCheckFunctor {
 #endif
   std::unordered_set<HashedStorageType> matchesSeen;
 
-  bool checkJointRings(const std::vector<std::uint32_t> queryToMolAtomIndices);
+  bool checkJointRings(
+      const std::span<const std::uint32_t> queryToMolAtomIndices);
 };
 
 struct RDKIT_SUBSTRUCTMATCH_EXPORT AtomCoordsMatchFunctor {

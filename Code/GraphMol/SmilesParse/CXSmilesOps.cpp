@@ -17,12 +17,12 @@
 #include <GraphMol/Atropisomers.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/JointRing.h>
 
 #include "SmilesWrite.h"
 #include "SmilesParse.h"
 #include "SmilesParseOps.h"
 #include <GraphMol/MolEnumerator/LinkNode.h>
-#include "GraphMol/Substruct/SubstructMatch.h"
 
 #include <algorithm>
 #include <array>
@@ -619,7 +619,7 @@ bool parse_atoms_in_joint_rings(Iterator &first, Iterator last,
     if (VALID_ATIDX(atomIdx)) {
       auto atom = mol.getAtomWithIdx(atomIdx - startAtomIdx);
 
-      JointRingConstraint element;
+      JointRingIds element;
       if (!atom->getPropIfPresent(common_properties::_CXJointRingIDs,
                                   element)) {
         if (!atom->hasQuery()) {
@@ -629,9 +629,9 @@ bool parse_atoms_in_joint_rings(Iterator &first, Iterator last,
       }
 
       if (excludeAtom) {
-        element.excludedAtoms.emplace_back(jrCounter);
+        element.excluded.emplace_back(jrCounter);
       } else {
-        element.jointAtoms.emplace_back(jrCounter);
+        element.joint.emplace_back(jrCounter);
       }
       atom->setProp(common_properties::_CXJointRingIDs, element);
     }
@@ -1716,35 +1716,9 @@ std::string quote_string(const std::string &txt,
   return res;
 }
 
-// TODO move somewhere shared
-std::vector<JointRingConstraint> collectJointRings(const ROMol &mol) {
-  std::vector<JointRingConstraint> jrToAtomIdx;
-  auto transfer = [&jrToAtomIdx](const auto &b, const auto value,
-                                 const bool exclude = false) {
-    for (const auto idx : b) {
-      if (idx >= jrToAtomIdx.size()) {
-        jrToAtomIdx.resize(idx + 1u);
-      }
-      if (exclude) {
-        jrToAtomIdx[idx].excludedAtoms.emplace_back(value);
-      } else {
-        jrToAtomIdx[idx].jointAtoms.emplace_back(value);
-      }
-    }
-  };
-  for (const auto atom : mol.atoms()) {
-    JointRingConstraint jrIndices;
-    if (atom->getPropIfPresent(common_properties::_CXJointRingIDs, jrIndices)) {
-      transfer(jrIndices.jointAtoms, atom->getIdx());
-      transfer(jrIndices.excludedAtoms, atom->getIdx(), true);
-    }
-  }
-  return jrToAtomIdx;
-}
-
 std::string get_joint_ring_atoms(const ROMol &mol,
                                  const std::vector<unsigned int> &atomOrder) {
-  std::vector<JointRingConstraint> jointRings = collectJointRings(mol);
+  std::vector<JointRingConstraint> jointRings = collectJRConstraints(mol);
 
   std::vector<unsigned int> revOrder(mol.getNumAtoms(), atomOrder.size());
   for (unsigned int i = 0; i < atomOrder.size(); ++i) {

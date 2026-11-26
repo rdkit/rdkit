@@ -15,6 +15,7 @@
 #include <GraphMol/Resonance.h>
 #include <GraphMol/MolBundle.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/JointRing.h>
 
 #include "SubstructMatch.h"
 #include "SubstructUtils.h"
@@ -36,31 +37,6 @@
 namespace RDKit {
 
 namespace detail {
-
-std::vector<JointRingConstraint> collectJointRings(const ROMol &mol) {
-  std::vector<JointRingConstraint> jrToAtomIdx;
-  auto transfer = [&jrToAtomIdx](const auto &b, const auto value,
-                                 const bool exclude = false) {
-    for (const auto idx : b) {
-      if (idx >= jrToAtomIdx.size()) {
-        jrToAtomIdx.resize(idx + 1u);
-      }
-      if (exclude) {
-        jrToAtomIdx[idx].excludedAtoms.emplace_back(value);
-      } else {
-        jrToAtomIdx[idx].jointAtoms.emplace_back(value);
-      }
-    }
-  };
-  for (const auto atom : mol.atoms()) {
-    JointRingConstraint jrIndices;
-    if (atom->getPropIfPresent(common_properties::_CXJointRingIDs, jrIndices)) {
-      transfer(jrIndices.jointAtoms, atom->getIdx());
-      transfer(jrIndices.excludedAtoms, atom->getIdx(), true);
-    }
-  }
-  return jrToAtomIdx;
-}
 
 namespace {
 bool hasChiralLabel(const Atom *at) {
@@ -197,16 +173,6 @@ typedef std::vector<
 
 }  // namespace detail
 
-namespace {
-inline void populateMask(auto &mask, const auto &rings) {
-  mask.reset();  // we assume here that the bitset has the right size, we won't
-                 // do the check here to save computation time
-  for (const auto x : rings) {
-    mask.set(x);
-  }
-};
-}  // namespace
-
 MolMatchFinalCheckFunctor::MolMatchFinalCheckFunctor(
     const ROMol &query, const ROMol &mol, const SubstructMatchParameters &ps)
     : d_query(query), d_mol(mol), d_params(ps) {
@@ -220,59 +186,56 @@ MolMatchFinalCheckFunctor::MolMatchFinalCheckFunctor(
       }
     }
   }
-  d_jointRingAtoms = detail::collectJointRings(query);
-  if (d_jointRingAtoms.size()) {
-    d_initializedMasked = boost::dynamic_bitset<>(mol.getNumAtoms());
-    d_ringMasks = std::vector<boost::dynamic_bitset<>>(
-        mol.getNumAtoms(),
-        boost::dynamic_bitset<>(mol.getRingInfo()->numRings()));
-  }
+  d_jointRingAtoms = collectJRConstraints(query);
 }
 
 bool MolMatchFinalCheckFunctor::checkJointRings(
-    const std::vector<std::uint32_t> queryToMolAtomIndices) {
+    const std::span<const std::uint32_t> queryToMolAtomIndices) {
   auto rInfo = d_mol.getRingInfo();
   const auto atomRings = [&rInfo,
                           &queryToMolAtomIndices](unsigned int qAtomIdx) {
     return rInfo->atomMembers(queryToMolAtomIndices[qAtomIdx]);
   };  // ring indices of the atom in mol where aAtomIdx would be mapped to
 
-  boost::dynamic_bitset<> ringIntersect(rInfo->numRings());
-
   for (auto &[joint, excluded] : d_jointRingAtoms) {
-    // 1. The intersection of rings for all joint atoms must NOT be empty:
-    // $J_i$: $R_i:=\bigcap_{a_j\in A_i}SSR(a_j)$
-    // we can do this with bit-logic => \cap <=> &
     if (joint.empty()) {
       continue;
     }
+    // 1. The intersection of rings for all joint atoms must NOT be empty:
+    // $J_i$: $R_i:=\bigcap_{a_j\in A_i}SSR(a_j)$
+    // we can do this with bit-logic => \cap <=> &
+    // 2. The intersetion between the rings of every excluded atom and the
+    // joint rings must BE empty:
+    // $\neg J_i$: \forall a_i \in J_i: $R_i \cap SSR(a_j)=\emptyset$
 
-    populateMask(ringIntersect, atomRings(*joint.begin()));
+    // collecting all rings for all jr atoms might be a bit an overhead for
+    // atoms with many rings, therefore, we do it atom wise => test all rings
+    // for one atoms (using the one with the least ring members should be the
+    // most efficent)
 
-    for (auto atmIdx : joint | std::views::drop(1)) {
-      auto &mask = d_ringMasks[queryToMolAtomIndices[atmIdx]];
-      if (!d_initializedMasked[queryToMolAtomIndices[atmIdx]]) {
-        populateMask(mask, atomRings(atmIdx));
+    const auto refAtom =
+        std::ranges::min_element(joint, {}, [&atomRings](const auto qAtomIdx) {
+          return atomRings(qAtomIdx).size();
+        });
+
+    bool jointRingExists = false;
+    for (const auto ringIdx : atomRings(*refAtom)) {
+      const auto containsRing = [&atomRings, ringIdx](const auto qAtomIdx) {
+        return std::ranges::binary_search(atomRings(qAtomIdx), ringIdx);
+      };
+
+      if (!std::ranges::all_of(joint, containsRing)) {
+        continue;
       }
-      ringIntersect &= mask;
 
-      if (ringIntersect.none()) {
+      jointRingExists = true;
+
+      if (std::ranges::any_of(excluded, containsRing)) {
         return false;
       }
     }
 
-    // 2. The intersetion between the rings of every excluded atom and the
-    // joint rings must BE empty:
-    // $\neg J_i$: \forall a_i \in J_i: $R_i \cap SSR(a_j)=\emptyset$
-    auto intersects = [&ringIntersect](const auto &other) {
-      return std::ranges::any_of(other, [&ringIntersect](const auto id) {
-        return ringIntersect.test(id);
-      });
-    };
-    auto excludedAtomIntersects =
-        std::ranges::any_of(excluded, intersects, atomRings);
-
-    if (excludedAtomIntersects) {
+    if (!jointRingExists) {
       return false;
     }
   }
@@ -281,7 +244,8 @@ bool MolMatchFinalCheckFunctor::checkJointRings(
 
 bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
                                            const std::uint32_t m_c[]) {
-  if (d_params.extraFinalCheck || d_params.useGenericMatchers) {
+  if (d_params.extraFinalCheck || d_params.useGenericMatchers ||
+      d_jointRingAtoms.size()) {
     const std::span<const std::uint32_t> aids(m_c, d_query.getNumAtoms());
     if (d_params.useGenericMatchers &&
         !GenericGroups::genericAtomMatcher(d_mol, d_query, aids)) {
@@ -290,14 +254,7 @@ bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
     if (d_params.extraFinalCheck && !d_params.extraFinalCheck(d_mol, aids)) {
       return false;
     }
-  }
-
-  if (d_jointRingAtoms.size()) {
-    std::vector<std::uint32_t> queryToMol(d_query.getNumAtoms());
-    for (std::uint32_t i = 0; i < d_query.getNumAtoms(); ++i) {
-      queryToMol[q_c[i]] = m_c[i];
-    }
-    if (!checkJointRings(queryToMol)) {
+    if (d_jointRingAtoms.size() && !checkJointRings(aids)) {
       return false;
     }
   }

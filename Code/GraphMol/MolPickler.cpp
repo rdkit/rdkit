@@ -24,7 +24,7 @@
 #include <cstdint>
 #include <string_view>
 #include <boost/algorithm/string.hpp>
-#include <GraphMol/Substruct/SubstructMatch.h>
+#include <GraphMol/JointRing.h>
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
@@ -405,20 +405,21 @@ template RDKIT_GRAPHMOL_EXPORT QueryDetails getQueryDetails<RDKit::Bond>(
 namespace {
 
 void pickleJointRingQ(std::ostream &ss, const Atom *atom) {  // TODO implemnt
-  JointRingConstraint elem;
-  if (!atom->getPropIfPresent(common_properties::_CXJointRingIDs, elem)) {
+  if (!atom->hasProp(common_properties::_CXJointRingIDs)) {
     return;
   }
+  const auto &jrIndices = rdvalue_cast<const JointRingIds &>(
+      atom->getDict().getRDValue(common_properties::_CXJointRingIDs));
   streamWrite(ss, MolPickler::QUERY_JOINTRINGS);
-  streamWriteVec(ss, rdvalue_cast<std::vector<unsigned int>>(elem.jointAtoms));
+  streamWriteVec(ss, rdvalue_cast<std::vector<unsigned int>>(jrIndices.joint));
   streamWriteVec(ss,
-                 rdvalue_cast<std::vector<unsigned int>>(elem.excludedAtoms));
+                 rdvalue_cast<std::vector<unsigned int>>(jrIndices.excluded));
 }
 
-void unpickleJointRingQ(std::istream &ss, Atom *atom, int version) {
-  JointRingConstraint elem;
-  streamReadVec(ss, elem.jointAtoms);
-  streamReadVec(ss, elem.excludedAtoms);
+void unpickleJointRingQ(std::istream &ss, Atom *atom) {
+  JointRingIds elem;
+  streamReadVec(ss, elem.joint);
+  streamReadVec(ss, elem.excluded);
   atom->setProp(common_properties::_CXJointRingIDs, std::move(elem));
 }
 
@@ -1985,7 +1986,7 @@ Atom *MolPickler::_addAtomFromPickle(std::istream &ss, ROMol *mol,
     static_cast<QueryAtom *>(atom)->setQuery(unpickleQuery(ss, atom, version));
     streamRead(ss, tag, version);
     if (version >= 16050 && tag == QUERY_JOINTRINGS) {
-      unpickleJointRingQ(ss, atom, version);
+      unpickleJointRingQ(ss, atom);
       streamRead(ss, tag, version);
     }
     if (tag != ENDQUERY) {

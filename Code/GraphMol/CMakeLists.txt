@@ -12,7 +12,7 @@ rdkit_library(GraphMol
         Renumber.cpp AdjustQuery.cpp Resonance.cpp StereoGroup.cpp
         new_canon.cpp SubstanceGroup.cpp FindStereo.cpp MonomerInfo.cpp
         NontetrahedralStereo.cpp Atropisomers.cpp
-        WedgeBonds.cpp MolProps.cpp Subset.cpp
+        WedgeBonds.cpp MolProps.cpp Subset.cpp JointRing.cpp
         SHARED
         LINK_LIBRARIES RDGeometryLib RDGeneral)
 target_compile_definitions(GraphMol PRIVATE RDKIT_GRAPHMOL_BUILD)
@@ -57,6 +57,7 @@ rdkit_headers(Atom.h
         new_canon.h
         MolBundle.h
 	Subset.h
+        JointRing.h
         DEST GraphMol)
 
 add_subdirectory(SmilesParse)
