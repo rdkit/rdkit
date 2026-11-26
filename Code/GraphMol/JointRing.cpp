@@ -19,6 +19,7 @@ std::vector<JointRingConstraint> collectJRConstraints(const ROMol &mol) {
                                  const bool exclude = false) {
     for (const auto idx : b) {
       if (idx >= jrToAtomIdx.size()) {
+        ASSERT_INVARIANT(idx < UINT_MAX, "Corruped ring indices");
         jrToAtomIdx.resize(idx + 1u);
       }
       if (exclude) {
