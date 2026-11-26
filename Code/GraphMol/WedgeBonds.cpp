@@ -86,7 +86,7 @@ bool ringsSharePathWithInteriorAtom(const ROMol &mol, const INT_VECT &firstRing,
 std::vector<unsigned int> getFusedRingSystem(RingInfo &ringInfo,
                                              unsigned int bondIdx) {
   VECT_INT_VECT bondRings;
-  for (const auto ring : ringInfo.bondRings()) {
+  for (const auto &ring : ringInfo.bondRings()) {
     bondRings.emplace_back(ring.begin(), ring.end());
   }
   // all rings containing bondIdx are in the same system
