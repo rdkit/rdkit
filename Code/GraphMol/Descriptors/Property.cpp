@@ -300,6 +300,7 @@ double failedValue(const PropertyFunctor &prop) {
     case PropertyFailureMode::DEFAULT_ZERO:
       return 0.0;
     case PropertyFailureMode::DEFAULT_NAN:
+    default:
       return std::numeric_limits<double>::quiet_NaN();
   }
 }
