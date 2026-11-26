@@ -410,7 +410,10 @@ void pickleJointRingQ(std::ostream &ss, const Atom *atom) {  // TODO implemnt
   }
   const auto &jrIndices = rdvalue_cast<const JointRingIds &>(
       atom->getDict().getRDValue(common_properties::_CXJointRingIDs));
+  const auto maxId = std::max(*std::ranges::max_element(jrIndices.joint),
+                              *std::ranges::max_element(jrIndices.excluded));
   streamWrite(ss, MolPickler::QUERY_JOINTRINGS);
+  streamWrite(ss, maxId);
   streamWriteVec(ss, rdvalue_cast<std::vector<unsigned int>>(jrIndices.joint));
   streamWriteVec(ss,
                  rdvalue_cast<std::vector<unsigned int>>(jrIndices.excluded));
@@ -418,8 +421,17 @@ void pickleJointRingQ(std::ostream &ss, const Atom *atom) {  // TODO implemnt
 
 void unpickleJointRingQ(std::istream &ss, Atom *atom) {
   JointRingIds elem;
+  unsigned int maxId;
+  streamRead(ss, maxId);
   streamReadVec(ss, elem.joint);
   streamReadVec(ss, elem.excluded);
+  unsigned int observedMaxId =
+      std::max(*std::ranges::max_element(elem.joint),
+               *std::ranges::max_element(
+                   elem.excluded));  // ensuring that we don't get larger ring
+                                     // ids than expected
+  CHECK_INVARIANT(observedMaxId <= maxId,
+                  "Unpickling JR constraints: corrupted ring ids");
   atom->setProp(common_properties::_CXJointRingIDs, std::move(elem));
 }
 
