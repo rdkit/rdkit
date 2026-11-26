@@ -2226,6 +2226,12 @@ CAS<~>
     self.assertTrue(m1.GetNumAtoms() == 12)
     self.assertTrue(m1.GetNumConformers() == 2)
 
+  def testRingInfoKeepsMolAlive(self):
+    ri = Chem.MolFromSmiles('c1ccccc1').GetRingInfo()
+    others = [Chem.MolFromSmiles('CCCCCCCCCC') for _ in range(1000)]
+    self.assertEqual(ri.NumRings(), 1)
+    self.assertEqual(ri.AtomRings(), ((0, 1, 2, 3, 4, 5), ))
+
   def test45RingInfo(self):
     """ test the RingInfo class
 
