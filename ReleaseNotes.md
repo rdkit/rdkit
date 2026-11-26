@@ -6,13 +6,12 @@
 see your contribution acknowledged with your name, please set your name in
 GitHub)
 
-Jakub Adamczyk, Angus Barlow, Kevin Boyd, Lukas Geiger, Dor Genosar, Zarko
-Ivkovic, Aleksander Jóźwik, Brian Kelley, Piotr Kubaj, Evan Li, Jahnavi
-Malhotra, Garrett A Meek, Yakov Pechersky, Davis Rens, Emily Rhodes, Paul
-Thiessen, Ricardo Rodriguez, Wonseok Shin, İlker YILMAZ, Co5mos,
+Jakub Adamczyk, Angus Barlow, Kevin Boyd, David Cosgrove, Lukas Geiger, Dor
+Genosar, Zarko Ivkovic, Aleksander Jóźwik, Brian Kelley, Piotr Kubaj, Evan Li,
+Jahnavi Malhotra, Garrett A Meek, Yakov Pechersky, Davis Rens, Emily Rhodes,
+Paul Thiessen, Ricardo Rodriguez, Wonseok Shin, İlker YILMAZ, Co5mos,
 braydonsprojects, Besty, michaelvlevine, AlexMax, zul5050, MherMatevosyan,
 jiaodu1307
-
 
 ## Backwards incompatible changes:
 - `Flippers.h` has been removed from the installed headers.
@@ -116,6 +115,8 @@ jiaodu1307
  (github pull #9857 from zul5050)
   - Implement onlyStereoGroups in C++ StereoisomerEnumerator, add tests
  (github pull #9858 from ricrogz)
+  - Count cyclic torsion occurrences once per atom in similarity maps
+ (github pull #9859 from jiaodu1307
   - fix an oob read in the MolPickler
  (github pull #9862 from greglandrum)
   - Honor highlightColor in molecule SVG and file output
@@ -132,6 +133,12 @@ jiaodu1307
  (github issue #9878 from garrettameek)
   - Unpickling sanitized molecules is ~2.4x slower in 2026.09: `_depickle` recomputes ring families
  (github issue #9912 from pechersky)
+  - Keep the molecule alive while its Python RingInfo is in use
+ (github pull #9917 from pechersky)
+  - GaussianShape returns an incorrect best similarity for Tversky similarities
+ (github issue #9918 from DavidACosgrove)
+)
+
   
 
 ## Cleanup work:
