@@ -26,6 +26,7 @@
 #include <GraphMol/SmilesParse/CanonicalizeStereoGroups.h>
 #include <GraphMol/CIPLabeler/CIPLabeler.h>
 
+#include <numeric>
 #include <random>
 #include <tuple>
 
@@ -1580,6 +1581,20 @@ static void checkSmilesRoundtrip(const std::string &smiles,
   }
 }
 
+TEST_CASE("Canonical SMILES is independent of atom order (GitHub #8721)") {
+  auto usingLegacyStereo = GENERATE(false, true);
+  CAPTURE(usingLegacyStereo);
+  UseLegacyStereoPerceptionFixture useLegacy(usingLegacyStereo);
+
+  auto mol = v2::SmilesParse::MolFromSmiles(
+      "O=C(c1ccccc1C(=O)N1C(=O)c2ccccc2C1=O)N1C(=O)c2ccccc2C1=O");
+  REQUIRE(mol);
+  std::vector<unsigned int> order(mol->getNumAtoms());
+  std::iota(order.rbegin(), order.rend(), 0u);
+  std::unique_ptr<ROMol> renumbered{MolOps::renumberAtoms(*mol, order)};
+  CHECK(MolToSmiles(*renumbered) == MolToSmiles(*mol));
+}
+
 TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
   // This is a check about the state of things with canonicalization.
   // The "samples" below initially come from the list compiled in GitHub
@@ -1593,7 +1608,7 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
       {R"smi(C1=C\CCCCCC/C=C/C=C/1)smi", true, true},                 // #8759
       {R"smi(O=C=NC1=CC2C3=C(C=C1)C2=C(N=C=O)C=C3)smi", true, true},  // #8721
       {R"smi(O=C(c1ccccc1C(=O)N1C(=O)c2ccccc2C1=O)N1C(=O)c2ccccc2C1=O)smi",
-       false, false},  // #8721
+       true, true},  // #8721
       {R"smi(O=[N+]([O-])c1cc/c2c(c1)=C(c1ccccc1)/N=c1\ccc([N+](=O)[O-])cc1=C(c1ccccc1)/N=2)smi",
        true, true},  // #8721
       {R"smi(C=Cc1c(C)/c2[n-]c1=C=c1[n-]/c(c(CC)c1C)=C\c1[n-]c3c(c1C)C(=O)[C@H](C(=O)OC)/C3=C1/[NH+]=C(/C=2)[C@@H](C)[C@@H]1CCC(=O)OC/C=C(\C)CCC[C@H](C)CCC[C@H](C)CCCC(C)C.[Mg+2])smi",
