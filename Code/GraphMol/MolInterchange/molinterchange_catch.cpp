@@ -510,3 +510,57 @@ TEST_CASE("github #8460: MolToJSON does not handle atropisomers") {
     }
   }
 }
+
+TEST_CASE("check array sizes when parsing JSON") {
+  std::string moljson =
+      R"JSON({"rdkitjson":{"version":11},"defaults":{"atom":{"z":6,"impHs":0,"chg":0,"nRad":0,"isotope":0,"stereo":"unspecified"},"bond":{"bo":1,"stereo":"unspecified"}},
+      "molecules":[{"name":"","atoms":[{"impHs":3},{"impHs":1},{"impHs":1},{"impHs":3}],
+      "bonds":[{"atoms":[0,1]},{"bo":2,"atoms":[1,2],"stereo":"cis","stereoAtoms":[0,3]},{"atoms":[2,3]}],
+      "substanceGroups":[{"properties":{"TYPE":"SRU","index":1},"atoms":[1,2],
+         "brackets":[[[0.5,-1.0,0.0],[0.5,1.0,0.0],[0.0,0.0,0.0]]]}],
+      "extensions":[{"name":"rdkitRepresentation","formatVersion":2,"toolkitVersion":"2026.09.1","atomRings":[]}]}]})JSON";
+  {
+    auto mols = MolInterchange::JSONDataToMols(moljson);
+    REQUIRE(mols.size() == 1);
+    CHECK(mols[0]->getBondWithIdx(1)->getStereoAtoms() ==
+          std::vector<int>{0, 3});
+    REQUIRE(getSubstanceGroups(*mols[0]).size() == 1);
+    CHECK(getSubstanceGroups(*mols[0])[0].getBrackets().size() == 1);
+  }
+  auto replace = [&moljson](const std::string &lookFor,
+                            const std::string &replacement) {
+    std::string badjson = moljson;
+    auto pos = badjson.find(lookFor);
+    REQUIRE(pos != std::string::npos);
+    badjson.replace(pos, lookFor.size(), replacement);
+    return badjson;
+  };
+  SECTION("wrong number of bracket points") {
+    std::string extraPoints;
+    for (unsigned int i = 0; i < 64; ++i) {
+      extraPoints += ",[1.0,1.0,0.0]";
+    }
+    // one point, two points, and 67 points
+    for (const auto &points : {std::string(""), std::string(",[0.0,0.0,0.0]"),
+                               ",[0.5,1.0,0.0],[0.0,0.0,0.0]" + extraPoints}) {
+      auto badjson =
+          replace(R"JSON(,[0.5,1.0,0.0],[0.0,0.0,0.0]]])JSON", points + "]]");
+      CHECK_THROWS_AS(MolInterchange::JSONDataToMols(badjson),
+                      FileParseException);
+    }
+  }
+  SECTION("wrong number of stereoAtoms") {
+    for (const auto &stereoAtoms : {"[]", "[0]", "[0,3,1]"}) {
+      auto badjson = replace(R"JSON("stereoAtoms":[0,3])JSON",
+                             std::string("\"stereoAtoms\":") + stereoAtoms);
+      CHECK_THROWS_AS(MolInterchange::JSONDataToMols(badjson),
+                      FileParseException);
+    }
+  }
+  SECTION("empty atom ring") {
+    auto badjson =
+        replace(R"JSON("atomRings":[])JSON", R"JSON("atomRings":[[]])JSON");
+    CHECK_THROWS_AS(MolInterchange::JSONDataToMols(badjson),
+                    FileParseException);
+  }
+}
