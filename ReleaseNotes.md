@@ -124,10 +124,15 @@ jiaodu1307
  (github pull #9869 from lgeiger)
   - fix heap buffer overflow in Base64Decode on unpadded input
  (github pull #9875 from zul5050)
+  - Make the ring symmetry check independent of atom order
+ (github issue #9876 from lgeiger)
+  - Use current neighbor ranks for ring stereo canonicalization
+ (github issue #9877 from lgeiger)
   - PathToSubmol fragments inherit _StereochemDone since 2025.09.4 (regression of #103)
  (github issue #9878 from garrettameek)
   - Unpickling sanitized molecules is ~2.4x slower in 2026.09: `_depickle` recomputes ring families
  (github issue #9912 from pechersky)
+  
 
 ## Cleanup work:
   - Report multithreaded test assertions after joining workers
