@@ -621,10 +621,16 @@ TEST_CASE("pseudoTest1") {
   }
 
   SECTION("pseudoTestFails") {
+    const std::string relativeRingStereo =
+        "CCC(=O)NC[C@H]1CN(c2cc(F)c(N3C[C@H]4[C@H](N)[C@H]4C3)c(F)c2)C(=O)O1";
+    // Ring symmetry makes these two OR/AND assignments equivalent.
+    const auto original = relativeRingStereo + " |o1:16,17,&1:6,19|";
+    const auto canonical = relativeRingStereo + " |o1:16,&1:6,17,19|";
     std::vector<std::string> tests = {
         "CNC(=O)[C@@H](NC(=O)[C@H](OCc1cc(F)ccc1F)[C@@H](O)[C@@H](O)[C@H](OCc1cc(F)ccc1F)C(=O)N[C@H](C(=O)NC)C(C)C)C(C)C |o1:19,23,&1:8,37|",
         "CNC(=O)C(NC(=O)[C@H](OCc1ccccc1)[C@@H](O)[C@@H](O)[C@H](OCc1ccccc1)C(=O)NC(C(=O)NC)[C@@H](C)O)[C@H](C)O |o1:38,41,&1:17,21|",
-        "CCC(=O)NC[C@H]1CN(c2cc(F)c(N3C[C@H]4[C@H](N)[C@H]4C3)c(F)c2)C(=O)O1 |o1:16,17,&1:6,19|",
+        original,
+        canonical,
         "Cc1cc(O)c([C@@]2(C)CC[C@@H]3C[C@@]32C)cc1-c1cc([C@]2(C)CC[C@H]3C[C@@]32C)c(O)cc1C |o1:6,23,&1:19,25|",
         "C[N+]12CC[C@@]34c5ccccc5N5[C@@H]6OCC=C7C[N+]8(C)CC[C@]9%10c%11ccccc%11N([C@@H]%11OCC=C(C1)[C@H](C[C@@H]32)[C@@H]%11[C@H]54)[C@H]9[C@H]6[C@H]7C[C@@H]%108.[Cl-].[Cl-] |o1:42,45,&1:22,41|",
         "Cl.Oc1ccc2c3c1O[C@H]1c4[nH]c5c(c4C[C@@]4(O)[C@@H](C2)N(CC2CC2)CC[C@]314)C[C@]1(O)[C@H]2Cc3ccc(O)c4c3[C@]1(CCN2CC1CC1)[C@H]5O4 |o1:29,40,&1:16,48|",
@@ -657,7 +663,7 @@ TEST_CASE("pseudoTest1") {
 
         auto outSmi1 = MolToCXSmiles(*nmol);
 
-        CHECK(outSmi1 == smi1);
+        CHECK(outSmi1 == (smi1 == original ? canonical : smi1));
       }
     }
   }
@@ -1659,121 +1665,121 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
        true},  // #7759
       {R"smi([C@H]12[C@H]3[C@H]4[C@@H]5[C@@H]([C@H]1N25)N34)smi", false,
        true},                                                      // #7759
-      {R"smi([CH]1C[C@H]2C[C@H](C2)[C@]12CC2)smi", false, true},   // #7759
-      {R"smi([CH]1O[C@H]2C[C@H](C2)[C@]12CC2)smi", false, true},   // #7759
-      {R"smi([CH]1O[C@H]2CN(C2)[C@]12CC2)smi", false, true},       // #7759
-      {R"smi([CH]1[C@H]2C[C@H](C2)[C@]12CCC2)smi", false, true},   // #7759
-      {R"smi([CH]1[C@H]2C[C@H](C2)[C@@]12COC2)smi", false, true},  // #7759
-      {R"smi(O=C1[C]2C[C@H](C2)[C@@]12CC2)smi", false, true},      // #7759
-      {R"smi(O=C1[C@H]2C[C](C2)[C@@]12CC2)smi", false, true},      // #7759
+      {R"smi([CH]1C[C@H]2C[C@H](C2)[C@]12CC2)smi", true, true},    // #7759
+      {R"smi([CH]1O[C@H]2C[C@H](C2)[C@]12CC2)smi", true, true},    // #7759
+      {R"smi([CH]1O[C@H]2CN(C2)[C@]12CC2)smi", true, true},        // #7759
+      {R"smi([CH]1[C@H]2C[C@H](C2)[C@]12CCC2)smi", true, true},    // #7759
+      {R"smi([CH]1[C@H]2C[C@H](C2)[C@@]12COC2)smi", true, true},   // #7759
+      {R"smi(O=C1[C]2C[C@H](C2)[C@@]12CC2)smi", true, true},       // #7759
+      {R"smi(O=C1[C@H]2C[C](C2)[C@@]12CC2)smi", true, true},       // #7759
       {R"smi(C1[C@H]2[C@@H]3C[C@H]4[C@@H]3[C@@H]1[C@@H]24)smi", false,
        true},  // #7759
       {R"smi(C[C@]12[C@@H]3[C@@H]1C[C@H]1[C@H]2[C@]31C)smi", false,
        true},                                                      // #7759
-      {R"smi([O][C@]12C[C@H](C1)[C@@]1(CC1)C2)smi", false, true},  // #7759
+      {R"smi([O][C@]12C[C@H](C1)[C@@]1(CC1)C2)smi", true, true},   // #7759
       {R"smi(O[C@]12[C@@H]3[C@@H]4[CH][C@H]1[C@H]2[C@]34O)smi", false,
        true},                                                        // #7759
-      {R"smi([CH2][C@]12C[C@H](C1)[C@]1(CC1)C2)smi", false, true},   // #7759
-      {R"smi([CH2][C@]12C[C@H](C1)[C@@]1(CC1)O2)smi", false, true},  // #7759
-      {R"smi([CH2][C@]1(C)[C@H]2[C@@H]3[C@@H](C)[C@H]2[C@@H]31)smi", false,
+      {R"smi([CH2][C@]12C[C@H](C1)[C@]1(CC1)C2)smi", true, true},    // #7759
+      {R"smi([CH2][C@]12C[C@H](C1)[C@@]1(CC1)O2)smi", true, true},   // #7759
+      {R"smi([CH2][C@]1(C)[C@H]2[C@@H]3[C@@H](C)[C@H]2[C@@H]31)smi", true,
        true},  // #7759
-      {R"smi([CH2][C@]1(C)[C@H]2[C@@H]3[C@H](O)[C@H]2[C@@H]31)smi", false,
+      {R"smi([CH2][C@]1(C)[C@H]2[C@@H]3[C@H](O)[C@H]2[C@@H]31)smi", true,
        true},  // #7759
-      {R"smi(C[C@H]1[C@@H]2[C@@H]3[C@H]1[C@H]2[C@@]31[CH]C1)smi", false,
+      {R"smi(C[C@H]1[C@@H]2[C@@H]3[C@H]1[C@H]2[C@@]31[CH]C1)smi", true,
        true},  // #7759
-      {R"smi(O[C@H]1[C@@H]2[C@@H]3[C@H]1[C@H]2[C@@]31[CH]C1)smi", false,
+      {R"smi(O[C@H]1[C@@H]2[C@@H]3[C@H]1[C@H]2[C@@]31[CH]C1)smi", true,
        true},  // #7759
-      {R"smi([O][C@H]1[C@@H]2[C@@H]3[C@H]1[C@H]2[C@]31CN1)smi", false,
+      {R"smi([O][C@H]1[C@@H]2[C@@H]3[C@H]1[C@H]2[C@]31CN1)smi", true,
        true},  // #7759
-      {R"smi(O[C@H]1[C@@H]2[C@@H]3[C@H]1[C@H]2[C@]31[CH]N1)smi", false,
+      {R"smi(O[C@H]1[C@@H]2[C@@H]3[C@H]1[C@H]2[C@]31[CH]N1)smi", true,
        true},  // #7759
-      {R"smi(O[C@H]1[C@@H]2[C@@H]3[C@H]1[C@H]2[C@]31C[N]1)smi", false,
+      {R"smi(O[C@H]1[C@@H]2[C@@H]3[C@H]1[C@H]2[C@]31C[N]1)smi", true,
        true},  // #7759
-      {R"smi([CH2][C@]1(O)[C@H]2[C@@H]3[C@@H](O)[C@H]2[C@@H]31)smi", false,
+      {R"smi([CH2][C@]1(O)[C@H]2[C@@H]3[C@@H](O)[C@H]2[C@@H]31)smi", true,
        true},  // #7759
-      {R"smi(C[C@]1([O])[C@H]2[C@@H]3[C@@H](O)[C@H]2[C@@H]31)smi", false,
+      {R"smi(C[C@]1([O])[C@H]2[C@@H]3[C@@H](O)[C@H]2[C@@H]31)smi", true,
        true},  // #7759
-      {R"smi([CH2][C@H]1[C@@H]2[C@@H]3[C@H]1[C@H]2[C@]31CO1)smi", false,
+      {R"smi([CH2][C@H]1[C@@H]2[C@@H]3[C@H]1[C@H]2[C@]31CO1)smi", true,
        true},  // #7759
-      {R"smi(C[C@]1(O)[C@@H]2[C@H]3[C@@H]([O])[C@@H]2[C@H]31)smi", false,
+      {R"smi(C[C@]1(O)[C@@H]2[C@H]3[C@@H]([O])[C@@H]2[C@H]31)smi", true,
        true},  // #7759
-      {R"smi(C[C@H]1[C@H]2[C@H]3[C@@H]1[C@@H]2[C@@]31[CH]O1)smi", false,
+      {R"smi(C[C@H]1[C@H]2[C@H]3[C@@H]1[C@@H]2[C@@]31[CH]O1)smi", true,
        true},  // #7759
-      {R"smi([O][C@H]1[C@H]2[C@H]3[C@@H]1[C@@H]2[C@@]31CO1)smi", false,
+      {R"smi([O][C@H]1[C@H]2[C@H]3[C@@H]1[C@@H]2[C@@]31CO1)smi", true,
        true},  // #7759
-      {R"smi(O[C@H]1[C@@H]2[C@@H]3[C@H]1[C@H]2[C@]31[CH]O1)smi", false,
+      {R"smi(O[C@H]1[C@@H]2[C@@H]3[C@H]1[C@H]2[C@]31[CH]O1)smi", true,
        true},  // #7759
-      {R"smi([CH2][C@]1(O)[C@@H]2[C@H]3[C@H](C)[C@@H]2[C@H]31)smi", false,
+      {R"smi([CH2][C@]1(O)[C@@H]2[C@H]3[C@H](C)[C@@H]2[C@H]31)smi", true,
        true},  // #7759
-      {R"smi(C[C@H]1[C@H]2[C@H]3[C@@H]1[C@@H]2[C@]3(C)[O])smi", false,
+      {R"smi(C[C@H]1[C@H]2[C@H]3[C@@H]1[C@@H]2[C@]3(C)[O])smi", true,
        true},  // #7759
-      {R"smi([CH2][C@H]1[C@@H]2[C@@H]3[C@H]1[C@H]2[C@@]3(C)O)smi", false,
+      {R"smi([CH2][C@H]1[C@@H]2[C@@H]3[C@H]1[C@H]2[C@@]3(C)O)smi", true,
        true},                                                           // #7759
-      {R"smi([O][C@H]1[C@H]2C[C@H](C2)[C@@]12CC2)smi", false, true},    // #7759
-      {R"smi(O[C]1[C@H]2C[C@H](C2)[C@@]12CC2)smi", false, true},        // #7759
-      {R"smi([CH2][C@H]1[C@H]2C[C@H](C2)[C@@]12CC2)smi", false, true},  // #7759
-      {R"smi(O[C@H]1[C]2C[C@H](C2)[C@]12CC2)smi", false, true},         // #7759
-      {R"smi(C[C]1[C@H]2C[C@H](C2)[C@@]12CC2)smi", false, true},        // #7759
-      {R"smi(C[C@H]1[C]2C[C@H](C2)[C@]12CC2)smi", false, true},         // #7759
-      {R"smi(O[C@H]1[C@H]2C[C](C2)[C@@]12CC2)smi", false, true},        // #7759
-      {R"smi(C[C@H]1[C@H]2C[C](C2)[C@@]12CC2)smi", false, true},        // #7759
+      {R"smi([O][C@H]1[C@H]2C[C@H](C2)[C@@]12CC2)smi", true, true},     // #7759
+      {R"smi(O[C]1[C@H]2C[C@H](C2)[C@@]12CC2)smi", true, true},         // #7759
+      {R"smi([CH2][C@H]1[C@H]2C[C@H](C2)[C@@]12CC2)smi", true, true},   // #7759
+      {R"smi(O[C@H]1[C]2C[C@H](C2)[C@]12CC2)smi", true, true},          // #7759
+      {R"smi(C[C]1[C@H]2C[C@H](C2)[C@@]12CC2)smi", true, true},         // #7759
+      {R"smi(C[C@H]1[C]2C[C@H](C2)[C@]12CC2)smi", true, true},          // #7759
+      {R"smi(O[C@H]1[C@H]2C[C](C2)[C@@]12CC2)smi", true, true},         // #7759
+      {R"smi(C[C@H]1[C@H]2C[C](C2)[C@@]12CC2)smi", true, true},         // #7759
       {R"smi(C[C@]12[C@@H]3[C@@H]1[CH-][C@H]1[C@H]2[C@]31C)smi", false,
        true},                                                           // #7759
-      {R"smi(C[C@]12C[C@H](C1)[N@+]1(CC1)C2)smi", false, true},         // #7759
-      {R"smi(C[C@H]1[C@H]2C[C-](C2)[C@@]12CC2)smi", false, true},       // #7759
-      {R"smi([CH]1[C@H]2C[C@H](C2)[C@]12CC2)smi", false, true},         // #7759
-      {R"smi([CH]1N2C[C@H](C2)O[C@]12CC2)smi", false, true},            // #7759
-      {R"smi([C]1=C[C@H]2C[C@H](C2)[C@@]12CC2)smi", false, true},       // #7759
-      {R"smi([CH-]1O[C@H]2CN(C2)[C@]12CC2)smi", false, true},           // #7759
-      {R"smi([CH-]1C[C@H]2C[C@H](C2)[C@]12CC2)smi", false, true},       // #7759
-      {R"smi([CH-]1O[C@H]2C[C@H](C2)[C@]12CC2)smi", false, true},       // #7759
-      {R"smi([CH-]1[C@H]2C[C@H](C2)[C@]12CCC2)smi", false, true},       // #7759
-      {R"smi([CH-]1[C@H]2C[C@H](C2)[C@@]12COC2)smi", false, true},      // #7759
-      {R"smi([O-]C1=C2C[C@H](C2)[C@@]12CC2)smi", false, true},          // #7759
-      {R"smi(O=C1[C@H]2C[C-](C2)[C@@]12CC2)smi", false, true},          // #7759
-      {R"smi([O-][C@]12C[C@H](C1)[C@@]1(CC1)C2)smi", false, true},      // #7759
-      {R"smi([CH2-][C@]12C[C@H](C1)[C@]1(CC1)C2)smi", false, true},     // #7759
-      {R"smi(O[C@H]1[C-]2C[C@H](C2)[C@@]12CC2)smi", false, true},       // #7759
-      {R"smi([CH2-][C@H]1[C@H]2C[C@H](C2)[C@]12CC2)smi", false, true},  // #7759
-      {R"smi([O-][C@H]1[C@H]2C[C@H](C2)[C@@]12CC2)smi", false, true},   // #7759
-      {R"smi(O[C-]1[C@H]2C[C@H](C2)[C@]12CC2)smi", false, true},        // #7759
-      {R"smi(O[C@H]1[C@H]2C[C-](C2)[C@@]12CC2)smi", false, true},       // #7759
-      {R"smi(C[C-]1[C@H]2C[C@H](C2)[C@]12CC2)smi", false, true},        // #7759
-      {R"smi(C[C@H]1[C-]2C[C@H](C2)[C@@]12CC2)smi", false, true},       // #7759
-      {R"smi([CH-]1[C@H]2C[C@H](C2)[C@]12CC2)smi", false, true},        // #7759
-      {R"smi([C-]1=C[C@H]2C[C@H](C2)[C@@]12CC2)smi", false, true},      // #7759
-      {R"smi([CH-]1N2C[C@H](C2)O[C@]12CC2)smi", false, true},           // #7759
-      {R"smi(C1=[O+][C@H]2C[C@H](C2)[C@]12CC2)smi", false, true},       // #7759
-      {R"smi(C1=[O+][C@H]2CN(C2)[C@]12CC2)smi", false, true},           // #7759
-      {R"smi([CH+]1[C@H]2C[C@H](C2)[C@]12CCC2)smi", false, true},       // #7759
-      {R"smi([CH+]1[C@H]2C[C@H](C2)[C@@]12COC2)smi", false, true},      // #7759
+      {R"smi(C[C@]12C[C@H](C1)[N@+]1(CC1)C2)smi", true, true},          // #7759
+      {R"smi(C[C@H]1[C@H]2C[C-](C2)[C@@]12CC2)smi", true, true},        // #7759
+      {R"smi([CH]1[C@H]2C[C@H](C2)[C@]12CC2)smi", true, true},          // #7759
+      {R"smi([CH]1N2C[C@H](C2)O[C@]12CC2)smi", true, true},             // #7759
+      {R"smi([C]1=C[C@H]2C[C@H](C2)[C@@]12CC2)smi", true, true},        // #7759
+      {R"smi([CH-]1O[C@H]2CN(C2)[C@]12CC2)smi", true, true},            // #7759
+      {R"smi([CH-]1C[C@H]2C[C@H](C2)[C@]12CC2)smi", true, true},        // #7759
+      {R"smi([CH-]1O[C@H]2C[C@H](C2)[C@]12CC2)smi", true, true},        // #7759
+      {R"smi([CH-]1[C@H]2C[C@H](C2)[C@]12CCC2)smi", true, true},        // #7759
+      {R"smi([CH-]1[C@H]2C[C@H](C2)[C@@]12COC2)smi", true, true},       // #7759
+      {R"smi([O-]C1=C2C[C@H](C2)[C@@]12CC2)smi", true, true},           // #7759
+      {R"smi(O=C1[C@H]2C[C-](C2)[C@@]12CC2)smi", true, true},           // #7759
+      {R"smi([O-][C@]12C[C@H](C1)[C@@]1(CC1)C2)smi", true, true},       // #7759
+      {R"smi([CH2-][C@]12C[C@H](C1)[C@]1(CC1)C2)smi", true, true},      // #7759
+      {R"smi(O[C@H]1[C-]2C[C@H](C2)[C@@]12CC2)smi", true, true},        // #7759
+      {R"smi([CH2-][C@H]1[C@H]2C[C@H](C2)[C@]12CC2)smi", true, true},   // #7759
+      {R"smi([O-][C@H]1[C@H]2C[C@H](C2)[C@@]12CC2)smi", true, true},    // #7759
+      {R"smi(O[C-]1[C@H]2C[C@H](C2)[C@]12CC2)smi", true, true},         // #7759
+      {R"smi(O[C@H]1[C@H]2C[C-](C2)[C@@]12CC2)smi", true, true},        // #7759
+      {R"smi(C[C-]1[C@H]2C[C@H](C2)[C@]12CC2)smi", true, true},         // #7759
+      {R"smi(C[C@H]1[C-]2C[C@H](C2)[C@@]12CC2)smi", true, true},        // #7759
+      {R"smi([CH-]1[C@H]2C[C@H](C2)[C@]12CC2)smi", true, true},         // #7759
+      {R"smi([C-]1=C[C@H]2C[C@H](C2)[C@@]12CC2)smi", true, true},       // #7759
+      {R"smi([CH-]1N2C[C@H](C2)O[C@]12CC2)smi", true, true},            // #7759
+      {R"smi(C1=[O+][C@H]2C[C@H](C2)[C@]12CC2)smi", true, true},        // #7759
+      {R"smi(C1=[O+][C@H]2CN(C2)[C@]12CC2)smi", true, true},            // #7759
+      {R"smi([CH+]1[C@H]2C[C@H](C2)[C@]12CCC2)smi", true, true},        // #7759
+      {R"smi([CH+]1[C@H]2C[C@H](C2)[C@@]12COC2)smi", true, true},       // #7759
       {R"smi(C[C@]12[C@@H]3[C@@H]1[CH][C@H]1[C@H]2[C@]31C)smi", false,
        true},                                                           // #7759
-      {R"smi(C[C+]1[C@H]2C[C@H](C2)[C@]12CC2)smi", false, true},        // #7759
-      {R"smi([H]/[O+]=C1/[C@H]2C[C@H](C2)[C@]12CC2)smi", false, true},  // #7759
-      {R"smi([CH+]1[C@H]2C[C@H](C2)[C@]12CC2)smi", false, true},        // #7759
+      {R"smi(C[C+]1[C@H]2C[C@H](C2)[C@]12CC2)smi", true, true},         // #7759
+      {R"smi([H]/[O+]=C1/[C@H]2C[C@H](C2)[C@]12CC2)smi", true, true},   // #7759
+      {R"smi([CH+]1[C@H]2C[C@H](C2)[C@]12CC2)smi", true, true},         // #7759
       {R"smi(C1[C@H]2O[C@@H]3C[C@H]4[C@@H]3[C@@H]1[C@@H]24)smi", false,
        true},                                                          // #7759
       {R"smi(O=C1N2[C@H]3[C@@H]2[C@@H]2[C@H]3N12)smi", false, false},  // #7759
       {R"smi(O1[C@H]2[C@@H]3O[C@H]4[C@@H]3[C@@H]1[C@@H]24)smi", false,
        true},                                                    // #7759
-      {R"smi(O=C1[C@H]2C[C@H](C2)[C@@]12CC2)smi", false, true},  // #7759
-      {R"smi(O=C1[C@H]2CN(C2)[C@@]12CC2)smi", false, true},      // #7759
-      {R"smi(O[C@]12C[C@H](C1)[C@]1(CC1)C2)smi", false, true},   // #7759
+      {R"smi(O=C1[C@H]2C[C@H](C2)[C@@]12CC2)smi", true, true},   // #7759
+      {R"smi(O=C1[C@H]2CN(C2)[C@@]12CC2)smi", true, true},       // #7759
+      {R"smi(O[C@]12C[C@H](C1)[C@]1(CC1)C2)smi", true, true},    // #7759
       {R"smi(O[C@]12[C@@H]3[C@@H]4O[C@H]1[C@H]2[C@]34O)smi", false,
        true},                                                    // #7759
-      {R"smi(C[C@]12C[C@H](C1)[C@@]1(CC1)O2)smi", false, true},  // #7759
-      {R"smi(C[C@]1(O)[C@H]2[C@@H]3[C@@H](O)[C@H]2[C@@H]31)smi", false,
+      {R"smi(C[C@]12C[C@H](C1)[C@@]1(CC1)O2)smi", true, true},   // #7759
+      {R"smi(C[C@]1(O)[C@H]2[C@@H]3[C@@H](O)[C@H]2[C@@H]31)smi", true,
        true},  // #7759
-      {R"smi(C[C@H]1[C@@H]2[C@@H]3[C@H]1[C@H]2[C@@]3(C)O)smi", false,
+      {R"smi(C[C@H]1[C@@H]2[C@@H]3[C@H]1[C@H]2[C@@]3(C)O)smi", true,
        true},  // #7759
-      {R"smi(O[C@H]1[C@@H]2[C@@H]3[C@H]1[C@H]2[C@]31CN1)smi", false,
+      {R"smi(O[C@H]1[C@@H]2[C@@H]3[C@H]1[C@H]2[C@]31CN1)smi", true,
        true},                                                      // #7759
-      {R"smi(C[C@H]1[C@H]2C[C@H](C2)[C@]12CC2)smi", false, true},  // #7759
+      {R"smi(C[C@H]1[C@H]2C[C@H](C2)[C@]12CC2)smi", true, true},   // #7759
       {R"smi(C[C@]12[C@@H]3[C@@H]4O[C@H]1[C@H]2[C@]34C)smi", false,
        true},                                                      // #7759
-      {R"smi(O[C@H]1[C@H]2C[C@H](C2)[C@]12CC2)smi", false, true},  // #7759
-      {R"smi(N[C@]1(C(=O)O)[C@@H]2C[C@H]3C[C@@H](C2)C[C@H]1C3)smi", false,
+      {R"smi(O[C@H]1[C@H]2C[C@H](C2)[C@]12CC2)smi", true, true},   // #7759
+      {R"smi(N[C@]1(C(=O)O)[C@@H]2C[C@H]3C[C@@H](C2)C[C@H]1C3)smi", true,
        true},  // #8862
       {R"smi(C/C=C1/C(=C\Cl)/C(=C\F)/C(=C\N)/C/1=C\O)smi", true,
        true},  // #8965
@@ -1803,6 +1809,10 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
       {R"smi(C=C1C(=C/C)/C(=C\C)C(=C)C1C)smi", true,
        true},  // pubchem 144493365
       {R"smi(CC/C(F)=C/C=C(\C)CC)smi", true, true},
+      {R"smi(c1c2c(ncc1Br)O[C@]3(C2)[C@H]4CC[N@@](C3)CC4)smi", true,
+       true},  // #1965
+      {R"smi(C1CC2(C1)NC(=S)N(C2=O)[C@]3([C@H]4CC[C@@H]3CC4)/C=C\C(=C(\Cl)/F)\F)smi",
+       true, true},  // #1639
 
   };
 
@@ -1816,4 +1826,28 @@ TEST_CASE("Canonicalization issues watch (see GitHub Issue #8775)") {
   auto shouldMatch = usingLegacyStereo ? legacyState : modernState;
 
   checkSmilesRoundtrip(smiles, shouldMatch);
+}
+
+TEST_CASE("Ring stereo canonicalization is independent of atom order") {
+  const auto &smiles = GENERATE(
+      as<std::string>{},
+      R"smi(c1c2c(ncc1Br)O[C@]3(C2)[C@H]4CC[N@@](C3)CC4)smi",  // #1965
+      R"smi(C1CC2(C1)NC(=S)N(C2=O)[C@]3([C@H]4CC[C@@H]3CC4)/C=C\C(=C(\Cl)/F)\F)smi"  // #1639
+  );
+  auto usingLegacyStereo = GENERATE(false, true);
+  CAPTURE(smiles, usingLegacyStereo);
+  UseLegacyStereoPerceptionFixture useLegacy(usingLegacyStereo);
+
+  auto mol = v2::SmilesParse::MolFromSmiles(smiles);
+  REQUIRE(mol);
+  const auto expected = MolToSmiles(*mol);
+  std::vector<unsigned int> order(mol->getNumAtoms());
+  std::iota(order.begin(), order.end(), 0u);
+  std::mt19937 rng(0xf00d);
+  for (int i = 0; i < 10; ++i) {
+    CAPTURE(i);
+    std::shuffle(order.begin(), order.end(), rng);
+    std::unique_ptr<ROMol> renumbered{MolOps::renumberAtoms(*mol, order)};
+    CHECK(MolToSmiles(*renumbered) == expected);
+  }
 }

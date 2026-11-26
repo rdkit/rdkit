@@ -834,8 +834,17 @@ void updateAtomNeighborNumSwapsImpl(
         }
       }
 
+      std::span<const bondholder> orderedBonds = atoms[nbrIdx].bonds;
+      BondholderVector rankedBonds;
+      if (!tooManySimilarNbrs) {
+        // Use the same ranks for parity as for tie detection, without changing
+        // the chiral neighbor's cached order.
+        rankedBonds = atoms[nbrIdx].bonds;
+        updateAtomNeighborIndex(atoms, rankedBonds);
+        orderedBonds = rankedBonds;
+      }
       probe.push_back(atomIdx);
-      for (auto &bond : atoms[nbrIdx].bonds) {
+      for (const auto &bond : orderedBonds) {
         if (bond.nbrIdx != atomIdx) {
           probe.push_back(bond.nbrIdx);
         }
