@@ -42,10 +42,10 @@ jobs:
         run: |
           cmake -S . -B build/ubsan -G Ninja \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-            -DCMAKE_C_FLAGS="-fsanitize=undefined -fno-sanitize-merge -fno-omit-frame-pointer" \
-            -DCMAKE_CXX_FLAGS="-fsanitize=undefined -fno-sanitize-merge -fno-omit-frame-pointer" \
-            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=undefined -shared-libsan" \
-            -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=undefined -shared-libsan" \
+            -DCMAKE_C_FLAGS="-fsanitize=undefined,float-divide-by-zero -fno-sanitize-merge -fno-omit-frame-pointer" \
+            -DCMAKE_CXX_FLAGS="-fsanitize=undefined,float-divide-by-zero -fno-sanitize-merge -fno-omit-frame-pointer" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=undefined,float-divide-by-zero -shared-libsan" \
+            -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=undefined,float-divide-by-zero -shared-libsan" \
             -DPython_EXECUTABLE="$PYTHON_EXECUTABLE" \
             -DRDK_BUILD_CPP_TESTS=ON \
             -DRDK_BUILD_PYTHON_WRAPPERS=ON \

@@ -14,6 +14,8 @@
 #include <GraphMol/MolOps.h>
 #include "GasteigerParams.h"
 
+#include <limits>
+
 namespace Gasteiger {
 using namespace RDKit;
 /*! \brief split the formal charge across atoms of same type if we have a
@@ -182,7 +184,12 @@ void computeGasteigerCharges(const ROMol &mol, std::vector<double> &charges,
         } else {
           sgn = 1;
         }
-        dq += dx / ((sgn * (ionX[aix] - ionX[nbr])) + ionX[nbr]);
+        // atoms without parameters get the all-zero "X" fallback (unless
+        // throwOnParamFailure is set), so the denominator can be zero; their
+        // charges are NaN
+        const auto denom = (sgn * (ionX[aix] - ionX[nbr])) + ionX[nbr];
+        dq += denom == 0.0 ? std::numeric_limits<double>::quiet_NaN()
+                           : dx / denom;
       }
       // now loop over the implicit hydrogens and get their contributions
       // since hydrogens don't connect to anything else, update their charges at
@@ -199,7 +206,9 @@ void computeGasteigerCharges(const ROMol &mol, std::vector<double> &charges,
           sgn = 1;
         }
 
-        const auto dqH = dx / ((sgn * (ionX[aix] - IONXH)) + IONXH);
+        const auto denom = (sgn * (ionX[aix] - IONXH)) + IONXH;
+        const auto dqH = denom == 0.0 ? std::numeric_limits<double>::quiet_NaN()
+                                      : dx / denom;
         dq += (niHs * dqH);
 
         // adjust the charges on the hydrogens simultaneously (possible because
