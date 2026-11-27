@@ -29,6 +29,49 @@ class TestCase(unittest.TestCase):
     rms2 = AllChem.GetConformerRMS(m1, 0, 0, prealigned=True)
     self.assertAlmostEqual(rms2, 0.0, 4)
 
+  def testConformerRMSMatrixAlignmentSubset(self):
+    mol = Chem.MolFromSmiles('CCCC')
+    # The first three atoms superimpose. The fourth rotates around the central bond.
+    for offset, end in enumerate(((2., 1.4, 0.), (2., -1.4, 0.), (2., 0., 1.4))):
+      conf = Chem.Conformer(4)
+      for idx, (x, y, z) in enumerate(((-0.5, 1.4, 0.), (0., 0., 0.), (1.5, 0., 0.), end)):
+        conf.SetAtomPosition(idx, (x + offset, y, z))
+      mol.AddConformer(conf, assignId=True)
+
+    atoms = [0, 1, 2]
+    # Without alignment the selected atoms differ only by the translations.
+    self.assertEqual(AllChem.GetConformerRMSMatrix(mol, atoms, prealigned=True), [1., 2., 1.])
+    aligned = AllChem.GetConformerRMSMatrix(mol, atoms)
+    for result in (aligned, AllChem.GetConformerRMSMatrix(mol, atoms, prealigned=True)):
+      self.assertEqual(len(result), 3)
+      for rms in result:
+        self.assertAlmostEqual(rms, 0.)
+
+    # Measuring all atoms on the same coordinates includes the moving fourth atom.
+    expected = [1.4, 1.4 / 2**0.5, 1.4 / 2**0.5]
+    for atomIds in (None, []):
+      result = AllChem.GetConformerRMSMatrix(mol, atomIds, prealigned=True)
+      self.assertEqual(len(result), len(expected))
+      for rms, ref in zip(result, expected):
+        self.assertAlmostEqual(rms, ref)
+
+  def testConformerRMSMatrixScaledSubset(self):
+    mol = Chem.MolFromSmiles('CCCC')
+    for s in (1., 2., 3.):
+      conf = Chem.Conformer(4)
+      for idx, xyz in enumerate(((s, 0., 0.), (0., 0., 1.), (0., s, 0.), (-s, -s, 0.))):
+        conf.SetAtomPosition(idx, xyz)
+      mol.AddConformer(conf, assignId=True)
+
+    # The selected triangle expands around its centroid. Between adjacent scales
+    # the squared displacements are 1, 1 and 2, so its RMS is sqrt(4/3).
+    rms = (4. / 3.)**0.5
+    for prealigned in (False, True):
+      result = AllChem.GetConformerRMSMatrix(mol, [0, 2, 3], prealigned)
+      self.assertEqual(len(result), 3)
+      for actual, expected in zip(result, (rms, 2. * rms, rms)):
+        self.assertAlmostEqual(actual, expected)
+
   def testConformerRMSMatrix(self):
     m1 = Chem.MultiConfMolFromSDF(os.path.join(RDConfig.RDCodeDir, "Chem/test_data/biaryl.sdf"),
                                   removeHs=False)

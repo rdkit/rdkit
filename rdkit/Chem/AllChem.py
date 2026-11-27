@@ -139,8 +139,8 @@ def GetConformerRMS(mol, confId1, confId2, atomIds=None, prealigned=False):
       - mol:        the molecule
       - confId1:    the id of the first conformer
       - confId2:    the id of the second conformer
-      - atomIds:    (optional) list of atom ids to use a points for
-                    alingment - defaults to all atoms
+      - atomIds:    (optional) atoms to use for alignment, defaults to all atoms.
+                    The RMS is calculated over all atoms.
       - prealigned: (optional) by default the conformers are assumed
                     be unaligned and the second conformer be aligned
                     to the first
@@ -167,16 +167,15 @@ def GetConformerRMS(mol, confId1, confId2, atomIds=None, prealigned=False):
 
 def GetConformerRMSMatrix(mol, atomIds=None, prealigned=False):
   """ Returns the RMS matrix of the conformers of a molecule.
-    As a side-effect, the conformers will be aligned to the first
-    conformer (i.e. the reference) and will left in the aligned state.
+    Unless prealigned is True, the conformers are aligned to the first
+    conformer and left in the aligned state.
 
     Arguments:
       - mol:     the molecule
-      - atomIds: (optional) list of atom ids to use a points for
-                 alingment - defaults to all atoms
-      - prealigned: (optional) by default the conformers are assumed
-                    be unaligned and will therefore be aligned to the
-                    first conformer
+      - atomIds: (optional) atoms to use for both alignment and RMS calculation,
+                 defaults to all atoms.
+      - prealigned: (optional) if True, calculate the RMS values using the
+                    current coordinates without aligning the conformers.
 
     Note that the returned RMS matrix is symmetrical, i.e. it is the
     lower half of the matrix, e.g. for 5 conformers::
@@ -192,25 +191,22 @@ def GetConformerRMSMatrix(mol, atomIds=None, prealigned=False):
     clustering.
 
     """
-  # if necessary, align the conformers
-  # Note: the reference conformer is always the first one
-  rmsvals = []
   confIds = [conf.GetId() for conf in mol.GetConformers()]
-  if not prealigned:
-    if atomIds:
-      AlignMolConformers(mol, atomIds=atomIds, RMSlist=rmsvals)
-    else:
-      AlignMolConformers(mol, RMSlist=rmsvals)
-  else:  # already prealigned
-    for i in range(1, len(confIds)):
-      rmsvals.append(
-        GetConformerRMS(mol, confIds[0], confIds[i], atomIds=atomIds, prealigned=prealigned))
-  # loop over the conformations (except the reference one)
+  if atomIds is None:
+    atomIds = []
+  # Compare each atom to itself on the aligned coordinates.
+  atoms = atomIds if len(atomIds) else range(mol.GetNumAtoms())
+  atomMap = [[(i, i) for i in atoms]]
+  if prealigned:
+    rmsvals = [CalcRMS(mol, mol, cid, confIds[0], map=atomMap) for cid in confIds[1:]]
+  else:
+    rmsvals = []
+    AlignMolConformers(mol, atomIds=atomIds, RMSlist=rmsvals)
   cmat = []
   for i in range(1, len(confIds)):
     cmat.append(rmsvals[i - 1])
     for j in range(1, i):
-      cmat.append(GetConformerRMS(mol, confIds[i], confIds[j], atomIds=atomIds, prealigned=True))
+      cmat.append(CalcRMS(mol, mol, confIds[i], confIds[j], map=atomMap))
   return cmat
 
 
