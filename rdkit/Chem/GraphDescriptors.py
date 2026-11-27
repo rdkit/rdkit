@@ -44,37 +44,34 @@ def _asDistMat(dMat):
   return numpy.ascontiguousarray(dMat, dtype=numpy.float64)
 
 
-HAS_IPC = hasattr(rdMolDescriptors, "CalcIpc")
+def Ipc(mol, avg=False, dMat=None, forceDMat=False):
+  """This returns the information content of the coefficients of the characteristic
+    polynomial of the adjacency matrix of a hydrogen-suppressed graph of a molecule.
 
-if HAS_IPC:
-  def Ipc(mol, avg=False, dMat=None, forceDMat=False):
-    """This returns the information content of the coefficients of the characteristic
-      polynomial of the adjacency matrix of a hydrogen-suppressed graph of a molecule.
+    'avg = True' returns the information content divided by the total population.
 
-      'avg = True' returns the information content divided by the total population.
+    From Eq 6 of D. Bonchev & N. Trinajstic, J. Chem. Phys. vol 67, 4517-4533 (1977)
 
-      From Eq 6 of D. Bonchev & N. Trinajstic, J. Chem. Phys. vol 67, 4517-4533 (1977)
-
-    """
-    if forceDMat or dMat is None:
-      return rdMolDescriptors.CalcIpc(mol, avg=bool(avg))
-    return rdMolDescriptors.CalcIpc(mol, avg=bool(avg), dMat=_asDistMat(dMat))
+  """
+  if forceDMat or dMat is None:
+    return rdMolDescriptors.CalcIpc(mol, avg=bool(avg))
+  return rdMolDescriptors.CalcIpc(mol, avg=bool(avg), dMat=_asDistMat(dMat))
 
 
-  Ipc.version = rdMolDescriptors._CalcIpc_version
+Ipc.version = rdMolDescriptors._CalcIpc_version
 
 
-  def AvgIpc(mol, dMat=None, forceDMat=False):
-    """This returns the average information content of the coefficients of the characteristic
-      polynomial of the adjacency matrix of a hydrogen-suppressed graph of a molecule.
+def AvgIpc(mol, dMat=None, forceDMat=False):
+  """This returns the average information content of the coefficients of the characteristic
+    polynomial of the adjacency matrix of a hydrogen-suppressed graph of a molecule.
 
-      From Eq 7 of D. Bonchev & N. Trinajstic, J. Chem. Phys. vol 67, 4517-4533 (1977)
+    From Eq 7 of D. Bonchev & N. Trinajstic, J. Chem. Phys. vol 67, 4517-4533 (1977)
 
-    """
-    return Ipc(mol, avg=True, dMat=dMat, forceDMat=forceDMat)
+  """
+  return Ipc(mol, avg=True, dMat=dMat, forceDMat=forceDMat)
 
 
-  AvgIpc.version = rdMolDescriptors._CalcAvgIpc_version
+AvgIpc.version = rdMolDescriptors._CalcAvgIpc_version
 
 HallKierAlpha = lambda x: rdMolDescriptors.CalcHallKierAlpha(x)
 HallKierAlpha.version = rdMolDescriptors._CalcHallKierAlpha_version

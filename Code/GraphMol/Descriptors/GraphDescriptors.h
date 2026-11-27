@@ -67,7 +67,6 @@ RDKIT_DESCRIPTORS_EXPORT double calcBertzCT(const ROMol &mol,
                                             const double *distMat = nullptr);
 const std::string bertzCTVersion = "2.0.0";
 
-#ifdef RDK_HAS_EIGEN3  
 //! Information content of the coefficients of the characteristic polynomial
 //! of the adjacency matrix of a hydrogen-suppressed graph of a molecule.
 /*!
@@ -78,22 +77,25 @@ const std::string bertzCTVersion = "2.0.0";
   \param avg  if set, the information content divided by the total
               population (AvgIpc) is returned
   \param distMat (optional) a row-major nAtoms x nAtoms distance matrix;
-                 the adjacency matrix is taken from its entries equal to 1.
-                 By default the topological distance matrix is used.
+                 the adjacency matrix is taken from the entries of its lower
+                 triangle, diagonal included, that equal 1. By default the
+                 bonds of the molecule are used.
 
-  The characteristic polynomial is expanded from the eigenvalues of the
-  adjacency matrix, as in the python implementation, so large molecules give
-  stable values.
+  The coefficients of the characteristic polynomial are integers. They are
+  computed exactly and each rounded to double once, so they do not depend on
+  the platform or on an eigensolver; only the final entropy is evaluated in
+  floating point. NaN is returned for graphs so large (about 3,000 atoms of a
+  molecular graph) that the coefficients exceed the built-in table of primes;
+  the double range is exceeded long before that.
 */
 RDKIT_DESCRIPTORS_EXPORT double calcIpc(const ROMol &mol, bool avg = false,
                                         const double *distMat = nullptr);
-const std::string ipcVersion = "1.0.0";
+const std::string ipcVersion = "2.0.0";
 
 //! Average information content (Eq 7 of Bonchev & Trinajstic), see calcIpc()
 RDKIT_DESCRIPTORS_EXPORT double calcAvgIpc(const ROMol &mol,
                                            const double *distMat = nullptr);
-const std::string avgIpcVersion = "1.0.0";
-#endif
+const std::string avgIpcVersion = "2.0.0";
 
 }  // namespace Descriptors
 }  // namespace RDKit

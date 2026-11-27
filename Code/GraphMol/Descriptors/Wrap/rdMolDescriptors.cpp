@@ -1144,7 +1144,6 @@ double CalcBertzCTHelper(const RDKit::ROMol &mol, unsigned int cutoff,
       mol, cutoff, pyObjectToDistMat(mol, dMat, dm) ? dm.data() : nullptr);
 }
 
-#ifdef RDK_HAS_EIGEN3  
 double CalcIpcHelper(const RDKit::ROMol &mol, bool avg, python::object dMat) {
   std::vector<double> dm;
   return RDKit::Descriptors::calcIpc(
@@ -1154,7 +1153,6 @@ double CalcIpcHelper(const RDKit::ROMol &mol, bool avg, python::object dMat) {
 double CalcAvgIpcHelper(const RDKit::ROMol &mol, python::object dMat) {
   return CalcIpcHelper(mol, true, dMat);
 }
-#endif
 
 python::tuple QEDPropertiesToTuple(
     const RDKit::Descriptors::QEDProperties &props) {
@@ -2272,7 +2270,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               "of the bond-order weighted one");
   python::scope().attr("_CalcBertzCT_version") =
       RDKit::Descriptors::bertzCTVersion;
-#ifdef RDK_HAS_EIGEN3  
   python::def("CalcIpc", CalcIpcHelper,
               (python::arg("mol"), python::arg("avg") = false,
                python::arg("dMat") = python::object()),
@@ -2289,7 +2286,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               "Trinajstic). dMat is as for CalcIpc");
   python::scope().attr("_CalcAvgIpc_version") =
       RDKit::Descriptors::avgIpcVersion;
-#endif
   python::def("CalcHeavyAtomMolWt", RDKit::Descriptors::calcHeavyAtomMolWt,
               python::arg("mol"),
               "Returns the average molecular weight ignoring hydrogens");

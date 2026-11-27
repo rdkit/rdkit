@@ -60,10 +60,8 @@ std::map<std::string, std::function<double(const ROMol &)>> getFunctions() {
        [](const ROMol &m) { return calcFpDensityMorgan(m, 2); }},
       {"FpDensityMorgan3",
        [](const ROMol &m) { return calcFpDensityMorgan(m, 3); }},
-#ifdef RDK_HAS_EIGEN3      
       {"AvgIpc", [](const ROMol &m) { return calcAvgIpc(m); }},
       {"Ipc", [](const ROMol &m) { return calcIpc(m); }},
-#endif
       {"BalabanJ", [](const ROMol &m) { return calcBalabanJ(m); }},
       {"BertzCT", [](const ROMol &m) { return calcBertzCT(m); }},
       {"Chi0", calcChi0},
@@ -158,9 +156,7 @@ TEST_CASE("simple python-ported descriptors") {
     CHECK(calcChi0(m) == 0.0);
     CHECK(calcBalabanJ(m) == 0.0);
     CHECK(calcBertzCT(m) == 0.0);
-#ifdef RDK_HAS_EIGEN3          
     CHECK(calcIpc(m) == 0.0);
-#endif
     CHECK(calcMaxEStateIndex(m) == 0.0);
     CHECK(calcMaxPartialCharge(m) == -500.0);
     CHECK(calcMinPartialCharge(m) == 500.0);
@@ -269,7 +265,6 @@ TEST_CASE("fragment descriptors") {
   }
 }
 
-#ifdef RDK_HAS_EIGEN3      
 TEST_CASE("AvgIpc is stable for long chains") {
   // AvgIpc is the entropy of n+1 coefficients, so it is bounded by
   // log2(n+1), and it can't decrease as a chain grows. The old
@@ -302,7 +297,67 @@ TEST_CASE("AvgIpc is stable for long chains") {
   CHECK_THAT(calcAvgIpc(*m), Catch::Matchers::WithinAbs(ent, 1e-10));
   CHECK_THAT(calcIpc(*m), Catch::Matchers::WithinAbs(total * ent, 1e-8));
 }
-#endif
+
+TEST_CASE("Ipc and AvgIpc come from the exact characteristic polynomial") {
+  // The reference values were computed from the polynomial in exact integer
+  // arithmetic. The coefficients are exact on every platform; the tolerance
+  // only allows for the platform's log() in the final entropy. The floating
+  // point Le Verrier-Faddeev recursion of 2026.03 gave AvgIpc values of 1.40
+  // for the chain and 0.87-0.89 for the polyalanines.
+  const auto polyalanine = [](unsigned int residues) {
+    std::string smi;
+    for (unsigned int i = 0; i < residues; ++i) {
+      smi += "NC(C)C(=O)";
+    }
+    return smi + "O";
+  };
+  const std::vector<std::tuple<std::string, double, double>> data{
+      {"COc1ccc(Cl)cc1C(=O)NCCc1ccc(S(=O)(=O)NC(=O)NC2CCCCC2)cc1",
+       19051838.76389809, 2.792496189658309},
+      {std::string(120, 'C'), 3.259288638433214e+25, 3.7592685780108055},
+      {polyalanine(20), 5.9951841834153935e+19, 3.5287448114000575},
+      {polyalanine(30), 2.5551069844069688e+29, 3.820776439934925},
+      {polyalanine(40), 1.0603006876700335e+39, 4.028064317960943},
+  };
+  for (const auto &[smi, ipc, avgIpc] : data) {
+    INFO(smi);
+    std::unique_ptr<ROMol> m(SmilesToMol(smi));
+    REQUIRE(m);
+    CHECK_THAT(calcIpc(*m), Catch::Matchers::WithinRel(ipc, 1e-13));
+    CHECK_THAT(calcAvgIpc(*m), Catch::Matchers::WithinRel(avgIpc, 1e-13));
+  }
+  SECTION("ones on the diagonal of distMat are self-loops") {
+    // A = [[1, 1], [1, 1]], so det(xI - A) = x^2 - 2x
+    std::unique_ptr<ROMol> m(SmilesToMol("CC"));
+    REQUIRE(m);
+    const std::vector<double> ones(4, 1.0);
+    const double ent = -(std::log2(1.0 / 3) + 2 * std::log2(2.0 / 3)) / 3;
+    CHECK_THAT(calcAvgIpc(*m, ones.data()),
+               Catch::Matchers::WithinAbs(ent, 1e-15));
+    CHECK_THAT(calcIpc(*m, false, ones.data()),
+               Catch::Matchers::WithinAbs(3 * ent, 1e-14));
+  }
+  SECTION("AvgIpc stays finite where Ipc leaves the double range") {
+    // At 1476 atoms every coefficient fits in a double but their sum does
+    // not; at 1500 the largest coefficient does not fit either. The
+    // references are the entropies of the exact coefficients.
+    for (const auto &[atoms, avgIpc] :
+         std::vector<std::pair<unsigned int, double>>{
+             {1476, 5.5694031032603307}, {1500, 5.5810377528400275}}) {
+      std::unique_ptr<ROMol> m(SmilesToMol(std::string(atoms, 'C')));
+      REQUIRE(m);
+      CHECK_THAT(calcAvgIpc(*m), Catch::Matchers::WithinRel(avgIpc, 1e-13));
+      CHECK(std::isinf(calcIpc(*m)));
+    }
+  }
+  SECTION("NaN past the table of primes") {
+    // the coefficient bound of a 4000-atom chain is about 5,100 bits
+    std::unique_ptr<ROMol> m(SmilesToMol(std::string(4000, 'C')));
+    REQUIRE(m);
+    CHECK(std::isnan(calcIpc(*m)));
+    CHECK(std::isnan(calcAvgIpc(*m)));
+  }
+}
 
 TEST_CASE("graph descriptors with a user-supplied distance matrix") {
   for (const auto smi : {"CCCCC(=O)O", "c1ccccc1CC(N)C(=O)O", "C1CC2CCC1C2",
@@ -316,10 +371,8 @@ TEST_CASE("graph descriptors with a user-supplied distance matrix") {
     std::vector<double> topoMat(topo, topo + n * n);
     const double *bal = MolOps::getDistanceMat(*m, true, false, true);
     std::vector<double> balMat(bal, bal + n * n);
-#ifdef RDK_HAS_EIGEN3      
     CHECK(calcIpc(*m, false, topoMat.data()) == calcIpc(*m));
     CHECK(calcAvgIpc(*m, topoMat.data()) == calcAvgIpc(*m));
-#endif
     
     CHECK(calcBalabanJ(*m, balMat.data()) == calcBalabanJ(*m));
     CHECK(calcBertzCT(*m, 100, balMat.data()) == calcBertzCT(*m));
@@ -342,8 +395,6 @@ TEST_CASE("graph descriptors with a user-supplied distance matrix") {
     CHECK_THAT(calcBalabanJ(*m, scaled.data()),
                Catch::Matchers::WithinRel(calcBalabanJ(*m, topo) / 2, 1e-12));
     // no entries equal to 1, so there are no edges
-#ifdef RDK_HAS_EIGEN3          
     CHECK(calcIpc(*m, false, scaled.data()) == 0.0);
-#endif
   }
 }

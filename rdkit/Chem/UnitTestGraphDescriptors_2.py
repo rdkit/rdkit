@@ -109,8 +109,6 @@ class TestCase(unittest.TestCase):
       self.__testDesc('PP_descrs_regress.2.csv', 3, GraphDescriptors.HallKierAlpha)
 
   def testIpc(self):
-    if not GraphDescriptors.HAS_IPC:
-      return
     data = [('CCCCC', 1.40564, 11.24511), ('CCC(C)C', 1.37878, 9.65148),
             ('CC(C)(C)C', 0.72193, 3.60964), ('CN(CC)CCC', 1.67982, 31.91664),
             ('C1CCCCC1', 1.71997, 34.39946), ('CC1CCCCC1', 1.68562, 47.19725),
@@ -522,9 +520,6 @@ class TestCase_regression(unittest.TestCase):
 
   def testDistanceMatrixArguments(self):
     # passing the matrices the C++ code uses by default gives the same values
-    if not GraphDescriptors.HAS_IPC:
-      return
-
     for smi in (
         'CCCCC(=O)O',
         'c1ccccc1CC(N)C(=O)O',
@@ -603,9 +598,6 @@ class TestCase_regression(unittest.TestCase):
     # AvgIpc is a Shannon entropy over the n+1 coefficients, so it is bounded by log2(n+1)
     # and cannot decrease as a chain is extended. It previously started decreasing near
     # n=110, reaching 1.40 at n=120 where the true value is 3.76.
-    if not GraphDescriptors.HAS_IPC:
-      return
-
     prev = 0.0
     for n in range(20, 141, 20):
       m = Chem.MolFromSmiles('C' * n)
