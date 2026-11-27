@@ -475,6 +475,7 @@ unsigned int calcNumBridgeheadAtoms(const ROMol &mol,
   }
   auto res = MolOps::findBridgeheadAtoms(mol);
   if (atoms) {
+    atoms->clear();
     atoms->insert(atoms->end(), res.begin(), res.end());
   }
   return res.size();
