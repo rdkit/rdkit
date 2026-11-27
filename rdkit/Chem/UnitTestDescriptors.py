@@ -187,6 +187,7 @@ class TestCase(unittest.TestCase):
     descs = Descriptors.CalcMolDescriptors(mol)
     self.assertTrue('MolLogP' in descs)
     self.assertEqual(descs['NumHDonors'], 1)
+    self.assertAlmostEqual(descs['SAScore'], 1.964415, 4)
 
   def testGet3DMolDescriptors(self):
     mol = Chem.MolFromSmiles('CCCO')

@@ -2226,6 +2226,12 @@ CAS<~>
     self.assertTrue(m1.GetNumAtoms() == 12)
     self.assertTrue(m1.GetNumConformers() == 2)
 
+  def testRingInfoKeepsMolAlive(self):
+    ri = Chem.MolFromSmiles('c1ccccc1').GetRingInfo()
+    others = [Chem.MolFromSmiles('CCCCCCCCCC') for _ in range(1000)]
+    self.assertEqual(ri.NumRings(), 1)
+    self.assertEqual(ri.AtomRings(), ((0, 1, 2, 3, 4, 5), ))
+
   def test45RingInfo(self):
     """ test the RingInfo class
 
@@ -7620,7 +7626,7 @@ CAS<~>
     smi = rdChemReactions.ReactionToSmiles(rxn)
     self.assertEqual(
       smi,
-      "C=C1C[C@](C)(C(C)(C)C)CC(=C)/C1=C/c1cc(C)c(C)c(CCC)c1>>C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1"
+      "C=C1C[C@@](C)(C(C)(C)C)CC(=C)/C1=C\\c1cc(C)c(C)c(CCC)c1>>C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1"
     )
 
     Chem.SetUseLegacyStereoPerception(True)
@@ -7638,7 +7644,7 @@ CAS<~>
     smi = rdChemReactions.ReactionToSmiles(rxn)
     self.assertEqual(
       smi,
-      "C=C1C[C@](C)(C(C)(C)C)CC(=C)/C1=C/c1cc(C)c(C)c(CCC)c1>>C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1"
+      "C=C1C[C@@](C)(C(C)(C)C)CC(=C)/C1=C\\c1cc(C)c(C)c(CCC)c1>>C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1"
     )
 
     rxn = rdChemReactions.ReactionFromRxnFile(fileN, True, True, False)
@@ -7646,7 +7652,7 @@ CAS<~>
     smi = rdChemReactions.ReactionToSmiles(rxn)
     self.assertEqual(
       smi,
-      "C=C1C[C@](C)(C(C)(C)C)CC(=C)/C1=C/c1cc(C)c(C)c(CCC)c1>>C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1"
+      "C=C1C[C@@](C)(C(C)(C)C)CC(=C)/C1=C\\c1cc(C)c(C)c(CCC)c1>>C=C1CC(C)(C(C)(C)C)CC(=C)C1=Cc1cc(C)c(Cl)c(C[C@H](C)Cl)c1"
     )
 
     Chem.SetUseLegacyStereoPerception(True)

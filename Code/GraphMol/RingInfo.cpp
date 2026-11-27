@@ -440,14 +440,20 @@ unsigned int RingInfo::numRingFamilies() const {
 
 unsigned int RingInfo::numRelevantCycles() const {
   PRECONDITION(df_init, "RingInfo not initialized");
-  PRECONDITION(dp_urfData, "Ring families not initialized");
+  if (!dp_urfData) {
+    BOOST_LOG(rdWarningLog) << "URF data not initialized" << std::endl;
+    return 0;
+  }
   auto nURF = RDL_getNofURF(dp_urfData.get());
-  auto nRC = rdcast<unsigned int>(RDL_getNofRC(dp_urfData.get()));
-  if (nRC < nURF || nRC == std::numeric_limits<unsigned int>::max()) {
+  // RDL counts the cycles as a double, which can be far larger than an
+  // unsigned int (and is RDL_INVALID_RC_COUNT on failure). Check the range
+  // before converting: converting an out-of-range double is undefined.
+  const auto nRC = RDL_getNofRC(dp_urfData.get());
+  if (nRC < nURF || nRC >= std::numeric_limits<unsigned int>::max()) {
     throw ValueErrorException(
         "Problems in RDL: Number of relevant cycles is invalid");
   }
-  return nRC;
+  return rdcast<unsigned int>(nRC);
 };
 
 unsigned int RingInfo::addRingFamily(const INT_VECT &atomIndices,
@@ -557,7 +563,10 @@ std::vector<std::vector<int>> truncatedRelevantCycles(
 
 std::vector<std::vector<int>> RingInfo::atomRelevantCycles() const {
   PRECONDITION(df_init, "RingInfo not initialized");
-  PRECONDITION(dp_urfData, "Ring families not initialized");
+  if (!dp_urfData) {
+    BOOST_LOG(rdWarningLog) << "URF data not initialized" << std::endl;
+    return {};
+  }
 
   size_t nURF = RDL_getNofURF(dp_urfData.get());
   auto nRC = RDL_getNofRC(dp_urfData.get());

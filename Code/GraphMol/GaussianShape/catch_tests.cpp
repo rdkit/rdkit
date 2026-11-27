@@ -1137,3 +1137,33 @@ TEST_CASE("color gradients are mixed into the matching components") {
     CHECK_THAT(mixed[g], Catch::Matchers::WithinAbs(expected, 1.0e-10));
   }
 }
+
+TEST_CASE("Bad Best Tversky Similarity : Github 9918") {
+  auto mol1 =
+      "O=C(c1ccccc1)N1CCCC1 |(0.0443291,-1.81486,-1.76886;0.0506321,-0.858174,-0.921491;1.37975,-0.430412,-0.483603;2.18964,-1.35506,0.144714;3.47088,-1.00454,0.585539;3.93803,0.297573,0.388032;3.1267,1.22739,-0.242406;1.85597,0.849751,-0.670531;-1.14837,-0.261434,-0.446583;-1.26073,0.836916,0.520219;-2.73583,1.04666,0.696614;-3.34033,-0.283345,0.290893;-2.46516,-0.679843,-0.874401)|"_smiles;
+  REQUIRE(mol1);
+  auto mol2 =
+      "[1*]C(=O)c1ccccc1 |(-1.14159,-0.42315,-0.318877;0.0690236,-0.924388,-0.863491;-0.0413875,-1.82621,-1.76281;1.38775,-0.461198,-0.446858;1.73115,0.877788,-0.566431;2.97116,1.35849,-0.183641;3.89602,0.464283,0.335682;3.57521,-0.874049,0.463404;2.33185,-1.34845,0.078804)|"_smiles;
+  REQUIRE(mol2);
+  GaussianShape::ShapeInputOptions shapeOpts;
+  GaussianShape::ShapeInput shape1(*mol1, -1, shapeOpts);
+  GaussianShape::ShapeInput shape2(*mol2, -1, shapeOpts);
+  GaussianShape::ShapeOverlayOptions overlayOpts;
+  overlayOpts.simAlpha = 0.05;
+  overlayOpts.simBeta = 0.95;
+  overlayOpts.optimMode = GaussianShape::OptimMode::SHAPE_ONLY;
+  auto checkScores = GaussianShape::ScoreShape(shape1, shape2, overlayOpts);
+  CHECK(checkScores[0] > 0.95);
+  unsigned int bestThisShape, bestFitShape;
+  RDGeom::Transform3D bestXform;
+  auto bestScores = shape1.bestSimilarity(shape2, bestThisShape, bestFitShape,
+                                          bestXform, 0.7, overlayOpts);
+  MolTransforms::transformConformer(mol2->getConformer(), bestXform);
+  CHECK(bestScores[0] > -0.5);
+  // Because the optimiser works on shape only, it finds a slightly better shape
+  // score than the input, but the combo score is significantly worse (~0.8)
+  // because the color score goes down a lot.  Optimising with SHAPE_AND_COLOR
+  // gives a more intuitive result where the combo score is also better but
+  // it's a bit slower so not ideal for a test.
+  CHECK(bestScores[1] > checkScores[1]);
+}

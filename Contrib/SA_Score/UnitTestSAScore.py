@@ -21,6 +21,14 @@ class TestCase(unittest.TestCase):
       val = sascorer.calculateScore(m)
       self.assertAlmostEqual(tgt, val, 3)
 
+  def testGithub8251(self):
+    # the old smoothing above 8 reported this molecule as 4.36, i.e. easier to
+    # make than aspirin
+    smi = ('C[N+]12CCCC1c1ccc[n+](c1)[Zn+2]21[O]C(=O)C(=O)[O]1.'
+           'O=C1[OH+][Zn+2]2([OH+]C1=O)[OH+]C(=O)C(=O)[OH+]2')
+    m = Chem.MolFromSmiles(smi)
+    self.assertAlmostEqual(sascorer.calculateScore(m), 8.026, 3)
+
 
 if __name__ == '__main__':
   import getopt

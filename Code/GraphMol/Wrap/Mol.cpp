@@ -944,7 +944,7 @@ struct mol_wrapper {
              "specified properties.\n")
 
         .def("GetRingInfo", &ROMol::getRingInfo,
-             python::return_value_policy<python::reference_existing_object>(),
+             python::return_internal_reference<1>(),
              python::args("self"),
              "Returns the number of molecule's RingInfo object.\n\n");
     python::register_ptr_to_python<std::shared_ptr<ROMol>>();

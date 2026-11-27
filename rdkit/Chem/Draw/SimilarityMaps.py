@@ -260,10 +260,12 @@ def GetAtomicWeightsForFingerprintGenerator(refMol, probeMol, fpg, useCounts=Fal
   atomFps = [copy.deepcopy(probeFP) for i in range(probeMol.GetNumAtoms())]
   for bit, entries in atomsPerBit.items():
     for entry in entries:
-      for aid in entry:
-        if not useCounts:
+      if not useCounts:
+        for aid in entry:
           atomFps[aid].UnSetBit(bit)
-        else:
+      else:
+        # A cyclic torsion may visit the same atom twice in one occurrence.
+        for aid in set(entry):
           atomFps[aid][bit] -= 1
 
   weights = []
