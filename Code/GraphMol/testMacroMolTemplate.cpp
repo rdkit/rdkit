@@ -10,6 +10,8 @@
 
 #include <GraphMol/Atom.h>
 #include <GraphMol/MacroMolTemplate.h>
+#include <GraphMol/QueryAtom.h>
+#include <GraphMol/QueryBond.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <RDGeneral/Invariant.h>
 #include <catch2/catch_all.hpp>
@@ -261,6 +263,28 @@ TEST_CASE("MacroMolTemplateBuilder validates completed definitions") {
                                     "C1CC1");
     builder.setMainGroup({0}).addLeavingGroup({{1, 2}, 0, 1, 1});
     CHECK_THROWS_AS(builder.build(), ValueErrorException);
+  }
+  SECTION("query atoms and bonds are not supported") {
+    using Catch::Matchers::ContainsSubstring;
+    const auto mol = v2::SmilesParse::MolFromSmiles("CO");
+
+    RWMol queryAtomMol(*mol);
+    QueryAtom queryAtom(8);
+    queryAtomMol.replaceAtom(1, &queryAtom);
+    MacroMolTemplateBuilder atomBuilder(queryAtomMol, MonomerClass::Other, "X",
+                                        "X", "CO");
+    atomBuilder.setMainGroup({0, 1});
+    CHECK_THROWS_WITH(atomBuilder.build(),
+                      ContainsSubstring("query atoms are not supported"));
+
+    RWMol queryBondMol(*mol);
+    QueryBond queryBond(Bond::SINGLE);
+    queryBondMol.replaceBond(0, &queryBond);
+    MacroMolTemplateBuilder bondBuilder(queryBondMol, MonomerClass::Other, "X",
+                                        "X", "CO");
+    bondBuilder.setMainGroup({0, 1});
+    CHECK_THROWS_WITH(bondBuilder.build(),
+                      ContainsSubstring("query bonds are not supported"));
   }
 }
 
