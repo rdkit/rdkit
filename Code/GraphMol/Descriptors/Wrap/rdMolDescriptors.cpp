@@ -1273,7 +1273,6 @@ double CalcQEDHelper(const RDKit::ROMol &mol, python::object weights,
   return RDKit::Descriptors::calcQED(pyObjectToQEDProperties(qedProperties), w);
 }
 
->>>>>>> descriptastorus
 }  // namespace
 
 BOOST_PYTHON_MODULE(rdMolDescriptors) {
@@ -2565,8 +2564,6 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
         "CalcAromatic function\n");
     python::def("CalcAtomCount", RDKit::Descriptors::Osmordred::calcAtomCounts,
         "CalcAtomCounts function\n");
-    python::def("CalcBalabanJ", RDKit::Descriptors::Osmordred::calcBalabanJ,
-        "CalcBalabanJ function\n");
     python::def("CalcBertzCT", RDKit::Descriptors::Osmordred::calcBertzCT,
         "CalcBertzCT function\n");
     python::def("CalcBondCount", RDKit::Descriptors::Osmordred::calcBondCounts,
