@@ -2362,7 +2362,7 @@ BOOST_PYTHON_MODULE(rdMolDescriptors) {
               "to use instead of the bond-order weighted one");
   python::scope().attr("_CalcBalabanJ_version") =
       RDKit::Descriptors::balabanJVersion;
-  python::def("CalcBalabanJUnweighted", CalcBalabanJHelper,
+  python::def("CalcBalabanJUnweighted", RDKit::Descriptors::calcBalabanJUnweighted,
               (python::arg("mol"), python::arg("dMat") = python::object()),
               "Returns Balaban's J value (Chem. Phys. Lett. vol 89, 399-404, "
               "(1982)). using an unweighted bond matrix");

@@ -1361,14 +1361,14 @@ TEST_CASE("Property registry") {
   }
   SECTION("vector descriptors are registered element by element") {
     Properties props(
-        {"PEOE_VSA1", "PEOE_VSA14", "SlogP_VSA2", "fr_amide", "BCUT2D_MRLOW"});
+        {"PEOE_VSA1", "PEOE_VSA14", "SlogP_VSA2", "fr_amide", "BalabanJ"});
     auto res = props.computeProperties(*mol);
     auto peoe = calcPEOE_VSA(*mol);
     CHECK(res[0] == peoe[0]);
     CHECK(res[1] == peoe[13]);
     CHECK(res[2] == calcSlogP_VSA(*mol)[1]);
     CHECK(res[3] == calcFragmentDescriptor(*mol, "fr_amide"));
-    CHECK(res[4] == BCUT2D(*mol)[7]);
+    CHECK(res[4] == calcBalabanJ(*mol));
     // on their own too
     CHECK((*Properties::getProperty("PEOE_VSA14"))(*mol) == peoe[13]);
     std::unique_ptr<PROP_RANGE_QUERY> query(
