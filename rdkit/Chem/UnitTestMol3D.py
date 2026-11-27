@@ -5,10 +5,62 @@ import os
 import random
 import unittest
 
+import numpy
+
 from rdkit import Chem, RDConfig
 from rdkit.Chem import AllChem, TorsionFingerprints
 
 class TestCase(unittest.TestCase):
+
+  def testConstrainedEmbedConformerSelection(self):
+    mol = Chem.AddHs(Chem.MolFromSmiles('CCCO'))
+    self.assertEqual(AllChem.EmbedMolecule(mol, randomSeed=42), 0)
+    original = mol.GetConformer().GetPositions()
+    core = Chem.RemoveHs(mol)
+    selectedId = core.AddConformer(core.GetConformer(), assignId=True)
+    AllChem.SetDihedralDeg(core.GetConformer(0), 0, 1, 2, 3, 60.)
+    AllChem.SetDihedralDeg(core.GetConformer(selectedId), 0, 1, 2, 3, 180.)
+    selectedCore = Chem.Mol(core, confId=selectedId)
+
+    for tethers in (False, True):
+      reference = AllChem.ConstrainedEmbed(Chem.Mol(mol), selectedCore, useTethers=tethers)
+      for append in (False, True):
+        with self.subTest(useTethers=tethers, append=append):
+          result = AllChem.ConstrainedEmbed(Chem.Mol(mol), core, useTethers=tethers,
+                                            coreConfId=selectedId, clearConfs=not append)
+          if append:
+            numpy.testing.assert_array_equal(result.GetConformer(0).GetPositions(), original)
+          embedded = result.GetConformer(1 if append else 0)
+          numpy.testing.assert_allclose(embedded.GetPositions(),
+                                        reference.GetConformer().GetPositions(), atol=1e-5)
+          self.assertAlmostEqual(result.GetDoubleProp('EmbedRMS'),
+                                 reference.GetDoubleProp('EmbedRMS'), places=5)
+
+  def testConstrainedEmbedSameMoleculeAsCore(self):
+    mol = Chem.AddHs(Chem.MolFromSmiles('CCCO'))
+    self.assertEqual(len(AllChem.EmbedMultipleConfs(mol, numConfs=2, randomSeed=42)), 2)
+    for conf, confId in zip(mol.GetConformers(), (3, 9)):
+      conf.SetId(confId)
+    for coreId in (-1, 9):
+      selected = Chem.Mol(mol, confId=mol.GetConformer(coreId).GetId())
+      for tethers in (False, True):
+        reference = AllChem.ConstrainedEmbed(Chem.Mol(mol), selected, useTethers=tethers)
+        for append in (False, True):
+          with self.subTest(coreId=coreId, useTethers=tethers, append=append):
+            target = Chem.Mol(mol)
+            options = {'clearConfs': False} if append else {}
+            result = AllChem.ConstrainedEmbed(target, target, useTethers=tethers, coreConfId=coreId,
+                                              **options)
+            self.assertIs(result, target)
+            if append:
+              for conf in mol.GetConformers():
+                numpy.testing.assert_array_equal(result.GetConformer(conf.GetId()).GetPositions(),
+                                                 conf.GetPositions())
+            embedded = list(result.GetConformers())[-1]
+            numpy.testing.assert_allclose(embedded.GetPositions(),
+                                          reference.GetConformer().GetPositions(), atol=1e-5)
+            self.assertAlmostEqual(result.GetDoubleProp('EmbedRMS'),
+                                   reference.GetDoubleProp('EmbedRMS'), places=5)
 
   def testConformerRMS(self):
     m1 = Chem.MultiConfMolFromSDF(os.path.join(RDConfig.RDCodeDir, "Chem/test_data/biaryl.sdf"),
