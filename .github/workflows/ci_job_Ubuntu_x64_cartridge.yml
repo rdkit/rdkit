@@ -7,8 +7,13 @@ jobs:
   Ubuntu_x64_cartridge:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        postgresql: ["16", "19"]
     env:
       BOOST_VERSION: "1.92"
+      PG_VERSION: ${{ matrix.postgresql }}
     steps:
       - uses: actions/checkout@v7
       - name: Set up CI environment
@@ -18,11 +23,15 @@ jobs:
       - name: Setup build environment
         run: |
           sudo apt-get update
-          sudo apt-get install -y postgresql-16 postgresql-client-16 postgresql-server-dev-16 postgresql-common
+          sudo apt-get install -y postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-${PG_VERSION} postgresql-client-${PG_VERSION} postgresql-server-dev-${PG_VERSION}
           echo "start postgres server"
           sudo systemctl start postgresql.service
+          PGPORT=$(pg_conftool ${PG_VERSION} main show port | sed 's/.*= *//')
+          echo "PGPORT=${PGPORT}" >> "$GITHUB_ENV"
           echo "add postgres user"
-          sudo -u postgres createuser -s `whoami`
+          sudo -u postgres createuser -p ${PGPORT} -s `whoami`
           source ${CONDA}/etc/profile.d/conda.sh
           conda config --set always_yes yes --set changeps1 no
           conda update -q conda
@@ -60,7 +69,8 @@ jobs:
           -DRDK_BUILD_THREADSAFE_SSS=ON \
           -DRDK_TEST_MULTITHREADED=ON \
           -DRDK_BUILD_PGSQL=ON \
-          -DPostgreSQL_CONFIG=/usr/bin/pg_config
+          -DPostgreSQL_ADDITIONAL_VERSIONS=${PG_VERSION} \
+          -DPostgreSQL_CONFIG=/usr/lib/postgresql/${PG_VERSION}/bin/pg_config
       - name: Build
         run: |
           source ${CONDA}/etc/profile.d/conda.sh
