@@ -12,6 +12,7 @@
 /Code/JavaWrappers/csharp_wrapper/RdkitTests/obj
 /Data/Fonts/ComicNeue-*
 /Data/Fonts/OFL.txt
+/Data/DASHTree/initial_test.dash
 /vcpkg/*
 #- Eclipse files
 /.project
