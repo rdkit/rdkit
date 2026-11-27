@@ -305,7 +305,7 @@ void SmilesMolSupplier::processTitleLine() {
 
 std::string SmilesMolSupplier::getItemText(unsigned int idx) {
   PRECONDITION(dp_inStream, "no stream");
-  unsigned int holder = d_next;
+  auto holder = d_next;
   bool endHolder = df_end;
   // this throws the relevant exception if we go too far:
   moveTo(idx);

@@ -10,6 +10,7 @@
 
 // this file parses MRV file for molecules and reactions
 
+#include <algorithm>
 #include <string>
 #include <exception>
 #include <fstream>
@@ -570,8 +571,9 @@ class MarvinCMLReader {
           atoms.push_back(mol->getAtomWithIdx(atomPtr));
         }
 
-        groups.emplace_back(groupPtr->groupType, std::move(atoms),
-                            std::move(bonds), groupPtr->groupNumber);
+        groups.emplace_back(
+            groupPtr->groupType, std::move(atoms), std::move(bonds),
+            static_cast<unsigned int>(std::max(groupPtr->groupNumber, 0)));
       }
       if (!groups.empty()) {
         mol->setStereoGroups(std::move(groups));

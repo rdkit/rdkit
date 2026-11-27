@@ -85,6 +85,14 @@ TEST_CASE("SmilesMolSupplier") {
       REQUIRE(mol);
     }
   }
+  SECTION("getItemText on a fresh supplier") {
+    FileParsers::SmilesMolSupplier smsup;
+    smsup.setData("SMILES Name\nCCO ethanol\nc1ccccc1 benzene\n");
+    CHECK(smsup.getItemText(1) == "c1ccccc1 benzene");
+    auto mol = smsup.next();
+    REQUIRE(mol);
+    CHECK(mol->getProp<std::string>(common_properties::_Name) == "ethanol");
+  }
 }
 
 TEST_CASE("TDTMolSupplier") {
