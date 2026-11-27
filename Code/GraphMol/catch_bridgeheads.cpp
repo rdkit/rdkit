@@ -161,4 +161,16 @@ TEST_CASE("Bridgehead atoms") {
     auto bridgeheads = MolOps::findBridgeheadAtoms(*m, onlyWithAtoms);
     CHECK(bridgeheads == onlyWithAtoms);
   }
+  SECTION("using SSSR also works") {
+    v2::SmilesParse::SmilesParserParams params{.sanitize = false};
+    auto m = v2::SmilesParse::MolFromSmiles("C1CC2CCC1CC2", params);
+    REQUIRE(m);
+    m->updatePropertyCache();
+    MolOps::findSSSR(*m);
+    auto bridgeheads = MolOps::findBridgeheadAtoms(*m);
+    CHECK(bridgeheads == std::vector<unsigned int>{2, 5});
+    MolOps::symmetrizeSSSR(*m);
+    bridgeheads = MolOps::findBridgeheadAtoms(*m);
+    CHECK(bridgeheads == std::vector<unsigned int>{2, 5});
+  }
 }
