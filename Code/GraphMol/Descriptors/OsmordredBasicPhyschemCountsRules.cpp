@@ -924,7 +924,6 @@ std::vector<double> calcWalkCounts(const ROMol &mol) {
   return results;
 }
 
-  
 // Weight - returns ExactMW and average MW per atom.
 // trick is to add the Hs for the average not only heavy atoms!
 // we need a function that can do this trick!!!
@@ -961,8 +960,8 @@ std::vector<double> calcWienerIndex(const ROMol &mol) {
   }
   // must return the half part (of the Distance matrix!) or only compute half
   // matrix... to speed up!!!!
-  WI[0]*=0.5;
-  WI[1]*=0.5;
+  WI[0] *= 0.5;
+  WI[1] *= 0.5;
 
   return WI;
 }
@@ -1068,7 +1067,7 @@ int hydrogenCount(const Atom *atom) {
   }
   return nH;
 }
-  
+
 // Helper function to count bond types
 std::unordered_map<Bond::BondType, int> bondTypeCount(const Atom *atom) {
   std::unordered_map<Bond::BondType, int> bondCounts;
@@ -1081,7 +1080,7 @@ std::unordered_map<Bond::BondType, int> bondTypeCount(const Atom *atom) {
   }
   return bondCounts;
 }
-}
+}  // namespace
 
 // Function to calculate the phosphorus contribution to TPSA
 double getPhosphorusContribution(const Atom *atom) {
@@ -1168,8 +1167,9 @@ std::vector<double> calcTopoPSA(const ROMol &mol) {
   // explicit H and missed e.g. R-SH thiols (Glutathione lost the 38.80 term),
   // so res[1] silently equalled res[0] for thiols.
   std::vector<double> res(2, 0.0);
-  res[0] = Descriptors::calcTPSA(mol, false, false);  // N,O only  -> TopoPSA(NO)
-  res[1] = Descriptors::calcTPSA(mol, false, true);   // incl. S,P -> TopoPSA
+  res[0] =
+      Descriptors::calcTPSA(mol, false, false);      // N,O only  -> TopoPSA(NO)
+  res[1] = Descriptors::calcTPSA(mol, false, true);  // incl. S,P -> TopoPSA
   return res;
 }
 
@@ -1411,7 +1411,7 @@ GetSmartsLogs() {
       }();
   return compiledSmartsLogs;
 }
-  
+
 // Function to calculate LogS descriptor
 double calcLogS(const ROMol &mol) {
   // Base formula contribution
@@ -1584,13 +1584,9 @@ double calcPol(OsmordredContext &ctx) {
   return *ctx.pol;
 }
 
-double calcMR(OsmordredContext &ctx) {
-  return 4. / 3. * M_PI * calcPol(ctx);
-}
+double calcMR(OsmordredContext &ctx) { return 4. / 3. * M_PI * calcPol(ctx); }
 
-double calcMR(const ROMol &mol) {
-  return 4. / 3. * M_PI * calcPol(mol);
-}
+double calcMR(const ROMol &mol) { return 4. / 3. * M_PI * calcPol(mol); }
 
 // Function to calculate the Schultz descriptor
 double calcSchultz(const ROMol &mol) {

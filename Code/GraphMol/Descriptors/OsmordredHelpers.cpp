@@ -177,7 +177,7 @@ std::vector<double> calcEStateIndices(const RDKit::ROMol &mol) {
   std::vector<double> res(numAtoms, 0.0);
   for (int i = 0; i < numAtoms; ++i) {
     res[i] = accum[i] + Is[i];
-    //mol.getAtomWithIdx(i)->setProp("EState", res[i]);
+    // mol.getAtomWithIdx(i)->setProp("EState", res[i]);
   }
   return res;
 }
@@ -198,7 +198,7 @@ std::vector<double> calcIStateIndices(const RDKit::ROMol &mol) {
       int N = GetPrincipalQuantumNumber(atomicNum);
       Is[i] = (4.0 / (N * N) * dv + 1.0) / degree;
     }
-    //mol.getAtomWithIdx(i)->setProp("IState", Is[i]);
+    // mol.getAtomWithIdx(i)->setProp("IState", Is[i]);
   }
   return Is;
 }
@@ -766,8 +766,8 @@ unsigned int countUniqueMatches(const ROMol &mol, const ROMol &queryMol) {
 
 const ROMol &OsmordredContext::molWithHs() {
   if (!d_molWithHs || !d_molWithHsShared) {
-    d_molWithHsShared = d_mol.getRingInfo() &&
-                        d_mol.getRingInfo()->isSssrOrBetter();
+    d_molWithHsShared =
+        d_mol.getRingInfo() && d_mol.getRingInfo()->isSssrOrBetter();
     d_molWithHs.reset(MolOps::addHs(d_mol));
   }
   return *d_molWithHs;
@@ -782,8 +782,7 @@ const ROMol &OsmordredContext::molWithHs() {
 // A (column-major, n x n) is left untouched; B (column-major, n x nrhs) is
 // overwritten with the solution.
 void solveLinearSystem(const ROMol &mol, std::vector<double> &A,
-                       std::vector<double> &B, int n, int nrhs,
-                       bool &success) {
+                       std::vector<double> &B, int n, int nrhs, bool &success) {
   success = false;
   if (n <= 0 || nrhs <= 0) {
     return;
@@ -805,7 +804,8 @@ void solveLinearSystem(const ROMol &mol, std::vector<double> &A,
     return;
   }
 
-  Eigen::BDCSVD<Eigen::MatrixXd, Eigen::ComputeThinU | Eigen::ComputeThinV> svd(a);
+  Eigen::BDCSVD<Eigen::MatrixXd, Eigen::ComputeThinU | Eigen::ComputeThinV> svd(
+      a);
   svd.setThreshold(1e-15);  // dgelss rcond
   const Eigen::MatrixXd x = svd.solve(b);
   if (x.allFinite()) {
@@ -955,7 +955,8 @@ void compute_eigenvalues_and_eigenvectorsL(
     }
     for (int i = 0; i < n; ++i) {
       eigenvalues[i] = solver.eigenvalues()(i);
-      for (int j = 0; j < n; ++j) eigenvectors[i][j] = solver.eigenvectors()(i, j);
+      for (int j = 0; j < n; ++j)
+        eigenvectors[i][j] = solver.eigenvectors()(i, j);
     }
   }
 

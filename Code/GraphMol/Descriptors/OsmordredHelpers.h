@@ -311,8 +311,8 @@ Eigen::MatrixXd floydWarshall(Eigen::MatrixXd &A);
 //! in-place Floyd-Warshall on a dense row-major distance matrix
 void floydWarshallL(std::vector<std::vector<double>> &matrix);
 
-template<class MOL>
-const RingInfo & getRings(const MOL &mol) {
+template <class MOL>
+const RingInfo &getRings(const MOL &mol) {
   if (!mol.getRingInfo() || !mol.getRingInfo()->isSssrOrBetter()) {
     RDKit::MolOps::findSSSR(mol);
   }

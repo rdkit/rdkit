@@ -88,10 +88,10 @@ namespace Descriptors {
 namespace Osmordred {
 namespace {
 std::vector<double> nans(int size) {
-    std::vector<double> res(size, std::numeric_limits<double>::quiet_NaN());
-    return res;
+  std::vector<double> res(size, std::numeric_limits<double>::quiet_NaN());
+  return res;
 }
-}
+}  // namespace
 // option using inspired CDS paper
 // https://www.sciencedirect.com/org/science/article/pii/S2635098X24001426
 //  full step matrix implements
@@ -650,7 +650,8 @@ static const std::vector<std::pair<std::string, std::string>> esPatterns = {
     {"ssBH", "[BD2H](-*)-*"},
     {"sssB", "[BD3](-*)(-*)-*"},
     {"ssssB", "[BD4](-*)(-*)(-*)-*"},
-    {"sCH3", "[CD1H3]"},  // v3 fix #10: single-atom pattern (no uniquify collapse)
+    {"sCH3",
+     "[CD1H3]"},  // v3 fix #10: single-atom pattern (no uniquify collapse)
     {"dCH2", "[CD1H2;$(*=*)]"},
     {"ssCH2", "[CD2H2]"},
     {"tCH", "[CD1H;$(*#*)]"},
@@ -733,7 +734,8 @@ static const std::vector<std::pair<std::string, std::string>>
         {"ssBH", "[BD2H](-*)-*"},
         {"sssB", "[BD3](-*)(-*)-*"},
         {"ssssB", "[BD4](-*)(-*)(-*)-*"},
-        {"sCH3", "[CD1H3]"},  // v3 fix #10: single-atom pattern (no uniquify collapse)
+        {"sCH3",
+         "[CD1H3]"},  // v3 fix #10: single-atom pattern (no uniquify collapse)
         {"dCH2", "[CD1H2;$(*=*)]"},
         {"ssCH2", "[CD2H2]"},
         {"tCH", "[CD1H;$(*#*)]"},
@@ -945,8 +947,7 @@ std::vector<double> calcEStateDescs(OsmordredContext &ctx, bool extended) {
   if (!extended) {
     localMatches = computeEStateMatches(mol, queries);
   }
-  const auto &queryMatches =
-      extended ? getEStateExtMatches(ctx) : localMatches;
+  const auto &queryMatches = extended ? getEStateExtMatches(ctx) : localMatches;
   // const std::vector<std::pair<std::string, std::string>> esPat = extended ?
   // esPatternsFromOEState : esPatterns;
   size_t nPatts = queries.size();
@@ -1613,7 +1614,8 @@ double computeAtomicId(const Graph &graph, int atomIdx, double epsilon,
 std::vector<double> computeAtomicIds(const ROMol &mol, double epsilon) {
   int natoms = mol.getNumAtoms();
   std::vector<double> atomicIds(natoms, 0.0);
-  // v3 fix #9: removed natoms>1 guard so single-atom mols get base ID 1.0 (matches Mordred)
+  // v3 fix #9: removed natoms>1 guard so single-atom mols get base ID 1.0
+  // (matches Mordred)
   Graph graph = buildGraph(mol);
   double limit = 1.0 / (epsilon * epsilon);
 
@@ -1847,15 +1849,15 @@ std::vector<double> calcBCUTs(const ROMol &mol) {
         static_cast<double>(atomNumber);  // Atomic number (Z)
     atomicProperties[5][i] =
         tbl->getAtomicWeight(atomNumber);  // Atomic weight (m)
-    atomicProperties[6][i] =
-        vdw_volume(atomicMapValue(vdwMap, atomNumber));  // Van der Waals volume need vdw_volume
-                                         // to go from (r) to (v)
-    atomicProperties[7][i] =
-        atomicMapValue(sandersonENMap, atomNumber);  // Sanderson electronegativity (se)
-    atomicProperties[8][i] =
-        atomicMapValue(paulingENMap, atomNumber);  // Pauling electronegativity (pe)
-    atomicProperties[9][i] =
-        atomicMapValue(allredENMap, atomNumber);  // Allred-Rocow electronegativity (are)
+    atomicProperties[6][i] = vdw_volume(atomicMapValue(
+        vdwMap, atomNumber));  // Van der Waals volume need vdw_volume
+                               // to go from (r) to (v)
+    atomicProperties[7][i] = atomicMapValue(
+        sandersonENMap, atomNumber);  // Sanderson electronegativity (se)
+    atomicProperties[8][i] = atomicMapValue(
+        paulingENMap, atomNumber);  // Pauling electronegativity (pe)
+    atomicProperties[9][i] = atomicMapValue(
+        allredENMap, atomNumber);  // Allred-Rocow electronegativity (are)
     atomicProperties[10][i] =
         atomicMapValue(polarizabilityMap, atomNumber);  // Polarizability (p)
     atomicProperties[11][i] =
@@ -2150,9 +2152,8 @@ std::vector<double> calcAutoCorrelation(OsmordredContext &ctx) {
     for (unsigned int i = 0; i < numAtoms; ++i) {
       for (unsigned int j = i + 1; j < numAtoms; ++j) {
         distanceMatrix[i][j] =
-            (parent[i] == parent[j]
-                 ? 0.0
-                 : dist[parent[i] * nMolAtoms + parent[j]]) +
+            (parent[i] == parent[j] ? 0.0
+                                    : dist[parent[i] * nMolAtoms + parent[j]]) +
             hops[i] + hops[j];
       }
     }
@@ -2477,7 +2478,8 @@ struct BondEStateResult {
 
 // retreive the positional of the
 std::vector<int> NamePosES(
-    size_t nAtoms, const std::vector<std::vector<MatchVectType>> &queryMatches) {
+    size_t nAtoms,
+    const std::vector<std::vector<MatchVectType>> &queryMatches) {
   std::vector<int> pos(nAtoms, 0);  // Initialize positions with 0
   for (unsigned int idx = 0; idx < queryMatches.size(); idx++) {
     const auto &qmatches = queryMatches[idx];
@@ -2502,7 +2504,6 @@ BondEStateResult getBEStateFeatures(OsmordredContext &ctx, bool extended) {
   // Get the distance matrix using RDKit's MolOps::getDistanceMat
   double *dists = MolOps::getDistanceMat(
       mol, false, false, false);  // no bond order, no weights, no hydrogens
-
 
   // Bond-specific indices
   std::vector<double> Iij(nBonds, 0.0);
@@ -2602,7 +2603,7 @@ BondEStateResult getBEStateFeatures(OsmordredContext &ctx, bool extended) {
     minBES.push_back(*std::min_element(values.begin(), values.end()));
     maxBES.push_back(*std::max_element(values.begin(), values.end()));
   }
-  
+
   return {SumKeys, BEStotal, SumBES, nBES, minBES, maxBES};
 }
 
@@ -3266,7 +3267,7 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
                             << "n & NumAtoms: " << nAtoms << std::endl;
   }
 #endif
-  
+
   auto [M, SP] = initializeMatrixAndSP(nAtoms, maxRadius);
 
 #ifdef DEBUG
@@ -3288,7 +3289,7 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
     }
   }
 #endif
-  
+
   std::map<int, std::vector<std::vector<int>>> CN;  // Combined CN and AN
   std::map<int, std::vector<int>> clustersByAN;
 
@@ -3336,7 +3337,7 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
     }
   }
 #endif
-  
+
   for (int r = 1; r <= maxRadius; ++r) {
     bool stopExpansion = true;
 
@@ -3373,8 +3374,8 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
           // deepest radius became non-reproducible across builds for
           // degenerate-symmetry molecules (e.g. P1PPP1: IC5 1.0 vs 1.4056).
           SP[atomIdx][r] = -2;
-          clusterKeys.emplace_back(atomIdx,
-                                   std::vector<int>{});  // keep atom; no frontier
+          clusterKeys.emplace_back(
+              atomIdx, std::vector<int>{});  // keep atom; no frontier
           continue;
         }
 
@@ -3382,28 +3383,28 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
         std::vector<int> neighbors;
 
 #ifdef DEBUG
-	{
+        {
           BOOST_LOG(rdDebugLog)
               << "Radius " << r << ", Atom " << atomIdx
               << " .Symbol: " << mol.getAtomWithIdx(atomIdx)->getSymbol()
               << ", Start " << start << ", Stop " << stop << std::endl;
         }
 #endif
-	
+
         for (int pos = start; pos <= stop; ++pos) {
           int rootIdx = M[atomIdx][pos];
           if (rootIdx < 0 || rootIdx >= nAtoms) {
-            BOOST_LOG(rdWarningLog) << "Atom index out of boundaries:" << rootIdx << std::endl;
+            BOOST_LOG(rdWarningLog)
+                << "Atom index out of boundaries:" << rootIdx << std::endl;
             continue;
           }
           const Atom *rootAtom = mol.getAtomWithIdx(rootIdx);
           int rootNum = rootAtom->getAtomicNum();
           // Basak's paper labels a vertex by (element, valency); DEGREE is the
           // default because it scores better against POLLY. See ICVertexLabel.
-          int rootDeg =
-              options.vertexLabel == ICVertexLabel::VALENCY
-                  ? rdcast<int>(rootAtom->getTotalValence())
-                  : rdcast<int>(rootAtom->getDegree());
+          int rootDeg = options.vertexLabel == ICVertexLabel::VALENCY
+                            ? rdcast<int>(rootAtom->getTotalValence())
+                            : rdcast<int>(rootAtom->getDegree());
 
           for (const auto &nb : mol.atomNeighbors(rootAtom)) {
             int nbIdx = nb->getIdx();
@@ -3416,9 +3417,8 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
             neighbors.push_back(nbIdx);
             const Bond *bond = mol.getBondBetweenAtoms(rootIdx, nbIdx);
             int bondOrder;
-            if (!deloc.empty() &&
-                deloc.count({std::min(rootIdx, nbIdx),
-                             std::max(rootIdx, nbIdx)})) {
+            if (!deloc.empty() && deloc.count({std::min(rootIdx, nbIdx),
+                                               std::max(rootIdx, nbIdx)})) {
               bondOrder = DELOCALIZED_BOND_CODE;
             } else if (options.aromaticHandling ==
                            ICAromaticHandling::KEKULIZED &&
@@ -3524,14 +3524,15 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
       }
     }
 #endif
-    
+
     CN[r].resize(2);  // Two vectors: sizes and last atomic values
     for (auto &cluster : clusters) {
       if (cluster.empty()) continue;  // Skip empty clusters
       int atomIdx = cluster.back();   // Atom index
 
       if (atomIdx < 0 || atomIdx >= nAtoms) {
-        BOOST_LOG(rdWarningLog) << "Atom index out of boundaries:" << atomIdx << "\n";
+        BOOST_LOG(rdWarningLog)
+            << "Atom index out of boundaries:" << atomIdx << "\n";
         continue;
       }
 
@@ -3562,7 +3563,7 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
 
   if (!CN.empty()) {
     auto lastRadius = CN.rbegin()->first;
-    for (int rr = lastRadius + 1; rr <=  maxRadius; ++rr) {
+    for (int rr = lastRadius + 1; rr <= maxRadius; ++rr) {
       CN[rr] = CN[lastRadius];
     }
   }
@@ -3579,7 +3580,7 @@ std::map<int, std::vector<std::vector<int>>> computePipeline(
       BOOST_LOG(rdDebugLog) << std::endl;
     }
   }
-#endif  
+#endif
 
   return CN;
 }
@@ -3624,8 +3625,7 @@ std::vector<double> ShannonEntropies(
 }
 
 std::vector<double> calcInformationContent(
-    const ROMol &mol,
-    const InformationContentOptions &options) {
+    const ROMol &mol, const InformationContentOptions &options) {
   if (options.maxradius < 0) {
     throw ValueErrorException(
         "calcInformationContent: maxradius must be non-negative");
@@ -3653,7 +3653,8 @@ std::vector<double> calcInformationContent(
       nBondsM += getbondtypeindouble(bond->getBondType());
     }
     const int nAtomsM = rdcast<int>(hmol->getNumAtoms());
-    const double log2nA_M = std::log(static_cast<double>(nAtomsM)) / std::log(2);
+    const double log2nA_M =
+        std::log(static_cast<double>(nAtomsM)) / std::log(2);
     const double log2nB_M = nBondsM > 1 ? std::log(nBondsM) / std::log(2) : 0.;
     auto CNm = mordredCN(*hmol, options.maxradius);
     // Deliberate departure from mordred: when the denominator of SIC (log2 A)
@@ -3662,7 +3663,8 @@ std::vector<double> calcInformationContent(
     // (one atom is one class; two identical atoms stay one class at every
     // radius), so 0 is the continuous value and it is what ShannonEntropies
     // already returns. Both flavours share that convention; the tests know it.
-    return ShannonEntropies(CNm, options.maxradius, log2nA_M, log2nB_M, nAtomsM);
+    return ShannonEntropies(CNm, options.maxradius, log2nA_M, log2nB_M,
+                            nAtomsM);
   }
 
   if (options.aromaticHandling == ICAromaticHandling::KEKULIZED) {
@@ -3703,7 +3705,6 @@ std::vector<double> calcInformationContent(
 
   return ShannonEntropies(CN, options.maxradius, log2nA, log2nB, nAtoms);
 }
-
 
 // triplet example AZ
 

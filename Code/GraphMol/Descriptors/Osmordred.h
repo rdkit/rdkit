@@ -148,7 +148,6 @@ struct RDKIT_DESCRIPTORS_EXPORT InformationContentOptions {
   int maxradius = 5;
 };
 
-
 // v2.0: Control function to check if Gasteiger parameters exist for all atoms
 // Returns true if all atoms have parameters for their specific environment,
 // false otherwise Use this BEFORE calling any function that uses Gasteiger
@@ -169,21 +168,19 @@ RDKIT_DESCRIPTORS_EXPORT std::vector<int> calcBondCounts(const ROMol &mol);
 
 //! calcWeight reeturns ExactMW and Average MW per atom
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcWeight(const ROMol &mol);
-  
+
 RDKIT_DESCRIPTORS_EXPORT double calcVdwVolumeABC(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcTopoPSA(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcSLogP(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcHydrogenBond(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT double calcLogS(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<int> calcLipinskiGhose(const ROMol &mol);
-RDKIT_DESCRIPTORS_EXPORT double calcMcGowanVolume(
-    const ROMol &mol);
+RDKIT_DESCRIPTORS_EXPORT double calcMcGowanVolume(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcPolarizability(
     const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcRotatableBond(
     const ROMol &mol);
-RDKIT_DESCRIPTORS_EXPORT double calcFragmentComplexity(
-    const ROMol &mol);
+RDKIT_DESCRIPTORS_EXPORT double calcFragmentComplexity(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcConstitutional(
     const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcAddFeatures(const ROMol &mol);
@@ -244,7 +241,7 @@ RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcChipathcluster(
 */
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcInformationContent(
     const ROMol &mol,
-    const InformationContentOptions &options=InformationContentOptions());
+    const InformationContentOptions &options = InformationContentOptions());
 
 // Group 4: Matrix/autocorr/EState/fragments
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcDetourMatrixDescs(
@@ -300,24 +297,24 @@ RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcFrags(const ROMol &mol);
 
 struct RDKIT_DESCRIPTORS_EXPORT OsmordredOptions {
   InformationContentOptions icOptions;
-  int timeout = 60; // !< Time to spend (in seconds) on a single molecule
-  bool isValid() const; // !< are the options valid for calculating descriptors
+  int timeout = 60;      // !< Time to spend (in seconds) on a single molecule
+  bool isValid() const;  // !< are the options valid for calculating descriptors
 };
 
-RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcOsmordred(const ROMol &mol,
-							   const OsmordredOptions &opts=OsmordredOptions());
+RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcOsmordred(
+    const ROMol &mol, const OsmordredOptions &opts = OsmordredOptions());
 
 // Batch from SMILES: parses each SMILES with SmilesToMol() -> NEW mol.
 // Tautomer canonical LOST.
 RDKIT_DESCRIPTORS_EXPORT std::vector<std::vector<double>> calcOsmordred(
     const std::vector<std::string> &smiles_list, int n_jobs = 0,
-    const OsmordredOptions &opts=OsmordredOptions());
+    const OsmordredOptions &opts = OsmordredOptions());
 
 // Batch from mol objects (Python Mol via ToBinary/MolPickler). PRESERVES
 // tautomer canonical.
-RDKIT_DESCRIPTORS_EXPORT std::vector<std::vector<double>>
-calcOsmordred(const std::vector<const ROMol *> &mols, int n_jobs = 0,
-	      const OsmordredOptions &opts=OsmordredOptions());
+RDKIT_DESCRIPTORS_EXPORT std::vector<std::vector<double>> calcOsmordred(
+    const std::vector<const ROMol *> &mols, int n_jobs = 0,
+    const OsmordredOptions &opts = OsmordredOptions());
 
 // Get descriptor names in the same order as calcOsmordred returns values
 RDKIT_DESCRIPTORS_EXPORT std::vector<std::string> getOsmordredDescriptorNames();
