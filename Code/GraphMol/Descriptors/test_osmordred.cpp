@@ -1,4 +1,15 @@
+//  Copyright (c) 2025, Guillaume Godin Osmo Labs, PBC’s and others
+//  All rights reserved.
+//
+//   @@ All Rights Reserved @@
+//  This file is part of the RDKit.
+//  The contents are covered by the terms of the BSD license
+//  which is included in the file license.txt, found at the root
+//  of the RDKit source tree.
+//
+
 #include "Osmordred.h"
+#include "GraphDescriptors.h"
 #include <catch2/catch_all.hpp>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
@@ -83,6 +94,7 @@ TEST_CASE("Osmordred Basic Functionality") {
 
     // double
     REQUIRE(calcBertzCT(*mol) > 0.0);
+    REQUIRE(Descriptors::calcBalabanJUnweighted(*mol) > 0.0);
     REQUIRE(calcVertexAdjacencyInformation(*mol) > 0.0);
     REQUIRE(calcLogS(*mol) == Catch::Approx(-7.7054571933));
     REQUIRE(calcMcGowanVolume(*mol) > 0.0);

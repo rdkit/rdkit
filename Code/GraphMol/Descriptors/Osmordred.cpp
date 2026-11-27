@@ -139,7 +139,7 @@ std::vector<double> calcOsmordred(const ROMol &mol,
   appendInt(calcAtomCounts(ctx));       // addNames("AtomCount", 17);
   append(calcAutoCorrelation(ctx));     // addNames("Autocorrelation", 606);
   append(calcBCUTs(mol));               // addNames("BCUT", 24);
-  append1(calcBalabanJ(mol));           // addNames("BalabanJ", 1);
+  append1(calcBalabanJUnweighted(mol));           // addNames("BalabanJ", 1);
   append(calcBaryszMatrixDescsL(mol));  // addNames("BaryszMatrix", 104);
   append1(calcBertzCT(mol));            // addNames("BertzCT", 1);
   appendInt(calcBondCounts(ctx));       // addNames("BondCount", 9);

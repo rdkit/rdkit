@@ -622,7 +622,7 @@ double calcBertzCT(const ROMol &mol) {
 
   int numAtoms = mol.getNumAtoms();
 
-  double *distances = MolOps::getDistanceMat(mol, true, false, true, "Balaban");
+  double *distances = MolOps::getDistanceMat(mol, true, false, true, "BertzCT");
   std::vector<std::vector<double>> dMat(numAtoms,
                                         std::vector<double>(numAtoms, 0.0));
 

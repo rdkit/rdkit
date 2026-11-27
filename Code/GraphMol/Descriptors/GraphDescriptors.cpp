@@ -49,15 +49,18 @@ double calcChi1(const ROMol &mol) {
   return res;
 }
 
-double calcBalabanJ(const ROMol &mol, const double *distMat) {
+double calcBalabanJ(const ROMol &mol, const double *distMat, bool bondWeighted) {
   const unsigned int nAts = mol.getNumAtoms();
   if (!nAts) {
     return 0.0;
   }
-  const double *dMat =
-      distMat ? distMat
-              : MolOps::getDistanceMat(mol, true, false, true, "Balaban");
-
+  const double *dMat = nullptr;
+  if(distMat!=nullptr) {
+    dMat = distMat;
+  } else {
+    dMat = bondWeighted ? MolOps::getDistanceMat(mol, true, false, true, "Balaban") :
+      MolOps::getDistanceMat(mol, false, false, false, "BalabanUnweighted");
+  }
   // column sums, accumulated row by row as the python code does
   std::vector<double> s(nAts, 0.0);
   for (unsigned int i = 0; i < nAts; ++i) {
@@ -90,6 +93,10 @@ double calcBalabanJ(const ROMol &mol, const double *distMat) {
   return 0.0;
 }
 
+RDKIT_DESCRIPTORS_EXPORT double calcBalabanJUnweighted(const ROMol &mol) {
+  return calcBalabanJ(mol, nullptr, false);
+}
+  
 double calcBertzCT(const ROMol &mol, unsigned int cutoff,
                    const double *distMat) {
   const unsigned int numAtoms = mol.getNumAtoms();
