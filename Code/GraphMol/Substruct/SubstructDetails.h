@@ -23,7 +23,7 @@ class RecursiveStructureQuery;
 struct SubstructMatchParameters;
 
 namespace detail {
-struct RecursiveLocker {
+struct RDKIT_SUBSTRUCTMATCH_EXPORT RecursiveLocker {
   bool df_clearOnDestruct{true};
   std::vector<RecursiveStructureQuery *> locked;
   RecursiveLocker() = default;

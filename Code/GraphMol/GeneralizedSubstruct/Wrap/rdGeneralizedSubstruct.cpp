@@ -89,8 +89,10 @@ ExtendedQueryMol *createExtendedQueryMolHelper(
   if (!ps) {
     ps = &defaults;
   }
+  // try to prevent a copy if necessary
+  const RWMol &wmol = static_cast<const RWMol&>(mol);
   return new ExtendedQueryMol(createExtendedQueryMol(
-      mol, doEnumeration, doTautomers, adjustQueryProperties, *ps));
+      wmol, doEnumeration, doTautomers, adjustQueryProperties, *ps));
 }
 
 }  // namespace

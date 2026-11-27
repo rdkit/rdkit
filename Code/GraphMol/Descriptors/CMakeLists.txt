@@ -30,10 +30,13 @@ rdkit_library(Descriptors
               USRDescriptor.cpp AtomFeat.cpp
               OxidationNumbers.cpp
               DCLV.cpp
+              GraphDescriptors.cpp EState.cpp MiscDescriptors.cpp
+              FragmentDescriptors.cpp QED.cpp SpacialScore.cpp
+              SAScore.cpp
 	      ${OSMORDRED_SOURCES}
               ${DESC3D_SOURCES}
-              LINK_LIBRARIES DataStructs Fingerprints PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch MolTransforms GraphMol
-                 EigenSolvers RDGeneral)
+              LINK_LIBRARIES DataStructs Fingerprints PartialCharges SmilesParse FileParsers Subgraphs SubstructMatch MolTransforms
+                 ChemTransforms Fingerprints GraphMol EigenSolvers RDGeneral)
 target_compile_definitions(Descriptors PRIVATE RDKIT_DESCRIPTORS_BUILD)
 if(RDK_OSMORDRED_USE_LAPACKE)
   target_compile_definitions(Descriptors PRIVATE RDK_OSMORDRED_USE_LAPACKE)
@@ -50,6 +53,9 @@ rdkit_headers(Crippen.h BCUT.h Lipinski.h
               OxidationNumbers.h
               DCLV.h
 	      ${OSMORDRED_HDRS}
+              GraphDescriptors.h EState.h MiscDescriptors.h
+              FragmentDescriptors.h QED.h SpacialScore.h
+              SAScore.h
               ${DESC3D_HDRS}
               DEST GraphMol/Descriptors)
 
@@ -95,6 +101,8 @@ rdkit_catch_test(descriptorsTestCatch catch_tests.cpp LINK_LIBRARIES Descriptors
 if(RDK_BUILD_OSMORDRED_SUPPORT)
  rdkit_catch_test(testOsmordred test_osmordred.cpp LINK_LIBRARIES Descriptors SmilesParse FileParsers)
 endif(RDK_BUILD_OSMORDRED_SUPPORT)
+
+rdkit_catch_test(descriptorsPyPortsTestCatch catch_pyports.cpp LINK_LIBRARIES Descriptors SmilesParse)
 
 if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
   add_subdirectory(Wrap)

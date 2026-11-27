@@ -552,7 +552,7 @@ static double gbfp_inner_distance(BfpSignature *query, GBfpInnerData *keyData,
       elog(ERROR, "Unknown strategy: %d", strategy);
   }
 
-  PG_RETURN_FLOAT8(1.0 - similarity);
+  return 1.0 - similarity;
 }
 
 static double gbfp_leaf_distance(BfpSignature *query, GBfpLeafData *keyData,

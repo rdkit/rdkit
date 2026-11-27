@@ -457,7 +457,7 @@ You can also request individual bonds or atoms:
 
   >>> m.GetAtomWithIdx(0).GetSymbol()
   'C'
-  >>> m.GetAtomWithIdx(0).GetExplicitValence()
+  >>> m.GetAtomWithIdx(0).GetValence(Chem.ValenceType.EXPLICIT)
   2
   >>> m.GetBondWithIdx(0).GetBeginAtomIdx()
   0
@@ -2965,7 +2965,7 @@ fingerprints, a task which is done using the
   >>> len(fp)
   885
   >>> fp.GetNumOnBits()
-  57
+  13
 
 Details about the bits themselves, including the features that are
 involved and the binned distance matrix between the features, can be
@@ -2974,7 +2974,7 @@ obtained from the signature factory:
 .. doctest::
 
   >>> list(fp.GetOnBits())[:5]
-  [1, 2, 6, 7, 8]
+  [1, 2, 7, 8, 14]
   >>> sigFactory.GetBitDescription(1)
   'Acceptor Acceptor |0 1|1 0|'
   >>> sigFactory.GetBitDescription(2)
@@ -2982,11 +2982,11 @@ obtained from the signature factory:
   >>> sigFactory.GetBitDescription(8)
   'Acceptor Donor |0 2|2 0|'
   >>> list(fp.GetOnBits())[-5:]
-  [704, 706, 707, 708, 714]
-  >>> sigFactory.GetBitDescription(707)
-  'Donor Donor PosIonizable |0 1 2|1 0 1|2 1 0|'
-  >>> sigFactory.GetBitDescription(714)
-  'Donor Donor PosIonizable |0 2 2|2 0 0|2 0 0|'
+  [108, 115, 156, 281, 324]
+  >>> sigFactory.GetBitDescription(281)
+  'Acceptor Donor Donor |0 2 1|2 0 2|1 2 0|'
+  >>> sigFactory.GetBitDescription(324)
+  'Acceptor Donor PosIonizable |0 1 2|1 0 2|2 2 0|'
 
 For the sake of convenience (to save you from having to edit the fdef
 file every time) it is possible to disable particular feature types
@@ -3000,7 +3000,7 @@ within the SigFactory:
   510
   >>> fp2 = Generate.Gen2DFingerprint(mol,sigFactory)
   >>> fp2.GetNumOnBits()
-  36
+  9
 
 Another possible set of feature definitions for 2D pharmacophore
 fingerprints in the RDKit are those published by Gobbi and
@@ -3485,7 +3485,9 @@ Possible Hits File
 As an alternative to an incremental search, there is the facility to write a possible hits file containing
 all the likely synthon combinations that have been assembled in the first stage of the search.  At this point
 the search can be stopped if desired:
+
 .. code-block:: python
+
     params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
     params.possibleHitsFile = "possible_hits.txt"
     params.writePossibleHitsAndStop = True
@@ -3498,7 +3500,9 @@ Each of the searcher objects has an API point to read designated lines of this f
 verification of it as a hit.  In the example below, the first 100 lines of the possible hits file are read and
 checked using the RASCAL searcher.  It makes sense if the parameters used are the same as those used to create
 the possible hits file, but that is not enforced.
+
 .. code-block:: python
+
     params = rdSynthonSpaceSearch.SynthonSpaceSearchParams()
     params.possibleHitsFile = "r_poss_hits_a.txt"
     rascalOpts = rdRascalMCES.RascalOptions()

@@ -17,6 +17,8 @@
 #include <vector>
 #include <algorithm>
 #include <fstream>
+#include <cmath>
+#include <memory>
 
 #include <GraphMol/Descriptors/PBF.h>
 
@@ -119,8 +121,47 @@ void testPBFEdges() {
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
 }
 
+void testPBFMultipleConformers() {
+  BOOST_LOG(rdErrorLog) << "-------------------------------------" << std::endl;
+  BOOST_LOG(rdErrorLog) << "    PBF with multiple conformers." << std::endl;
+
+  std::string pathName = getenv("RDBASE");
+  std::string sdfName =
+      pathName + "/Code/GraphMol/Descriptors/test_data/PBF_egfr.sdf";
+  RDKit::SDMolSupplier reader(sdfName, true, false);
+  std::unique_ptr<RDKit::ROMol> m(reader.next());
+  TEST_ASSERT(m);
+  TEST_ASSERT(m->getNumConformers() == 1);
+  double refPBF = RDKit::Descriptors::PBF(*m);
+  TEST_ASSERT(refPBF > 0.1);
+
+  // add rotated copies of the conformer: PBF is rotation-invariant, so each
+  // must give the same value as the original. The principal axes from the
+  // first conformer must not be reused for the others.
+  const double c = std::cos(0.5);
+  const double s = std::sin(0.5);
+  auto *conf1 = new RDKit::Conformer(m->getConformer());
+  auto *conf2 = new RDKit::Conformer(m->getConformer());
+  for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+    const auto &p = m->getConformer().getAtomPos(i);
+    conf1->setAtomPos(i, RDGeom::Point3D(p.y, p.z, p.x));
+    conf2->setAtomPos(
+        i, RDGeom::Point3D(c * p.x - s * p.y, s * p.x + c * p.y, p.z));
+  }
+  auto cid1 = m->addConformer(conf1, true);
+  auto cid2 = m->addConformer(conf2, true);
+
+  m->clearComputedProps();
+  for (auto cid : {0, static_cast<int>(cid1), static_cast<int>(cid2)}) {
+    double dpbf = RDKit::Descriptors::PBF(*m, cid);
+    TEST_ASSERT(fabs(dpbf - refPBF) < 1e-4);
+  }
+  BOOST_LOG(rdErrorLog) << "  done" << std::endl;
+}
+
 int main() {
   RDLog::InitLogs();
   test1();
   testPBFEdges();
+  testPBFMultipleConformers();
 }

@@ -229,6 +229,8 @@ const char *CachedMolHolderDoc =
 const char *CachedSmilesMolHolderDoc =
     "Holds molecules as smiles string\n"
     "This allows more molecules to be held in memory at a time\n"
+    "    Note:  To use CXSmiles you must use addSmiles, not addMol\n"
+    "         addMol stores non cxsmiles\n\n"
     "  AddMol(mol) -> adds a molecule to the molecule holder, returns index of "
     "molecule\n\n"
     "  AddSmiles(smiles) -> adds a smiles string to the molecule holder, "
@@ -238,21 +240,36 @@ const char *CachedSmilesMolHolderDoc =
     "  GetMol(idx) -> return the molecule at index idx\n";
 
 const char *CachedTrustedSmilesMolHolderDoc =
-    "Holds molecules as trusted smiles string\n"
-    "This allows more molecules to be held in memory at a time and avoids "
-    "RDKit sanitization\n"
-    "overhead.\n"
-    "See: "
+    "A trusted smiles is essentially a smiles string that\n"
+    "RDKit has generated.  This indicates that fewer\n"
+    "sanitization steps are required.  See\n"
     "http://rdkit.blogspot.com/2016/09/avoiding-unnecessary-work-and.html\n"
-    "  AddMol(mol) -> adds a molecule to the molecule holder, returns index of "
-    "molecule\n\n"
-    "  AddSmiles(smiles) -> adds a smiles string to the molecule holder, "
-    "returns index of molecule\n"
-    "                       The smiles is stored as-is, no checking is done "
-    "for validity.\n"
+    "\n"
+    "This implementation uses quite a bit less memory than the\n"
+    "cached binary or uncached implementation.  However, due to the\n"
+    "reduced speed it should be used in conjunction with a pattern\n"
+    "fingerprinter.\n"
+    "\n"
+    "See RDKit::FPHolder\n"
+    "\n"
+    "Note: TrustedSmiles currently does not support CXSmiles\n"
+    "      use CachedSmilesMolHolder::addSmiles for cxsmiles support\n"
+    "	  or use MolHolder or CachedMolHolder.\n"
+    "\n"
+    "Consequences of Trusted smiles:\n"
+    "  - Because sanitization is not done on the molecule, this means that radical counts,\n"
+    "     hybridization and conjugation are not supported for query.\n"
+    "  - In such cases use MolHolder, CachedMolHolder or CachedSmilesMolHolder\n"
+    "\n"
     "  GetMol(idx,s) -> return the molecule at index idx, \n"
     "              note, only light sanitization is done here, for instance\n"
-    "              the molecules RingInfo is not initialized\n";
+    "              the molecules RingInfo is not initialized\n\n"
+    "  AddMol(mol) -> adds a molecule to the molecule holder, returns index of molecule\n"
+    "\n"
+    "  AddSmiles(smiles) -> adds a smiles string to the molecule holder, returns index of molecule\n"
+    "                     The smiles is stored as-is, no checking is done for validity.\n"
+  ;
+
 
 const char *PatternHolderDoc =
     "Holds fingerprints with optional, user-defined number of bits (default: "
@@ -371,6 +388,10 @@ const char *SubstructLibraryDoc =
     ">>> indices = library.GetMatches(m)\n"
     ">>> list(library.GetKeyHolder().GetKeys(indices))\n"
     "['Z11234']\n"
+    "\n"
+    "Note: to support CXSmiles, you must use MolHolder,CachedMolHolder\n"
+    " or CachedSmilesMolHolder with the addSmiles method\n"
+    "See each MolHolder doc for more details and limitations of each format\n"
     "";
 
 python::object SubstructLibrary_Serialize(const SubstructLibraryWrap &cat) {

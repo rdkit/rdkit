@@ -14,6 +14,7 @@
 
 #include <DataStructs/ExplicitBitVect.h>
 #include <cstdint>
+#include <cstring>
 #include <DataStructs/BitOps.h>
 
 #include <RDGeneral/Invariant.h>
@@ -140,25 +141,28 @@ void extractArenaDetails(FPBReader_impl *dp_impl, std::uint64_t sz) {
       static_cast<std::streamoff>(numBytesStoredPerFingerprint * dp_impl->len),
       std::ios_base::cur);
 }
-void extractArena(FPBReader_impl *dp_impl, std::uint64_t sz,
-                  const std::uint8_t *chunk) {
+// Read only the fingerprints into the buffer so they keep the file's alignment.
+void readArena(FPBReader_impl *dp_impl, std::uint64_t sz) {
   PRECONDITION(dp_impl, "bad pointer");
+  PRECONDITION(!dp_impl->df_lazy, "should not be used in lazy mode");
 
-  std::uint32_t numBytesPerFingerprint =
-      *reinterpret_cast<const std::uint32_t *>(chunk);
+  std::uint32_t numBytesPerFingerprint;
+  streamRead(*dp_impl->istrm, numBytesPerFingerprint);
   dp_impl->nBits = numBytesPerFingerprint * 8;
 
-  chunk += sizeof(std::uint32_t);
-  dp_impl->numBytesStoredPerFingerprint =
-      *reinterpret_cast<const std::uint32_t *>(chunk);
-  chunk += sizeof(std::uint32_t);
-  std::uint8_t spacer = *reinterpret_cast<const std::uint8_t *>(chunk);
-  chunk += 1;
-  // now move forward the length of the spacer
-  chunk += spacer;
+  std::uint32_t numBytesStoredPerFingerprint;
+  streamRead(*dp_impl->istrm, numBytesStoredPerFingerprint);
+  dp_impl->numBytesStoredPerFingerprint = numBytesStoredPerFingerprint;
+  std::uint8_t spacer;
+  streamRead(*dp_impl->istrm, spacer);
+  dp_impl->istrm->ignore(spacer);
 
-  dp_impl->dp_fpData = chunk;
-  dp_impl->len = (sz - 9 - spacer) / dp_impl->numBytesStoredPerFingerprint;
+  std::uint64_t fpDataSize = sz - 9 - spacer;
+  dp_impl->dp_arenaChunk.reset(new std::uint8_t[fpDataSize]);
+  dp_impl->istrm->read(reinterpret_cast<char *>(dp_impl->dp_arenaChunk.get()),
+                       fpDataSize);
+  dp_impl->dp_fpData = dp_impl->dp_arenaChunk.get();
+  dp_impl->len = fpDataSize / numBytesStoredPerFingerprint;
 };
 
 // if dp_impl->df_lazy is true, we'll use the memory in fpData (should be large
@@ -205,28 +209,37 @@ std::uint8_t *copyBytes(const FPBReader_impl *dp_impl, unsigned int which) {
 // caller is responsible for delete'ing the result
 RDKIT_DATASTRUCTS_EXPORT boost::dynamic_bitset<> *bytesToBitset(
     const std::uint8_t *fpData, std::uint32_t nBits) {
-  unsigned int nBytes = nBits / 8;
-  if (!(nBytes % sizeof(boost::dynamic_bitset<>::block_type))) {
-    // I believe this could be faster (needs to be verified of course)
-    unsigned int nBlocks = nBytes / sizeof(boost::dynamic_bitset<>::block_type);
-    const auto *fpBlocks =
-        reinterpret_cast<const boost::dynamic_bitset<>::block_type *>(fpData);
-    return new boost::dynamic_bitset<>(fpBlocks, fpBlocks + nBlocks);
-  } else {
-    return reinterpret_cast<boost::dynamic_bitset<> *>(
-        new boost::dynamic_bitset<std::uint8_t>(fpData, fpData + nBytes));
+  using block_type = boost::dynamic_bitset<>::block_type;
+  constexpr unsigned int bytesPerBlock = sizeof(block_type);
+  const unsigned int nBytes = nBits / 8;
+  // FPB stores bit i in byte i/8 at position i%8. Assemble the blocks with
+  // shifts so this doesn't depend on the host's byte order, padding the last
+  // block and then trimming the bitset back to nBits.
+  std::vector<block_type> blocks((nBytes + bytesPerBlock - 1) / bytesPerBlock);
+  for (unsigned int i = 0; i < nBytes; ++i) {
+    blocks[i / bytesPerBlock] |= static_cast<block_type>(fpData[i])
+                                 << (8 * (i % bytesPerBlock));
   }
+  auto *res = new boost::dynamic_bitset<>(blocks.begin(), blocks.end());
+  res->resize(nBits);
+  return res;
 }
 
 // caller is responsible for delete []'ing the result
 RDKIT_DATASTRUCTS_EXPORT std::uint8_t *bitsetToBytes(
     const boost::dynamic_bitset<> &bitset) {
-  unsigned int nBits = bitset.size();
-  unsigned int nBytes = nBits / 8;
-
+  using block_type = boost::dynamic_bitset<>::block_type;
+  constexpr unsigned int bytesPerBlock = sizeof(block_type);
+  std::vector<block_type> blocks(bitset.num_blocks());
+  boost::to_block_range(bitset, blocks.begin());
+  // the result is sized in whole blocks; split each block into bytes with
+  // shifts so the layout doesn't depend on the host's byte order
+  const auto nBytes = blocks.size() * bytesPerBlock;
   auto *res = new std::uint8_t[nBytes];
-  boost::to_block_range(
-      bitset, reinterpret_cast<boost::dynamic_bitset<>::block_type *>(res));
+  for (size_t i = 0; i < nBytes; ++i) {
+    res[i] = static_cast<std::uint8_t>(blocks[i / bytesPerBlock] >>
+                                       (8 * (i % bytesPerBlock)));
+  }
   return res;
 }
 
@@ -590,16 +603,14 @@ void FPBReader::init() {
     std::uint8_t *chunk = nullptr;
     detail::readChunkDetails(*dp_istrm, chunkNm, chunkSz);
     // std::cerr << " Chunk: " << chunkNm << " " << chunkSz << std::endl;
-    if (!df_lazyRead || (chunkNm != "AREN" && chunkNm != "FPID")) {
+    if (!df_lazyRead && chunkNm == "AREN") {
+      detail::readArena(dp_impl, chunkSz);
+    } else if (!df_lazyRead || (chunkNm != "AREN" && chunkNm != "FPID")) {
       detail::readChunkData(*dp_istrm, chunkSz, chunk);
       if (chunkNm == "FEND") {
         break;
       } else if (chunkNm == "POPC") {
         detail::extractPopCounts(dp_impl, chunkSz, chunk);
-      } else if (chunkNm == "AREN") {
-        dp_impl->dp_arenaChunk.reset(chunk);
-        detail::extractArena(dp_impl, chunkSz, chunk);
-        chunk = nullptr;
       } else if (chunkNm == "FPID") {
         dp_impl->dp_idChunk.reset(chunk);
         detail::extractIds(dp_impl, chunkSz, chunk);

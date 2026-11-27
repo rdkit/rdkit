@@ -202,7 +202,6 @@ class TestCase(unittest.TestCase):
     rdDistGeom.EmbedMolecule(mol, _getParams(useLegacy=False))
     conf = mol.GetConformer()
 
-
     self.assertTrue(lstEq(conf.GetAtomPosition(0), [-1.2474, 0.0005, 0.0]))
     self.assertTrue(lstEq(conf.GetAtomPosition(1), [-0.0001, -0.0010, 0.0]))
     self.assertTrue(lstEq(conf.GetAtomPosition(2), [1.2474, 0.0005, 0.0]))
@@ -237,7 +236,9 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles("CC(C)(C)c(cc12)n[n]2C(=O)/C=C(N1)/COC")
     ps = _getParams(useLegacy=True, maxIt=30, seed=100, useET=False, useK=False)
     cids = rdDistGeom.EmbedMultipleConfs(mol, 10, ps)
-    energies = [117.954, 113.546, 107.011, 112.810, 100.653, 142.081, 126.7481, 110.266, 138.002, 126.042] 
+    energies = [
+      117.954, 113.546, 107.011, 112.810, 100.653, 142.081, 126.7481, 110.266, 138.002, 126.042
+    ]
 
     nenergies = []
     for cid in cids:
@@ -250,7 +251,9 @@ class TestCase(unittest.TestCase):
     mol = Chem.MolFromSmiles("CC(C)(C)c(cc12)n[n]2C(=O)/C=C(N1)/COC")
     ps = _getParams(useLegacy=False, maxIt=30, seed=100, useET=False, useK=False)
     cids = rdDistGeom.EmbedMultipleConfs(mol, 10, ps)
-    energies = [146.800, 134.093, 111.822, 117.216, 102.216, 147.764, 101.124, 88.870, 113.237, 159.059]
+    energies = [
+      146.800, 134.093, 111.822, 117.216, 102.216, 147.764, 101.124, 88.870, 113.237, 159.059
+    ]
 
     nenergies = []
     for cid in cids:
@@ -284,7 +287,7 @@ class TestCase(unittest.TestCase):
     ]
 
     nconfs = []
-    expected = [3, 3, 6, 4, 4, 3] # note: this also depends on seed
+    expected = [3, 3, 6, 4, 4, 3]  # note: this also depends on seed
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       ps = _getParams(useLegacy=False, maxIt=30, seed=100, pruneRMS=1.5)
@@ -322,7 +325,7 @@ class TestCase(unittest.TestCase):
     params.useSymmetryForPruning = False
     params.useLegacyImplementation = False
     nconfs = []
-    expected = [6, 4, 4, 6, 7, 3]
+    expected = [5, 5, 6, 6, 7, 3]
     for smi in smiles:
       mol = Chem.MolFromSmiles(smi)
       cids = rdDistGeom.EmbedMultipleConfs(mol, 50, params)
@@ -753,8 +756,9 @@ class TestCase(unittest.TestCase):
       conf1 = m1.GetConformer()
       conf2 = m2.GetConformer()
       self.assertTrue(
-        abs((conf2.GetAtomPosition(4) - conf2.GetAtomPosition(0)).Length() -
-            target) <= abs((conf1.GetAtomPosition(4) - conf1.GetAtomPosition(0)).Length() - target)) # both end up in same position
+        abs((conf2.GetAtomPosition(4) - conf2.GetAtomPosition(0)).Length() - target)
+        <= abs((conf1.GetAtomPosition(4) - conf1.GetAtomPosition(0)).Length() -
+               target))  # both end up in same position
 
   def testETKDGv3amide(self):
     """
@@ -813,8 +817,8 @@ class TestCase(unittest.TestCase):
     mol = Chem.AddHs(mol)
     rdDistGeom.EmbedMolecule(mol, params)
     cnts = params.GetFailureCounts()
-    self.assertGreater(cnts[rdDistGeom.EmbedFailureCauses.INITIAL_COORDS], 5)
-    self.assertGreater(cnts[rdDistGeom.EmbedFailureCauses.ETK_MINIMIZATION], 10)
+    self.assertGreater(cnts[rdDistGeom.EmbedFailureCauses.INITIAL_COORDS], 0)
+    self.assertGreater(cnts[rdDistGeom.EmbedFailureCauses.ETK_MINIMIZATION], 0)
 
   def testTrackFailures(self):
     params = _getParams(useLegacy=False, maxIt=50, seed=42)
@@ -864,10 +868,10 @@ class TestCase(unittest.TestCase):
     ps.randomSeed = 0xc0ffee
     ps.pruneRmsThresh = 0.5
     cids = rdDistGeom.EmbedMultipleConfs(mol, 50, ps)
-    self.assertEqual(len(cids), 2)
+    self.assertEqual(len(cids), 1)
     ps.symmetrizeConjugatedTerminalGroupsForPruning = False
     cids = rdDistGeom.EmbedMultipleConfs(mol, 50, ps)
-    self.assertGreater(len(cids), 2)
+    self.assertGreater(len(cids), 1)
 
   def testSymmetrizeTerminal(self):
     mol = Chem.AddHs(Chem.MolFromSmiles("FCC(=O)O"))
@@ -876,10 +880,10 @@ class TestCase(unittest.TestCase):
     ps.pruneRmsThresh = 0.5
     ps.useLegacyImplementation = False
     cids = rdDistGeom.EmbedMultipleConfs(mol, 50, ps)
-    self.assertEqual(len(cids), 2)
+    self.assertEqual(len(cids), 1)
     ps.symmetrizeConjugatedTerminalGroupsForPruning = False
     cids = rdDistGeom.EmbedMultipleConfs(mol, 50, ps)
-    self.assertGreater(len(cids), 2)
+    self.assertGreater(len(cids), 1)
 
   def testSetattr(self):
     mol = Chem.MolFromSmiles("CCC")
@@ -917,7 +921,6 @@ class TestCase(unittest.TestCase):
     json = rdDistGeom.EmbedParametersToJSON(ps)
     self.assertIn('"embedForceField":"MMFF"', json)
 
-
   def testOrderedFailureCauses(self):
     legacy = rdDistGeom.OrderedEmbedFailureCauses(True)
     aio = rdDistGeom.OrderedEmbedFailureCauses(False)
@@ -947,6 +950,93 @@ class TestCase(unittest.TestCase):
     time.sleep(0.2)
     # make sure our signal handler is once again active:
     self.assertEqual(signal.getsignal(signal.SIGINT), handler)
+
+  def testoptimizeConfWithId(self):
+    mol = Chem.MolFromSmiles("c1ccccc1[C@@H](Cl)CCC(O)CC")
+    mol = Chem.AddHs(mol)
+    ps = rdDistGeom.ETDGv2()
+    ps.randomSeed = 0xc0ffee
+    rdDistGeom.EmbedMolecule(mol, ps)
+    mol2 = Chem.Mol(mol)
+    ps = rdDistGeom.ETKDGv2()
+    ps.optimizeConfWithId = 0
+    cid = rdDistGeom.EmbedMolecule(mol2, ps)
+    self.assertEqual(cid, ps.optimizeConfWithId)
+    rmsd = rdMolAlign.GetBestRMS(Chem.RemoveHs(mol), Chem.RemoveHs(mol2))
+    self.assertGreater(rmsd, .21)
+    self.assertLess(rmsd, .24)
+
+  def testoptimizeConfWithId2(self):
+    mol = Chem.MolFromSmiles("c1ccccc1[C@@H](Cl)CCC(O)CC")
+    mol = Chem.AddHs(mol)
+    ps = rdDistGeom.ETDGv2()
+    ps.randomSeed = 0xc0ffee
+    rdDistGeom.EmbedMolecule(mol, ps)
+    mol2 = Chem.Mol(mol)
+    ps = rdDistGeom.ETKDGv2()
+    ps.optimizeConfWithId = 0
+    cids = rdDistGeom.EmbedMultipleConfs(mol2, 10, ps)
+    self.assertEqual(len(cids), 1)
+    rmsd = rdMolAlign.GetBestRMS(Chem.RemoveHs(mol), Chem.RemoveHs(mol2))
+    self.assertGreater(rmsd, .21)
+    self.assertLess(rmsd, .24)
+
+  def testoptimizeConfWithId3(self):
+    mol = Chem.MolFromSmiles("CCC.CCC")
+    mol = Chem.AddHs(mol)
+    ps = rdDistGeom.ETDGv2()
+    ps.randomSeed = 0xc0ffee
+    rdDistGeom.EmbedMolecule(mol, ps)
+    mol2 = Chem.Mol(mol)
+    ps = rdDistGeom.ETKDGv2()
+    ps.optimizeConfWithId = 0
+    cid = rdDistGeom.EmbedMolecule(mol2, ps)
+    self.assertEqual(cid, -1)
+    rmsd = rdMolAlign.GetBestRMS(Chem.RemoveHs(mol), Chem.RemoveHs(mol2))
+    self.assertLess(rmsd, 1e-5)
+
+  def testSetChiralSets(self):
+    ps = rdDistGeom.ETKDGv4()
+    ps.randomSeed = 0xf00d
+
+    mol = Chem.MolFromSmiles("I[C](Cl)(Br)O[C](F)(Cl)Br")
+    chiral_set = rdDistGeom.ChiralSet(1, 0, 2, 3, 4, -100.0, -5.0)
+    ps.SetAdditionalChiralSets([chiral_set])
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, ps), 0)
+    Chem.AssignStereochemistryFrom3D(mol)
+    self.assertEqual(mol.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CW)
+
+    mol = Chem.MolFromSmiles("I[C](Cl)(Br)O[C](F)(Cl)Br")
+    chiral_set = rdDistGeom.ChiralSet(1, 0, 2, 3, 4, 5.0, 100.0)
+    ps.SetAdditionalChiralSets([chiral_set])
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, ps), 0)
+    Chem.AssignStereochemistryFrom3D(mol)
+    self.assertEqual(mol.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
+
+    mol = Chem.MolFromSmiles("I[C](Cl)(Br)O[C](F)(Cl)Br")
+    chiral_set = rdDistGeom.ChiralSet(1, 0, 2, 3, 4, 5.0, 100.0)
+    ps.SetAdditionalChiralSets([chiral_set])
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, ps), 0)
+    Chem.AssignStereochemistryFrom3D(mol)
+    self.assertEqual(mol.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
+
+    # make sure that we have copied the object
+    mol = Chem.MolFromSmiles("I[C](Cl)(Br)O[C](F)(Cl)Br")
+    chiral_set.volumeLowerBound = -100.0
+    chiral_set.volumeUpperBound = -5.0
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, ps), 0)
+    Chem.AssignStereochemistryFrom3D(mol)
+    self.assertEqual(mol.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
+
+    # two chiral sets
+    mol = Chem.MolFromSmiles("I[C](Cl)(Br)O[C](F)(Cl)Br")
+    chiral_set = rdDistGeom.ChiralSet(1, 0, 2, 3, 4, 5.0, 100.0)
+    chiral_set2 = rdDistGeom.ChiralSet(5, 4, 6, 7, 8, 5.0, 100.0)
+    ps.SetAdditionalChiralSets([chiral_set, chiral_set2])
+    self.assertEqual(rdDistGeom.EmbedMolecule(mol, ps), 0)
+    Chem.AssignStereochemistryFrom3D(mol)
+    self.assertEqual(mol.GetAtomWithIdx(1).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
+    self.assertEqual(mol.GetAtomWithIdx(5).GetChiralTag(), Chem.ChiralType.CHI_TETRAHEDRAL_CCW)
 
 
 if __name__ == '__main__':

@@ -289,6 +289,30 @@ class TestCase(unittest.TestCase):
       sasa = rdFreeSASA.CalcSASA(mol, radii=radii, opts=opts)
       self.assertTrue(abs(sasa - res) < 1e-5)
 
+  def test_resolution(self):
+    fname = os.path.join(os.environ["RDBASE"], "External", "FreeSASA", "test_data", "1d3z.pdb")
+    mol = Chem.MolFromPDBFile(fname)
+    radii = rdFreeSASA.classifyAtoms(mol)
+    opts = rdFreeSASA.SASAOpts()
+    self.assertEqual(opts.shrakeRupleyNumPoints, 100)
+    self.assertEqual(opts.leeRichardsNumSlices, 20)
+
+    opts.algorithm = rdFreeSASA.ShrakeRupley
+    opts.shrakeRupleyNumPoints = 1000
+    sasa = rdFreeSASA.CalcSASA(mol, radii=radii, opts=opts)
+    self.assertTrue(abs(sasa - 4993.916324) < 1e-5)
+    opts.shrakeRupleyNumPoints = 0
+    with self.assertRaises(ValueError):
+      rdFreeSASA.CalcSASA(mol, radii=radii, opts=opts)
+
+    opts.algorithm = rdFreeSASA.LeeRichards
+    opts.leeRichardsNumSlices = 40
+    sasa = rdFreeSASA.CalcSASA(mol, radii=radii, opts=opts)
+    self.assertTrue(abs(sasa - 4998.810558) < 1e-5)
+    opts.leeRichardsNumSlices = 0
+    with self.assertRaises(ValueError):
+      rdFreeSASA.CalcSASA(mol, radii=radii, opts=opts)
+
 
 if __name__ == '__main__':
   unittest.main()

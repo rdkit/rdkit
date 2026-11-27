@@ -1191,7 +1191,7 @@ void visit_children(
           continue;
         }
         fused->setProp<int>(CDXML_FRAG_ID, static_cast<int>(frag_id));
-        mols.emplace_back(dynamic_cast<RWMol *>(fused.release()));
+        mols.emplace_back(static_cast<RWMol *>(fused.release()));
       } else {
         mols.push_back(std::move(mol));
       }
@@ -1440,7 +1440,7 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
 }
 
 RDKIT_FILEPARSERS_EXPORT std::string MolToCDXMLBlock(
-    const RWMol &,
+    const ROMol &,
     CDXMLFormat) {
   std::ostringstream errout;
   errout << "RDKit build withoutChemDraw writing support. ";
@@ -1516,7 +1516,7 @@ std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
 }
 
 std::string MolToCDXMLBlock(
-    const RWMol &mol,
+    const ROMol &mol,
     CDXMLFormat format) {
 
   CDXFormat cdx_format = CDXFormat::CDXML;

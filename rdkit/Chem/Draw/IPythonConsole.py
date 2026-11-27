@@ -37,7 +37,7 @@ molSize = (450, 150)
 highlightSubstructs = True  # highlight substructure matches when drawing 2D structures
 kekulizeStructures = True  # try to kekulize structures before drawing
 highlightByReactant = False  # highlight reactions by reactant
-ipython_useSVG = False  # use the SVG renderer for 2D depictions (otherwise PNG is used)
+ipython_useSVG = not hasattr(rdMolDraw2D, 'MolDraw2DCairo')  # use SVG if Cairo isn't available
 ipython_showProperties = True  # display molecule properties when rendering them in 2D
 ipython_maxProperties = 10  # maximum number of properties to display
 ipython_3d = False  # try to use 3D rendering for molecules with a 3D conformer
@@ -67,8 +67,11 @@ Returns
 -------
 None'''
   if mol.GetNumAtoms() >= 999 or drawAs == 'cartoon':
+    # The PDB writer interprets a negative ID as a request for all conformers.
+    if confId < 0 and mol.GetNumConformers():
+      confId = mol.GetConformer().GetId()
     # py3DMol is happier with TER and MASTER records present
-    pdb = Chem.MolToPDBBlock(mol, flavor=0x20 | 0x10)
+    pdb = Chem.MolToPDBBlock(mol, confId=confId, flavor=0x20 | 0x10)
     view.addModel(pdb, 'pdb')
   else:
     # py3Dmol does not currently support v3k mol files, so
@@ -164,13 +167,15 @@ the py3Dmol.view object containing the drawing'''
 
   if drawAs is None:
     drawAs = ['stick'] * len(mols)
+  elif isinstance(drawAs, str):
+    drawAs = [drawAs] * len(mols)
   if confIds is None:
     confIds = [-1] * len(mols)
 
-  for m, confId in zip(mols, confIds):
+  for i, (m, confId) in enumerate(zip(mols, confIds)):
     if removeHs:
       m = Chem.RemoveHs(m)
-    addMolToView(m, view, confId)
+    addMolToView(m, view, confId, drawAs[i])
   for i in range(len(mols)):
     style = {'colorscheme': colors[i % len(colors)]}
     if drawAs[i] == "sphere":
@@ -204,6 +209,23 @@ def _wrapHTMLIntoTable(html):
     '</td></tr></tbody></table></div>')
 
 
+def _hasCairoRenderer():
+  return hasattr(rdMolDraw2D, 'MolDraw2DCairo')
+
+
+def _useSVG():
+  # Cairo-less builds must keep working even if a user sets ipython_useSVG=False.
+  return ipython_useSVG or not _hasCairoRenderer()
+
+
+def _getUseSVG(kwargs):
+  if 'useSVG' not in kwargs:
+    return _useSVG()
+  if not kwargs['useSVG'] and not _hasCairoRenderer():
+    return True
+  return kwargs['useSVG']
+
+
 def _toHTML(mol):
   useInteractiveRenderer = InteractiveRenderer.isEnabled(mol)
   if _canUse3D and ipython_3d and mol.GetNumConformers() and mol.GetConformer().Is3D():
@@ -212,7 +234,7 @@ def _toHTML(mol):
   if not ipython_showProperties or not props:
     if useInteractiveRenderer:
       return _wrapHTMLIntoTable(
-        InteractiveRenderer.generateHTMLBody(mol, molSize, useSVG=ipython_useSVG))
+        InteractiveRenderer.generateHTMLBody(mol, molSize, useSVG=_useSVG()))
     else:
       return _toSVG(mol)
   if mol.HasProp('_Name'):
@@ -223,9 +245,9 @@ def _toHTML(mol):
   res = []
 
   if useInteractiveRenderer:
-    content = InteractiveRenderer.generateHTMLBody(mol, molSize, legend=nm, useSVG=ipython_useSVG)
+    content = InteractiveRenderer.generateHTMLBody(mol, molSize, legend=nm, useSVG=_useSVG())
   else:
-    if not ipython_useSVG:
+    if not _useSVG():
       png = _toPNG(mol)
       png = base64.b64encode(png)
       content = f'<image src="data:image/png;base64,{png.decode()}">'
@@ -270,8 +292,14 @@ def _toPNG(mol):
                         drawOptions=drawOptions)
 
 
+def _toPNGRepr(mol):
+  if _useSVG():
+    return None
+  return _toPNG(mol)
+
+
 def _toSVG(mol):
-  if not ipython_useSVG:
+  if not _useSVG():
     return None
   if hasattr(mol, '__sssAtoms'):
     highlightAtoms = listToLists(mol.__sssAtoms)
@@ -291,8 +319,14 @@ def _toReactionPNG(rxn):
                               returnPNG=True)
 
 
+def _toReactionPNGRepr(rxn):
+  if _useSVG():
+    return None
+  return _toReactionPNG(rxn)
+
+
 def _toReactionSVG(rxn):
-  if not ipython_useSVG:
+  if not _useSVG():
     return None
   rc = copy.deepcopy(rxn)
   return Draw.ReactionToImage(rc, subImgSize=(int(molSize[0] / 3), molSize[1]), useSVG=True,
@@ -307,8 +341,14 @@ def _toMolBundlePNG(bundle):
   return fn(bundle, subImgSize=molSize, drawOptions=drawOptions, useSVG=False, returnPNG=True)
 
 
+def _toMolBundlePNGRepr(bundle):
+  if _useSVG():
+    return None
+  return _toMolBundlePNG(bundle)
+
+
 def _toMolBundleSVG(bundle):
-  if not ipython_useSVG:
+  if not _useSVG():
     return None
   if Draw._MolsToGridImageSaved is not None:
     fn = Draw._MolsToGridImageSaved
@@ -361,8 +401,7 @@ from IPython import display
 
 
 def ShowMols(mols, maxMols=50, **kwargs):
-  if 'useSVG' not in kwargs:
-    kwargs['useSVG'] = ipython_useSVG
+  kwargs['useSVG'] = _getUseSVG(kwargs)
   if 'returnPNG' not in kwargs:
     kwargs['returnPNG'] = True
   if InteractiveRenderer.isEnabled():
@@ -394,8 +433,7 @@ def ShowMols(mols, maxMols=50, **kwargs):
 
 
 def _DrawBit(fn, *args, **kwargs):
-  if 'useSVG' not in kwargs:
-    kwargs['useSVG'] = ipython_useSVG
+  kwargs['useSVG'] = _getUseSVG(kwargs)
 
   res = fn(*args, **kwargs)
   if kwargs['useSVG']:
@@ -405,8 +443,7 @@ def _DrawBit(fn, *args, **kwargs):
 
 
 def _DrawBits(fn, *args, **kwargs):
-  if 'useSVG' not in kwargs:
-    kwargs['useSVG'] = ipython_useSVG
+  kwargs['useSVG'] = _getUseSVG(kwargs)
 
   res = fn(*args, **kwargs)
   if kwargs['useSVG']:
@@ -470,19 +507,19 @@ def InstallIPythonRenderer():
   # Github #8082
   UninstallIPythonRenderer()
 
-  rdchem.Mol._repr_png_ = _toPNG
+  rdchem.Mol._repr_png_ = _toPNGRepr
   rdchem.Mol._repr_svg_ = _toSVG
   _methodsToDelete.append((rdchem.Mol, '_repr_png_'))
   _methodsToDelete.append((rdchem.Mol, '_repr_svg_'))
   rdchem.Mol._repr_html_ = _toHTML
   _methodsToDelete.append((rdchem.Mol, '_repr_html_'))
 
-  rdChemReactions.ChemicalReaction._repr_png_ = _toReactionPNG
+  rdChemReactions.ChemicalReaction._repr_png_ = _toReactionPNGRepr
   rdChemReactions.ChemicalReaction._repr_svg_ = _toReactionSVG
   _methodsToDelete.append((rdChemReactions.ChemicalReaction, '_repr_png_'))
   _methodsToDelete.append((rdChemReactions.ChemicalReaction, '_repr_svg_'))
 
-  rdchem.MolBundle._repr_png_ = _toMolBundlePNG
+  rdchem.MolBundle._repr_png_ = _toMolBundlePNGRepr
   rdchem.MolBundle._repr_svg_ = _toMolBundleSVG
   _methodsToDelete.append((rdchem.MolBundle, '_repr_png_'))
   _methodsToDelete.append((rdchem.MolBundle, '_repr_svg_'))

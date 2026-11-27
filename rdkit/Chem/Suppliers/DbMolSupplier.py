@@ -127,7 +127,7 @@ class ForwardDbMolSupplier(DbMolSupplier):
 
     """
     try:
-      d = self._dataIter.next()
+      d = next(self._dataIter)
     except StopIteration:
       d = None
     if d is not None:

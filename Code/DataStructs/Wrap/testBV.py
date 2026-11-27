@@ -232,6 +232,23 @@ class TestCase(unittest.TestCase):
       for i in range(iv.GetLength()):
         self.assertEqual(iv[i], arr[i])
 
+  def test10ToNumpyResize(self):
+    import numpy
+    bv = DataStructs.ExplicitBitVect(4)
+    bv.SetBit(1)
+    for dtype in (numpy.int32, numpy.float64, object):
+      arr = numpy.zeros((0, ), dtype=dtype)
+      DataStructs.ConvertToNumpyArray(bv, arr)
+      numpy.testing.assert_array_equal(arr, [0, 1, 0, 0])
+      if dtype is object:
+        self.assertTrue(all(type(value) is int for value in arr))
+
+    for dtype in ('U5', 'S5'):
+      arr = numpy.zeros((0, ), dtype=dtype)
+      DataStructs.ConvertToNumpyArray(bv, arr)
+      expected = numpy.array(['0', '1', '0', '0'], dtype=dtype)
+      numpy.testing.assert_array_equal(arr, expected)
+
   def test11BulkNeighbors(self):
     nbits = 2048
     bvs = []
@@ -322,17 +339,17 @@ class TestCase(unittest.TestCase):
       self.assertFalse(ffp[3])
 
   def test16ToText(self):
-    bv1 = DataStructs.SparseBitVect(64)
-    obits = range(0, 64, 3)
+    for cls in [DataStructs.ExplicitBitVect, DataStructs.SparseBitVect]:
+      bv1 = cls(64)
+      obits = range(0, 64, 3)
 
-    for bit in obits:
-      bv1.SetBit(bit)
+      for bit in obits:
+        bv1.SetBit(bit)
 
-    self.assertEqual(DataStructs.BitVectToText(bv1),
-                     '1001001001001001001001001001001001001001001001001001001001001001')
-
-    self.assertEqual(bv1.ToBitString(),
-                     '1001001001001001001001001001001001001001001001001001001001001001')
+      text = DataStructs.BitVectToText(bv1)
+      self.assertEqual(text,
+                       '1001001001001001001001001001001001001001001001001001001001001001')
+      self.assertEqual(bv1.ToBitString(), text)
 
 
 if __name__ == '__main__':

@@ -215,7 +215,13 @@ def patched_get_formatter(self, i, *args, **kwargs):
     n_trunc_cols = len(self.columns) - max_cols
     if n_trunc_cols > 0:
       i += n_trunc_cols
-  return orig_get_formatter(self, i, *args, **kwargs)
+  try:
+    res = orig_get_formatter(self, i, *args, **kwargs)
+  except IndexError:
+    # this started happening with Pandas 3.1 because of this PR:
+    #   https://github.com/pandas-dev/pandas/pull/65288
+    res = orig_get_formatter(self, i - n_trunc_cols, *args, **kwargs)
+  return res
 
 
 def patched_write_cell(self, s, *args, **kwargs):

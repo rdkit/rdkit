@@ -111,7 +111,7 @@ RDKIT_FILEPARSERS_EXPORT std::vector<std::unique_ptr<RWMol>> MolsFromCDXML(
  *   \param format - CDXMLFormat to use, CDX or CDXML (default)
  */
 RDKIT_FILEPARSERS_EXPORT std::string MolToCDXMLBlock(
-    const RWMol &mol,
+    const ROMol &mol,
     CDXMLFormat format = CDXMLFormat::CDXML);
 }  // namespace CDXMLParser
 }  // namespace v2

@@ -38,7 +38,6 @@ Submodules
    rdkit.Chem.Descriptors
    rdkit.Chem.Descriptors3D
    rdkit.Chem.EnumerateHeterocycles
-   rdkit.Chem.EnumerateStereoisomers
    rdkit.Chem.FastSDMolSupplier
    rdkit.Chem.FeatFinderCLI
    rdkit.Chem.FilterCatalog
@@ -87,6 +86,7 @@ Submodules
    rdkit.Chem.rdForceFieldHelpers
    rdkit.Chem.rdfragcatalog
    rdkit.Chem.rdFreeSASA
+   rdkit.Chem.rdGaussianShape
    rdkit.Chem.rdGeneralizedSubstruct
    rdkit.Chem.rdinchi
    rdkit.Chem.rdMHFPFingerprint

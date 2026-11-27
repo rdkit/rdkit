@@ -9,12 +9,12 @@
 //  of the RDKit source tree.
 //
 #include <RDGeneral/export.h>
-#include <cstddef>
 #ifndef RD_Z_MATRIX_H
 #define RD_Z_MATRIX_H
 
 #include <Numerics/SquareMatrix.h>
 #include <RDGeneral/Invariant.h>
+#include <cstddef>
 #include <iterator>
 #include <optional>
 #include <variant>
@@ -206,7 +206,7 @@ class RDKIT_DISTGEOMETRY_EXPORT ZMatrix {
   std::vector<std::optional<TorsionDependence>> d_torsionDependences;
 };
 
-typedef std::shared_ptr<ZMatrix> ZMatPtr;
+using ZMatPtr = std::shared_ptr<ZMatrix>;
 
 inline std::ostream &operator<<(std::ostream &os, const ZMatrix &zmat) {
   os << "AtomIdx BondRefernece BondLength AngleReference BondAngle "

@@ -51,6 +51,13 @@ public class ChemTests extends GraphMolTest {
 
 			}
 		}
+
+		ROMol fused = RWMol.MolFromSmiles("C1CC2C1C2");
+		RingInfo ringInfo = fused.getRingInfo();
+		assertEquals(2, ringInfo.atomRings().size());
+		assertEquals(2, ringInfo.bondRings().size());
+		assertEquals(2, ringInfo.atomMembers(2).size());
+		assertEquals(2, ringInfo.bondMembers(2).size());
 	}
 
         @Test

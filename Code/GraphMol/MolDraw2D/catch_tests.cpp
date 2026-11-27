@@ -3584,8 +3584,9 @@ TEST_CASE("github #3912: cannot draw atom lists from SMARTS", "[query][bug]") {
   }
 }
 
-TEST_CASE("github #9607: Depiction code doesn't recognize all atom lists", "[queries]") {
- SECTION("support all atom lists when depicting") {
+TEST_CASE("github #9607: Depiction code doesn't recognize all atom lists",
+          "[queries]") {
+  SECTION("support all atom lists when depicting") {
     auto m1 = R"CTAB(
      RDKit          2D
 
@@ -3605,7 +3606,7 @@ M  V30 END CTAB
 M  END
 $$$$
 )CTAB"_ctab;
-      
+
     CHECK(isAtomListQuery(m1->getAtomWithIdx(1)));
     int panelWidth = -1;
     int panelHeight = -1;
@@ -7973,7 +7974,7 @@ TEST_CASE(
         DrawColour(0.0, 0.8, 0.8), DrawColour(0.0, 0.0, 0.8)};
 
     auto rings = m->getRingInfo();
-    auto &atomRings = rings->atomRings();
+    auto atomRings = rings->atomRings();
     std::map<int, std::vector<DrawColour>> atomCols;
     std::map<int, double> atomRads;
     for (auto i = 0u; i < atomRings.size(); ++i) {
@@ -7992,7 +7993,7 @@ TEST_CASE(
       }
     }
 
-    auto &bondRings = rings->bondRings();
+    auto bondRings = rings->bondRings();
     std::map<int, int> bondMults;
     std::map<int, std::vector<DrawColour>> bondCols;
     for (auto i = 0u; i < bondRings.size(); ++i) {
@@ -8783,16 +8784,16 @@ TEST_CASE("Lasso highlights") {
     CHECK(match_count == 4);
     auto a0reg = std::sregex_iterator(text.begin(), text.end(), a0);
     auto dat1 = *a0reg;
-    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(381.7, 0.1));
-    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(284.9, 0.1));
-    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(381.0, 0.1));
-    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(285.5, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(228.9, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(94.6, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(228.8, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(93.6, 0.1));
     a0reg++;
     dat1 = *a0reg;
-    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(377.9, 0.1));
-    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(265.7, 0.1));
-    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(378.7, 0.1));
-    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(266.0, 0.1));
+    CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(244.1, 0.1));
+    CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(81.1, 0.1));
+    CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(245.1, 0.1));
+    CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(81.5, 0.1));
     check_file_hash(baseName + "3.svg");
 #endif
   }
@@ -8832,22 +8833,22 @@ TEST_CASE("Lasso highlights") {
       CHECK(match_count == 3);
       auto a5reg = std::sregex_iterator(text.begin(), text.end(), a5);
       auto dat1 = *a5reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(286.2, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(243.1, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(285.0, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(242.7, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(221.0, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(206.7, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(219.7, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(206.2, 0.1));
       a5reg++;
       dat1 = *a5reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(280.5, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(215.0, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(281.6, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(214.2, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(215.1, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(177.9, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(216.2, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(177.0, 0.1));
       a5reg++;
       dat1 = *a5reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(307.7, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(224.2, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(307.9, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(225.5, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(243.0, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(187.2, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(243.3, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(188.6, 0.1));
       // There should be 2 lines in red, the lasso along the bi-phenyl
       // bond.
       std::regex bond5("<path class='bond-5 atom-5 atom-6.*stroke:#FF0000;");
@@ -8891,16 +8892,16 @@ TEST_CASE("Lasso highlights") {
       CHECK(match_count == 2);
       auto a11reg = std::sregex_iterator(text.begin(), text.end(), a11);
       auto dat1 = *a11reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(156.2, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(286.8, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(157.2, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(285.9, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(346.2, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(279.1, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(345.0, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(278.7, 0.1));
       a11reg++;
       dat1 = *a11reg;
-      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(183.4, 0.1));
-      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(295.9, 0.1));
-      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(183.7, 0.1));
-      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(297.3, 0.1));
+      CHECK_THAT(stod(dat1[1]), Catch::Matchers::WithinAbs(340.5, 0.1));
+      CHECK_THAT(stod(dat1[2]), Catch::Matchers::WithinAbs(250.9, 0.1));
+      CHECK_THAT(stod(dat1[3]), Catch::Matchers::WithinAbs(341.6, 0.1));
+      CHECK_THAT(stod(dat1[4]), Catch::Matchers::WithinAbs(250.0, 0.1));
 
       // There should not be any red lines for bond 5.
       std::regex bond5("<path class='bond-5 atom-5 atom-6.*stroke:#FF0000;");
@@ -11719,8 +11720,8 @@ TEST_CASE("colourScheme option from JSON", "[drawing]") {
     setDarkMode(reference);
 
     MolDrawOptions opts;
-    MolDraw2DUtils::updateMolDrawOptionsFromJSON(
-        opts, R"({"colourScheme": "dark"})");
+    MolDraw2DUtils::updateMolDrawOptionsFromJSON(opts,
+                                                 R"({"colourScheme": "dark"})");
     CHECK(opts.backgroundColour == reference.backgroundColour);
     CHECK(opts.backgroundColour != defaults.backgroundColour);
     CHECK(opts.legendColour == reference.legendColour);
@@ -11744,8 +11745,8 @@ TEST_CASE("colourScheme option from JSON", "[drawing]") {
   SECTION("scheme name is case-insensitive and darkmode is an alias") {
     MolDrawOptions reference;
     setDarkMode(reference);
-    for (const auto *json : {R"({"colourScheme": "Dark"})",
-                             R"({"colourScheme": "DARKMODE"})"}) {
+    for (const auto *json :
+         {R"({"colourScheme": "Dark"})", R"({"colourScheme": "DARKMODE"})"}) {
       MolDrawOptions opts;
       MolDraw2DUtils::updateMolDrawOptionsFromJSON(opts, json);
       CHECK(opts.backgroundColour == reference.backgroundColour);
@@ -11759,8 +11760,7 @@ TEST_CASE("colourScheme option from JSON", "[drawing]") {
 
     MolDrawOptions opts;
     MolDraw2DUtils::updateMolDrawOptionsFromJSON(
-        opts,
-        R"({"colourScheme": "dark", "backgroundColour": [0, 0, 1, 1]})");
+        opts, R"({"colourScheme": "dark", "backgroundColour": [0, 0, 1, 1]})");
     CHECK(opts.backgroundColour == blue);
     // everything else still comes from the scheme
     CHECK(opts.legendColour == reference.legendColour);
@@ -11798,4 +11798,26 @@ TEST_CASE("colourScheme option from JSON", "[drawing]") {
     CHECK(opts.backgroundColour == defaults.backgroundColour);
     CHECK(opts.atomColourPalette == defaults.atomColourPalette);
   }
+}
+
+TEST_CASE("Github 9779 - No wedge for chiral P and S") {
+  auto mol = "C[C@@H]1CC[P@]1C(C)(C)C"_smiles;
+  REQUIRE(mol);
+  MolDraw2DSVG drawer(250, 200, -1, -1, NO_FREETYPE);
+  drawer.drawOptions().addAtomIndices = true;
+  drawer.drawOptions().addBondIndices = true;
+  MolDraw2DUtils::prepareAndDrawMolecule(drawer, *mol);
+  drawer.finishDrawing();
+  auto text = drawer.getDrawingText();
+  std::ofstream outs("testGithub9779_MissingWedgeToP.svg");
+  outs << text;
+  outs.close();
+  // Bond 4, the wedge from P to the t-butyl wasn't being drawn at all,
+  // so just test that it comes in twice in the text - one for the
+  // black bit, one for the orange bit.
+  const static std::regex bond4("<path class='bond-4 atom-4 atom-5'");
+  std::ptrdiff_t const bond4_count(
+      std::distance(std::sregex_iterator(text.begin(), text.end(), bond4),
+                    std::sregex_iterator()));
+  CHECK(bond4_count == 2);
 }

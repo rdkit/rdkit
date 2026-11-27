@@ -513,9 +513,21 @@ class TestCase(unittest.TestCase):
     a = m.GetAtomWithIdx(1)
     ns = a.GetNeighbors()
     self.assertTrue(len(ns) == 3)
+    # indexing must return the i-th neighbor, not the molecule's i-th atom
+    # (github #9645)
+    self.assertEqual([ns[i].GetIdx() for i in range(len(ns))],
+                     [n.GetIdx() for n in ns])
+    self.assertEqual(ns[-1].GetIdx(), ns[len(ns) - 1].GetIdx())
+    with self.assertRaises(IndexError):
+      ns[len(ns)]
 
     bs = a.GetBonds()
     self.assertTrue(len(bs) == 3)
+    self.assertEqual([bs[i].GetIdx() for i in range(len(bs))],
+                     [b.GetIdx() for b in bs])
+    self.assertEqual(bs[-1].GetIdx(), bs[len(bs) - 1].GetIdx())
+    with self.assertRaises(IndexError):
+      bs[len(bs)]
 
     for b in bs:
       try:

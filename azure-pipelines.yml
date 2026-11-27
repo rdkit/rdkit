@@ -22,7 +22,7 @@ jobs:
 - job: Ubuntu_x64_minimallib_build
   timeoutInMinutes: 120
   pool:
-    vmImage: ubuntu-latest
+    vmImage: ubuntu-24.04
   steps:
   - task: DockerCompose@1
     displayName: 'Build MinimalLib JS bindings'
@@ -49,7 +49,7 @@ jobs:
 - job: Ubuntu_x64_new # up to date version of things
   timeoutInMinutes: 120
   pool:
-    vmImage: ubuntu-latest
+    vmImage: ubuntu-24.04
   variables:
     python: python=3.14
     boost_version: 1.92
@@ -60,7 +60,7 @@ jobs:
 - job: Ubuntu_x64_nb
   timeoutInMinutes: 120
   pool:
-    vmImage: ubuntu-latest
+    vmImage: ubuntu-24.04
   variables:
     python: python=3.14
     boost_version: 1.92
@@ -70,7 +70,7 @@ jobs:
 - job: macOS_x64
   timeoutInMinutes: 120
   pool:
-    vmImage: macos-14
+    vmImage: macos-15
   variables:
     compiler: clangxx_osx-64=18.1
     boost_version: 1.92
@@ -82,7 +82,7 @@ jobs:
 - job: macOS_x64_java
   timeoutInMinutes: 90
   pool:
-    vmImage: macos-14
+    vmImage: macos-15
   variables:
     compiler: clangxx_osx-64=18.1
     boost_version: 1.91
@@ -101,7 +101,7 @@ jobs:
   steps:
   - template: .azure-pipelines/vs_build.yml
 - job: Windows_VS2022_x64_dll
-  timeoutInMinutes: 120
+  timeoutInMinutes: 150
   pool:
     vmImage: windows-2022
   variables:
@@ -113,7 +113,7 @@ jobs:
 - job: Ubuntu_x64_cartridge
   timeoutInMinutes: 90
   pool:
-    vmImage: ubuntu-latest
+    vmImage: ubuntu-24.04
   variables:
     boost_version: 1.92
     number_of_cores: nproc
@@ -123,7 +123,7 @@ jobs:
 - job: Ubuntu_x64_limitexternaldependencies
   timeoutInMinutes: 90
   pool:
-    vmImage: ubuntu-latest
+    vmImage: ubuntu-24.04
   variables:
     python: python=3.14
     boost_version: 1.92
@@ -134,7 +134,7 @@ jobs:
 - job: Ubuntu_x64_java
   timeoutInMinutes: 90
   pool:
-    vmImage: ubuntu-latest
+    vmImage: ubuntu-24.04
   variables:
     boost_version: 1.92.0
     number_of_cores: nproc

@@ -418,34 +418,25 @@ bool isSpiroCenter(unsigned int aid, const RDKit::ROMol *mol) {
     return false;
   }
 
-  // Spiro atom must belong to exactly 2 rings
-  unsigned int numRings = mol->getRingInfo()->numAtomRings(aid);
-  if (numRings != 2) {
+  const auto ringInfo = mol->getRingInfo();
+  const auto ringIndices = ringInfo->atomMembers(aid);
+  if (ringIndices.size() != 2) {
     return false;
   }
 
   // Get the two rings containing this atom
-  const auto &atomRings = mol->getRingInfo()->atomRings();
-  std::vector<RDKit::INT_VECT> rings;
-  for (const auto &ring : atomRings) {
-    if (std::find(ring.begin(), ring.end(), static_cast<int>(aid)) !=
-        ring.end()) {
-      rings.push_back(ring);
-    }
-  }
-
-  if (rings.size() != 2) {
-    return false;
-  }
+  const auto atomRings = ringInfo->atomRings();
+  const auto ring1Members = atomRings[ringIndices[0]];
+  const auto ring2Members = atomRings[ringIndices[1]];
 
   // Use dynamic_bitset for efficient set operations
   boost::dynamic_bitset<> ring1(mol->getNumAtoms());
   boost::dynamic_bitset<> ring2(mol->getNumAtoms());
 
-  for (auto idx : rings[0]) {
+  for (auto idx : ring1Members) {
     ring1.set(idx);
   }
-  for (auto idx : rings[1]) {
+  for (auto idx : ring2Members) {
     ring2.set(idx);
   }
 
@@ -685,8 +676,8 @@ std::unique_ptr<RDKit::RWMol> prepareTemplateForRGroups(
   return reducedTemplateMol;
 }
 
-void reducedToFullMatches(const RDKit::RWMol &reducedQuery,
-                          const RDKit::RWMol &molHs,
+void reducedToFullMatches(const RDKit::ROMol &reducedQuery,
+                          const RDKit::ROMol &molHs,
                           std::vector<RDKit::MatchVectType> &matches) {
   boost::dynamic_bitset<> molHsMatches(molHs.getNumAtoms());
   for (auto &match : matches) {

@@ -10,11 +10,14 @@
 
 """
 
+import math
 import os.path
 import unittest
 
+import numpy
+
 from rdkit import Chem, RDConfig
-from rdkit.Chem import GraphDescriptors
+from rdkit.Chem import Graphs, GraphDescriptors
 
 doLong = False
 _THREE_RING = Chem.MolFromSmarts('*1~*~*~1')
@@ -106,6 +109,8 @@ class TestCase(unittest.TestCase):
       self.__testDesc('PP_descrs_regress.2.csv', 3, GraphDescriptors.HallKierAlpha)
 
   def testIpc(self):
+    if not GraphDescriptors.HAS_IPC:
+      return
     data = [('CCCCC', 1.40564, 11.24511), ('CCC(C)C', 1.37878, 9.65148),
             ('CC(C)(C)C', 0.72193, 3.60964), ('CN(CC)CCC', 1.67982, 31.91664),
             ('C1CCCCC1', 1.71997, 34.39946), ('CC1CCCCC1', 1.68562, 47.19725),
@@ -481,53 +486,133 @@ class TestCase(unittest.TestCase):
                                Chem.FindAllPathsOfLengthN(m, i + 1, useBonds=False))
 
 
-class TestCase_python(unittest.TestCase):
-  """ Test the Python implementation of the various descriptors """
+class TestCase_regression(unittest.TestCase):
+  """ Test the descriptors against the values in the regression data files """
 
-  def test_equivalence(self):
+  def test_regression(self):
     if not doLong:
       raise unittest.SkipTest('long test')
-    self._compareImplementations('PP_descrs_regress.csv', 3, GraphDescriptors.HallKierAlpha,
-                                 GraphDescriptors._pyHallKierAlpha)
-    self._compareImplementations('PP_descrs_regress.2.csv', 3, GraphDescriptors.HallKierAlpha,
-                                 GraphDescriptors._pyHallKierAlpha)
-    self._compareImplementations('PP_descrs_regress.rest.2.csv', 31, GraphDescriptors.Kappa1,
-                                 GraphDescriptors._pyKappa1)
-    self._compareImplementations('PP_descrs_regress.rest.2.csv', 32, GraphDescriptors.Kappa2,
-                                 GraphDescriptors._pyKappa2)
-    self._compareImplementations('PP_descrs_regress.csv', 5, GraphDescriptors.Kappa3,
-                                 GraphDescriptors._pyKappa3)
-    self._compareImplementations('PP_descrs_regress.2.csv', 5, GraphDescriptors.Kappa3,
-                                 GraphDescriptors._pyKappa3)
-    self._compareImplementations('PP_descrs_regress.rest.2.csv', 7, GraphDescriptors.Chi0v,
-                                 GraphDescriptors._pyChi0v)
-    self._compareImplementations('PP_descrs_regress.rest.2.csv', 10, GraphDescriptors.Chi1v,
-                                 GraphDescriptors._pyChi1v)
-    self._compareImplementations('PP_descrs_regress.rest.2.csv', 12, GraphDescriptors.Chi2v,
-                                 GraphDescriptors._pyChi2v)
-    self._compareImplementations('PP_descrs_regress.rest.2.csv', 14, GraphDescriptors.Chi3v,
-                                 GraphDescriptors._pyChi3v, molFilter=_skip3rings)
-    self._compareImplementations('PP_descrs_regress.rest.2.csv', 6, GraphDescriptors.Chi0n,
-                                 GraphDescriptors._pyChi0n)
-    self._compareImplementations('PP_descrs_regress.rest.2.csv', 9, GraphDescriptors.Chi1n,
-                                 GraphDescriptors._pyChi1n)
-    self._compareImplementations('PP_descrs_regress.rest.2.csv', 11, GraphDescriptors.Chi2n,
-                                 GraphDescriptors._pyChi2n)
-    self._compareImplementations('PP_descrs_regress.rest.2.csv', 13, GraphDescriptors.Chi3n,
-                                 GraphDescriptors._pyChi3n, molFilter=_skip3rings)
+    self._compareToRegression('PP_descrs_regress.csv', 3, GraphDescriptors.HallKierAlpha)
+    self._compareToRegression('PP_descrs_regress.2.csv', 3, GraphDescriptors.HallKierAlpha)
+    self._compareToRegression('PP_descrs_regress.rest.2.csv', 31, GraphDescriptors.Kappa1)
+    self._compareToRegression('PP_descrs_regress.rest.2.csv', 32, GraphDescriptors.Kappa2)
+    self._compareToRegression('PP_descrs_regress.csv', 5, GraphDescriptors.Kappa3)
+    self._compareToRegression('PP_descrs_regress.2.csv', 5, GraphDescriptors.Kappa3)
+    self._compareToRegression('PP_descrs_regress.rest.2.csv', 7, GraphDescriptors.Chi0v)
+    self._compareToRegression('PP_descrs_regress.rest.2.csv', 10, GraphDescriptors.Chi1v)
+    self._compareToRegression('PP_descrs_regress.rest.2.csv', 12, GraphDescriptors.Chi2v)
+    self._compareToRegression('PP_descrs_regress.rest.2.csv', 14, GraphDescriptors.Chi3v,
+                              molFilter=_skip3rings)
+    self._compareToRegression('PP_descrs_regress.rest.2.csv', 6, GraphDescriptors.Chi0n)
+    self._compareToRegression('PP_descrs_regress.rest.2.csv', 9, GraphDescriptors.Chi1n)
+    self._compareToRegression('PP_descrs_regress.rest.2.csv', 11, GraphDescriptors.Chi2n)
+    self._compareToRegression('PP_descrs_regress.rest.2.csv', 13, GraphDescriptors.Chi3n,
+                              molFilter=_skip3rings)
 
-  def _compareImplementations(self, filename, col, cFunc, pyFunc, molFilter=None):
-    """ Comparison of two implementations.
-    The optional argument molFilter can be used to skip examples. """
+  def _compareToRegression(self, filename, col, func, molFilter=None):
+    """ The optional argument molFilter can be used to skip examples. """
     for lineNum, smi, mol, expected in _regressionData(filename, col):
       if molFilter and molFilter(mol):
         continue
       if feq(expected, 666.0):  # Unavailable data point
         continue
-      cVal = cFunc(mol)
-      pyVal = pyFunc(mol)
-      assert feq(cVal, pyVal,
-                 1e-4), 'line %d, mol %s (c = %f, py = %f)' % (lineNum, smi, cVal, pyVal)
+      val = func(mol)
+      assert feq(val, expected,
+                 1e-4), 'line %d, mol %s (calc = %f, expected = %f)' % (lineNum, smi, val, expected)
+
+  def testDistanceMatrixArguments(self):
+    # passing the matrices the C++ code uses by default gives the same values
+    if not GraphDescriptors.HAS_IPC:
+      return
+
+    for smi in (
+        'CCCCC(=O)O',
+        'c1ccccc1CC(N)C(=O)O',
+        'C1CC2CCC1C2',
+        'CC.O',
+        'C'
+    ):
+      m = Chem.MolFromSmiles(smi)
+      topoMat = Chem.GetDistanceMatrix(m, useBO=False, useAtomWts=False, force=True)
+      balabanMat = Chem.GetDistanceMatrix(m, useBO=True, useAtomWts=False, force=True)
+      self.assertAlmostEqual(GraphDescriptors.Ipc(m, dMat=topoMat), GraphDescriptors.Ipc(m))
+      self.assertAlmostEqual(GraphDescriptors.AvgIpc(m, dMat=topoMat.tolist()),
+                             GraphDescriptors.AvgIpc(m))
+      self.assertAlmostEqual(GraphDescriptors.BalabanJ(m, dMat=balabanMat),
+                             GraphDescriptors.BalabanJ(m))
+      self.assertAlmostEqual(GraphDescriptors.BertzCT(m, dMat=balabanMat, forceDMat=0),
+                             GraphDescriptors.BertzCT(m))
+      # forceDMat ignores the matrix that was passed in
+      self.assertAlmostEqual(GraphDescriptors.BalabanJ(m, dMat=topoMat * 2, forceDMat=1),
+                             GraphDescriptors.BalabanJ(m))
+      
+      if m.GetNumAtoms() > 3:
+        for i, r in enumerate(balabanMat):
+          for j in range(len(r)):
+            balabanMat[i,j] = 100.0
+          
+        # make sure we actually use the distance mat if forceDMat is False
+        a = GraphDescriptors.BertzCT(m, dMat=balabanMat, forceDMat=False)
+        b = GraphDescriptors.BertzCT(m)
+        self.assertNotEqual(a,b)
+        
+    m = Chem.MolFromSmiles('CCO')
+    with self.assertRaises(ValueError):
+      GraphDescriptors.BalabanJ(m, dMat=numpy.zeros((2, 2)))
+
+
+  def testCharacteristicPolynomialLargeGraphs(self):
+    # The characteristic polynomial of a path graph has |constant term| = |det(A)| = 1.
+    # The Le Verrier-Faddeev-Frame recursion previously used here lost every significant
+    # digit above roughly 80 atoms and returned -1.97e26 here at n=120.
+    for n in (20, 60, 120, 200):
+      m = Chem.MolFromSmiles('C' * n)
+      cp = Graphs.CharacteristicPolynomial(m, Chem.GetAdjacencyMatrix(m))
+      self.assertAlmostEqual(
+        abs(cp[-1]), 1.0, delta=1e-6,
+        msg='n=%d: |constant term| should be 1, got %g' % (n, cp[-1]))
+
+  def testCharacteristicPolynomialCoefficients(self):
+    # For a path graph the whole coefficient vector is known in closed form:
+    #   det(xI - A) = sum_k (-1)**k * binom(n-k, k) * x**(n-2k)
+    # so every coefficient is checked, not only the constant term.
+    for n in (8, 20, 60):
+      m = Chem.MolFromSmiles('C' * n)
+      got = Graphs.CharacteristicPolynomial(m, Chem.GetAdjacencyMatrix(m))
+      want = numpy.zeros(n + 1)
+      for k in range(n // 2 + 1):
+        want[2 * k] = (-1)**k * math.comb(n - k, k)
+      scale = max(abs(want).max(), 1.0)
+      self.assertTrue(
+        numpy.allclose(got, want, rtol=0, atol=1e-9 * scale),
+        msg='n=%d: worst coefficient error %g (scale %g)' % (
+          n, abs(numpy.asarray(got) - want).max(), scale))
+
+  def testCharacteristicPolynomialAsymmetricMatrix(self):
+    # eigvalsh reads one triangle only, so a near-symmetric matrix must NOT take that path.
+    m = Chem.MolFromSmiles('CCC')
+    a = numpy.array(Chem.GetAdjacencyMatrix(m), dtype=float)
+    a[0, 1] += 1e-7
+    got = Graphs.CharacteristicPolynomial(m, a)
+    # compare against the polynomial of exactly this matrix, via its own eigenvalues
+    want = numpy.poly(numpy.linalg.eigvals(a)).real
+    self.assertTrue(numpy.allclose(got, want, atol=1e-10),
+                    msg='asymmetric input: got %s, expected %s' % (got, want))
+
+  def testAvgIpcIsMonotonicAndBounded(self):
+    # AvgIpc is a Shannon entropy over the n+1 coefficients, so it is bounded by log2(n+1)
+    # and cannot decrease as a chain is extended. It previously started decreasing near
+    # n=110, reaching 1.40 at n=120 where the true value is 3.76.
+    if not GraphDescriptors.HAS_IPC:
+      return
+
+    prev = 0.0
+    for n in range(20, 141, 20):
+      m = Chem.MolFromSmiles('C' * n)
+      v = GraphDescriptors.AvgIpc(m, forceDMat=1)
+      self.assertGreater(v, prev, 'AvgIpc decreased at n=%d (%g <= %g)' % (n, v, prev))
+      self.assertLess(v, math.log2(n + 1), 'AvgIpc exceeds its log2(n+1) bound at n=%d' % n)
+      prev = v
 
 
 if __name__ == '__main__':

@@ -19,25 +19,32 @@ namespace python = boost::python;
 
 namespace {
 using namespace RDKit;
+python::tuple spanToTuple(std::span<const int> values) {
+  python::list result;
+  for (const auto value : values) {
+    result.append(value);
+  }
+  return python::tuple(result);
+}
 python::object atomRings(const RingInfo *self) {
   python::list res;
-  for (const auto &ring : self->atomRings()) {
-    res.append(python::tuple(ring));
+  for (const auto ring : self->atomRings()) {
+    res.append(spanToTuple(ring));
   }
   return python::tuple(res);
 }
 python::object bondRings(const RingInfo *self) {
   python::list res;
-  for (const auto &ring : self->bondRings()) {
-    res.append(python::tuple(ring));
+  for (const auto ring : self->bondRings()) {
+    res.append(spanToTuple(ring));
   }
   return python::tuple(res);
 }
 python::object atomMembers(const RingInfo *self, unsigned int idx) {
-  return python::tuple(self->atomMembers(idx));
+  return spanToTuple(self->atomMembers(idx));
 }
 python::object bondMembers(const RingInfo *self, unsigned int idx) {
-  return python::tuple(self->bondMembers(idx));
+  return spanToTuple(self->bondMembers(idx));
 }
 python::object atomRingSizes(const RingInfo *self, unsigned int idx) {
   return python::tuple(self->atomRingSizes(idx));

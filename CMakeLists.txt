@@ -73,6 +73,7 @@ option(RDK_BUILD_YAEHMOP_SUPPORT "build support for the YAeHMOP wrapper" OFF)
 option(RDK_BUILD_XYZ2MOL_SUPPORT "build in support for the RDKit's implementation of xyz2mol (in the DetermineBonds library)" OFF )
 option(RDK_BUILD_STRUCTCHECKER_SUPPORT "build in support for the StructChecker alpha (not recommended, use the MolVS integration instead)" OFF )
 option(RDK_BUILD_PUBCHEMSHAPE_SUPPORT "build the rdkit wrapper around pubchem-align3d" ON )
+option(RDK_BUILD_NORMALIZED_DESCRIPTORS "build the CDF-normalized descriptors (port of descriptastorus RDKit2DNormalized)" ON )
 option(RDK_INSTALL_DEV_COMPONENT "install libraries and headers" ON)
 option(RDK_USE_BOOST_IOSTREAMS "use boost::iostreams" ON)
 option(RDK_USE_UNITY_BUILDS "build the RDKit libraries using CMake unity (jumbo) builds to reduce compile time" OFF)
@@ -147,9 +148,9 @@ if(NOT MSVC AND RDK_OPTIMIZE_POPCNT)
   endif()
 endif()
 
-# Detect clang, which masquerades as gcc.  CMake 2.6 doesn't know how to
-# detect it.
-string(REGEX MATCH "clang" CMAKE_COMPILER_IS_CLANG "${CMAKE_C_COMPILER}")
+# CMAKE_CXX_COMPILER_ID covers clang regardless of the executable's name
+# (e.g. FreeBSD's cc and c++ are clang, and package-installed compilers may
+# be named clang23/clang++23).
 # Detect emcc
 string(REGEX MATCH "Emscripten" CMAKE_COMPILER_IS_EMCC "${CMAKE_SYSTEM_NAME}")
 
@@ -207,10 +208,10 @@ set(RDK_PYTHON_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/rdkit")
 
 #-------
 # Config variables:
-set(RDKit_Year "2026")
-set(RDKit_Month "09")
+set(RDKit_Year "2027")
+set(RDKit_Month "03")
 set(RDKit_Revision "1")
-set(RDKit_RevisionModifier "b1")
+set(RDKit_RevisionModifier "pre")
 set(RDKit_ABI "1")
 
 # we need an integer version of the month later, so remove the zero padding
@@ -222,17 +223,19 @@ set(RDKit_ExternalDir "${CMAKE_CURRENT_SOURCE_DIR}/External")
 set(RDKit_DataDir "${CMAKE_CURRENT_SOURCE_DIR}/Data")
 
 #include catch
-find_package(Catch2 3 QUIET)
-if(NOT Catch2_FOUND)
-  Include(FetchContent)
+if(RDK_BUILD_CPP_TESTS)
+  find_package(Catch2 3 QUIET)
+  if(NOT Catch2_FOUND)
+    Include(FetchContent)
 
-  FetchContent_Declare(
-    Catch2
-    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-    GIT_TAG        v3.4.0 # or a later release
-  )
+    FetchContent_Declare(
+      Catch2
+      GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+      GIT_TAG        v3.4.0 # or a later release
+    )
 
-  FetchContent_MakeAvailable(Catch2)
+    FetchContent_MakeAvailable(Catch2)
+  endif()
 endif()
 
 # make sure we have better_enums
@@ -325,8 +328,7 @@ endif()
 if(MINGW)
   target_compile_definitions(rdkit_base INTERFACE "-DBOOST_SYSTEM_NO_DEPRECATED")
 endif(MINGW)
-# fallback on match to "Clang" where CMAKE_C_COMPILER=/usr/bin/cc
-if (CMAKE_COMPILER_IS_CLANG OR CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_COMPILER_IS_EMCC)
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_COMPILER_IS_EMCC)
   if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 15)
     target_compile_definitions(rdkit_base INTERFACE -DBOOST_SYSTEM_NO_DEPRECATED -DBOOST_NO_CXX98_FUNCTION_BASE -D_HAS_AUTO_PTR_ETC=0)
     target_compile_options(rdkit_base INTERFACE -Wno-deprecated-builtins -Wno-deprecated-non-prototype -Wno-unused-parameter)
@@ -449,7 +451,7 @@ if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
 
   #-------
   # pull in python:
-  find_package(Python COMPONENTS Interpreter Development.Module Development.Embed NumPy)
+  find_package(Python COMPONENTS Interpreter Development.Module NumPy REQUIRED)
   target_include_directories(rdkit_py_base INTERFACE ${Python_INCLUDE_DIRS})
   target_include_directories(rdkit_py_base INTERFACE ${Python_NumPy_INCLUDE_DIRS})
   target_compile_definitions(rdkit_py_base INTERFACE "-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION")
@@ -462,9 +464,7 @@ if(RDK_BUILD_BOOST_PYTHON_WRAPPERS)
       OUTPUT_STRIP_TRAILING_WHITESPACE
   )
 
-  if(WIN32 OR "${Py_ENABLE_SHARED}" STREQUAL "1")
-    target_link_libraries(rdkit_py_base INTERFACE ${Python_LIBRARIES} )
-  endif()
+  target_link_libraries(rdkit_py_base INTERFACE Python::Module)
 
 
   find_package(Boost ${RDK_BOOST_VERSION} COMPONENTS "python${Python_VERSION_MAJOR}${Python_VERSION_MINOR}" "numpy${Python_VERSION_MAJOR}${Python_VERSION_MINOR}" REQUIRED CONFIG)

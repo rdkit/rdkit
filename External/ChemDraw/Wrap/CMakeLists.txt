@@ -6,3 +6,4 @@ rdkit_python_extension(rdChemDraw
 		       RDChemDrawLib RDChemDrawReactionLib
                       )
 
+add_pytest(testChemDraw ${CMAKE_CURRENT_SOURCE_DIR}/testChemDraw.py)

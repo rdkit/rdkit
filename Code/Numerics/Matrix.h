@@ -27,7 +27,7 @@ namespace RDNumeric {
 template <class TYPE>
 class Matrix {
  public:
-  typedef boost::shared_array<TYPE> DATA_SPTR;
+  using DATA_SPTR = boost::shared_array<TYPE>;
 
   //! Initialize with a size.
   Matrix(unsigned int nRows, unsigned int nCols)
@@ -340,7 +340,7 @@ Vector<TYPE> &multiply(const Matrix<TYPE> &A, const Vector<TYPE> &x,
   return y;
 };
 
-typedef Matrix<double> DoubleMatrix;
+using DoubleMatrix = Matrix<double>;
 };  // namespace RDNumeric
 
 //! ostream operator for Matrix's

@@ -2164,14 +2164,14 @@ RDKitにおいて化学的特徴（フィーチャー）は、SMARTSに基づく
    >>> len(fp)
    885
    >>> fp.GetNumOnBits()
-   57
+   13
 
 含まれるフィーチャーやビン分割されたフィーチャー間の距離行列といった情報も含めて、ビット自体の詳細についてはシグネチャーファクトリーから得ることができます。
 
 .. code:: python
 
    >>> list(fp.GetOnBits())[:5]
-   [1, 2, 6, 7, 8]
+   [1, 2, 7, 8, 14]
    >>> sigFactory.GetBitDescription(1)
    'Acceptor Acceptor |0 1|1 0|'
    >>> sigFactory.GetBitDescription(2)
@@ -2179,11 +2179,11 @@ RDKitにおいて化学的特徴（フィーチャー）は、SMARTSに基づく
    >>> sigFactory.GetBitDescription(8)
    'Acceptor Donor |0 2|2 0|'
    >>> list(fp.GetOnBits())[-5:]
-   [704, 706, 707, 708, 714]
-   >>> sigFactory.GetBitDescription(707)
-   'Donor Donor PosIonizable |0 1 2|1 0 1|2 1 0|'
-   >>> sigFactory.GetBitDescription(714)
-   'Donor Donor PosIonizable |0 2 2|2 0 0|2 0 0|'
+   [108, 115, 156, 281, 324]
+   >>> sigFactory.GetBitDescription(281)
+   'Acceptor Donor Donor |0 2 1|2 0 2|1 2 0|'
+   >>> sigFactory.GetBitDescription(324)
+   'Acceptor Donor PosIonizable |0 1 2|1 0 2|2 2 0|'
 
 作業を簡便にするため（毎回FDefファイルを編集する必要をなくすため）に、SigFactoryの特定のフィーチャータイプを無効化することもできます。
 
@@ -2195,7 +2195,7 @@ RDKitにおいて化学的特徴（フィーチャー）は、SMARTSに基づく
    510
    >>> fp2 = Generate.Gen2DFingerprint(mol,sigFactory)
    >>> fp2.GetNumOnBits()
-   36
+   9
 
 RDKitで使用可能な、2Dファーマコフォアフィンガープリントのためのフィーチャー定義のセットにはもう一つあり、GobbiとPoppingerによって提案されたものです 。[#gobbi]_
 \ `rdkit.Chem.Pharm2D.Gobbi_Pharm2D <https://www.rdkit.org/docs/source/rdkit.Chem.Pharm2D.Gobbi_Pharm2D.html#module-rdkit.Chem.Pharm2D.Gobbi_Pharm2D>`__\ モジュールにこれらのフィンガープリントタイプのために予め設定されたシグネチャーファクトリーがあります。使い方の例をお示しします:

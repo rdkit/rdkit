@@ -2314,9 +2314,11 @@ TEST_CASE("getBondTypeAsDouble()") {
         {Bond::BondType::AROMATIC, 1.5},
         {Bond::BondType::DATIVEONE, 1.0},
         {Bond::BondType::DATIVE, 1.0},
-        {Bond::BondType::HYDROGEN, 0}
-
-    };
+        {Bond::BondType::DATIVEL, 1.0},
+        {Bond::BondType::DATIVER, 1.0},
+        {Bond::BondType::HYDROGEN, 0},
+        {Bond::BondType::THREECENTER, 0},
+        {Bond::BondType::OTHER, 0}};
     for (const auto &pr : vals) {
       Bond bnd(pr.first);
       CHECK(bnd.getBondType() == pr.first);
@@ -2333,9 +2335,9 @@ TEST_CASE("getBondTypeAsDouble()") {
         {Bond::BondType::THREEANDAHALF, 7}, {Bond::BondType::FOURANDAHALF, 9},
         {Bond::BondType::FIVEANDAHALF, 11}, {Bond::BondType::AROMATIC, 3},
         {Bond::BondType::DATIVEONE, 2},     {Bond::BondType::DATIVE, 2},
-        {Bond::BondType::HYDROGEN, 0}
-
-    };
+        {Bond::BondType::DATIVEL, 2},       {Bond::BondType::DATIVER, 2},
+        {Bond::BondType::HYDROGEN, 0},      {Bond::BondType::THREECENTER, 0},
+        {Bond::BondType::OTHER, 0}};
     for (const auto &pr : vals) {
       Bond bnd(pr.first);
       CHECK(bnd.getBondType() == pr.first);
@@ -2577,7 +2579,7 @@ void check_dest(RWMol *m1, const ROMol &m2) {
   CHECK(m1->getRingInfo() == nullptr);
 
   // make sure we can still do something with m1:
-  *m1 = m2;
+  *m1 = RWMol(m2);
   CHECK(!m1->getDict().empty());
   CHECK(m1->getNumAtoms() == 8);
   CHECK(m1->getNumBonds() == 7);
@@ -2911,6 +2913,8 @@ TEST_CASE("Github #5849: aromatic tag allows bad valences to pass") {
   SECTION("edge cases atoms") {
     std::vector<std::string> smis = {
         "c1c(ccc2NC(CN=c(c21)=C)=O)O",     // exocyclic double bond
+        "Cc1(C)=NCCCc1",                   // a hexavalent C atom
+        "Cc1(C)nCCCC=1",                   // a hexavalent C atom
         "c1c(ccc2NC(Cn=c(c21)(C)C)=O)O",   // even more bogus aromatic atoms
         "c1c(ccc2NC(CN=c(c21)(:c)C)=O)O",  // even more bogus aromatic atoms
     };
@@ -2922,8 +2926,6 @@ TEST_CASE("Github #5849: aromatic tag allows bad valences to pass") {
   SECTION("edge cases kekulization") {
     std::vector<std::string> smis = {
         "c12ccccc1=NCCC2",  // adjacent to an actual aromatic ring
-        "Cc1(C)=NCCCc1",    // two bogus aromatic atoms
-        "Cc1(C)nCCCC=1",    // two bogus aromatic atoms
         "Cc1(C)nCCCc1",     // three bogus aromatic atoms
         "Cc:1(C):nCCCc:1",  // three bogus aromatic atoms
     };
@@ -2949,6 +2951,17 @@ TEST_CASE("Stop caching ring finding results") {
     MolOps::fastFindRings(*m);
     CHECK(m->getRingInfo()->numRings() == 2);
   }
+}
+
+TEST_CASE("Symmetrized SSSR results retain their ring type", "[rings][bug]") {
+  auto algorithm = GENERATE(MolOps::SymmetrizeSSSRAlgorithm::LEGACY,
+                            MolOps::SymmetrizeSSSRAlgorithm::RDL);
+  CAPTURE(algorithm);
+  auto mol = "C1C2CC1CCC2"_smiles;
+  REQUIRE(mol);
+  VECT_INT_VECT rings;
+  CHECK(MolOps::symmetrizeSSSR(*mol, rings, algorithm) == 3);
+  CHECK(mol->getRingInfo()->isSymmSssr());
 }
 
 TEST_CASE("molecules with more than 255 rings produce a bad pickle") {
@@ -5142,6 +5155,97 @@ TEST_CASE("canonical re-kekulization after sanitization preserves stereo",
   }
 }
 
+TEST_CASE("github #9629: renumberAtoms drops ring families and ring type") {
+  UseLegacyRingFindingFixture fix(false);
+
+  auto m = "C1CCN2CCCC2C1"_smiles;
+  REQUIRE(m);
+  REQUIRE(m->getRingInfo()->areRingFamiliesInitialized());
+
+  // identity renumbering must preserve everything about ring info
+  std::vector<unsigned int> perm(m->getNumAtoms());
+  std::iota(perm.begin(), perm.end(), 0u);
+  std::unique_ptr<ROMol> nmol(MolOps::renumberAtoms(*m, perm));
+  REQUIRE(nmol->getRingInfo()->isInitialized());
+  CHECK(nmol->getRingInfo()->getRingType() == m->getRingInfo()->getRingType());
+  CHECK(nmol->getRingInfo()->areRingFamiliesInitialized());
+  CHECK(nmol->getRingInfo()->numRingFamilies() ==
+        m->getRingInfo()->numRingFamilies());
+
+  // the reported symptom: the perceived stereo-center count changed.
+  // Mirror what Descriptors::numAtomStereoCenters() does internally
+  auto countPossible = [](const ROMol &mol) {
+    RWMol tmol(mol);
+    constexpr bool cleanIt = true;
+    constexpr bool force = true;
+    constexpr bool flagPossible = true;
+    MolOps::assignStereochemistry(tmol, cleanIt, force, flagPossible);
+    unsigned int res = 0;
+    for (const auto &atom : tmol.atoms()) {
+      if (atom->hasProp(common_properties::_ChiralityPossible)) {
+        ++res;
+      }
+    }
+    return res;
+  };
+  CHECK(countPossible(*nmol) == countPossible(*m));
+
+  SECTION("ring family contents are remapped to the new atom order") {
+    std::vector<unsigned int> rperm(m->getNumAtoms());
+    std::iota(rperm.rbegin(), rperm.rend(), 0u);  // reversed order
+    std::vector<unsigned int> revOrder(m->getNumAtoms());
+    for (unsigned int i = 0; i < rperm.size(); ++i) {
+      revOrder[rperm[i]] = i;
+    }
+    std::unique_ptr<ROMol> rnmol(MolOps::renumberAtoms(*m, rperm));
+    REQUIRE(rnmol->getRingInfo()->areRingFamiliesInitialized());
+
+    auto normalize = [](std::vector<std::vector<int>> fams) {
+      for (auto &fam : fams) {
+        std::sort(fam.begin(), fam.end());
+      }
+      std::sort(fams.begin(), fams.end());
+      return fams;
+    };
+
+    std::vector<std::vector<int>> expectedAtomFams;
+    for (auto fam : m->getRingInfo()->atomRingFamilies()) {
+      for (auto &idx : fam) {
+        idx = revOrder[idx];
+      }
+      expectedAtomFams.push_back(std::move(fam));
+    }
+    CHECK(normalize(rnmol->getRingInfo()->atomRingFamilies()) ==
+          normalize(expectedAtomFams));
+
+    // bonds keep their original indices across renumbering
+    CHECK(normalize(rnmol->getRingInfo()->bondRingFamilies()) ==
+          normalize(m->getRingInfo()->bondRingFamilies()));
+  }
+
+  SECTION("ring families preserve the original bond selection") {
+    auto dm = "N->1CCN->[Pt]1"_smiles;
+    REQUIRE(dm);
+    dm->getRingInfo()->resetRingFamilies();
+    MolOps::findRingFamilies(*dm, true);
+    REQUIRE(dm->getRingInfo()->numRingFamilies() == 1);
+    std::vector<unsigned int> dperm(dm->getNumAtoms());
+    std::iota(dperm.begin(), dperm.end(), 0u);
+    std::unique_ptr<ROMol> dnmol(MolOps::renumberAtoms(*dm, dperm));
+    CHECK(dnmol->getRingInfo()->numRingFamilies() == 1);
+
+    auto hm = "CC1O[H]O=C(C)C1 |H:4.3|"_smiles;
+    REQUIRE(hm);
+    hm->getRingInfo()->resetRingFamilies();
+    MolOps::findRingFamilies(*hm, false, true);
+    REQUIRE(hm->getRingInfo()->numRingFamilies() == 1);
+    std::vector<unsigned int> hperm(hm->getNumAtoms());
+    std::iota(hperm.begin(), hperm.end(), 0u);
+    std::unique_ptr<ROMol> hnmol(MolOps::renumberAtoms(*hm, hperm));
+    CHECK(hnmol->getRingInfo()->numRingFamilies() == 1);
+  }
+}
+
 TEST_CASE("duplicate atoms/bonds in StereoGroups") {
   SECTION("atoms") {
     auto m = "C[C@H](O)C[C@H](F)Cl"_smiles;
@@ -5166,5 +5270,71 @@ TEST_CASE("duplicate atoms/bonds in StereoGroups") {
             StereoGroupType::STEREO_ABSOLUTE, std::vector<Atom *>{},
             std::vector<Bond *>{m->getBondWithIdx(1), m->getBondWithIdx(1)}),
         ValueErrorException);
+  }
+}
+
+TEST_CASE(
+    "GitHub #9735: Valence checks for aromatic atoms allows them to be hypervalent") {
+  auto runCheck = [](const char *smiles, bool expectKekulizeError = false) {
+    const v2::SmilesParse::SmilesParserParams p{.sanitize = false,
+                                                .replacements = {}};
+
+    auto mol = v2::SmilesParse::MolFromSmiles(smiles, p);
+    REQUIRE(mol);
+
+    auto failures = MolOps::detectChemistryProblems(*mol);
+
+    REQUIRE(failures.size() == (expectKekulizeError ? 2 : 1));
+
+    REQUIRE(failures[0]->getType() == "AtomValenceException");
+    auto valenceFailure =
+        dynamic_cast<AtomValenceException *>(failures[0].get());
+    REQUIRE(valenceFailure);
+
+    REQUIRE(valenceFailure->getAtomIdx() == 4);
+
+    if (expectKekulizeError) {
+      REQUIRE(failures[1]->getType() == "KekulizeException");
+    }
+  };
+
+  SECTION("aliphatic pentavalent carbon") {
+    // the [C] atom is pentavalent, and parsing the SMILES fails
+    // sanitization at the valence checks in SANITIZE_PROPERTIES
+    runCheck("Oc1cc2=[C](=O)c(cccn2)n1");
+  }
+
+  SECTION("aromatic pentavalent carbon") {
+    // ... but when the atom is aromatic, the valence check doesn't
+    // catch the pentavalent carbon (this is the reported issue)
+    runCheck("Oc1cc2=[c](=O)c(cccn2)n1");
+  }
+
+  SECTION("hypervalent aromatic with explicit Hs") {
+    // using [cH2] would not trigger the valence error,
+    // since the valence check would consider the case where both
+    // ring bonds are kekulized to single bonds, but kekulization
+    // will fail (the ring can't be aromatic if these bonds are both
+    // single).
+    // With [cH3], both the valence and the kekulization checks
+    // will fail.
+
+    bool expectKekulizeError = true;
+    runCheck("c1ccc[cH3]c1", expectKekulizeError);
+  }
+}
+
+TEST_CASE("getTotalNumHs() and query atoms") {
+  SECTION("basics") {
+    auto m = "C[CH][CH][CH,NH2]"_smarts;
+    REQUIRE(m);
+    m->getAtomWithIdx(2)->setNoImplicit(false);
+    CHECK(m->getAtomWithIdx(0)->getTotalNumHs(false) == 0);
+    CHECK(m->getAtomWithIdx(1)->getTotalNumHs(false) == 1);
+    CHECK_THROWS_AS(
+        m->getAtomWithIdx(2)->getValence(Atom::ValenceType::IMPLICIT),
+        std::runtime_error);
+    CHECK(m->getAtomWithIdx(2)->getTotalNumHs(false) == 1);
+    CHECK(m->getAtomWithIdx(3)->getTotalNumHs(false) == 0);
   }
 }

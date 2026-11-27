@@ -8,6 +8,11 @@ import unittest
 from rdkit import rdBase
 from rdkit.ML.Data import Quantize
 
+# Make sure that cQuantize is available. We can use the Quantize module without
+# it, but let's assume that whoever is running the unit tests has installed the 
+# python wrappers
+from rdkit.ML.Data import cQuantize
+
 
 class TestCase(unittest.TestCase):
 

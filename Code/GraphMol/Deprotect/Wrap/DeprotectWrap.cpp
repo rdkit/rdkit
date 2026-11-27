@@ -17,7 +17,7 @@ namespace RDKit {
 
 boost::shared_ptr<ROMol> DeprotectWrap(const ROMol &mol,
                                        const python::object &iterable) {
-  if (iterable != python::object()) {
+  if (!iterable.is_none()) {
     std::vector<Deprotect::DeprotectData> deprotections;
     pythonObjectToVect<Deprotect::DeprotectData>(iterable, deprotections);
     return Deprotect::deprotect(mol, deprotections);
@@ -28,7 +28,7 @@ boost::shared_ptr<ROMol> DeprotectWrap(const ROMol &mol,
 
 bool DeprotectInPlaceWrap(ROMol &mol, const python::object &iterable) {
   RWMol &rwmol = static_cast<RWMol &>(mol);
-  if (iterable != python::object()) {
+  if (!iterable.is_none()) {
     std::vector<Deprotect::DeprotectData> deprotections;
     pythonObjectToVect<Deprotect::DeprotectData>(iterable, deprotections);
     return Deprotect::deprotectInPlace(rwmol, deprotections);

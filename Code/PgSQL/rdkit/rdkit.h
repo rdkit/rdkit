@@ -154,6 +154,7 @@ double MolLogP(CROMol i);
 int MolHBA(CROMol i);
 int MolHBD(CROMol i);
 int MolNumAtoms(CROMol i);
+int MolNumAtomsQMol(CROMol i);
 int MolNumHeavyAtoms(CROMol i);
 int MolNumRotatableBonds(CROMol i);
 int MolNumHeteroatoms(CROMol i);

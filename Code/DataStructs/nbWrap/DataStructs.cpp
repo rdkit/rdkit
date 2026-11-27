@@ -16,7 +16,6 @@
 #include <DataStructs/SparseIntVect.h>
 #include <numpy/npy_common.h>
 #include <RDBoost/import_array.h>
-// #include <RDBoost/pyint_api.h>
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -30,38 +29,31 @@ void wrap_realValVect(nb::module_ &m);
 void wrap_sparseIntVect(nb::module_ &m);
 void wrap_FPB(nb::module_ &m);
 
-#if 1
 namespace {
-template <typename T, typename U>
-void converter(const T &v, nb::object destArray, U func) {
+template <typename T>
+void convertToNumpyArray(const T &v, nb::object destArray) {
   if (!PyArray_Check(destArray.ptr())) {
     throw nb::value_error("Expecting a Numeric array object");
   }
-  auto *destP = (PyArrayObject *)destArray.ptr();
-  npy_intp ndims[1];
-  ndims[0] = v.size();
-  PyArray_Dims dims;
-  dims.ptr = ndims;
-  dims.len = 1;
-  PyArray_Resize(destP, &dims, 0, NPY_ANYORDER);
+  auto *destP = reinterpret_cast<PyArrayObject *>(destArray.ptr());
+  npy_intp size = static_cast<npy_intp>(v.size());
+  PyArray_Dims dims{&size, 1};
+  PyObject *resized = PyArray_Resize(destP, &dims, 0, NPY_ANYORDER);
+  if (!resized) {
+    throw nb::python_error();
+  }
+  Py_DECREF(resized);
   for (unsigned int i = 0; i < v.size(); ++i) {
-    PyObject *iItem = func(v[i]);
-    PyArray_SETITEM(destP, static_cast<char *>(PyArray_GETPTR1(destP, i)),
-                    iItem);
-    Py_DECREF(iItem);
+    nb::object item = nb::cast(+v[i]);
+    if (PyArray_SETITEM(destP,
+                       static_cast<char *>(PyArray_GETPTR1(destP, i)),
+                       item.ptr()) < 0) {
+      throw nb::python_error();
+    }
   }
 }
 }  // namespace
 
-template <typename T>
-void convertToIntNumpyArray(const T &v, nb::object destArray) {
-  converter(v, destArray, PyLong_FromLong);
-}
-template <typename T>
-void convertToDoubleNumpyArray(const T &v, nb::object destArray) {
-  converter(v, destArray, PyFloat_FromDouble);
-}
-#endif
 NB_MODULE(cDataStructs, m) {
   rdkit_import_array();
   m.doc() =
@@ -87,30 +79,21 @@ NB_MODULE(cDataStructs, m) {
   wrap_sparseIntVect(m);
   wrap_FPB(m);
   m.def("ConvertToNumpyArray",
-        (void (*)(const RDKit::DiscreteValueVect &,
-                  nb::object))convertToIntNumpyArray,
-        "bv"_a, "destArray"_a);
-  m.def("ConvertToNumpyArray",
-        (void (*)(const RDKit::RealValueVect &,
-                  nb::object))convertToDoubleNumpyArray,
+        &convertToNumpyArray<RDKit::DiscreteValueVect>, "bv"_a, "destArray"_a);
+  m.def("ConvertToNumpyArray", &convertToNumpyArray<RDKit::RealValueVect>,
         "rvv"_a, "destArray"_a);
-  m.def("ConvertToNumpyArray",
-        (void (*)(const ExplicitBitVect &, nb::object))convertToIntNumpyArray,
+  m.def("ConvertToNumpyArray", &convertToNumpyArray<ExplicitBitVect>,
         "bv"_a, "destArray"_a);
   m.def("ConvertToNumpyArray",
-        (void (*)(const RDKit::SparseIntVect<std::int32_t> &,
-                  nb::object))convertToIntNumpyArray,
+        &convertToNumpyArray<RDKit::SparseIntVect<std::int32_t>>,
         "bv"_a, "destArray"_a);
   m.def("ConvertToNumpyArray",
-        (void (*)(const RDKit::SparseIntVect<boost::int64_t> &,
-                  nb::object))convertToIntNumpyArray,
+        &convertToNumpyArray<RDKit::SparseIntVect<boost::int64_t>>,
         "bv"_a, "destArray"_a);
   m.def("ConvertToNumpyArray",
-        (void (*)(const RDKit::SparseIntVect<std::uint32_t> &,
-                  nb::object))convertToIntNumpyArray,
+        &convertToNumpyArray<RDKit::SparseIntVect<std::uint32_t>>,
         "bv"_a, "destArray"_a);
   m.def("ConvertToNumpyArray",
-        (void (*)(const RDKit::SparseIntVect<boost::uint64_t> &,
-                  nb::object))convertToIntNumpyArray,
+        &convertToNumpyArray<RDKit::SparseIntVect<boost::uint64_t>>,
         "bv"_a, "destArray"_a);
 }

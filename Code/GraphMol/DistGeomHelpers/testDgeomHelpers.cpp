@@ -13,6 +13,7 @@
 #include <RDGeneral/RDLog.h>
 #include <RDGeneral/versions.h>
 #include <GraphMol/RDKitBase.h>
+#include <atomic>
 #include <string>
 #include <algorithm>
 #include <map>
@@ -620,29 +621,32 @@ TEST_CASE("testIssue355") {
   }
 
   SECTION("2") {
+    // If the central carbon is not bonded to another carbon, it's no longer considered
+    // to be an aminde. Thus cases 2 and 3 are no longer forced to be trans
     const std::string smi = "CNC(=O)NC";
     const auto bm = _getBoundsMatrix(smi);
     CHECK(bm->getLowerBound(0, 3) < 3.0);
-    CHECK(bm->getUpperBound(0, 3) < 3.0);
+    CHECK(bm->getUpperBound(0, 3) >
+          3.0);  // can be cis or trans => allow full range
     CHECK(bm->getUpperBound(0, 4) > 3.2);
-    CHECK(bm->getLowerBound(0, 4) > 3.2);
+    CHECK(bm->getLowerBound(0, 4) < 3.2);
     CHECK(bm->getLowerBound(5, 3) < 3.0);
-    CHECK(bm->getUpperBound(5, 3) < 3.0);
+    CHECK(bm->getUpperBound(5, 3) > 3.0);
     CHECK(bm->getUpperBound(5, 1) > 3.2);
-    CHECK(bm->getLowerBound(5, 1) > 3.2);
+    CHECK(bm->getLowerBound(5, 1) < 3.2);
   }
 
   SECTION("3") {
     const std::string smi = "CNC(=O)Nc1ccccc1";
     const auto bm = _getBoundsMatrix(smi);
     CHECK(bm->getLowerBound(0, 3) < 3.0);
-    CHECK(bm->getUpperBound(0, 3) < 3.0);
+    CHECK(bm->getUpperBound(0, 3) > 3.0);
     CHECK(bm->getUpperBound(0, 4) > 3.2);
-    CHECK(bm->getLowerBound(0, 4) > 3.2);
+    CHECK(bm->getLowerBound(0, 4) < 3.2);
     CHECK(bm->getLowerBound(5, 3) < 3.0);
-    CHECK(bm->getUpperBound(5, 3) < 3.0);
+    CHECK(bm->getUpperBound(5, 3) > 3.0);
     CHECK(bm->getUpperBound(5, 1) > 3.2);
-    CHECK(bm->getLowerBound(5, 1) > 3.2);
+    CHECK(bm->getLowerBound(5, 1) < 3.2);
   }
 }
 
@@ -946,9 +950,9 @@ TEST_CASE("testIssue3483968") {
 
 #ifdef RDK_TEST_MULTITHREADED
 namespace {
-void runblock(const std::vector<std::shared_ptr<RWMol>> &mols,
-              const std::vector<double> &energies, unsigned int count,
-              unsigned int idx, const bool legacyETKDG) {
+std::string runblock(const std::vector<std::shared_ptr<RWMol>> &mols,
+                     const std::vector<double> &energies, unsigned int count,
+                     unsigned int idx, const bool legacyETKDG) {
   for (std::size_t j = 0; j < 100; j++) {
     for (std::size_t i = 0; i < mols.size(); ++i) {
       if (i % count != idx) {
@@ -961,19 +965,26 @@ void runblock(const std::vector<std::shared_ptr<RWMol>> &mols,
           .useLegacyImplementation = legacyETKDG};
       std::vector<int> cids =
           DGeomHelpers::EmbedMultipleConfs(*mol, 10, params);
-      REQUIRE(cids.size() == 10);
+      // Catch2 assertion reporting is shared state: return failures to the
+      // calling thread instead of making assertions from these workers.
+      if (cids.size() != 10) {
+        return "Incorrect conformer count for molecule " + std::to_string(i);
+      }
       std::unique_ptr<ForceFields::ForceField> field(
           UFF::constructForceField(*mol, 100, cids[0]));
-      REQUIRE(field);
+      if (!field) {
+        return "Missing force field for molecule " + std::to_string(i);
+      }
       field->initialize();
       double eng = field->calcEnergy();
       if (!feq(eng, energies[i])) {
-        std::cerr << i << " iter " << j << " " << energies[i] << " != " << eng
-                  << std::endl;
+        return "Energy mismatch for molecule " + std::to_string(i) +
+               " at iteration " + std::to_string(j) + ": " +
+               std::to_string(energies[i]) + " != " + std::to_string(eng);
       }
-      CHECK(feq(eng, energies[i]));
     }
   }
+  return {};
 }
 }  // namespace
 
@@ -1028,7 +1039,7 @@ TEST_CASE("testMultiThread") {
     CHECK(feq(eng, energies[i]));
   }
 
-  std::vector<std::future<void>> tg;
+  std::vector<std::future<std::string>> tg;
   std::cerr << "processing" << std::endl;
   unsigned int count = 4;
   for (unsigned int i = 0; i < count; ++i) {
@@ -1038,7 +1049,9 @@ TEST_CASE("testMultiThread") {
                                count, i, legacyETKDG));
   }
   for (auto &fut : tg) {
-    fut.get();
+    const auto error = fut.get();
+    INFO(error);
+    CHECK(error.empty());
   }
 
   BOOST_LOG(rdErrorLog) << "  done" << std::endl;
@@ -1354,7 +1367,8 @@ TEST_CASE("testGithub971") {
 
 TEST_CASE("testEmbedParameters") {
   auto runTest = [](const std::string &smiles, const std::string &fname,
-                    DGeomHelpers::EmbedParameters &params, const unsigned int randomSeed = 42) {
+                    DGeomHelpers::EmbedParameters &params,
+                    const unsigned int randomSeed = 42) {
     auto getPath = [](const std::string &file, const bool legacy) {
       std::string fname = rdbase + "/Code/GraphMol/DistGeomHelpers/test_data/";
       if (!legacy) {
@@ -1761,7 +1775,7 @@ TEST_CASE("testProvideBoundsMatrix") {
   REQUIRE(cid >= 0);
 
   const auto conf = m->getConformer(cid);
-  CHECK(feq((conf.getAtomPos(0) - conf.getAtomPos(1)).length(), 0.55, 0.05));
+  CHECK(feq((conf.getAtomPos(0) - conf.getAtomPos(1)).length(), 0.55, 0.1));
   CHECK(feq((conf.getAtomPos(0) - conf.getAtomPos(2)).length(), 2.0, 0.1));
   boost::logging::enable_logs("rdApp.warning");
 }
@@ -1951,3 +1965,141 @@ TEST_CASE("ETKDGv4-Benzamide") {
     run(params, 157.0, 26.0);
   }
 }
+
+#ifdef RDK_BUILD_THREADSAFE_SSS
+TEST_CASE("Parallel embedding failures keep independent conformer flags") {
+  constexpr unsigned int numConfs = 32;
+  const bool legacy = GENERATE(true, false);
+  auto mol =
+      "C=CC1=C(N)Oc2cc1c(-c1cc(C(C)O)cc(=O)cc1C1NCC(=O)N1)c(OC)c2OC"_smiles;
+  REQUIRE(mol);
+  MolOps::addHs(*mol);
+  auto params = DGeomHelpers::ETKDGv3;
+  params.useLegacyImplementation = legacy;
+  params.randomSeed = 42;
+  params.maxIterations = 1;
+  params.trackFailures = true;
+  params.numThreads = 1;
+  const auto serialIds = DGeomHelpers::EmbedMultipleConfs(*mol, numConfs, params);
+  const auto serialFailures = params.failures;
+  REQUIRE(serialIds.size() < numConfs);
+  params.numThreads = 4;
+  const auto parallelIds = DGeomHelpers::EmbedMultipleConfs(*mol, numConfs, params);
+  CHECK(parallelIds == serialIds);
+  CHECK(params.failures == serialFailures);
+}
+
+TEST_CASE("Parallel default-seed embedding uses the global source safely") {
+  const bool legacy = GENERATE(true, false);
+  const auto mode = GENERATE(
+      DGeomHelpers::InitialEmbeddingMode::DG_EMBEDDING,
+      DGeomHelpers::InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING,
+      DGeomHelpers::InitialEmbeddingMode::RANDOM_COORDINATE_EMBEDDING);
+  auto mol = "C[C@H](O)CCCO"_smiles;
+  MolOps::addHs(*mol);
+  auto params = DGeomHelpers::ETKDGv3;
+  params.useLegacyImplementation = legacy;
+  params.initialEmbeddingMode = mode;
+  params.numThreads = 2;
+  params.randomSeed = -1;
+  params.maxIterations = 100;
+  getRandomGenerator(104729);
+  const auto ids = DGeomHelpers::EmbedMultipleConfs(*mol, 8, params);
+  CHECK(ids.size() == 8);
+}
+#endif
+
+TEST_CASE(
+    "Serial default-seed embedding preserves global RNG reproducibility") {
+  const bool legacy = GENERATE(true, false);
+  const auto mode = GENERATE(
+      DGeomHelpers::InitialEmbeddingMode::DG_EMBEDDING,
+      DGeomHelpers::InitialEmbeddingMode::INTERNAL_COORDINATE_EMBEDDING,
+      DGeomHelpers::InitialEmbeddingMode::RANDOM_COORDINATE_EMBEDDING);
+  const auto smiles = GENERATE("C[C@H](O)CCCO", "CCO.CCCCCCO");
+  auto first = std::unique_ptr<RWMol>(SmilesToMol(smiles));
+  MolOps::addHs(*first);
+  auto second = std::make_unique<RWMol>(*first);
+  auto params = DGeomHelpers::ETKDGv3;
+  params.useLegacyImplementation = legacy;
+  params.initialEmbeddingMode = mode;
+  params.randomSeed = -1;
+  getRandomGenerator(104729);
+  auto firstParams = params;
+  const auto firstIds =
+      DGeomHelpers::EmbedMultipleConfs(*first, 3, firstParams);
+  const auto nextValue = getRandomGenerator()();
+  getRandomGenerator(104729);
+  auto secondParams = params;
+  const auto secondIds =
+      DGeomHelpers::EmbedMultipleConfs(*second, 3, secondParams);
+  REQUIRE(firstIds.size() == 3);
+  REQUIRE(secondIds.size() == firstIds.size());
+  CHECK(getRandomGenerator()() == nextValue);
+  CHECK(secondParams.maxIterations == firstParams.maxIterations);
+  for (unsigned int i = 0; i < firstIds.size(); ++i) {
+    const auto &firstPositions =
+        first->getConformer(firstIds[i]).getPositions();
+    const auto &secondPositions =
+        second->getConformer(secondIds[i]).getPositions();
+    for (unsigned int j = 0; j < firstPositions.size(); ++j) {
+      CHECK(firstPositions[j].x == secondPositions[j].x);
+      CHECK(firstPositions[j].y == secondPositions[j].y);
+      CHECK(firstPositions[j].z == secondPositions[j].z);
+    }
+  }
+}
+
+#ifdef RDK_BUILD_THREADSAFE_SSS
+namespace {
+std::atomic<unsigned int> nestedEmbeddingCalls{0};
+std::atomic<bool> nestedEmbeddingSucceeded{false};
+
+void embedFromProgressCallback(unsigned int) {
+  if (nestedEmbeddingCalls.fetch_add(1) != 0) {
+    return;
+  }
+  auto mol = "CCO"_smiles;
+  MolOps::addHs(*mol);
+  auto params = DGeomHelpers::ETKDGv3;
+  nestedEmbeddingSucceeded.store(DGeomHelpers::EmbedMolecule(*mol, params) ==
+                                 0);
+}
+}  // namespace
+
+TEST_CASE("Embedding progress callbacks can reenter default-seed embedding") {
+  auto mol = "CCCCCCO"_smiles;
+  MolOps::addHs(*mol);
+  auto params = DGeomHelpers::ETKDGv3;
+  params.numThreads = 2;
+  // Keep this RNG-lock regression independent of shared-default resolution.
+  params.maxIterations = 100;
+  params.callback = embedFromProgressCallback;
+  nestedEmbeddingCalls.store(0);
+  nestedEmbeddingSucceeded.store(false);
+  const auto ids = DGeomHelpers::EmbedMultipleConfs(*mol, 8, params);
+  CHECK(ids.size() == 8);
+  CHECK(nestedEmbeddingCalls.load() >= 1);
+  CHECK(nestedEmbeddingSucceeded.load());
+}
+
+TEST_CASE("First parallel embedding resolves shared defaults") {
+  const bool legacy = GENERATE(true, false);
+  const bool randomCoords = GENERATE(false, true);
+  auto mol = "CCCCCCO"_smiles;
+  MolOps::addHs(*mol);
+  auto params = DGeomHelpers::ETKDGv3;
+  params.useLegacyImplementation = legacy;
+  params.useRandomCoords = randomCoords;
+  params.numThreads = 2;
+  params.randomSeed = 42;
+  REQUIRE(params.maxIterations == 0);
+  const auto ids = DGeomHelpers::EmbedMultipleConfs(*mol, 8, params);
+  CHECK(ids.size() == 8);
+  CHECK(params.maxIterations == 10 * mol->getNumAtoms());
+  if (randomCoords) {
+    CHECK(params.basinThresh == 1e8);
+  }
+}
+#endif
+

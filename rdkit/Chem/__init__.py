@@ -45,6 +45,14 @@ else:
   rdCoordGen.SetDefaultTemplateFileDir(templDir)
 
 if rdBase._wrapperType == 'boost':
+  from rdkit import __vect__iter__
+  from rdkit.Chem import rdmolops
+
+  rdchem.StereoGroup_vect.__iter__ = __vect__iter__
+  for name, object in vars(rdmolops).items():
+    if name.startswith('_vect') and hasattr(object, '__iter__'):
+      object.__iter__ = __vect__iter__
+
   # Github Issue #6208: boost::python iterators are slower than they should
   # (cause is that boost::python throws exceptions as actual C++ exceptions)
   class _GetRDKitObjIterator:
@@ -55,8 +63,7 @@ if rdBase._wrapperType == 'boost':
     def _getRDKitItem(self, i):
       raise NotImplementedError()
 
-    def __init__(self, mol):
-      self._mol = mol
+    def __init__(self):
       self._pos = 0
       self._size = self._sizeCalc()
 
@@ -79,26 +86,24 @@ if rdBase._wrapperType == 'boost':
       return ret
 
     def __iter__(self):
-      for i in range(0, len(self)):
+      for i in range(len(self)):
         self._pos = i
-        yield self[i]
+        if self._sizeCalc() != self._size:
+          raise RuntimeError('size changed during iteration')
+        yield self._getRDKitItem(i)
         self._pos = self._size
 
   class _GetAtomsIterator(_GetRDKitObjIterator):
-
-    def _sizeCalc(self):
-      return self._mol.GetNumAtoms()
-
-    def _getRDKitItem(self, i):
-      return self._mol.GetAtomWithIdx(i)
+    def __init__(self, mol):
+      self._sizeCalc = mol.GetNumAtoms
+      self._getRDKitItem = mol.GetAtomWithIdx
+      super().__init__()
 
   class _GetBondsIterator(_GetRDKitObjIterator):
-
-    def _sizeCalc(self):
-      return self._mol.GetNumBonds()
-
-    def _getRDKitItem(self, i):
-      return self._mol.GetBondWithIdx(i)
+    def __init__(self, mol):
+      self._sizeCalc = mol.GetNumBonds
+      self._getRDKitItem = mol.GetBondWithIdx
+      super().__init__()
 
   rdchem.Mol.GetAtoms = lambda self: _GetAtomsIterator(self)
   rdchem.Mol.GetAtoms.__doc__ = """returns an iterator over the atoms in the molecule"""

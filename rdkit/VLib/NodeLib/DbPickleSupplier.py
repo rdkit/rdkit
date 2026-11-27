@@ -21,7 +21,7 @@ if RDConfig.usePgSQL:
     having to use all of PgSQL's typechecking, we'll make a lot of
     assumptions about what's coming out of the Db and its layout.
     The results can lead to drastic improvements in performance.
-    
+
     """
 
     def __init__(self, cursor, cmd, pickleCol=1, depickle=1, klass=None):
@@ -112,7 +112,7 @@ if RDConfig.usePgSQL:
       self.rowCount = self.res.ntuples + 1
       self.idx = 0
       if self.res.nfields < 2:
-        raise ValueError('bad query result' % str(res))
+        raise ValueError(f'bad query result: {self.res}')
 
       return self
 
@@ -137,7 +137,7 @@ if RDConfig.usePgSQL:
         self.rowCount = self.res.ntuples + 1
         self.idx = 0
         if self.res.nfields < 2:
-          raise ValueError('bad query result' % str(res))
+          raise ValueError(f'bad query result: {self.res}')
 
       if idx < 0:
         idx = self.rowCount + idx
@@ -171,7 +171,7 @@ class DbPickleSupplyNode(SupplyNode):
 
   Sample Usage:
     >>> from rdkit.Dbase.DbConnection import DbConnect
-  
+
   """
 
   def __init__(self, cursor, cmd, binaryCol, **kwargs):

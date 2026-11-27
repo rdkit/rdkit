@@ -78,7 +78,7 @@ RDKit::INT_VECT LazyMaxMinPicks(MaxMinPicker *picker, python::object distFunc,
                                 int poolSize, int pickSize,
                                 python::object firstPicks, int seed,
                                 python::object useCache) {
-  if (useCache != python::object()) {
+  if (!useCache.is_none()) {
     BOOST_LOG(rdWarningLog)
         << "the useCache argument is deprecated and ignored" << std::endl;
   }
@@ -103,7 +103,7 @@ RDKit::INT_VECT LazyVectorMaxMinPicks(MaxMinPicker *picker, python::object objs,
                                       int poolSize, int pickSize,
                                       python::object firstPicks, int seed,
                                       python::object useCache) {
-  if (useCache != python::object()) {
+  if (!useCache.is_none()) {
     BOOST_LOG(rdWarningLog)
         << "the useCache argument is deprecated and ignored" << std::endl;
   }

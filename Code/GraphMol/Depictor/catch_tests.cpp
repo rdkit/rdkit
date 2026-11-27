@@ -373,8 +373,15 @@ TEST_CASE("templates are aware of E/Z stereochemistry") {
   params.useRingTemplates = true;
   RDDepict::compute2DCoords(*mol1, params);
   RDDepict::compute2DCoords(*mol2, params);
-  auto rmsd = MolAlign::getBestRMS(*mol1, *mol2);
-  CHECK(rmsd > 0.58);
+  // Check template acceptance directly against a template-free depiction.
+  // Comparing the two stereoisomers' overall RMSD also measures unrelated
+  // substituent placement and makes the cutoff sensitive to layout changes.
+  ROMol mol1WithoutTemplate(*mol1), mol2WithoutTemplate(*mol2);
+  params.useRingTemplates = false;
+  RDDepict::compute2DCoords(mol1WithoutTemplate, params);
+  RDDepict::compute2DCoords(mol2WithoutTemplate, params);
+  CHECK(MolAlign::getBestRMS(*mol1, mol1WithoutTemplate) > 0.1);
+  CHECK(MolAlign::getBestRMS(*mol2, mol2WithoutTemplate) < 1.e-4);
 }
 
 TEST_CASE("dative bonds and rings") {
@@ -2459,6 +2466,63 @@ TEST_CASE(
   CHECK(m->getNumConformers() == 1);
 }
 #endif
+
+TEST_CASE("attachments use the exterior gap larger than pi") {
+  auto side = GENERATE(-1.0, 1.0);
+  CAPTURE(side);
+  auto mol = "C(F)(Cl)(Br)C"_smiles;
+  REQUIRE(mol);
+  // Three bonds occupy a 90-degree sector. The fourth belongs in the free
+  // 270-degree sector, including when that gap crosses the atan2 branch cut.
+  RDGeom::INT_POINT2D_MAP coords{
+      {0, {0, 0}}, {1, {side, -1}}, {2, {side, 0}}, {3, {side, 1}}};
+  RDDepict::EmbeddedFrag fragment(mol.get(), coords);
+  fragment.addNonRingAtom(4, 0);
+  const auto &pos = fragment.GetEmbeddedAtom(4).loc;
+  CHECK(pos.x * side < 0);
+  CHECK(std::abs(pos.y) < 1.e-6);
+}
+
+TEST_CASE("crowding does not reverse a selected attachment gap") {
+  auto halfWidth = GENERATE(M_PI / 2, 5 * M_PI / 9);
+  CAPTURE(halfWidth);
+  auto mol = "P(F)(Cl)(Br)(CC)C"_smiles;
+  REQUIRE(mol);
+  const auto pointAt = [](double angle) {
+    return RDGeom::Point2D(std::cos(angle), std::sin(angle)) *
+           RDDepict::BOND_LEN;
+  };
+  const auto step = (2 * M_PI - 2 * halfWidth) / 3;
+  // The three existing bonds leave a 180- or 160-degree gap. Atom 5 crowds
+  // the first new position, but reversing would leave the selected gap.
+  RDGeom::INT_POINT2D_MAP coords{{0, {0, 0}},
+                                 {1, pointAt(-halfWidth)},
+                                 {2, pointAt(0)},
+                                 {3, pointAt(halfWidth)},
+                                 {5, pointAt(halfWidth + step) * 1.05}};
+  RDDepict::EmbeddedFrag fragment(mol.get(), coords);
+  for (auto atom : {4, 6}) {
+    fragment.addNonRingAtom(atom, 0);
+    const auto expected = pointAt(halfWidth + (atom == 4 ? 1 : 2) * step);
+    CHECK((fragment.GetEmbeddedAtom(atom).loc - expected).length() < 1.e-6);
+  }
+}
+
+TEST_CASE("attachments retain a direction chosen to avoid crowding") {
+  auto mol = "C(F)(Cl)(CC)C"_smiles;
+  REQUIRE(mol);
+  // Two opposite bonds leave either half-plane available. Atom 4 crowds
+  // the right side, so both remaining substituents should go to the left.
+  RDGeom::INT_POINT2D_MAP coords{
+      {0, {0, 0}}, {1, {0, -1.5}}, {2, {0, 1.5}}, {4, {1.3, 0.75}}};
+  RDDepict::EmbeddedFrag fragment(mol.get(), coords);
+  for (auto atom : {3, 5}) {
+    fragment.addNonRingAtom(atom, 0);
+    const RDGeom::Point2D expected(-std::sqrt(3.) * 0.75,
+                                   atom == 3 ? 0.75 : -0.75);
+    CHECK((fragment.GetEmbeddedAtom(atom).loc - expected).length() < 1.e-6);
+  }
+}
 
 TEST_CASE("canonical ordering") {
   auto useLegacy = GENERATE(true, false);
