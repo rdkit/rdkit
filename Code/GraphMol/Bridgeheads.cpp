@@ -86,9 +86,10 @@ std::vector<Bridgehead> findBridgeheads(
   // mark all bonds that are part of the shared rings
   const auto ringinfo = mol.getRingInfo();
   boost::dynamic_bitset<> bondsAreInSharedRings(mol.getNumBonds());
+  const auto bondRings = ringinfo->bondRings();
   for (const auto &[pr, sharedBonds] : ringPairs) {
     for (const auto pri : {pr.first, pr.second}) {
-      for (const auto bi : ringinfo->bondRings()[pri]) {
+      for (const auto bi : bondRings[pri]) {
         bondsAreInSharedRings.set(bi);
       }
     }
@@ -96,21 +97,23 @@ std::vector<Bridgehead> findBridgeheads(
 
   std::unordered_map<unsigned int, unsigned int> atomSharedRingBondCount;
   // lambda to count the number of shared ring bonds for at atom
-  auto getAtomSharedRingBondCount =
-      [&atomSharedRingBondCount, &bondsAreInSharedRings, &mol](
-          unsigned int ai, unsigned int i, unsigned int j) {
-        const auto &ringi = mol.getRingInfo()->bondRings()[i];
-        const auto &ringj = mol.getRingInfo()->bondRings()[j];
-        unsigned int ringBondCount = 0;
-        for (const auto bnd : mol.atomBonds(mol.getAtomWithIdx(ai))) {
-          if (bondsAreInSharedRings.test(bnd->getIdx()) &&
-              (std::ranges::find(ringi, bnd->getIdx()) != ringi.end() ||
-               std::ranges::find(ringj, bnd->getIdx()) != ringj.end())) {
-            ++ringBondCount;
-          }
-        }
-        return ringBondCount;
-      };
+  auto getAtomSharedRingBondCount = [&bondsAreInSharedRings, &mol](
+                                        unsigned int ai, unsigned int i,
+                                        unsigned int j) {
+    const auto bondRings = mol.getRingInfo()->bondRings();
+    const auto &ringi = bondRings[i];
+    const auto &ringj = bondRings[j];
+    unsigned int ringBondCount = 0;
+    for (const auto bnd : mol.atomBonds(mol.getAtomWithIdx(ai))) {
+      const auto bi = bnd->getIdx();
+      if (bondsAreInSharedRings.test(bi) &&
+          (std::ranges::find(ringi, bi) != ringi.end() ||
+           std::ranges::find(ringj, bi) != ringj.end())) {
+        ++ringBondCount;
+      }
+    }
+    return ringBondCount;
+  };
 
   const auto atomRings = mol.getRingInfo()->atomRings();
   std::vector<Bridgehead> bridgeheads;
