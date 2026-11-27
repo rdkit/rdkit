@@ -1298,6 +1298,9 @@ std::vector<double> calcAdjMatrixDescs(const ROMol &mol) {
 }
 
 std::vector<double> calcAdjMatrixDescsL(const ROMol &mol) {
+  if(mol.getNumAtoms() == 0) {
+    return std::vector<double>(12, std::numeric_limits<double>::quiet_NaN());
+  }
   auto AdjMat =
       calculateAdjacencyMatrixL(mol);  // Use LAPACK-compatible adjacency matrix
 
