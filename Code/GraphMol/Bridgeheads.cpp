@@ -73,13 +73,10 @@ findRingPairs(const ROMol &mol, unsigned int minCommonBonds,
 }
 }  // namespace details
 
-std::vector<Bridgehead> findBridgeheads(
-    const ROMol &mol, const std::vector<unsigned int> &onlyWithAtoms) {
-  // FIX: verify that SSSR is actually sufficient for bridgehead detection
-  if (!mol.getRingInfo()->isSssrOrBetter()) {
-    MolOps::findSSSR(mol);
-  }
+namespace {
 
+std::vector<Bridgehead> bridgeheadFinder(
+    const ROMol &mol, const std::vector<unsigned int> &onlyWithAtoms) {
   // find pairs of rings that share at least two bonds:
   const auto ringPairs = details::findRingPairs(mol, 2, onlyWithAtoms);
 
@@ -158,10 +155,26 @@ std::vector<Bridgehead> findBridgeheads(
   // Implementation for finding bridgeheads goes here
   return bridgeheads;
 }
+}  // namespace
+
+std::vector<Bridgehead> findBridgeheads(
+    ROMol &mol, const std::vector<unsigned int> &onlyWithAtoms) {
+  // We don't get a complete list of all of the bridghead pairs unless we have
+  // the symmetric set of smallest rings.
+  if (!mol.getRingInfo()->isSymmSssr()) {
+    MolOps::symmetrizeSSSR(mol);
+  }
+  return bridgeheadFinder(mol, onlyWithAtoms);
+}
 
 std::vector<unsigned int> findBridgeheadAtoms(
     const ROMol &mol, const std::vector<unsigned int> &onlyWithAtoms) {
-  auto bridgeheads = findBridgeheads(mol, onlyWithAtoms);
+  // We can find all of the bridgehead atoms with only the SSSR rings, we don't
+  // need the symmetric set
+  if (!mol.getRingInfo()->isSssrOrBetter()) {
+    MolOps::findSSSR(mol);
+  }
+  auto bridgeheads = bridgeheadFinder(mol, onlyWithAtoms);
   std::set<unsigned int> bridgeheadAtoms;
   for (const auto &bh : bridgeheads) {
     if (!onlyWithAtoms.empty()) {
