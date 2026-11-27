@@ -9,6 +9,7 @@
 //
 
 #include <RDGeneral/test.h>
+#include <GraphMol/MolOps.h>
 #include <GraphMol/RDKitBase.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
@@ -16,6 +17,8 @@
 #include <DataStructs/ExplicitBitVect.h>
 
 #include <RDGeneral/RDLog.h>
+
+#include <memory>
 #include <string>
 
 using namespace RDKit;
@@ -199,6 +202,27 @@ void testGithub8201() {
   delete fp;
 }
 
+void testCachedDistanceMatrix() {
+  BOOST_LOG(rdInfoLog)
+      << "testing ErG fingerprint after a distance matrix was cached"
+      << std::endl;
+  std::string smi = "C=C/C(C)=C/C[C@H]1OC1(C)C";
+  std::unique_ptr<ROMol> fresh(SmilesToMol(smi));
+  std::unique_ptr<ROMol> cached(SmilesToMol(smi));
+  TEST_ASSERT(fresh);
+  TEST_ASSERT(cached);
+  // populate the molecule-level computed distance-matrix cache:
+  MolOps::getDistanceMat(*cached);
+  std::unique_ptr<RDNumeric::DoubleVector> fp1(
+      ReducedGraphs::getErGFingerprint(*fresh));
+  std::unique_ptr<RDNumeric::DoubleVector> fp2(
+      ReducedGraphs::getErGFingerprint(*cached));
+  TEST_ASSERT(fp1->size() == fp2->size());
+  for (unsigned int i = 0; i < fp1->size(); ++i) {
+    TEST_ASSERT((*fp1)[i] == (*fp2)[i]);
+  }
+}
+
 int main(int argc, char *argv[]) {
   (void)argc;
   (void)argv;
@@ -207,5 +231,6 @@ int main(int argc, char *argv[]) {
   test2();
   testCanRetrieveProp();
   testGithub8201();
+  testCachedDistanceMatrix();
   return 0;
 }

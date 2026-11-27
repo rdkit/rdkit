@@ -207,6 +207,11 @@ ROMol *generateMolExtendedReducedGraph(
     getErGAtomTypes(mol, *atomTypes);
   }
   auto *res = new RWMol(mol);
+  // the copy inherits computed properties from the parent molecule, including
+  // a cached topological distance matrix.  The extended reduced graph has
+  // additional atoms, so that matrix is the wrong size and must not be reused
+  // (same reasoning as the clearComputedProps() call in addHs()):
+  res->clearComputedProps(false);
 
   const int aliphaticFlag = atomTypes->size() - 1;  // the last type
   const int aromaticFlag = atomTypes->size();
