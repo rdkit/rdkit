@@ -1177,7 +1177,7 @@ std::vector<unsigned int> findBridgeheadAtomsHelper(
 }
 
 std::vector<MolOps::Bridgehead> findBridgeheadsHelper(
-    const ROMol &mol, python::object onlyWithAtoms) {
+    ROMol &mol, python::object onlyWithAtoms) {
   auto onlyWithAtomsVect = pythonObjectToVect<unsigned int>(onlyWithAtoms);
   if (!onlyWithAtomsVect.get()) {
     onlyWithAtomsVect = std::make_unique<std::vector<unsigned int>>();
