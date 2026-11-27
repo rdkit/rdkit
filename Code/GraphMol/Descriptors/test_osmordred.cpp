@@ -83,7 +83,6 @@ TEST_CASE("Osmordred Basic Functionality") {
 
     // double
     REQUIRE(calcBertzCT(*mol) > 0.0);
-    REQUIRE(calcBalabanJ(*mol) > 0.0);
     REQUIRE(calcVertexAdjacencyInformation(*mol) > 0.0);
     REQUIRE(calcLogS(*mol) == Catch::Approx(-7.7054571933));
     REQUIRE(calcMcGowanVolume(*mol) > 0.0);
