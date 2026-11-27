@@ -41,10 +41,12 @@ jobs:
 
       - name: Configure
         run: |
+          # _GLIBCXX_SANITIZE_VECTOR annotates std::vector so ASan reports
+          # accesses between size() and capacity() (container-overflow).
           cmake -S . -B build/asan -G Ninja \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_C_FLAGS="-fsanitize=address -fsanitize-address-use-after-scope -fno-omit-frame-pointer" \
-            -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize-address-use-after-scope -fno-omit-frame-pointer" \
+            -DCMAKE_CXX_FLAGS="-fsanitize=address -fsanitize-address-use-after-scope -fno-omit-frame-pointer -D_GLIBCXX_SANITIZE_VECTOR" \
             -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address -shared-libasan" \
             -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=address -shared-libasan" \
             -DPython_EXECUTABLE="$PYTHON_EXECUTABLE" \
@@ -67,7 +69,9 @@ jobs:
 
       - name: Test
         env:
-          ASAN_OPTIONS: detect_leaks=0:halt_on_error=1
+          # check_initialization_order/strict_init_order: static initializers
+          # that read globals from another TU before those are initialized.
+          ASAN_OPTIONS: detect_leaks=0:halt_on_error=1:check_initialization_order=1:strict_init_order=1
           MPLBACKEND: Agg
           LD_LIBRARY_PATH: ${{ github.workspace }}/lib
           PYTHONPATH: ${{ github.workspace }}
