@@ -428,8 +428,8 @@ void readConformer(Conformer *conf, const bj::value &confVal) {
     if (arr.size() != dim) {
       throw FileParseException("coordinate contains wrong number of values");
     }
-    RDGeom::Point3D pt(arr[0].as_double(), arr[1].as_double(),
-                       (dim == 3 ? arr[2].as_double() : 0.0));
+    RDGeom::Point3D pt(arr[0].to_number<double>(), arr[1].to_number<double>(),
+                       (dim == 3 ? arr[2].to_number<double>() : 0.0));
     conf->setAtomPos(idx++, pt);
   }
   if (idx != conf->getNumAtoms()) {

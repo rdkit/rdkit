@@ -510,3 +510,52 @@ TEST_CASE("github #8460: MolToJSON does not handle atropisomers") {
     }
   }
 }
+
+TEST_CASE("JSON conformer coordinates accept numeric representations",
+          "[json-coordinate-numbers]") {
+  const auto dim = GENERATE(2, 3);
+  const auto number =
+      GENERATE(std::string("0"), std::string("-2"), std::string("1.25"),
+               std::string("1e0"), std::string("1.0"),
+               std::string("9223372036854775808"));
+  CAPTURE(dim, number);
+  auto mol = "CC"_smiles;
+  REQUIRE(mol);
+  auto json = MolInterchange::MolToJSONData(*mol);
+  const auto coords = "[" + number + "," + number +
+                      (dim == 3 ? "," + number : "") + "],[3.5,-4.5" +
+                      (dim == 3 ? ",1e-3" : "") + "]";
+  json.insert(json.find("\"atoms\":"),
+              "\"conformers\":[{\"dim\":" + std::to_string(dim) +
+                  ",\"coords\":[" + coords + "]}],");
+  const auto mols = MolInterchange::JSONDataToMols(json);
+  REQUIRE(mols.size() == 1);
+  CHECK(MolToSmiles(*mols[0]) == "CC");
+  REQUIRE(mols[0]->getNumConformers() == 1);
+  const auto &conf = mols[0]->getConformer();
+  CHECK(conf.is3D() == (dim == 3));
+  CHECK(conf.getAtomPos(0).x == std::stod(number));
+  CHECK(conf.getAtomPos(0).y == std::stod(number));
+  CHECK(conf.getAtomPos(0).z == (dim == 3 ? std::stod(number) : 0.0));
+  CHECK(conf.getAtomPos(1).x == 3.5);
+  CHECK(conf.getAtomPos(1).y == -4.5);
+  CHECK(conf.getAtomPos(1).z == (dim == 3 ? 0.001 : 0.0));
+}
+
+TEST_CASE("JSON conformer coordinates reject non-numeric values",
+          "[json-coordinate-numbers]") {
+  const auto value =
+      GENERATE(std::string("true"), std::string("false"), std::string("null"),
+               std::string("\"0\""), std::string("[]"), std::string("{}"));
+  const auto axis = GENERATE(0, 1, 2);
+  CAPTURE(value, axis);
+  auto mol = "C"_smiles;
+  REQUIRE(mol);
+  auto json = MolInterchange::MolToJSONData(*mol);
+  std::vector<std::string> xyz = {"0.0", "0.0", "0.0"};
+  xyz[axis] = value;
+  json.insert(json.find("\"atoms\":"),
+              "\"conformers\":[{\"dim\":3,\"coords\":[[" + xyz[0] + "," +
+                  xyz[1] + "," + xyz[2] + "]]}],");
+  CHECK_THROWS(MolInterchange::JSONDataToMols(json));
+}
