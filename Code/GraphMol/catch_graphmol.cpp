@@ -5397,3 +5397,17 @@ M  END)CTAB"_ctab;
     CHECK(m->getAtomWithIdx(4)->getTotalNumHs(false) == 0);
   }
 }
+
+TEST_CASE("DATIVEONE bond valence contribution") {
+  SECTION("basics") {
+    auto m = "[NH3]->[Cu]"_smiles;
+    REQUIRE(m);
+    auto b = m->getBondBetweenAtoms(0, 1);
+    REQUIRE(b->getBondType() == Bond::DATIVE);
+    CHECK(b->getValenceContrib(b->getBeginAtom()) == 0.0);
+    CHECK(b->getValenceContrib(b->getEndAtom()) == 2.0);
+    b->setBondType(Bond::BondType::DATIVEONE);
+    CHECK(b->getValenceContrib(b->getBeginAtom()) == 0.0);
+    CHECK(b->getValenceContrib(b->getEndAtom()) == 1.0);
+  }
+}
