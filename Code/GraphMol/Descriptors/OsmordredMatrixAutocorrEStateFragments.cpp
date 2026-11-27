@@ -3684,7 +3684,8 @@ std::vector<double> calcInformationContent(
   if (nAtoms == 0) {
     BOOST_LOG(rdWarningLog)
         << "Error: Molecule has no atoms after adding hydrogens." << std::endl;
-    return nans(42);
+    int singleoutputsize = options.maxradius + 1;
+    return nans(7*singleoutputsize);
   }
 
   double nBonds = 0.;
@@ -3700,7 +3701,8 @@ std::vector<double> calcInformationContent(
   if (CN.empty()) {
     BOOST_LOG(rdWarningLog)
         << "Error: ComputePipeline returned empty CN." << std::endl;
-    return nans(42);
+    int singleoutputsize = options.maxradius + 1;
+    return nans(7*singleoutputsize);
   }
 
   return ShannonEntropies(CN, options.maxradius, log2nA, log2nB, nAtoms);
