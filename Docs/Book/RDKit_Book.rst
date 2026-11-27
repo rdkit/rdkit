@@ -682,8 +682,6 @@ Here's some code demonstrating that (and acting as a test):
   rdkit.Chem.rdchem.ChiralType.CHI_TETRAHEDRAL_CW
 
 
-
-
 Ring Finding and SSSR
 =====================
 
@@ -699,6 +697,27 @@ Because it is sometimes useful to know the "true" SSSR rings, there is a :py:fun
 For situations where you just care about knowing whether or not atoms/bonds are in rings, the RDKit provides the function
 :py:func:`rdkit.Chem.rdmolops.FastFindRings`. This does a depth-first traversal of the molecule graph and identifies atoms and bonds that
 are in rings.
+
+
+Bridgehead Atoms
+================
+
+A bridgehead is defined by two smallest rings that share at least two bonds and
+two bridgehead atoms that are members of those rings and which each have at
+least three ring bonds from the shared rings.
+
+Here's norbornane with the bridgehead atoms (2 and 5) and bonds shared between the rings highlighted.
+
+.. image:: images/bridgeheads.1.png
+
+The left part of the image below shows adamantane, with all of the atoms involved in bridgeheads highlighted. 
+In this case, there are six pairs of atoms defining bridgeheads: ``(1, 3), (1, 5), (1, 7), (3, 5), (3, 7), (5, 7)``
+
+.. image:: images/bridgeheads.2.png
+
+Cubane, shown on the right, has no bridgehead atoms since all of the pairs of
+smallest rings only share one bond.
+
 
 Stereochemistry
 ===============
