@@ -92,6 +92,12 @@ struct RDKIT_DEPICTOR_EXPORT Compute2DCoordParameters {
                                   //!< generating initial coordinates
   bool usePathAngleExpansion = true;  //!< use path angle expansion for
                                        //!< collision resolution
+  bool useBranchDepthPrioritization = true;
+  //!< Prefer deeper acyclic branches while constructing the initial zig-zag
+  //!< layout. This tends to draw the longest path as a visually continuous
+  //!< chain. Enabled by default; set this to false to retain the historical
+  //!< rank-based branch ordering. Explicit random-sampling settings take
+  //!< precedence and may change the prioritized layout.
 };
 
 //! \brief Generate 2D coordinates (a depiction) for a molecule
@@ -141,6 +147,9 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(
   \param useRingTemplates whether to use ring system templates for generating
       initial coordinates
 
+  \param useBranchDepthPrioritization prefer deeper acyclic branches in the
+      initial layout; enabled by default. Set to false for historical ordering.
+
   \return ID of the conformation added to the molecule containing the
   2D coordinates
 
@@ -150,7 +159,7 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(
     bool canonOrient = false, bool clearConfs = true,
     unsigned int nFlipsPerSample = 0, unsigned int nSamples = 0,
     int sampleSeed = 0, bool permuteDeg4Nodes = false, bool forceRDKit = false,
-    bool useRingTemplates = false);
+    bool useRingTemplates = false, bool useBranchDepthPrioritization = true);
 
 //! \brief Compute the 2D coordinates such the interatom distances
 ///  mimic those in a distance matrix
@@ -199,6 +208,10 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoords(
   \param forceRDKit - use RDKit to generate coordinates even if
         preferCoordGen is set to true
 
+  \param useBranchDepthPrioritization - prefer deeper acyclic branches while
+        constructing the initial zig-zag layout. Explicit random-sampling
+        settings still run and may change the prioritized layout.
+
   \return ID of the conformation added to the molecule containing the
   2D coordinates
 
@@ -208,7 +221,8 @@ RDKIT_DEPICTOR_EXPORT unsigned int compute2DCoordsMimicDistMat(
     RDKit::ROMol &mol, const DOUBLE_SMART_PTR *dmat = nullptr,
     bool canonOrient = true, bool clearConfs = true, double weightDistMat = 0.5,
     unsigned int nFlipsPerSample = 3, unsigned int nSamples = 100,
-    int sampleSeed = 25, bool permuteDeg4Nodes = true, bool forceRDKit = false);
+    int sampleSeed = 25, bool permuteDeg4Nodes = true, bool forceRDKit = false,
+    bool useBranchDepthPrioritization = true);
 
 struct RDKIT_DEPICTOR_EXPORT ConstrainedDepictionParams {
   //! if false (default), a DepictException is thrown if the molecule
