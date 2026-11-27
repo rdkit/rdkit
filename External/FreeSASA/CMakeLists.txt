@@ -12,7 +12,7 @@ endif()
 
 if(needDownload)
   # don't actually use the md5 here
-  set(FREESASA_VERSION "2.0.3")
+  set(FREESASA_VERSION "2.1.4")
   set(FREESASA_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/freesasa-${FREESASA_VERSION}")
   if(NOT EXISTS "${FREESASA_SRC_DIR}/src")
     downloadAndCheckMD5("https://github.com/mittinatten/freesasa/releases/download/${FREESASA_VERSION}/freesasa-${FREESASA_VERSION}.tar.gz"
