@@ -5,8 +5,8 @@ CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/versions.h.cmake
 CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/RDConfig.h.cmake
         ${CMAKE_CURRENT_SOURCE_DIR}/RDConfig.h)
 
-FetchContent_MakeAvailable(better_enums)
 if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/enum.h)
+    FetchContent_MakeAvailable(better_enums)
     file(COPY ${better_enums_SOURCE_DIR}/enum.h DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})
 endif (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/enum.h)
 
