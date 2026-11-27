@@ -2309,7 +2309,7 @@ std::unordered_set<int> findLinkersWithBFS(
   }
 
   // Perform BFS for each pair of fused rings
-  std::vector<std::vector<int>> atomRings = ringInfo.atomRings();
+  const auto &atomRings = ringInfo.atomRings();
   for (unsigned int i = 0; i < atomRings.size(); ++i) {
     for (unsigned int j = i + 1; j < atomRings.size(); ++j) {
       // Identify start atoms (non-ring neighbors of the first ring)
@@ -2370,7 +2370,7 @@ double calcFramework(OsmordredContext &ctx) {
   std::unordered_set<int> ringAtoms;
 
   // Collect all atoms that are part of rings
-  std::vector<std::vector<int>> atomRings = ringInfo.atomRings();
+  const auto &atomRings = ringInfo.atomRings();
   for (const auto &ring : atomRings) {
     for (int atom : ring) {
       ringAtoms.insert(atom);
