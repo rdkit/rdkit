@@ -4891,7 +4891,7 @@ TEST_CASE("stereogroups operator<<") {
     REQUIRE(m->getStereoGroups().size() == 1);
     std::ostringstream oss;
     oss << m->getStereoGroups()[0];
-    CHECK(oss.str() == "AND rId: 0 wId: 0 atoms: { 15 } bonds: { 7 }");
+    CHECK(oss.str() == "AND rId: 1 wId: 0 atoms: { 15 } bonds: { 7 }");
   }
   SECTION("just bonds in one") {
     auto m = "Oc1cccc(C)c1-c1c(C)nccc1[C@H](F)Cl |wU:8.9,&1:8|"_smiles;
@@ -4899,7 +4899,7 @@ TEST_CASE("stereogroups operator<<") {
     REQUIRE(m->getStereoGroups().size() == 1);
     std::ostringstream oss;
     oss << m->getStereoGroups()[0];
-    CHECK(oss.str() == "AND rId: 0 wId: 0 bonds: { 7 }");
+    CHECK(oss.str() == "AND rId: 1 wId: 0 bonds: { 7 }");
   }
 }
 

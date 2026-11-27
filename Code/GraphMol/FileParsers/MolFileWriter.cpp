@@ -1111,52 +1111,78 @@ const std::string GetV3000MolFileBondLine(
   return ss.str();
 }
 
+namespace {
+void appendStereoCollection(std::string &res, const StereoGroup &group,
+                            const std::vector<unsigned int> &ids, bool bonds) {
+  std::string line = bonds ? "M  V30 MDLV30/STEB" : "M  V30 MDLV30/STE";
+  switch (group.getGroupType()) {
+    case StereoGroupType::STEREO_ABSOLUTE:
+      line += "ABS";
+      break;
+    case StereoGroupType::STEREO_OR:
+      line += "REL" + std::to_string(group.getWriteId());
+      break;
+    case StereoGroupType::STEREO_AND:
+      line += "RAC" + std::to_string(group.getWriteId());
+      break;
+  }
+  line += bonds ? " BONDS=(" : " ATOMS=(";
+  line += std::to_string(ids.size());
+  for (auto idx : ids) {
+    line += ' ';
+    const auto number = std::to_string(idx + 1);
+    if (line.size() + number.size() >= 78) {
+      res += line + "-\n";
+      line = "M  V30 ";
+    }
+    line += number;
+  }
+  res += line + ")\n";
+}
+}  // namespace
+
 void appendEnhancedStereoGroups(
     std::string &res, const ROMol &tmol,
     std::map<int, std::unique_ptr<Chirality::WedgeInfoBase>> &wedgeBonds) {
-  if (!tmol.getStereoGroups().empty()) {
-    auto stereo_groups = tmol.getStereoGroups();
-    assignStereoGroupIds(stereo_groups);
-    res += "M  V30 BEGIN COLLECTION\n";
-    std::string tmp;
-    tmp.reserve(80);
-    for (auto &&group : stereo_groups) {
-      tmp += "M  V30 MDLV30/";
-      switch (group.getGroupType()) {
-        case RDKit::StereoGroupType::STEREO_ABSOLUTE:
-          tmp += "STEABS";
-          break;
-        case RDKit::StereoGroupType::STEREO_OR:
-          tmp += "STEREL";
-          tmp += std::to_string(group.getWriteId());
-          break;
-        case RDKit::StereoGroupType::STEREO_AND:
-          tmp += "STERAC";
-          tmp += std::to_string(group.getWriteId());
-          break;
+  auto groups = tmol.getStereoGroups();
+  if (groups.empty()) {
+    return;
+  }
+  assignStereoGroupIds(groups);
+  res += "M  V30 BEGIN COLLECTION\n";
+  for (const auto &group : groups) {
+    std::vector<unsigned int> bondIds;
+    std::vector<Bond *> axisBonds;
+    for (auto bond : group.getBonds()) {
+      if (bond->getBondType() == Bond::DOUBLE) {
+        bondIds.push_back(bond->getIdx());
+      } else {
+        axisBonds.push_back(bond);
       }
-      tmp += " ATOMS=(";
-
-      std::vector<unsigned int> atomIds;
+    }
+    std::vector<unsigned int> atomIds;
+    if (bondIds.empty()) {
       Atropisomers::getAllAtomIdsForStereoGroup(tmol, group, atomIds,
                                                 wedgeBonds);
-
-      tmp += std::to_string(atomIds.size());
-      for (auto &&atom : atomIds) {
-        tmp += ' ';
-        // atoms are 1 indexed in molfiles
-        auto idxStr = std::to_string(atom + 1);
-        if (tmp.size() + idxStr.size() >= 78) {
-          res += tmp + "-\n";
-          tmp = "M  V30 ";
-        }
-        tmp += idxStr;
-      }
-      res += tmp + ")\n";
-      tmp.clear();
+      appendStereoCollection(res, group, atomIds, false);
+      continue;
     }
-    res += tmp + "M  V30 END COLLECTION\n";
+    if (!group.getAtoms().empty() || !axisBonds.empty()) {
+      if (group.getGroupType() != StereoGroupType::STEREO_ABSOLUTE) {
+        throw ValueErrorException(
+            "Writing a relative V3000 stereo group containing both double "
+            "bonds and other stereo elements is not supported");
+      }
+      // RDKit holds all absolute stereo in one group. Only the axes use
+      // the legacy atom-numbered representation.
+      StereoGroup atomGroup(group.getGroupType(), group.getAtoms(), axisBonds);
+      Atropisomers::getAllAtomIdsForStereoGroup(tmol, atomGroup, atomIds,
+                                                wedgeBonds);
+      appendStereoCollection(res, group, atomIds, false);
+    }
+    appendStereoCollection(res, group, bondIds, true);
   }
+  res += "M  V30 END COLLECTION\n";
 }
 namespace FileParserUtils {
 std::string getV3000CTAB(const ROMol &tmol,
