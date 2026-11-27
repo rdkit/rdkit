@@ -162,7 +162,7 @@ class TestOsmordred(unittest.TestCase):
         self.assertGreater(len(wiener_list), 0)
         
         # Test Balaban J index
-        balaban_j = rdMD.CalcBalabanJ(self.ethanol)
+        balaban_j = rdMD.CalcBalabanJUnweighted(self.ethanol)
         self.assertGreater(balaban_j, 0)
         
         # Test Bertz CT index
