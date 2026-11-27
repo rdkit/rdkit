@@ -19,6 +19,7 @@
 #include <GraphMol/FileParsers/FileParsers.h>
 #include <GraphMol/SmilesParse/SmilesParse.h>
 #include <GraphMol/SmilesParse/SmilesWrite.h>
+#include <GraphMol/SmilesParse/SmartsWrite.h>
 
 using namespace RDKit;
 TEST_CASE("Github #6312: space overhead of serializing properties") {
@@ -704,6 +705,17 @@ $$$$
   CHECK(v3kMolBlock.find(
             "M  V30 1 SUP 1 ATOMS=(1 128) XBONDS=(1 257) LABEL=Generic") !=
         std::string::npos);
+}
+
+TEST_CASE("joint-ring pickling") {
+  auto mol = "CCCC |jr:0,1,jr:2,-3|"_smarts;
+  REQUIRE(mol);
+
+  std::string pickle;
+  MolPickler::pickleMol(*mol, pickle);
+  RWMol pickledMol(pickle);
+
+  CHECK(MolToCXSmarts(pickledMol) == "[C&R][C&R][C&R][C&R] |jr:0,1,jr:2,-3|");
 }
 
 TEST_CASE("OOB read in depickling") {

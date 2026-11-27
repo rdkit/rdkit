@@ -17,6 +17,7 @@
 #include <GraphMol/Atropisomers.h>
 #include <GraphMol/Chirality.h>
 #include <GraphMol/MolOps.h>
+#include <GraphMol/JointRing.h>
 
 #include "SmilesWrite.h"
 #include "SmilesParse.h"
@@ -583,6 +584,63 @@ bool parse_unsaturation(Iterator &first, Iterator last, RDKit::RWMol &mol,
       ++first;
     }
   }
+  return true;
+}
+
+template <typename Iterator>
+bool parse_atoms_in_joint_rings(Iterator &first, Iterator last,
+                                RDKit::RWMol &mol,
+                                const unsigned int startAtomIdx,
+                                unsigned int &jrCounter) {
+  // these look like this: |jr:0,2,-3| meaning that atom 0 and 2 should be in
+  // the same ring but not -3
+  if (first >= last || *first != 'j' || first + 1 >= last ||
+      *(first + 1) != 'r') {
+    return false;
+  }
+  first += 2;
+  // check that we can read at least two more characters:
+  if (first >= last || *first != ':') {
+    return false;
+  }
+  ++first;
+
+  while (first < last && ((*first >= '0' && *first <= '9') || *first == '-')) {
+    bool excludeAtom = false;
+    if (*first == '-') {
+      excludeAtom = true;
+      first++;
+    }
+    unsigned int atomIdx;
+    if (!read_int(first, last, atomIdx)) {
+      return false;
+    }
+
+    if (VALID_ATIDX(atomIdx)) {
+      auto atom = mol.getAtomWithIdx(atomIdx - startAtomIdx);
+
+      JointRingIds element;
+      if (!atom->getPropIfPresent(common_properties::_CXJointRingIDs,
+                                  element)) {
+        if (!atom->hasQuery()) {
+          atom = QueryOps::replaceAtomWithQueryAtom(&mol, atom);
+        }
+        atom->expandQuery(makeAtomInRingQuery(), Queries::COMPOSITE_AND);
+      }
+
+      if (excludeAtom) {
+        element.excluded.emplace_back(jrCounter);
+      } else {
+        element.joint.emplace_back(jrCounter);
+      }
+      atom->setProp(common_properties::_CXJointRingIDs, element);
+    }
+
+    if (first < last && *first == ',') {
+      ++first;
+    }
+  }
+  ++jrCounter;
   return true;
 }
 
@@ -1429,6 +1487,7 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol,
   ++first;
   unsigned int nSGroups = 0;
   unsigned int confIndex = 0;
+  unsigned int jrCounter = 0;
   while (first < last && *first != '|') {
     typename Iterator::difference_type length = std::distance(first, last);
     if (*first == '(') {
@@ -1499,6 +1558,11 @@ bool parse_it(Iterator &first, Iterator last, RDKit::RWMol &mol,
       }
     } else if (*first == 'u') {
       if (!parse_unsaturation(first, last, mol, startAtomIdx)) {
+        return false;
+      }
+    } else if (*first == 'j' && first + 1 < last && first[1] == 'r') {
+      if (!parse_atoms_in_joint_rings(first, last, mol, startAtomIdx,
+                                      jrCounter)) {
         return false;
       }
     } else if (*first == 's') {
@@ -1648,6 +1712,42 @@ std::string quote_string(const std::string &txt,
     } else {
       res += c;
     }
+  }
+  return res;
+}
+
+std::string get_joint_ring_atoms(const ROMol &mol,
+                                 const std::vector<unsigned int> &atomOrder) {
+  std::vector<JointRingConstraint> jointRings = collectJRConstraints(mol);
+
+  std::vector<unsigned int> revOrder(mol.getNumAtoms(), atomOrder.size());
+  for (unsigned int i = 0; i < atomOrder.size(); ++i) {
+    revOrder[atomOrder[i]] = i;
+  }
+
+  std::string res;
+  for (const auto &[joint, excluded] : jointRings) {
+    std::vector<std::string> atoms;
+    const auto addAtomStrings = [&](const auto &indices,
+                                    bool excluded = false) {
+      for (auto atomIdx : indices) {
+        if (atomIdx < revOrder.size() && revOrder[atomIdx] < atomOrder.size()) {
+          atoms.push_back((excluded ? "-" : "") +
+                          std::to_string(revOrder[atomIdx]));
+        }
+      }
+    };
+    addAtomStrings(joint);
+    addAtomStrings(excluded, true);
+    if (atoms.size()) {
+      res += "jr:";
+      for (const auto &str : atoms) {
+        res += str + ",";
+      }
+    }
+  }
+  if (!res.empty()) {
+    res.pop_back();
   }
   return res;
 }
@@ -2589,6 +2689,10 @@ std::string getCXExtensions(const ROMol &mol, std::uint32_t flags) {
   if (flags & SmilesWrite::CXSmilesFields::CX_ATOM_PROPS) {
     const auto atomblock = get_atom_props_block(mol, atomOrder);
     appendToCXExtension(atomblock, res);
+  }
+
+  if (flags & SmilesWrite::CXSmilesFields::CX_JOINT_RING_ATOMS) {
+    appendToCXExtension(get_joint_ring_atoms(mol, atomOrder), res);
   }
 
   const Conformer *conf = nullptr;

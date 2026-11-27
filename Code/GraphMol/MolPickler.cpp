@@ -24,6 +24,7 @@
 #include <cstdint>
 #include <string_view>
 #include <boost/algorithm/string.hpp>
+#include <GraphMol/JointRing.h>
 
 #ifdef RDK_BUILD_THREADSAFE_SSS
 #include <mutex>
@@ -35,7 +36,7 @@ using std::uint32_t;
 namespace RDKit {
 
 constexpr int32_t MolPickler::versionMajor = 16;
-constexpr int32_t MolPickler::versionMinor = 4;
+constexpr int32_t MolPickler::versionMinor = 5;
 constexpr int32_t MolPickler::versionPatch = 0;
 constexpr int32_t MolPickler::endianId = 0xDEADBEEF;
 
@@ -402,6 +403,44 @@ template RDKIT_GRAPHMOL_EXPORT QueryDetails getQueryDetails<RDKit::Bond>(
 }  // namespace PicklerOps
 
 namespace {
+
+inline unsigned int getMaxId(const JointRingIds &ids) {
+  unsigned int maxId = 0;
+  if (ids.joint.size()) {
+    maxId = std::max(*std::ranges::max_element(ids.joint), maxId);
+  }
+  if (ids.excluded.size()) {
+    maxId = std::max(*std::ranges::max_element(ids.excluded), maxId);
+  }
+  return maxId;
+}
+
+void pickleJointRingQ(std::ostream &ss, const Atom *atom) {  // TODO implemnt
+  if (!atom->hasProp(common_properties::_CXJointRingIDs)) {
+    return;
+  }
+  const auto &jrIndices = rdvalue_cast<const JointRingIds &>(
+      atom->getDict().getRDValue(common_properties::_CXJointRingIDs));
+  streamWrite(ss, MolPickler::QUERY_JOINTRINGS);
+  streamWrite(ss, getMaxId(jrIndices));
+  streamWriteVec(ss, rdvalue_cast<std::vector<unsigned int>>(jrIndices.joint));
+  streamWriteVec(ss,
+                 rdvalue_cast<std::vector<unsigned int>>(jrIndices.excluded));
+}
+
+void unpickleJointRingQ(std::istream &ss, Atom *atom) {
+  JointRingIds elem;
+  unsigned int maxId;
+  streamRead(ss, maxId);
+  streamReadVec(ss, elem.joint);
+  streamReadVec(ss, elem.excluded);
+  // ensuring that we don't get larger ring
+  // ids than expected
+  CHECK_INVARIANT(getMaxId(elem) <= maxId,
+                  "Unpickling JR constraints: corrupted ring ids");
+  atom->setProp(common_properties::_CXJointRingIDs, std::move(elem));
+}
+
 template <class T>
 void pickleQuery(std::ostream &ss, const Query<int, T const *, true> *query) {
   PRECONDITION(query, "no query");
@@ -1766,6 +1805,7 @@ void MolPickler::_pickleAtom(std::ostream &ss, const Atom *atom) {
   if (atom->hasQuery()) {
     streamWrite(ss, BEGINQUERY);
     pickleQuery(ss, static_cast<const QueryAtom *>(atom)->getQuery());
+    pickleJointRingQ(ss, atom);
     streamWrite(ss, ENDQUERY);
   }
   if (getAtomMapNumber(atom, tmpInt)) {
@@ -1954,6 +1994,10 @@ Atom *MolPickler::_addAtomFromPickle(std::istream &ss, ROMol *mol,
     }
     static_cast<QueryAtom *>(atom)->setQuery(unpickleQuery(ss, atom, version));
     streamRead(ss, tag, version);
+    if (version >= 16050 && tag == QUERY_JOINTRINGS) {
+      unpickleJointRingQ(ss, atom);
+      streamRead(ss, tag, version);
+    }
     if (tag != ENDQUERY) {
       throw MolPicklerException("Bad pickle format: ENDQUERY tag not found.");
     }

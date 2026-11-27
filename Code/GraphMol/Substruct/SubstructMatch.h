@@ -27,6 +27,7 @@
 #endif
 
 #include <GraphMol/StereoGroup.h>
+#include <GraphMol/JointRing.h>
 
 namespace RDKit {
 class ROMol;
@@ -273,6 +274,9 @@ class RDKIT_SUBSTRUCTMATCH_EXPORT MolMatchFinalCheckFunctor {
   const ROMol &d_mol;
   const SubstructMatchParameters &d_params;
   std::unordered_map<unsigned int, StereoGroup const *> d_molStereoGroups;
+
+  std::vector<JointRingConstraint> d_jointRingAtoms;
+
 #ifdef RDK_INTERNAL_BITSET_HAS_HASH
   // Boost 1.71 added support for std::hash with dynamic_bitset.
   using HashedStorageType = boost::dynamic_bitset<>;
@@ -281,6 +285,9 @@ class RDKIT_SUBSTRUCTMATCH_EXPORT MolMatchFinalCheckFunctor {
   using HashedStorageType = std::string;
 #endif
   std::unordered_set<HashedStorageType> matchesSeen;
+
+  bool checkJointRings(
+      const std::span<const std::uint32_t> queryToMolAtomIndices);
 };
 
 struct RDKIT_SUBSTRUCTMATCH_EXPORT AtomCoordsMatchFunctor {
@@ -289,7 +296,9 @@ struct RDKIT_SUBSTRUCTMATCH_EXPORT AtomCoordsMatchFunctor {
   double d_tol2 = 1e-8;  //< squared distance tolerance
   AtomCoordsMatchFunctor(int refConfId = -1, int queryConfId = -1,
                          double tol = 1e-4)
-      : d_refConfId(refConfId), d_queryConfId(queryConfId), d_tol2(tol * tol){};
+      : d_refConfId(refConfId),
+        d_queryConfId(queryConfId),
+        d_tol2(tol * tol) {};
 
   bool operator()(const Atom &queryAtom, const Atom &targetAtom) const;
 };

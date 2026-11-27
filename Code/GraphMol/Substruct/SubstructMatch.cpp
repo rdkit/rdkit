@@ -15,6 +15,7 @@
 #include <GraphMol/Resonance.h>
 #include <GraphMol/MolBundle.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/JointRing.h>
 
 #include "SubstructMatch.h"
 #include "SubstructUtils.h"
@@ -34,6 +35,7 @@
 #include "vf2.hpp"
 
 namespace RDKit {
+
 namespace detail {
 
 namespace {
@@ -184,17 +186,75 @@ MolMatchFinalCheckFunctor::MolMatchFinalCheckFunctor(
       }
     }
   }
+  d_jointRingAtoms = collectJRConstraints(query);
+}
+
+bool MolMatchFinalCheckFunctor::checkJointRings(
+    const std::span<const std::uint32_t> queryToMolAtomIndices) {
+  auto rInfo = d_mol.getRingInfo();
+  const auto atomRings = [&rInfo,
+                          &queryToMolAtomIndices](unsigned int qAtomIdx) {
+    return rInfo->atomMembers(queryToMolAtomIndices[qAtomIdx]);
+  };  // ring indices of the atom in mol where aAtomIdx would be mapped to
+
+  for (auto &[joint, excluded] : d_jointRingAtoms) {
+    if (joint.empty()) {
+      continue;
+    }
+    // 1. The intersection of rings for all joint atoms must NOT be empty:
+    // $J_i$: $R_i:=\bigcap_{a_j\in A_i}SSR(a_j)$
+    // we can do this with bit-logic => \cap <=> &
+    // 2. The intersetion between the rings of every excluded atom and the
+    // joint rings must BE empty:
+    // $\neg J_i$: \forall a_i \in J_i: $R_i \cap SSR(a_j)=\emptyset$
+
+    // collecting all rings for all jr atoms might be a bit an overhead for
+    // atoms with many rings, therefore, we do it atom wise => test all rings
+    // for one atoms (using the one with the least ring members should be the
+    // most efficent)
+
+    const auto refAtom =
+        std::ranges::min_element(joint, {}, [&atomRings](const auto qAtomIdx) {
+          return atomRings(qAtomIdx).size();
+        });
+
+    bool jointRingExists = false;
+    for (const auto ringIdx : atomRings(*refAtom)) {
+      const auto containsRing = [&atomRings, ringIdx](const auto qAtomIdx) {
+        return std::ranges::binary_search(atomRings(qAtomIdx), ringIdx);
+      };
+
+      if (!std::ranges::all_of(joint, containsRing)) {
+        continue;
+      }
+
+      jointRingExists = true;
+
+      if (std::ranges::any_of(excluded, containsRing)) {
+        return false;
+      }
+    }
+
+    if (!jointRingExists) {
+      return false;
+    }
+  }
+  return true;
 }
 
 bool MolMatchFinalCheckFunctor::operator()(const std::uint32_t q_c[],
                                            const std::uint32_t m_c[]) {
-  if (d_params.extraFinalCheck || d_params.useGenericMatchers) {
+  if (d_params.extraFinalCheck || d_params.useGenericMatchers ||
+      d_jointRingAtoms.size()) {
     const std::span<const std::uint32_t> aids(m_c, d_query.getNumAtoms());
     if (d_params.useGenericMatchers &&
         !GenericGroups::genericAtomMatcher(d_mol, d_query, aids)) {
       return false;
     }
     if (d_params.extraFinalCheck && !d_params.extraFinalCheck(d_mol, aids)) {
+      return false;
+    }
+    if (d_jointRingAtoms.size() && !checkJointRings(aids)) {
       return false;
     }
   }
