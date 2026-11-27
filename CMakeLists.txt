@@ -73,6 +73,7 @@ option(RDK_BUILD_YAEHMOP_SUPPORT "build support for the YAeHMOP wrapper" OFF)
 option(RDK_BUILD_XYZ2MOL_SUPPORT "build in support for the RDKit's implementation of xyz2mol (in the DetermineBonds library)" OFF )
 option(RDK_BUILD_STRUCTCHECKER_SUPPORT "build in support for the StructChecker alpha (not recommended, use the MolVS integration instead)" OFF )
 option(RDK_BUILD_PUBCHEMSHAPE_SUPPORT "build the rdkit wrapper around pubchem-align3d" ON )
+option(RDK_BUILD_NORMALIZED_DESCRIPTORS "build the CDF-normalized descriptors (port of descriptastorus RDKit2DNormalized)" ON )
 option(RDK_INSTALL_DEV_COMPONENT "install libraries and headers" ON)
 option(RDK_USE_BOOST_IOSTREAMS "use boost::iostreams" ON)
 option(RDK_USE_UNITY_BUILDS "build the RDKit libraries using CMake unity (jumbo) builds to reduce compile time" OFF)
@@ -98,6 +99,7 @@ option(RDK_BUILD_MINIMAL_LIB_MCS "build support for MCS into MinimalLib" OFF )
 option(RDK_BUILD_MINIMAL_LIB_MOLZIP "build support for molzip into MinimalLib" OFF )
 option(RDK_BUILD_MINIMAL_LIB_MMPA "build support for MMPA into MinimalLib" OFF )
 option(RDK_BUILD_LONG_RUNNING_TESTS "build longer running tests" OFF )
+option(RDK_BUILD_OSMORDRED_SUPPORT "Build Osmordred descriptors" ON )
 
 set(RDK_LTO_MODE "OFF" CACHE STRING
     "link-time optimization mode: OFF, THIN, or FULL")
@@ -297,6 +299,11 @@ if(RDK_BUILD_MAEPARSER_SUPPORT)
     add_definitions(-DRDK_BUILD_MAEPARSER_SUPPORT)
     include_directories(${RDKit_ExternalDir})
 endif()
+
+if(RDK_BUILD_OSMORDRED_SUPPORT)
+    add_definitions(-DRDK_BUILD_OSMORDRED_SUPPORT)
+endif()
+
 
 if((MSVC AND (NOT RDK_INSTALL_DLLS_MSVC)) OR ((NOT MSVC) AND WIN32 AND RDK_INSTALL_STATIC_LIBS))
     add_definitions(-DRDL_WIN_STATIC)

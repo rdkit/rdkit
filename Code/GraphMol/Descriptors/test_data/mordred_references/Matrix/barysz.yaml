@@ -1,0 +1,35 @@
+# PaDEL-descriptor
+- names: [SpAbs_DzZ, SpMax_DzZ, SpDiam_DzZ, SpAD_DzZ, SpMAD_DzZ, LogEE_DzZ, SM1_DzZ]
+  digit: 6
+  results:
+    Hexane: [24.21862301, 12.1093115, 19.57341312, 24.21862301, 4.036437168, 12.10932554, -3.55E-15]
+    Benzene: [12, 6, 8.666666667, 12, 2, 6.009012619, -3.55E-15]
+    # Caffeine
+    # Cyanidin
+    Lycopene: [721.7481658, 360.8740829, 560.1974935, 721.7481658, 18.04370415, 360.8740829, -3.98E-13]
+    # Epicatechin
+    # Limonene
+    Allicin: [25.76121946, 12.8958126, 19.50759563, 26.26121946, 2.917913274, 12.89582879, 1.5]
+    Glutathione: [173.8091125, 88.18134194, 134.7973904, 176.1073267, 8.805366337, 88.18134194, 2.553571429]
+    Digoxin: [982.7856765, 493.0353652, 769.8501708, 985.9434577, 17.92624469, 493.0353652, 3.5]
+    Capsaicin: [229.3980496, 115.1454534, 183.8687075, 230.2097379, 10.464079, 115.1454534, 0.892857143]
+    # EllagicAcid
+    # Astaxanthin
+
+# e-dragon
+- names: [VE1_DzZ, VE2_DzZ]
+  digit: 1
+  results:
+    Hexane: [2.412, 0.402]
+    Benzene: [2.449, 0.408]
+    Caffeine: [3.698, 0.264]
+    Cyanidin: [4.513, 0.215]
+    Lycopene: [6.21, 0.155]
+    Epicatechin: [4.525, 0.215]
+    Limonene: [3.122, 0.312]
+    Allicin: [2.921, 0.325]
+    Glutathione: [4.403, 0.22]
+    Digoxin: [7.307, 0.133]
+    Capsaicin: [4.618, 0.21]
+    EllagicAcid: [4.636, 0.211]
+    Astaxanthin: [6.556, 0.149]

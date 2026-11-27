@@ -1,0 +1,32 @@
+- names: nRot
+  results:
+    Hexane: 3
+    Benzene: 0
+    Caffeine: 0
+    Cyanidin: 1
+    Lycopene: 16
+    Epicatechin: 1
+    Limonene: 1
+    Allicin: 5
+    Glutathione: 9
+    Digoxin: 7
+    Capsaicin: 9
+    EllagicAcid: 0
+    Astaxanthin: 10
+
+- names: RotRatio
+  digit: 7
+  results:
+    Hexane: 0.6
+    Benzene: 0
+    Caffeine: 0
+    Cyanidin: 0.043478261
+    Lycopene: 0.41025641
+    Epicatechin: 0.043478261
+    Limonene: 0.1
+    Allicin: 0.625
+    Glutathione: 0.473684211
+    Digoxin: 0.112903226
+    Capsaicin: 0.409090909
+    EllagicAcid: 0
+    Astaxanthin: 0.222222222

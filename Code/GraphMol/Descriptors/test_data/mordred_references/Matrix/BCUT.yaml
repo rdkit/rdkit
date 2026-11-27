@@ -1,0 +1,18 @@
+# Regenerated from live Mordred (was PaDEL-descriptor values).
+# osmordred's BCUT matches Mordred, not PaDEL -- see classify_residual_diffs.py.
+- names: [BCUTm-1l, BCUTm-1h]
+  digit: 0
+  results:
+    Hexane: [11.827508, 12.198113]
+    Benzene: [11.712000, 12.314000]
+    Caffeine: [11.783410, 16.011258]
+    Cyanidin: [11.686337, 16.011561]
+    Lycopene: [11.703920, 12.346852]
+    Epicatechin: [11.703020, 16.007911]
+    Limonene: [11.733421, 12.295636]
+    Allicin: [11.778694, 32.161893]
+    Glutathione: [11.834618, 32.060605]
+    Digoxin: [11.740109, 16.020816]
+    Capsaicin: [11.705188, 16.010483]
+    EllagicAcid: [11.655361, 16.022509]
+    Astaxanthin: [11.700841, 16.011806]

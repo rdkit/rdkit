@@ -47,8 +47,13 @@ const std::string chi1Version = "1.0.0";
                  the molecule
 */
 RDKIT_DESCRIPTORS_EXPORT double calcBalabanJ(const ROMol &mol,
-                                             const double *distMat = nullptr);
+                                             const double *distMat = nullptr,
+					     const bool bondWeighted = true);
 const std::string balabanJVersion = "1.0.0";
+
+RDKIT_DESCRIPTORS_EXPORT double calcBalabanJUnweighted(const ROMol &mol);
+const std::string balabanJUnweightedVersion = "1.0.0";
+
 
 //! Bertz's complexity index
 /*!
