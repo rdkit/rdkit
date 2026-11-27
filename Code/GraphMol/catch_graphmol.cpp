@@ -2351,7 +2351,7 @@ TEST_CASE("getValenceContrib()") {
   REQUIRE(m);
   CHECK(m->getBondWithIdx(1)->getValenceContrib(m->getAtomWithIdx(0)) == 0);
   CHECK(m->getBondWithIdx(1)->getValenceContrib(m->getAtomWithIdx(1)) == 0);
-  CHECK(m->getBondWithIdx(1)->getValenceContrib(m->getAtomWithIdx(2)) == 1);
+  CHECK(m->getBondWithIdx(1)->getValenceContrib(m->getAtomWithIdx(2)) == 2);
 }
 
 TEST_CASE("conformer details") {
@@ -4235,13 +4235,14 @@ TEST_CASE("Hybridization of dative bonded atoms") {
   const std::vector<Atom::HybridizationType> ref_hybridizations = {
       Atom::HybridizationType::SP3, Atom::HybridizationType::SP3,
       Atom::HybridizationType::SP2, Atom::HybridizationType::SP2,
-      Atom::HybridizationType::SP2, Atom::HybridizationType::SP3D2};
+      Atom::HybridizationType::SP2, Atom::HybridizationType::SP3D};
 
   SECTION("Base mol") {
     auto m = "CCC(=O)O"_smiles;
     REQUIRE(m);
 
     for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+      INFO("Checking atom " << i);
       CHECK(m->getAtomWithIdx(i)->getHybridization() == ref_hybridizations[i]);
     }
   }
@@ -4253,6 +4254,7 @@ TEST_CASE("Hybridization of dative bonded atoms") {
     REQUIRE(dBond->getBondType() == Bond::BondType::DATIVE);
 
     for (unsigned int i = 0; i < m->getNumAtoms(); ++i) {
+      INFO("Checking atom " << i);
       CHECK(m->getAtomWithIdx(i)->getHybridization() == ref_hybridizations[i]);
     }
   }
@@ -5336,5 +5338,76 @@ TEST_CASE("getTotalNumHs() and query atoms") {
         std::runtime_error);
     CHECK(m->getAtomWithIdx(2)->getTotalNumHs(false) == 1);
     CHECK(m->getAtomWithIdx(3)->getTotalNumHs(false) == 0);
+  }
+}
+
+TEST_CASE("github #7788: failing valence checks for aluminum") {
+  SECTION("basics") {
+    {
+      auto m = "Cl[Al]1(Cl)Cl->[Al](Cl)(Cl)Cl->1"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getTotalNumHs(false) == 0);
+      CHECK(m->getAtomWithIdx(4)->getTotalNumHs(false) == 0);
+    }
+    {
+      // has four single bonds, but the "organometallic cleanup" fixes that
+      auto m = "Cl[Al]1(Cl)Cl[Al](Cl)(Cl)Cl1"_smiles;
+      REQUIRE(m);
+      CHECK(m->getAtomWithIdx(1)->getTotalNumHs(false) == 0);
+      CHECK(m->getAtomWithIdx(4)->getTotalNumHs(false) == 0);
+    }
+  }
+  SECTION("Al(CH3)4 -") {
+    // actually not affected by #7788, but make sure we still handle it
+    auto m = "C[Al-](C)(C)C"_smiles;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getTotalNumHs(false) == 0);
+  }
+  SECTION("as reported") {
+    auto m = R"CTAB(
+  SMMXDraw08051113052D
+
+  0  0  0     0  0            999 V3000
+M  V30 BEGIN CTAB
+M  V30 COUNTS 8 8 0 0 0
+M  V30 BEGIN ATOM
+M  V30 1 Cl 11.5252 -12.6451 0.0000 0
+M  V30 2 Al 12.7063 -12.6451 0.0000 0
+M  V30 3 Cl 12.7063 -11.4640 0.0000 0
+M  V30 4 Cl 12.7063 -13.8979 0.0000 0
+M  V30 5 Al 14.7407 -13.8979 0.0000 0
+M  V30 6 Cl 14.7407 -12.6451 0.0000 0
+M  V30 7 Cl 15.9218 -13.8979 0.0000 0
+M  V30 8 Cl 14.7407 -15.0790 0.0000 0
+M  V30 END ATOM
+M  V30 BEGIN BOND
+M  V30 1 1 2 3 
+M  V30 2 1 5 6 
+M  V30 3 1 1 2 
+M  V30 4 1 5 7 
+M  V30 5 1 2 4 
+M  V30 6 1 5 8 
+M  V30 7 9 6 2 
+M  V30 8 9 4 5 
+M  V30 END BOND
+M  V30 END CTAB
+M  END)CTAB"_ctab;
+    REQUIRE(m);
+    CHECK(m->getAtomWithIdx(1)->getTotalNumHs(false) == 0);
+    CHECK(m->getAtomWithIdx(4)->getTotalNumHs(false) == 0);
+  }
+}
+
+TEST_CASE("DATIVEONE bond valence contribution") {
+  SECTION("basics") {
+    auto m = "[NH3]->[Cu]"_smiles;
+    REQUIRE(m);
+    auto b = m->getBondBetweenAtoms(0, 1);
+    REQUIRE(b->getBondType() == Bond::DATIVE);
+    CHECK(b->getValenceContrib(b->getBeginAtom()) == 0.0);
+    CHECK(b->getValenceContrib(b->getEndAtom()) == 2.0);
+    b->setBondType(Bond::BondType::DATIVEONE);
+    CHECK(b->getValenceContrib(b->getBeginAtom()) == 0.0);
+    CHECK(b->getValenceContrib(b->getEndAtom()) == 1.0);
   }
 }

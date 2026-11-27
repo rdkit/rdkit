@@ -191,26 +191,26 @@ Dative bonds
 
 ``<-`` and ``->`` create a dative bond between the atoms, direction does matter.
 
-Here's an example of a bipy-copper complex:
+Here's an example of a bipy-palladium complex:
 
 .. doctest::
 
-  >>> bipycu = Chem.MolFromSmiles('c1cccn->2c1-c1n->3cccc1.[Cu]23(Cl)Cl')
-  >>> bipycu.GetBondBetweenAtoms(4,12).GetBondType()
+  >>> bipypd = Chem.MolFromSmiles('c1cccn->2c1-c1n->3cccc1.[Pd]23(Cl)Cl')
+  >>> bipypd.GetBondBetweenAtoms(4,12).GetBondType()
   rdkit.Chem.rdchem.BondType.DATIVE
-  >>> Chem.MolToSmiles(bipycu)
-  '[Cl][Cu]1([Cl])<-[n]2ccccc2-c2cccc[n]->12'
+  >>> Chem.MolToSmiles(bipypd)
+  '[Cl][Pd]1([Cl])<-[n]2ccccc2-c2cccc[n]->12'
 
 Dative bonds have the special characteristic that they don't affect the valence on the start atom, but do affect
 the end atom. So in this case, the N atoms involved in the dative bond have the valence of 3 that we expect from bipy,
-while the Cu has a valence of 4:
+while the Pd has a valence of 6 - 1 from the ``Pd--Cl`` single bonds and 2 from each ``N->Pd`` dative bond :
 
 .. doctest::
 
-  >>> bipycu.GetAtomWithIdx(4).GetTotalValence()
+  >>> bipypd.GetAtomWithIdx(4).GetTotalValence()
   3
-  >>> bipycu.GetAtomWithIdx(12).GetTotalValence()
-  4
+  >>> bipypd.GetAtomWithIdx(12).GetTotalValence()
+  6
 
 Ring closures
 -------------
