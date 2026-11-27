@@ -22,6 +22,7 @@
 #include <GraphMol/RDKitQueries.h>
 #include <GraphMol/MonomerInfo.h>
 #include <GraphMol/Chirality.h>
+#include <GraphMol/Bridgeheads.h>
 #include <GraphMol/Substruct/SubstructMatch.h>
 #include <GraphMol/Substruct/SubstructUtils.h>
 #include <GraphMol/Wrap/substructmethods.h>
@@ -1164,6 +1165,24 @@ ROMol *copyMolSubsetHelper4(const ROMol &mol, python::object path,
     pathvect = std::make_unique<std::vector<unsigned int>>();
   }
   return copyMolSubset(mol, *pathvect, selectionInfo, options).release();
+}
+
+std::vector<unsigned int> findBridgeheadAtomsHelper(
+    const ROMol &mol, python::object onlyWithAtoms) {
+  auto onlyWithAtomsVect = pythonObjectToVect<unsigned int>(onlyWithAtoms);
+  if (!onlyWithAtomsVect.get()) {
+    onlyWithAtomsVect = std::make_unique<std::vector<unsigned int>>();
+  }
+  return MolOps::findBridgeheadAtoms(mol, *onlyWithAtomsVect);
+}
+
+std::vector<MolOps::Bridgehead> findBridgeheadsHelper(
+    ROMol &mol, python::object onlyWithAtoms) {
+  auto onlyWithAtomsVect = pythonObjectToVect<unsigned int>(onlyWithAtoms);
+  if (!onlyWithAtomsVect.get()) {
+    onlyWithAtomsVect = std::make_unique<std::vector<unsigned int>>();
+  }
+  return MolOps::findBridgeheads(mol, *onlyWithAtomsVect);
 }
 
 struct molops_wrapper {
@@ -3584,6 +3603,27 @@ ARGUMENTS:\n\
          python::arg("options") = SubsetOptions()),
         "copy a subset of a molecule",
         python::return_value_policy<python::manage_new_object>());
+
+    docString = R"DOC(Bridgehead)DOC";
+    python::class_<MolOps::Bridgehead>("Bridgehead", docString.c_str())
+        .def_readonly("atom1", &MolOps::Bridgehead::atom1,
+                      "first bridgehead atom")
+        .def_readonly("atom2", &MolOps::Bridgehead::atom2,
+                      "second bridgehead atom")
+        .def_readonly("ring1", &MolOps::Bridgehead::ring1, "first ring")
+        .def_readonly("ring2", &MolOps::Bridgehead::ring2, "second ring");
+
+    bool noproxy = true;
+    RegisterVectorConverter<MolOps::Bridgehead>("BridgeheadList", noproxy);
+
+    python::def(
+        "FindBridgeheads", findBridgeheadsHelper,
+        (python::arg("mol"), python::arg("onlyWithAtoms") = python::object()),
+        "Find bridgehead atoms in a molecule");
+    python::def(
+        "FindBridgeheadAtoms", findBridgeheadAtomsHelper,
+        (python::arg("mol"), python::arg("onlyWithAtoms") = python::object()),
+        "Find bridgehead atoms in a molecule");
   }
 };
 }  // namespace RDKit

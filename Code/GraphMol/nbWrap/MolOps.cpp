@@ -33,6 +33,7 @@
 #include <GraphMol/FileParsers/MolFileStereochem.h>
 #include <GraphMol/ChemTransforms/ChemTransforms.h>
 #include <GraphMol/GenericGroups/GenericGroups.h>
+#include <GraphMol/Bridgeheads.h>
 #include <GraphMol/Subset.h>
 #include <RDBoost/Wrap_nb.h>
 #include <nanobind/stl/string.h>
@@ -3242,7 +3243,6 @@ A note on the flags controlling which atoms/bonds are modified:
             
             If there is no chiral flag set (i.e. the property is not present), the
             molecule will not be modified.)DOC");
-#if 1
 
     m.def(
         "ExpandAttachmentPoints", expandAttachmentPointsHelper, "mol"_a,
@@ -3392,7 +3392,19 @@ ARGUMENTS:\n\
           "bondIndices"_a, "options"_a = nb::none(), docString.c_str(),
           nb::rv_policy::take_ownership);
 
-#endif
+    docString = R"DOC(Bridgehead)DOC";
+    nb::class_<MolOps::Bridgehead>(m, "Bridgehead", docString.c_str())
+        .def_ro("atom1", &MolOps::Bridgehead::atom1, "first bridgehead atom")
+        .def_ro("atom2", &MolOps::Bridgehead::atom2, "second bridgehead atom")
+        .def_ro("ring1", &MolOps::Bridgehead::ring1,
+                "first ring involved in the bridgehead")
+        .def_ro("ring2", &MolOps::Bridgehead::ring2,
+                "second ring involved in the bridgehead");
+    m.def("FindBridgeheadAtoms", &MolOps::findBridgeheadAtoms, "mol"_a,
+          "onlyWithAtoms"_a = nb::list(),
+          "Find bridgehead atoms in a molecule");
+    m.def("FindBridgeheads", &MolOps::findBridgeheads, "mol"_a,
+          "onlyWithAtoms"_a = nb::list(), "Find bridgeheads in a molecule");
   }
 };
 

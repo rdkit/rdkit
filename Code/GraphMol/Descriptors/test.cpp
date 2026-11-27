@@ -1821,7 +1821,8 @@ void testSpiroAndBridgeheads() {
     TEST_ASSERT(atoms.size() == nSpiro);
     TEST_ASSERT(std::find(atoms.begin(), atoms.end(), 3) != atoms.end());
 
-    atoms.clear();
+    // make sure that calling calcNumBridgeheadAtoms with a pre-existing atoms
+    // vector clears it and fills it correctly
     unsigned int nBridgehead =
         Descriptors::calcNumBridgeheadAtoms(*mol, &atoms);
     TEST_ASSERT(nBridgehead == 2);
