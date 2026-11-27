@@ -16,8 +16,9 @@ name (availableTrees). Without a source, it uses $RDKIT_DASH_TREE, or the
 pruned tree initial_test if that variable is not set.
 
 The container must be in RDKit's own '.dash' format. Use python -m
-rdkit.Chem.DASHTree.convert to write one from a legacy tree, and python -m
-rdkit.Chem.DASHTree.prune to make one smaller.
+rdkit.Chem.DASHTree.convert to write one from a legacy tree. Use python -m
+rdkit.Chem.DASHTree.prune to make one smaller. Use python -m
+rdkit.Chem.DASHTree.populate to add property columns from your own data.
 
 NodePathToSmarts() writes the substructure that a node path describes as
 SMARTS. GetAtomMatchSmarts() matches one atom and writes that match as SMARTS
@@ -36,14 +37,19 @@ from urllib.request import Request, urlopen
 from rdkit import RDConfig
 from rdkit.Chem import rdDASHTree
 
-#: the trees GetDASHTree() knows by name: the MBIS charge tree pruned at
-#: 0.01 e, 0.02 e and 0.1 e. The build downloads initial_test into
-#: Data/DASHTree. Code/GraphMol/DASHTree/README.md says how far each is from the
-#: full tree
+#: the trees GetDASHTree() knows by name. initial_test, mbis_pruned_0.01 and
+#: mbis_pruned_0.1 are the MBIS charge tree pruned at 0.02 e, 0.01 e and 0.1 e.
+#: The build downloads initial_test into Data/DASHTree. dash_props is the full
+#: MBIS charge tree with seven properties of the DASH-properties data set, and
+#: dash_props_pruned_0.02 is dash_props pruned at 0.02 e.
+#: Code/GraphMol/DASHTree/README.md says how accurate each tree is
+_trees = "https://github.com/MTLehner/dash-trees"
 availableTrees = {
-  "initial_test": "https://github.com/MTLehner/dash-trees/raw/v1/initial_test.dash",
-  "mbis_pruned_0.01": "https://github.com/MTLehner/dash-trees/raw/v2/mbis_pruned_0.01.dash",
-  "mbis_pruned_0.1": "https://github.com/MTLehner/dash-trees/raw/v2/mbis_pruned_0.1.dash",
+  "initial_test": f"{_trees}/raw/v1/initial_test.dash",
+  "mbis_pruned_0.01": f"{_trees}/raw/v2/mbis_pruned_0.01.dash",
+  "mbis_pruned_0.1": f"{_trees}/raw/v2/mbis_pruned_0.1.dash",
+  "dash_props": f"{_trees}/releases/download/v3/dash_props.dash",
+  "dash_props_pruned_0.02": f"{_trees}/raw/v3/dash_props_pruned_0.02.dash",
 }
 
 

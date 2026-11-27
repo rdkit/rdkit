@@ -8,7 +8,7 @@
 #  of the RDKit source tree.
 #
 """Tests for rdkit.Chem.DASHTree, the pure-python side: GetDASHTree(), the
-synthetic fixture, the pattern writer and the pruner.
+synthetic fixture, the pattern writer, the pruner and the populator.
 Code/GraphMol/DASHTree/Wrap/testDASHTree.py tests the extension itself.
 
 _writeSyntheticTree() writes test_data/dash_test_tree.dash, a tree that knows
@@ -20,16 +20,19 @@ The tests that need real chemistry run on initial_test, the pruned tree the
 build downloads into Data/DASHTree.
 """
 
+import contextlib
+import io
 import math
 import os
 import tempfile
 import unittest
+from unittest import mock
 
 import numpy as np
 
 from rdkit import Chem, RDConfig
 from rdkit.Chem import DASHTree, rdDASHTree
-from rdkit.Chem.DASHTree import container, convert, prune
+from rdkit.Chem.DASHTree import container, convert, populate, prune
 
 # ethanol with explicit hydrogens is C0 H3 H4 H5, C1 H6 H7, O2 H8. The synthetic
 # tree carries exactly its four atom classes, so these are their branch indices.
@@ -104,7 +107,7 @@ class TestSyntheticTree(unittest.TestCase):
   def testPrunedTreeFallsBack(self):
     # at 0.1, pruning cuts the O node below the methyl's CH2 node, so atom 0's
     # descent stops at the CH2 node and reads its value
-    with tempfile.TemporaryDirectory() as d:
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as d:
       out = os.path.join(d, "pruned.dash")
       prune.main([_fixturePath(), out, "--tolerance", "0.1"])
       pruned = rdDASHTree.DASHTree(out, ["result"])
@@ -116,6 +119,131 @@ class TestSyntheticTree(unittest.TestCase):
       # the hydrogen rule keeps the H root's children, so atom 3 reads its methyl node
       self.assertEqual(pruned.GetAtomProperty(self.mol, 3, "result"), 0.10)
       del pruned  # unmaps the file before the directory goes
+
+      # at 0.01, only the methyl branch's deepest node goes. It has no value,
+      # so the descent reads the O node above it, as before
+      prune.main([_fixturePath(), out, "--tolerance", "0.01"])
+      pruned = rdDASHTree.DASHTree(out, ["result"])
+      self.assertEqual(pruned.GetNumNodes(), self.tree.GetNumNodes() - 1)
+      self.assertEqual(list(pruned.GetAtomNodePath(self.mol, 0)), [M, 0, 1, 2])
+      self.assertEqual(pruned.GetAtomProperty(self.mol, 0, "result"), -0.45)
+      del pruned
+
+      # the same holds for an int32 column, where the leaf has no size
+      prune.main([_fixturePath(), out, "--tolerance", "0.5", "--value-property", "size"])
+      pruned = rdDASHTree.DASHTree(out, ["result"])
+      self.assertEqual(pruned.GetNumNodes(), self.tree.GetNumNodes() - 1)
+      del pruned
+
+  def testPopulate(self):
+    # two conformers: the values are the atom index, then the index + 2. Atom 8,
+    # the OH hydrogen, has none, so the nodes only it reaches stay empty
+    values = np.array([np.arange(9.0), np.arange(9.0) + 2])
+    values[:, 8] = NAN
+    columns, failed = populate.collectStatistics(_fixturePath(), [(self.mol, {"q": values})], ["q"])
+    self.assertEqual(failed, 0)
+    self.assertEqual([(name, tag) for name, tag, _ in columns], [("q", container.DTYPE_F32),
+                                                                 ("q_std", container.DTYPE_F16),
+                                                                 ("q_count", container.DTYPE_I32)])
+    self.assertEqual(columns[2][2][15], container.MISSING_INT32)  # only atom 8 reaches node 15
+    # the sums are the same when they go in after each record
+    with mock.patch.object(populate, "_BATCH", 0):
+      batched, _ = populate.collectStatistics(_fixturePath(), [(self.mol, {
+        "q": values[:1]
+      }), (self.mol, {
+        "q": values[1]
+      })], ["q"])
+    for (_, _, a), (_, _, b) in zip(columns, batched):
+      np.testing.assert_array_equal(a, b)
+
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as d:
+      out = os.path.join(d, "populated.dash")
+      populate.writeTree(_fixturePath(), out, columns)
+      tree = rdDASHTree.DASHTree(out)
+      self.assertEqual(sorted(tree.GetAvailablePropertyNames()),
+                       ["q", "q_count", "q_std", "result", "size", "std"])
+
+      def read(i, p):
+        return tree.GetAtomProperty(self.mol, i, p)
+
+      # atom 0 is the only atom on its deepest node, with the values 0 and 2
+      self.assertEqual((read(0, "q"), read(0, "q_count")), (1.0, 2))
+      self.assertAlmostEqual(read(0, "q_std"), math.sqrt(2), places=3)
+      # the three methyl Hs share their deepest node: 3, 4, 5, 5, 6, 7
+      self.assertEqual((read(3, "q"), read(3, "q_count")), (5.0, 6))
+      # atom 8 reads the H root, which the five other Hs reach
+      self.assertEqual((read(8, "q"), read(8, "q_count")), (6.0, 10))
+      del tree, read
+
+      # pruning on q drops the subtrees with the parent's mean and the subtrees
+      # without a q value. The H root keeps its children, so 7 nodes stay
+      pruned = os.path.join(d, "pruned.dash")
+      prune.main([out, pruned, "--tolerance", "0.001", "--value-property", "q"])
+      tree = rdDASHTree.DASHTree(pruned)
+      self.assertEqual(tree.GetNumNodes(), 7)
+      self.assertEqual(list(tree.GetAtomNodePath(self.mol, 8)), [H, 0, 3])
+      self.assertEqual(tree.GetAtomProperty(self.mol, 8, "q"), 6.0)
+      del tree
+
+      # a new column replaces the column of the same name
+      populate.writeTree(_fixturePath(), out, [("result", ) + columns[0][1:]])
+      tree = rdDASHTree.DASHTree(out)
+      self.assertEqual(sorted(tree.GetAvailablePropertyNames()), ["result", "size", "std"])
+      self.assertEqual(tree.GetAtomProperty(self.mol, 3, "result"), 5.0)  # the fixture has 0.12
+      del tree
+      with self.assertRaises(ValueError):
+        populate.writeTree(out, out, columns)
+
+    with self.assertRaises(ValueError):  # two values for nine atoms
+      populate.collectStatistics(_fixturePath(), [(self.mol, {"q": [1.0, 2.0]})], ["q"])
+    with self.assertRaises(ValueError):  # values for a property that is not collected
+      populate.collectStatistics(_fixturePath(), [(self.mol, {"r": values})], ["q"])
+    with self.assertRaises(ValueError):
+      populate.collectStatistics(_fixturePath(), [(self.mol, {"q": np.full(9, np.inf)})], ["q"])
+    with self.assertRaises(ValueError):  # implicit hydrogens
+      populate.collectStatistics(_fixturePath(), [(Chem.MolFromSmiles("CCO"), {})], ["q"])
+    with self.assertRaises(ValueError):  # 'q_std' is also a column of 'q'
+      populate.collectStatistics(_fixturePath(), [], ["q", "q_std"])
+    # the tree has no class for the N of methylamine, so the molecule adds
+    # nothing. A molecule without atoms adds nothing, and does not fail
+    amine = Chem.AddHs(Chem.MolFromSmiles("CN"))
+    records = [(amine, {"q": np.ones(amine.GetNumAtoms())}), (Chem.Mol(), {})]
+    columns, failed = populate.collectStatistics(_fixturePath(), records, ["q"])
+    self.assertEqual(failed, 1)
+    self.assertTrue((columns[2][2] == container.MISSING_INT32).all())
+
+  def testPopulateFromSdf(self):
+    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as d:
+      sdf = os.path.join(d, "mols.sdf")
+      with Chem.SDWriter(sdf) as writer:
+        for shift in (0, 2):  # the two conformers of testPopulate, one record each
+          mol = Chem.Mol(self.mol)
+          for atom in mol.GetAtoms():
+            if atom.GetIdx() != 8:
+              atom.SetDoubleProp("q", atom.GetIdx() + shift)
+          Chem.CreateAtomDoublePropertyList(mol, "q")
+          writer.write(mol)
+        writer.write(Chem.AddHs(Chem.MolFromSmiles("CN")))  # the tree has no class for the N
+      with open(sdf, "a") as f:  # a record that does not parse
+        f.write("broken\n\n\n  1  0  0  0  0  0  0  0  0  0999 V2000\nM  END\n$$$$\n")
+      out = os.path.join(d, "populated.dash")
+      err = io.StringIO()
+      with contextlib.redirect_stderr(err):
+        populate.main([_fixturePath(), out, sdf, "--props", "q", "--drop-existing"])
+      self.assertIn("skipped 1 records that do not parse and 1 molecules", err.getvalue())
+      tree = rdDASHTree.DASHTree(out)
+      self.assertEqual(sorted(tree.GetAvailablePropertyNames()), ["q", "q_count", "q_std"])
+      self.assertEqual([tree.GetAtomProperty(self.mol, i, "q") for i in (0, 3, 8)], [1.0, 5.0, 6.0])
+      del tree
+
+      other = os.path.join(d, "other.dash")
+      for args in ([out, out, sdf, "--props",
+                    "q"], [out, other, sdf, "--props",
+                           "q,q_std"], [out, other, sdf, "--props",
+                                        ","], [out, other, other, "--props", "q"]):
+        with self.assertRaises(SystemExit), contextlib.redirect_stderr(io.StringIO()):
+          populate.main(args)
+      self.assertFalse(os.path.exists(other))
 
   def testPatterns(self):
     self.assertEqual(DASHTree.GetAtomMatchSmarts(self.tree, self.mol, 0),
@@ -189,6 +317,19 @@ class TestBundledTree(unittest.TestCase):
     self.assertEqual(len(diffs), sum(m.GetNumAtoms() for m in mols))
     self.assertLess(max(abs(d) for d in diffs), 0.06)
     self.assertLess(math.sqrt(sum(d * d for d in diffs) / len(diffs)), 0.01)
+
+  def testPopulateFollowsTheTieBreaking(self):
+    # the two CH2 of 5-aminoisoindoline fit the same node, so the two rules
+    # descend to different nodes and count the values there
+    mol = Chem.AddHs(Chem.MolFromSmiles("Nc1ccc2CNCc2c1"))
+    legacy = rdDASHTree.DASHParams()
+    legacy.legacyTieBreaking = True
+    records = [(mol, {"q": np.ones(mol.GetNumAtoms())})]
+    counts = [
+      populate.collectStatistics(self.path, records, ["q"], params)[0][2][2]
+      for params in (None, legacy)
+    ]
+    self.assertFalse(np.array_equal(*counts))
 
   def testPatternRefindsItsOwnAtom(self):
     mol = Chem.AddHs(Chem.MolFromSmiles("CC(=O)Nc1ccc(O)cc1"))

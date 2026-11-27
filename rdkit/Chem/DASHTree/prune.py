@@ -54,8 +54,10 @@ def toleranceMask(parent, level, values, eps):
   """True where a node changes the value read by at least eps.
 
   err(n) = max |value(x) - value(parent(n))| over n and its subtree. A node
-  whose parent carries no value always stays, since the path above it may have
-  no value at all.
+  whose parent carries no value stays if its subtree has a value, since the
+  path above it may have no value at all. A subtree without any value in this
+  column changes nothing that this column reads, so it goes. A populated tree
+  has such subtrees where no atom of the data went.
   """
   vals = values.astype(np.float64)
   if not np.issubdtype(values.dtype, np.floating):
@@ -69,6 +71,7 @@ def toleranceMask(parent, level, values, eps):
   parentVal = np.where(parent >= 0, vals[np.maximum(parent, 0)], np.nan)
   err = np.maximum(np.abs(smax - parentVal), np.abs(smin - parentVal))
   err[np.isnan(parentVal)] = np.inf
+  err[smin > smax] = 0.0  # only a subtree without values keeps the start values
   return err >= eps
 
 

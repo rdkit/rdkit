@@ -37,10 +37,11 @@ build downloads `initial_test` into `Data/DASHTree`. If a named tree is not
 there, `GetDASHTree()` downloads it once into a cache.
 
 `initial_test` is the legacy MBIS charge tree pruned to 38 MB, see below. It
-carries the `result` and `std` columns only. For the full tree, or for
-properties other than MBIS charges, convert a tree yourself. Then give
-`GetDASHTree()` its path, or an http(s) URL that it downloads once into the
-cache:
+carries the `result` and `std` columns only. For seven atomic properties, use
+`dash_props` or `dash_props_pruned_0.02`, see
+[Trees with more properties](#trees-with-more-properties). For the full MBIS
+tree, convert it yourself. Then give `GetDASHTree()` its path, or an http(s)
+URL that it downloads once into the cache:
 
 ```python
 tree = GetDASHTree("default.dash", ["result", "std"])      # resolve only the columns you need
@@ -48,7 +49,7 @@ tree = GetDASHTree("default.dash", ["result", "std"])      # resolve only the co
 
 ## Make a tree
 
-`rdkit.Chem.DASHTree` has two command-line tools, and `--help` explains every
+`rdkit.Chem.DASHTree` has three command-line tools, and `--help` explains every
 option.
 
 **Convert a legacy tree.** A legacy tree is a folder of `0.gz, 0.h5, 1.gz,
@@ -92,8 +93,70 @@ molecules in `test_data` (5019 atoms):
 command, run on the MBIS tree of the DASH-tree package (MIT licence). Both steps
 are deterministic, so it is reproducible byte for byte.
 
+**Populate a tree.** The populator adds property columns to the nodes of a
+tree you have. It matches each atom of each molecule and gives the atom's
+value to every node on the atom's path. For each property `P`, each node then
+stores the mean (`P`), the sample standard deviation (`P_std`) and the number
+of values (`P_count`). The molecules come from SDF files with explicit
+hydrogens. Each record gives one value per atom as an RDKit atom property list:
+
+```python
+mol = Chem.AddHs(Chem.MolFromSmiles("CCO"))
+for atom, value in zip(mol.GetAtoms(), values):     # your reference values, one per atom
+  atom.SetDoubleProp("q", value)
+Chem.CreateAtomDoublePropertyList(mol, "q")         # writes the field 'atom.dprop.q'
+with Chem.SDWriter("train.sdf") as writer:
+  writer.write(mol)
+```
+
+```
+python -m rdkit.Chem.DASHTree.populate default.dash q.dash train.sdf --props q
+```
+
+The descent decides which nodes an atom reaches. Populate a tree with the
+tie-breaking rule that you read it with (see
+[Atoms that fit the same node](#atoms-that-fit-the-same-node)). For a tree that
+you read with `DASHParams.legacyTieBreaking`, add `--legacy-tie-breaking`. In
+python, `rdkit.Chem.DASHTree.populate.collectStatistics()` takes any iterable
+of `(mol, {name: values})` pairs. Each value array can have one row per
+conformer. `writeTree()` writes the result.
+
 **Train one.** The DASH-tree package builds trees from a trained attention
 model and writes them in the legacy format.
+
+## Trees with more properties
+
+`dash_props` is the MBIS tree, populated with seven atomic properties of the
+DASH-properties data set (ETH Research Collection,
+[doi:10.3929/ethz-b-000670546](https://doi.org/10.3929/ethz-b-000670546),
+871,906 conformers of 293,822 molecules). The columns are the MBIS charge
+(`result`, with `std` and `size`), the `mulliken`, `resp1`, `resp2` and
+`am1bcc` charges, the dual descriptor (`dual`) and the `mbis_dipole_strength`.
+Each of the six other properties has a `_std` and a `_count` column. The
+populator used the default
+tie-breaking rule, so read these trees with the default `DASHParams`.
+`dash_props_pruned_0.02` is `dash_props` pruned at 0.02 e on `result`, with
+the means and standard deviations only.
+
+A tree populated from 90 % of the molecules gives these RMS errors against
+every conformer of the other 10 % (29,469 molecules, 1.23 million atoms):
+
+| column | `dash_props` (774 MB) | `dash_props_pruned_0.02` (94 MB) |
+|---|---|---|
+| `result` (MBIS charge) | 0.0250 e | 0.0254 e |
+| `result` after `GetPartialCharges()` | 0.0243 e | 0.0247 e |
+| `mulliken` | 0.0374 e | 0.0377 e |
+| `resp1` | 0.0676 e | 0.0673 e |
+| `resp2` | 0.0699 e | 0.0683 e |
+| `am1bcc` | 0.0278 e | 0.0285 e |
+| `dual` | 0.0477 | 0.0479 |
+| `mbis_dipole_strength` | 0.0106 | 0.0107 |
+
+The conformers of a molecule scatter by 0.012 e RMS around their mean MBIS
+charge. No tree can be more accurate than that, because a tree reads the
+molecular graph only. The two trees carry the licence of the data set, CC BY-SA
+4.0. [github.com/MTLehner/dash-trees](https://github.com/MTLehner/dash-trees)
+says how they were made.
 
 ## Use a tree from python
 
@@ -128,12 +191,12 @@ A tree with more columns works the same way. When you open it, name the columns
 you want. The tree reads only those:
 
 ```python
-props = GetDASHTree("props.dash", ["AM1BCC", "AM1BCC_std", "DFTD4:C6"])
-c6 = props.GetMolProperty(mol, "DFTD4:C6")          # one value per atom, no normalization
+props = GetDASHTree("dash_props_pruned_0.02", ["am1bcc", "am1bcc_std", "dual"])
+dual = props.GetMolProperty(mol, "dual")            # one value per atom, no normalization
 
 # any per-atom property with a molecule-wide total normalizes like the charges do
 options = rdDASHTree.NormalizationOptions()
-options.valueProperty, options.stdProperty = "AM1BCC", "AM1BCC_std"
+options.valueProperty, options.stdProperty = "am1bcc", "am1bcc_std"
 am1bcc = props.GetNormalizedMolProperty(mol, Chem.GetFormalCharge(mol), options)
 ```
 
@@ -190,3 +253,11 @@ options = rdDASHTree.NormalizationOptions()
 options.params.legacyTieBreaking = True
 charges = tree.GetPartialCharges(mol, options)      # the DASH-tree package's values
 ```
+
+The rule decides which nodes collect the values when you populate a tree. So
+populate and read a tree with the same rule. With the DASH-properties data,
+the default rule gives a 0.3 % smaller MBIS charge error than the legacy rule.
+The difference is small but statistically significant. For the six other
+properties, the default rule is as accurate or more accurate. If you populate a
+tree with one rule and read it with the other, its MBIS charge error is 8 % to
+42 % larger.
