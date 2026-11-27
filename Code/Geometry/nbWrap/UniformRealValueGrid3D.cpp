@@ -71,7 +71,7 @@ struct urvGrid3D_wrapper {
         .def(
             nb::init<double, double, double, double, const RDGeom::Point3D *>(),
             "dimX"_a, "dimY"_a, "dimZ"_a, "spacing"_a = 0.5,
-            "offSet"_a = (const RDGeom::Point3D *)nullptr, "Constructor")
+            "offSet"_a = nb::none(), "Constructor")
         .def("__init__",
              [](UniformRealValueGrid3D *t, nb::bytes b) {
                new (t) UniformRealValueGrid3D(
