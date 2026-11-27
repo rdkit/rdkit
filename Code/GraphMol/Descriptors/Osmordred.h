@@ -196,7 +196,6 @@ RDKIT_DESCRIPTORS_EXPORT double calcPol(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT double calcMR(const ROMol &mol);
 
 // Group 3: Topological indices/connectivity/shape
-RDKIT_DESCRIPTORS_EXPORT double calcBalabanJ(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT double calcBertzCT(const ROMol &mol);
 RDKIT_DESCRIPTORS_EXPORT double calcVertexAdjacencyInformation(
     const ROMol &mol);

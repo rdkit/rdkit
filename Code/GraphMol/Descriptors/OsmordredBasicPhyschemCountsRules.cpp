@@ -470,34 +470,6 @@ std::vector<double> _VertexDegrees(const double *distances,
   return res;
 }
 
-double calcBalabanJ(const ROMol &mol) {
-  double q = mol.getNumBonds();
-  unsigned int n = mol.getNumAtoms();
-
-  double *Topodistances =
-      MolOps::getDistanceMat(mol, false, false, false,
-                             "Balaban");  // we need bond order diagonal!  based
-                                          // on the code mordred all false
-  double *adjMat = MolOps::getAdjacencyMatrix(mol, false, false, false, "NoBO");
-
-  std::vector<double> s = _VertexDegrees(Topodistances, n);
-  double mu = q - n + 1;
-
-  double sum_ = 0.0;
-  for (unsigned int i = 0; i < n; ++i) {
-    double si = s[i];
-    for (unsigned int j = i; j < n; ++j) {
-      if (adjMat[i * n + j] == 1) {
-        sum_ += 1.0 / sqrt(si * s[j]);
-      }
-    }
-  }
-
-  double J = (mu + 1 != 0) ? (q / (mu + 1)) * sum_ : 0.0;
-
-  return J;
-}
-
 // bertyCT related functions (InfoGain can be found in rdkit ML/InfoGainFuncs
 // part, but I have to change to input for matching python code)
 template <typename... Args>
@@ -1747,18 +1719,6 @@ double calcEccentricConnectivityIndex(const ROMol &mol) {
                   V[i];  // Cast E[i] to int and multiply with V[i]
   }
   return productSum;
-}
-
-// Function to find rings in a molecule using RDKit's ring detection
-std::vector<std::vector<int>> findRings(const ROMol &mol) {
-  std::vector<std::vector<int>> rings;
-  const RingInfo &ri = getRings(mol);
-  for (size_t i = 0; i < ri.numRings(); ++i) {
-    std::vector<int> ring = ri.bondRings()[i];
-    rings.push_back(ring);
-  }
-
-  return rings;
 }
 
 // Constitutional
