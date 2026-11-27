@@ -1657,6 +1657,31 @@ values = properties.ComputeProperties(mols, numThreads=4))DOC")
       .def("ComputeProperties", &computePropertiesForMolsHelper, "mols"_a,
            "numThreads"_a = 1,
            R"DOC(Compute the properties for a sequence of molecules.
+      .def("ComputePropertiesForMols", &computePropertiesForMolsHelper, "mols"_a,
+           "numThreads"_a = 1,
+           R"DOC(Compute the properties for a sequence of molecules.
+
+  ARGUMENTS:
+    - mols: an iterable of molecules. None entries are allowed and produce
+      a row of NaNs.
+    - numThreads: the number of threads to use, only has an effect if the
+      RDKit was built with multi-thread support. If this is zero, the max
+      supported by the system will be used. If it is negative, that number
+      is subtracted from the max supported by the system.
+      Python-defined properties are always computed on the calling thread.
+
+  RETURNS:
+    a numpy array of floats with shape (len(mols), len(GetPropertyNames())).
+    Row i contains the values ComputeProperties(mols[i]) returns. Values that
+    cannot be computed are NaN; exceptions raised by Python-defined
+    properties are propagated.
+)DOC")
+      .def("ComputePropertiesForMols", &computePropertiesForMolsHelper, "mols"_a,
+           "numThreads"_a = 1,
+           R"DOC(Compute the properties for a sequence of molecules.
+      .def("ComputePropertiesForMols", &computePropertiesForMolsHelper, "mols"_a,
+           "numThreads"_a = 1,
+           R"DOC(Compute the properties for a sequence of molecules.
 
   ARGUMENTS:
     - mols: an iterable of molecules. None entries are allowed and produce

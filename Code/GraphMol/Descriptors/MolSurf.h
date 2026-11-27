@@ -105,6 +105,9 @@ RDKIT_DESCRIPTORS_EXPORT double getTPSAAtomContribs(const ROMol &mol,
 RDKIT_DESCRIPTORS_EXPORT double calcTPSA(const ROMol &mol, bool force = false,
                                          bool includeSandP = false);
 
+const std::string SlogP_VSAVersion = "1.0.0";
+const std::string SMR_VSAVersion = "1.0.0";
+const std::string PEOE_VSAVersion = "1.0.0";
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcSlogP_VSA(
     const ROMol &mol, std::vector<double> *bins = nullptr, bool force = false);
 RDKIT_DESCRIPTORS_EXPORT std::vector<double> calcSMR_VSA(
