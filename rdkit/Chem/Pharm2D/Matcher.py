@@ -85,6 +85,9 @@ def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingA
     dMat = Chem.GetDistanceMatrix(mol, sigFactory.includeBondOrder)
 
   distsToCheck = Utils.nPointDistDict[nPts]
+  bins = sigFactory.GetBins()
+  minD, maxD = bins[0][0], bins[-1][1]
+  intervals = [bins[idx] for idx in scaffold]
 
   protoPharmacophores = Utils.GetAllCombinations(choices, noDups=1)
 
@@ -92,21 +95,16 @@ def GetAtomsMatchingBit(sigFactory, bitIdx, mol, dMat=None, justOne=0, matchingA
   for protoPharm in protoPharmacophores:
     if _verbose:
       print('protoPharm:', protoPharm)
-    for i in range(len(distsToCheck)):
-      dLow, dHigh = sigFactory.GetBins()[scaffold[i]]
-      a1, a2 = distsToCheck[i]
-      #
-      # FIX: this is making all kinds of assumptions about
-      #  things being single-atom matches (or at least that
-      #  only the first atom matters
-      #
-      idx1, idx2 = protoPharm[a1][0], protoPharm[a2][0]
-      dist = dMat[idx1, idx2]
-      if _verbose:
-        print(f'\t dist: {idx1}->{idx2} = {dist} ({dLow}, {dHigh})')
-      if dist < dLow or dist >= dHigh:
-        break
-    else:
+    dists = [Utils._ShortestFeatureDistance(protoPharm[a], protoPharm[b], dMat, minD, maxD)
+             for a, b in distsToCheck]
+    if None in dists:
+      continue
+    if nPts == 3:
+      # GetBitIdx orders equivalent feature vertices before assigning the bit.
+      _, dists = Utils.OrderTriangle(featCombo, dists)
+    if _verbose:
+      print(f'\t distances: {dists}, bins: {intervals}')
+    if all(low <= dist < high for dist, (low, high) in zip(dists, intervals)):
       if _verbose:
         print('Found one')
       # we found it

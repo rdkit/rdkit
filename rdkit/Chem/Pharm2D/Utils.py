@@ -111,6 +111,24 @@ nDistPointDict = {
 _trianglesInPharmacophore = {}
 
 
+def _ShortestFeatureDistance(atoms1, atoms2, dMat, minD, maxD):
+  """Return the shortest atom-pair distance used in a fingerprint, or None if excluded."""
+  minSeen = maxD
+  for idx1 in atoms1:
+    for idx2 in atoms2:
+      minSeen = min(minSeen, dMat[idx1, idx2])
+      if minSeen == 0 or minSeen < minD:
+        return None
+  if minSeen >= maxD:
+    return None
+  # Bond-order-weighted paths can have fractional lengths. Fingerprints bin
+  # their integer parts.
+  dist = int(minSeen)
+  if dist == 0 or dist < minD:
+    return None
+  return dist
+
+
 def GetTriangles(nPts):
   """ returns a tuple with the distance indices for
      triangles composing an nPts-pharmacophore

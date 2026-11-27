@@ -61,6 +61,65 @@ class TestCase(unittest.TestCase):
       atoms = Matcher.GetAtomsMatchingBit(factory, bit, mol, justOne=1)
       self.assertTrue(len(atoms))
 
+  def testMultiAtomFeatureDistance(self):
+    mol = Chem.MolFromSmiles('c1ccc(F)cc1')
+    families = self.factory.GetFeatFamilies()
+    pair = [families.index('Acceptor'), families.index('Aromatic')]
+    near = self.factory.GetBitIdx(pair, [1])
+    far = self.factory.GetBitIdx(pair, [4])
+    bitInfo = {}
+    fp = Generate.Gen2DFingerprint(mol, self.factory, bitInfo=bitInfo)
+    self.assertTrue(fp[near])
+    self.assertFalse(fp[far])
+    expected = [tuple(sorted(bitInfo[near][0]))]
+    self.assertEqual(Matcher.GetAtomsMatchingBit(self.factory, near, mol), expected)
+    self.assertEqual(Matcher.GetAtomsMatchingBit(self.factory, far, mol), [])
+
+  def testOverlappingFeatures(self):
+    mol = Chem.MolFromSmiles('c1ccc2ccccc2c1')
+    aromatic = self.factory.GetFeatFamilies().index('Aromatic')
+    bit = self.factory.GetBitIdx([aromatic, aromatic], [1])
+    self.assertFalse(Generate.Gen2DFingerprint(mol, self.factory)[bit])
+    self.assertEqual(Matcher.GetAtomsMatchingBit(self.factory, bit, mol), [])
+
+  def testBondOrderWeightedDistance(self):
+    mol = Chem.MolFromSmiles('N#N')
+    acceptor = self.factory.GetFeatFamilies().index('Acceptor')
+    bit = self.factory.GetBitIdx([acceptor, acceptor], [1])
+    self.assertTrue(Generate.Gen2DFingerprint(mol, self.factory)[bit])
+    self.assertEqual(Matcher.GetAtomsMatchingBit(self.factory, bit, mol), [((0,), (1,))])
+    self.factory.includeBondOrder = True
+    self.assertFalse(Generate.Gen2DFingerprint(mol, self.factory)[bit])
+    self.assertEqual(Matcher.GetAtomsMatchingBit(self.factory, bit, mol), [])
+
+  def testRepeatedFeatureTriangle(self):
+    mol = Chem.MolFromSmiles('Fc1ccc(CO)cc1')
+    families = self.factory.GetFeatFamilies()
+    featCombo = (families.index('Acceptor'), families.index('Acceptor'),
+                 families.index('Aromatic'))
+    bitInfo = {}
+    fp = Generate.Gen2DFingerprint(mol, self.factory, bitInfo=bitInfo)
+    self.assertEqual(sum(self.factory.GetBitInfo(i)[1] == featCombo for i in fp.GetOnBits()), 1)
+    # Exchanging the two acceptors must not produce additional bit matches.
+    for bit in range(self.factory.GetSigSize()):
+      if self.factory.GetBitInfo(bit)[1] == featCombo:
+        expected = [tuple(sorted(match)) for match in bitInfo.get(bit, [])]
+        self.assertEqual(Matcher.GetAtomsMatchingBit(self.factory, bit, mol), expected)
+
+  def testFractionalUpperBound(self):
+    self.factory.SetBins([(0, 1.5), (1.5, 3.5)])
+    self.factory.Init()
+    mol = Chem.MolFromSmiles('NCCN')
+    acceptor = self.factory.GetFeatFamilies().index('Acceptor')
+    bit = self.factory.GetBitIdx([acceptor, acceptor], [3])
+    dMat = Chem.GetDistanceMatrix(mol).copy()
+    for distance, matches in [(3.25, [((0,), (3,))]), (3.5, []), (7., [])]:
+      with self.subTest(distance=distance):
+        dMat[0, 3] = dMat[3, 0] = distance
+        fp = Generate.Gen2DFingerprint(mol, self.factory, perms=[[acceptor, acceptor]], dMat=dMat)
+        self.assertEqual(bool(fp[bit]), bool(matches))
+        self.assertEqual(Matcher.GetAtomsMatchingBit(self.factory, bit, mol, dMat=dMat), matches)
+
   def test3Roundtrip(self):
     # longer-running Bug 28 test
     nToDo = 20
