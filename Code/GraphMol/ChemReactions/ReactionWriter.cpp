@@ -71,20 +71,24 @@ std::string molToString(RDKit::ROMol &mol, bool toSmiles,
 
 std::string chemicalReactionTemplatesToString(
     const RDKit::ChemicalReaction &rxn, RDKit::ReactionMoleculeType type,
-    bool toSmiles, const RDKit::SmilesWriteParams &params) {
+    bool toSmiles, const RDKit::SmilesWriteParams &params,
+    std::vector<RDKit::ROMol *> &writtenMols) {
   std::string res = "";
-  std::vector<std::string> vfragsmi;
+  std::vector<std::pair<std::string, RDKit::ROMol *>> vfrags;
   auto begin = getStartIterator(rxn, type);
   auto end = getEndIterator(rxn, type);
   for (; begin != end; ++begin) {
-    vfragsmi.push_back(molToString(**begin, toSmiles, params));
+    vfrags.emplace_back(molToString(**begin, toSmiles, params), begin->get());
   }
   if (params.canonical) {
-    std::sort(vfragsmi.begin(), vfragsmi.end());
+    std::stable_sort(
+        vfrags.begin(), vfrags.end(),
+        [](const auto &a, const auto &b) { return a.first < b.first; });
   }
-  for (unsigned i = 0; i < vfragsmi.size(); ++i) {
-    res += vfragsmi[i];
-    if (i < vfragsmi.size() - 1) {
+  for (unsigned i = 0; i < vfrags.size(); ++i) {
+    res += vfrags[i].first;
+    writtenMols.push_back(vfrags[i].second);
+    if (i < vfrags.size() - 1) {
       res += ".";
     }
   }
@@ -95,26 +99,17 @@ std::string chemicalReactionToRxnToString(
     const RDKit::ChemicalReaction &rxn, bool toSmiles,
     const RDKit::SmilesWriteParams &params, bool includeCX, std::uint32_t flags = RDKit::SmilesWrite::CXSmilesFields::CX_ALL) {
   std::string res = "";
-  res +=
-      chemicalReactionTemplatesToString(rxn, RDKit::Reactant, toSmiles, params);
+  std::vector<RDKit::ROMol *> mols;
+  res += chemicalReactionTemplatesToString(rxn, RDKit::Reactant, toSmiles,
+                                           params, mols);
   res += ">";
-  res += chemicalReactionTemplatesToString(rxn, RDKit::Agent, toSmiles, params);
+  res += chemicalReactionTemplatesToString(rxn, RDKit::Agent, toSmiles, params,
+                                           mols);
   res += ">";
-  res +=
-      chemicalReactionTemplatesToString(rxn, RDKit::Product, toSmiles, params);
-
+  res += chemicalReactionTemplatesToString(rxn, RDKit::Product, toSmiles,
+                                           params, mols);
 
   if (includeCX) {
-    std::vector<RDKit::ROMol *> mols;
-
-    // Collect reactants, agents, and products into mols vector
-    for (auto type : {RDKit::Reactant, RDKit::Agent, RDKit::Product}) {
-      for (auto begin = getStartIterator(rxn, type);
-           begin != getEndIterator(rxn, type); ++begin) {
-        mols.push_back((*begin).get());
-      }
-    }
-
     auto ext = RDKit::SmilesWrite::getCXExtensions(mols, flags); 
     if (!ext.empty()) {
       res += " ";
