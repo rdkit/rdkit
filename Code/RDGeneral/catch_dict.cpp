@@ -8,10 +8,16 @@
 //  of the RDKit source tree.
 //
 #include <string>
+#include <boost/numeric/conversion/cast.hpp>
 #include <catch2/catch_all.hpp>
 #include "Dict.h"
 #include "RDProps.h"
 #include "Exceptions.h"
+#include "StreamOps.h"
+#include <cstdint>
+#include <limits>
+#include <sstream>
+#include <vector>
 using namespace std::string_literals;
 
 TEST_CASE("Dict move semantics") {
@@ -92,4 +98,31 @@ TEST_CASE("github #9068: dicts with empty keys") {
   }
   SECTION("hasVal with empty key") { CHECK(!dict.hasVal("")); }
   SECTION("clearVal with empty key") { CHECK_NOTHROW(dict.clearVal("")); }
+}
+TEST_CASE("streamReadStringVec rejects element counts that do not fit in size_t") {
+  auto makeStream = [](std::uint64_t count) {
+    std::stringstream ss;
+    ss.write(reinterpret_cast<const char *>(&count), sizeof(count));
+    // a few empty strings (zero length prefix) so a bad count is not caught
+    // by an early end of stream
+    for (int i = 0; i < 4; ++i) {
+      std::uint32_t len = 0;
+      ss.write(reinterpret_cast<const char *>(&len), sizeof(len));
+    }
+    return ss;
+  };
+  std::vector<std::string> v;
+  SECTION("largest possible count") {
+    auto ss = makeStream(std::numeric_limits<std::uint64_t>::max());
+    CHECK_THROWS(RDKit::streamReadStringVec(ss, v, 0));
+  }
+  if constexpr (sizeof(size_t) == 4) {
+    // this count used to be silently truncated to 1 on 32-bit platforms,
+    // after which the read loop ran past the end of the vector
+    SECTION("count that wraps around on 32-bit platforms") {
+      auto ss = makeStream((std::uint64_t(1) << 32) + 1);
+      CHECK_THROWS_AS(RDKit::streamReadStringVec(ss, v, 0),
+                      boost::numeric::bad_numeric_cast);
+    }
+  }
 }
