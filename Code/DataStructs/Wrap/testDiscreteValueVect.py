@@ -5,6 +5,7 @@
 import io
 import os
 import pickle
+import struct
 import unittest
 
 from rdkit import DataStructs as ds
@@ -260,6 +261,43 @@ class TestCase(unittest.TestCase):
     arr = numpy.zeros((3, ), 'i')
     ds.ConvertToNumpyArray(bv, arr)
     self.assertTrue(numpy.all(bv == arr))
+
+  def test10BadPickleHeaders(self):
+    # the header fields used to be trusted individually, so a pickle claiming a
+    # length that does not fit in the stored data read (and wrote) past the end
+    # of the allocation
+    # header words: version, type, bitsPerVal, mask, length, numInts
+    pkl = struct.pack('<iIIIII', -1, int(ds.DiscreteValueType.EIGHTBITVALUE), 8, 0xff, 4,
+                      1) + b'\x01\x02\x03\x04'
+    v = ds.DiscreteValueVect(pkl)
+    self.assertEqual(len(v), 4)
+    self.assertEqual(list(v), [1, 2, 3, 4])
+
+    def corrupt(word, val):
+      res = bytearray(pkl)
+      res[4 * word:4 * word + 4] = struct.pack('<I', val)
+      return bytes(res)
+
+    # length much larger than the stored data
+    self.assertRaises(ValueError, lambda: ds.DiscreteValueVect(corrupt(4, 4000000)))
+    # more storage words claimed than are present
+    self.assertRaises(ValueError, lambda: ds.DiscreteValueVect(corrupt(5, 2)))
+    # unknown value type
+    self.assertRaises(ValueError, lambda: ds.DiscreteValueVect(corrupt(1, 7)))
+    # bits per value that does not match the type (0 also divides by zero)
+    self.assertRaises(ValueError, lambda: ds.DiscreteValueVect(corrupt(2, 0)))
+    self.assertRaises(ValueError, lambda: ds.DiscreteValueVect(corrupt(2, 32)))
+    # mask that does not match the type
+    self.assertRaises(ValueError, lambda: ds.DiscreteValueVect(corrupt(3, 0xffffffff)))
+    # truncated data
+    self.assertRaises(ValueError, lambda: ds.DiscreteValueVect(pkl[:-2]))
+
+    # the same thing arriving through pickle.loads, which is how these show up
+    # in practice (DiscreteValueVects are embedded in UniformGrid3D pickles)
+    stream = pickle.dumps(ds.DiscreteValueVect(ds.DiscreteValueType.EIGHTBITVALUE, 4))
+    self.assertEqual(stream.count(struct.pack('<II', 4, 1)), 1)
+    bad = stream.replace(struct.pack('<II', 4, 1), struct.pack('<II', 4000000, 1))
+    self.assertRaises(ValueError, lambda: pickle.loads(bad))
 
 
 if __name__ == '__main__':

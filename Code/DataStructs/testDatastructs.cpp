@@ -398,6 +398,37 @@ TEST_CASE("test3DiscreteVectPickles") {
   REQUIRE(computeL1Norm(v161, v162) == 0);
 }
 
+TEST_CASE("DiscreteValueVect pickles with inconsistent headers are rejected") {
+  DiscreteValueVect v1(DiscreteValueVect::EIGHTBITVALUE, 4);
+  const std::string pkl = v1.toString();
+  REQUIRE(pkl.size() == 28);
+  // header words: version, type, bitsPerVal, mask, length, numInts
+  auto setWord = [&pkl](unsigned int word, std::uint32_t val) {
+    std::string res = pkl;
+    for (unsigned int i = 0; i < 4; ++i) {
+      res[4 * word + i] = static_cast<char>((val >> (8 * i)) & 0xff);
+    }
+    return res;
+  };
+  DiscreteValueVect v2(pkl);
+  CHECK(v2.getLength() == 4);
+
+  // length much larger than the stored data
+  CHECK_THROWS_AS(DiscreteValueVect(setWord(4, 4000000)), ValueErrorException);
+  // more storage words claimed than are present
+  CHECK_THROWS_AS(DiscreteValueVect(setWord(5, 2)), ValueErrorException);
+  // unknown value type
+  CHECK_THROWS_AS(DiscreteValueVect(setWord(1, 7)), ValueErrorException);
+  // bits per value that does not match the type
+  CHECK_THROWS_AS(DiscreteValueVect(setWord(2, 0)), ValueErrorException);
+  CHECK_THROWS_AS(DiscreteValueVect(setWord(2, 32)), ValueErrorException);
+  // mask that does not match the type
+  CHECK_THROWS_AS(DiscreteValueVect(setWord(3, 0xffffffff)),
+                  ValueErrorException);
+  // truncated data
+  CHECK_THROWS_AS(DiscreteValueVect(pkl.substr(0, 26)), ValueErrorException);
+}
+
 TEST_CASE("test4DiscreteVectOps1") {
   DiscreteValueVect vect1(DiscreteValueVect::ONEBITVALUE, 8);
   for (unsigned int i = 0; i < 4; ++i) {
