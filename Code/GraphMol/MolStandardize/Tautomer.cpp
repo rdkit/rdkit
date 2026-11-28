@@ -96,27 +96,28 @@ const std::vector<SubstructTerm> &getDefaultTautomerScoreSubstructs() {
   //   - name, SMARTS, score
   //   - requiredElements: atomic numbers that must be present (empty = no
   //   filter)
-  //   - connectivitySmarts: bond-order-agnostic pattern for pre-screening
-  // Since tautomerization only moves H and changes bond orders (never creates/
-  // destroys heavy-atom bonds), we can skip patterns whose connectivity
-  // prerequisites aren't met by the input molecule.
+  //   - connectivitySmarts: bond-order- and aromaticity-agnostic pattern for
+  //     pre-screening
+  // Tautomerization preserves heavy-atom connectivity but can change bond
+  // orders and aromaticity. Use atomic numbers rather than aromatic/aliphatic
+  // atom types in connectivity SMARTS so no scoring term is missed.
   static std::vector<SubstructTerm> substructureTerms{
       {"benzoquinone",
        "[#6]1([#6]=[#6][#6]([#6]=[#6]1)=,:[N,S,O])=,:[N,S,O]",
        25,
        {6},
-       "[#6]1(~[#6]~[#6]~[#6](~[#6]~[#6]~1)~[N,S,O])~[N,S,O]"},
+       "[#6]1(~[#6]~[#6]~[#6](~[#6]~[#6]~1)~[#7,#16,#8])~[#7,#16,#8]"},
       {"oxim", "[#6]=[N][OH]", 4, {6, 7, 8}, "[#6]~[#7]~[#8]"},
       {"C=O", "[#6]=,:[#8]", 2, {6, 8}, "[#6]~[#8]"},
       {"N=O", "[#7]=,:[#8]", 2, {7, 8}, "[#7]~[#8]"},
       {"P=O", "[#15]=,:[#8]", 2, {15, 8}, "[#15]~[#8]"},
-      {"C=hetero", "[C]=[!#1;!#6]", 1, {6}, "[C]~[!#1;!#6]"},
+      {"C=hetero", "[C]=[!#1;!#6]", 1, {6}, "[#6]~[!#1;!#6]"},
       {"C(=hetero)-hetero",
        "[C](=[!#1;!#6])[!#1;!#6]",
        2,
        {6},
-       "[C](~[!#1;!#6])~[!#1;!#6]"},
-      {"aromatic C = exocyclic N", "[c]=!@[N]", -1, {6, 7}, "[c]~[N]"},
+       "[#6](~[!#1;!#6])~[!#1;!#6]"},
+      {"aromatic C = exocyclic N", "[c]=!@[N]", -1, {6, 7}, "[#6]~[#7]"},
       {"methyl", "[CX4H3]", 1, {6}, ""},
       {"guanidine terminal=N",
        "[#7]C(=[NR0])[#7H0]",
@@ -127,7 +128,7 @@ const std::vector<SubstructTerm> &getDefaultTautomerScoreSubstructs() {
        "[#7;R][#6;R]([N])=[#7;R]",
        2,
        {6, 7},
-       "[#7]~[#6](~[N])~[#7]"},
+       "[#7]~[#6](~[#7])~[#7]"},
       {"aci-nitro",
        "[#6]=[N+]([O-])[OH]",
        -4,

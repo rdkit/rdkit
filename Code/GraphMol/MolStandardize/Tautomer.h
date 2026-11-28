@@ -52,7 +52,7 @@ struct RDKIT_MOLSTANDARDIZE_EXPORT SubstructTerm {
 
   // Pre-screening support: elements that must be present (empty = no filter)
   std::vector<int> requiredElements;
-  // Bond-order-agnostic connectivity pattern for pre-screening (may be empty)
+  // Bond-order- and aromaticity-agnostic connectivity pattern (may be empty)
   std::string connectivitySmarts;
   RWMol connectivityMatcher;
 
