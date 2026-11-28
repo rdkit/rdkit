@@ -48,6 +48,7 @@ jobs:
           cmake .. ^
           -G "Ninja" ^
           -DCMAKE_BUILD_TYPE=Release ^
+          -DRDK_LTO_MODE=FULL ^
           -DCMAKE_C_COMPILER_LAUNCHER=ccache ^
           -DCMAKE_CXX_COMPILER_LAUNCHER=ccache ^
           -DRDK_INSTALL_INTREE=ON ^
@@ -77,6 +78,15 @@ jobs:
           call activate rdkit_build
           cd build
           cmake --build . --config Release --target install
+      - name: Upload Windows artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rdkit-windows-x64
+          path: |
+            bin
+            lib
+            rdkit
       - name: Trim and store ccache
         uses: ./.github/actions/store-ccache
         if: ${{ success() && steps.cache-restore.outputs.cache-hit != 'true' }}

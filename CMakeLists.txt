@@ -128,9 +128,12 @@ if(NOT RDK_LTO_MODE_UPPER STREQUAL "OFF")
     set(RDK_LTO_FLAG "-flto=${RDK_LTO_JOBS}")
     add_compile_options("${RDK_LTO_FLAG}")
     add_link_options("${RDK_LTO_FLAG}")
+  elseif(MSVC)
+    add_compile_options("/GL")
+    add_link_options("/LTCG:INCREMENTAL")
   else()
     message(FATAL_ERROR
-        "RDK_LTO_MODE=${RDK_LTO_MODE} requires Clang or GCC")
+        "RDK_LTO_MODE=${RDK_LTO_MODE} requires Clang, GCC, or MSVC")
   endif()
 endif()
 
