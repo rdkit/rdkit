@@ -7334,6 +7334,24 @@ CAS<~>
       pass
     self.assertEqual(rwmol.GetNumAtoms(), mol.GetNumAtoms())
 
+  def testRemoveHsInBatchEdit(self):
+    # Hs can't be removed while a batch edit is in progress
+    mol = Chem.AddHs(Chem.MolFromSmiles("C[C@H](N)O"))
+    rwmol = Chem.RWMol(mol)
+    rwmol.BeginBatchEdit()
+    rwmol.RemoveAtom(4)
+    with self.assertRaisesRegex(ValueError, "batch edit in progress"):
+      Chem.RemoveHs(rwmol)
+    with self.assertRaisesRegex(ValueError, "batch edit in progress"):
+      Chem.RemoveHs(rwmol, Chem.RemoveHsParameters())
+    with self.assertRaisesRegex(ValueError, "batch edit in progress"):
+      Chem.RemoveAllHs(rwmol)
+    with self.assertRaisesRegex(ValueError, "batch edit in progress"):
+      with Chem.RWMol(mol) as rwmol2:
+        Chem.RemoveHs(rwmol2)
+    rwmol.CommitBatchEdit()
+    self.assertEqual(Chem.MolToSmiles(Chem.RemoveHs(rwmol)), Chem.CanonSmiles("C[C@H](N)O"))
+
   def testGithub4138(self):
     m = Chem.MolFromSmiles('C1CCCO1')
     q = Chem.MolFromSmarts('')

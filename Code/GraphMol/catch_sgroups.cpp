@@ -557,3 +557,72 @@ M  END)CTAB"_ctab;
   REQUIRE(dataFields.size() == 1);
   CHECK(dataFields[0] == "[IV]");
 }
+
+TEST_CASE("removing SubstanceGroups referencing several atoms or bonds",
+          "[sgroups]") {
+  // removeSubstanceGroupsReferencing{Atoms,Bonds}() must give the same
+  // result as calling removeSubstanceGroupsReferencing{Atom,Bond}() for each
+  // index, in decreasing order
+  const std::string rdbase = getenv("RDBASE");
+  auto sgroupsString = [](const ROMol &mol) {
+    std::ostringstream out;
+    for (const auto &sg : getSubstanceGroups(mol)) {
+      out << sg.getProp<std::string>("TYPE") << " atoms";
+      for (auto idx : sg.getAtoms()) {
+        out << ' ' << idx;
+      }
+      out << " patoms";
+      for (auto idx : sg.getParentAtoms()) {
+        out << ' ' << idx;
+      }
+      out << " bonds";
+      for (auto idx : sg.getBonds()) {
+        out << ' ' << idx;
+      }
+      out << " saps";
+      for (const auto &sap : sg.getAttachPoints()) {
+        out << ' ' << sap.aIdx << '/' << sap.lvIdx;
+      }
+      out << " cstates";
+      for (const auto &cs : sg.getCStates()) {
+        out << ' ' << cs.bondIdx;
+      }
+      out << '\n';
+    }
+    return out.str();
+  };
+  for (unsigned int fileNum = 1; fileNum <= 7; ++fileNum) {
+    const auto fName = rdbase +
+                       "/Code/GraphMol/test_data/sgroups_and_remove_atoms_" +
+                       std::to_string(fileNum) + ".mol";
+    std::unique_ptr<RWMol> mol(MolFileToMol(fName));
+    REQUIRE(mol);
+    REQUIRE(!getSubstanceGroups(*mol).empty());
+    for (unsigned int step : {2u, 3u, 5u, 1000u}) {
+      INFO(fName << " step " << step);
+      std::vector<unsigned int> atomIndices;
+      for (unsigned int i = step / 2; i < mol->getNumAtoms(); i += step) {
+        atomIndices.push_back(i);
+      }
+      RWMol sequential(*mol);
+      for (auto it = atomIndices.rbegin(); it != atomIndices.rend(); ++it) {
+        removeSubstanceGroupsReferencingAtom(sequential, *it);
+      }
+      RWMol batch(*mol);
+      removeSubstanceGroupsReferencingAtoms(batch, atomIndices);
+      CHECK(sgroupsString(batch) == sgroupsString(sequential));
+
+      std::vector<unsigned int> bondIndices;
+      for (unsigned int i = step / 2; i < mol->getNumBonds(); i += step) {
+        bondIndices.push_back(i);
+      }
+      RWMol sequentialBonds(*mol);
+      for (auto it = bondIndices.rbegin(); it != bondIndices.rend(); ++it) {
+        removeSubstanceGroupsReferencingBond(sequentialBonds, *it);
+      }
+      RWMol batchBonds(*mol);
+      removeSubstanceGroupsReferencingBonds(batchBonds, bondIndices);
+      CHECK(sgroupsString(batchBonds) == sgroupsString(sequentialBonds));
+    }
+  }
+}

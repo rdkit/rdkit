@@ -1476,6 +1476,8 @@ struct molops_wrapper {
     - Hs that are part of the definition of double bond Stereochemistry\n\
       will not be removed\n\
     - Hs that are not connected to anything else will not be removed\n\
+    - Hs can't be removed from an RWMol with a batch edit in progress;\n\
+      a ValueError is raised if this is attempted.\n\
 \n ";
 #if defined(__GNUC__) or defined(__clang__)
 #pragma GCC diagnostic push
@@ -1556,12 +1558,14 @@ struct molops_wrapper {
         (python::arg("mol"), python::arg("params"),
          python::arg("sanitize") = true),
         "Returns a copy of the molecule with Hs removed. Which Hs are "
-        "removed is controlled by the params argument",
+        "removed is controlled by the params argument. Raises a ValueError "
+        "if mol is an RWMol with a batch edit in progress.",
         python::return_value_policy<python::manage_new_object>());
     python::def("RemoveAllHs",
                 (ROMol * (*)(const ROMol &, bool)) & MolOps::removeAllHs,
                 (python::arg("mol"), python::arg("sanitize") = true),
-                "Returns a copy of the molecule with all Hs removed.",
+                "Returns a copy of the molecule with all Hs removed. Raises a "
+                "ValueError if mol is an RWMol with a batch edit in progress.",
                 python::return_value_policy<python::manage_new_object>());
     python::def("MergeQueryHs",
                 (ROMol * (*)(const ROMol &, bool, bool)) & MolOps::mergeQueryHs,

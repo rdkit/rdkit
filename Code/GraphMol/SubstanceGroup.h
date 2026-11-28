@@ -210,6 +210,26 @@ class RDKIT_GRAPHMOL_EXPORT SubstanceGroup : public RDProps {
   //! definition of this substance group
   bool includesBond(unsigned int bondIdx) const;
 
+  //! like adjustToRemovedAtom(), for several removed atoms at once
+  //!   \c atomIndices must be sorted in increasing order
+  //! \returns whether or not anything was changed
+  bool adjustToRemovedAtoms(const std::vector<unsigned int> &atomIndices);
+
+  //! \returns whether any of the atoms in \c atomIndices, which must be
+  //! sorted in increasing order, is part of the definition of this substance
+  //! group
+  bool includesAnyAtom(const std::vector<unsigned int> &atomIndices) const;
+
+  //! like adjustToRemovedBond(), for several removed bonds at once
+  //!   \c bondIndices must be sorted in increasing order
+  //! \returns whether or not anything was changed
+  bool adjustToRemovedBonds(const std::vector<unsigned int> &bondIndices);
+
+  //! \returns whether any of the bonds in \c bondIndices, which must be
+  //! sorted in increasing order, is part of the definition of this substance
+  //! group
+  bool includesAnyBond(const std::vector<unsigned int> &bondIndices) const;
+
   //! Set owning molecule
   //! This only updates atoms and bonds; parent sgroup has to be updated
   //! independently, since parent might not exist at the time this is
@@ -298,6 +318,30 @@ RDKIT_GRAPHMOL_EXPORT void removeSubstanceGroupsReferencingAtom(
 */
 RDKIT_GRAPHMOL_EXPORT void removeSubstanceGroupsReferencingBond(
     RWMol &mol, unsigned int idx);
+//! Removes SubstanceGroups which reference any of several atom indices
+/*!
+  This is equivalent to calling removeSubstanceGroupsReferencingAtom() for
+  each of the atoms, in order of decreasing index, but is linear in the size
+  of the SubstanceGroups instead of proportional to the number of atoms times
+  that size.
+
+  \param mol - molecule to be edited.
+  \param atomIndices - atom indices, sorted in increasing order
+*/
+RDKIT_GRAPHMOL_EXPORT void removeSubstanceGroupsReferencingAtoms(
+    RWMol &mol, const std::vector<unsigned int> &atomIndices);
+//! Removes SubstanceGroups which reference any of several bond indices
+/*!
+  This is equivalent to calling removeSubstanceGroupsReferencingBond() for
+  each of the bonds, in order of decreasing index, but is linear in the size
+  of the SubstanceGroups instead of proportional to the number of bonds times
+  that size.
+
+  \param mol - molecule to be edited.
+  \param bondIndices - bond indices, sorted in increasing order
+*/
+RDKIT_GRAPHMOL_EXPORT void removeSubstanceGroupsReferencingBonds(
+    RWMol &mol, const std::vector<unsigned int> &bondIndices);
 //! @}
 
 }  // namespace RDKit

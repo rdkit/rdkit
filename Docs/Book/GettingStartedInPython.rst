@@ -3726,6 +3726,21 @@ You can make this more concise using a context manager, which takes care of the 
   >>> Chem.MolToSmiles(mw)
   'C=CC.CC.O'
 
+Hs can't be removed with ``Chem.RemoveHs()`` or ``Chem.RemoveAllHs()`` while
+a batch edit is in progress; commit (or roll back) the batch edit first:
+
+.. doctest::
+
+  >>> mw = Chem.RWMol(Chem.AddHs(m))
+  >>> mw.BeginBatchEdit()
+  >>> Chem.RemoveHs(mw)
+  Traceback (most recent call last):
+    ...
+  ValueError: Hs can't be removed from a molecule with a batch edit in progress
+  >>> mw.CommitBatchEdit()
+  >>> Chem.MolToSmiles(Chem.RemoveHs(mw))
+  'C=CC=CC(C)=O'
+
 It is even easier to generate nonsense using the RWMol than it
 is with standard molecules.  If you need chemically reasonable
 results, be certain to sanitize the results.

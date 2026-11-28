@@ -5338,3 +5338,96 @@ TEST_CASE("getTotalNumHs() and query atoms") {
     CHECK(m->getAtomWithIdx(3)->getTotalNumHs(false) == 0);
   }
 }
+
+TEST_CASE("batch removal of many atoms preserves stereochemistry",
+          "[editing]") {
+  // Removing atoms in a batch must give the same result as removing them one
+  // at a time, including the order of the bonds of the remaining atoms, which
+  // chiral tags refer to.
+  auto m = "C/C=C/[C@H](N)[C@@H](O)C(=O)N[C@@H](C)C(=O)O"_smiles;
+  REQUIRE(m);
+  MolOps::addHs(*m);
+  // interleave the Hs with the heavy atoms, so that removed and kept atoms
+  // alternate (addHs() puts all the Hs at the end)
+  std::vector<unsigned int> heavy, hydrogens;
+  for (const auto atom : m->atoms()) {
+    (atom->getAtomicNum() == 1 ? hydrogens : heavy).push_back(atom->getIdx());
+  }
+  REQUIRE(hydrogens.size() >= heavy.size());
+  std::vector<unsigned int> order;
+  for (size_t i = 0; i < hydrogens.size(); ++i) {
+    if (i < heavy.size()) {
+      order.push_back(heavy[i]);
+    }
+    order.push_back(hydrogens[i]);
+  }
+  std::unique_ptr<RWMol> reordered(
+      static_cast<RWMol *>(MolOps::renumberAtoms(*m, order)));
+  std::vector<unsigned int> toRemove;
+  for (const auto atom : reordered->atoms()) {
+    if (atom->getAtomicNum() == 1 || atom->getAtomicNum() == 8) {
+      toRemove.push_back(atom->getIdx());
+    }
+  }
+  RWMol sequential(*reordered);
+  for (auto it = toRemove.rbegin(); it != toRemove.rend(); ++it) {
+    sequential.removeAtom(*it);
+  }
+  RWMol batch(*reordered);
+  batch.beginBatchEdit();
+  for (auto idx : toRemove) {
+    batch.removeAtom(idx);
+  }
+  batch.commitBatchEdit();
+  REQUIRE(batch.getNumAtoms() == sequential.getNumAtoms());
+  REQUIRE(batch.getNumBonds() == sequential.getNumBonds());
+  for (const auto atom : batch.atoms()) {
+    const auto other = sequential.getAtomWithIdx(atom->getIdx());
+    CHECK(atom->getAtomicNum() == other->getAtomicNum());
+    CHECK(atom->getChiralTag() == other->getChiralTag());
+    std::vector<unsigned int> bonds, otherBonds;
+    for (const auto bond : batch.atomBonds(atom)) {
+      bonds.push_back(bond->getIdx());
+    }
+    for (const auto bond : sequential.atomBonds(other)) {
+      otherBonds.push_back(bond->getIdx());
+    }
+    CHECK(bonds == otherBonds);
+  }
+  CHECK(MolToSmiles(batch) == MolToSmiles(sequential));
+}
+
+TEST_CASE("removeHs inside a batch edit", "[removeHs][editing]") {
+  // Removing Hs while a batch edit is in progress isn't supported, by any of
+  // the removeHs() and removeAllHs() overloads.
+  auto m = "C/C=C/[C@H](N)[C@@H](O)C(=O)O"_smiles;
+  REQUIRE(m);
+  MolOps::addHs(*m);
+  const auto smilesBefore = MolToSmiles(*m);
+  const auto numAtomsBefore = m->getNumAtoms();
+  const MolOps::RemoveHsParameters ps;
+
+  m->beginBatchEdit();
+  CHECK(m->isInBatchEdit());
+  CHECK_THROWS_AS(MolOps::removeHs(*m, ps), ValueErrorException);
+  CHECK_THROWS_AS(MolOps::removeHs(*m, ps, false), ValueErrorException);
+  CHECK_THROWS_AS(MolOps::removeAllHs(*m), ValueErrorException);
+  const ROMol &constMol = *m;
+  CHECK_THROWS_AS(std::unique_ptr<ROMol>(MolOps::removeHs(constMol, ps)),
+                  ValueErrorException);
+  CHECK_THROWS_AS(std::unique_ptr<ROMol>(MolOps::removeAllHs(constMol)),
+                  ValueErrorException);
+
+  // the molecule wasn't modified, and the batch edit is still in progress
+  CHECK(m->isInBatchEdit());
+  CHECK(m->getNumAtoms() == numAtomsBefore);
+  CHECK(MolToSmiles(*m) == smilesBefore);
+
+  // Hs can be removed once the batch edit is committed
+  m->commitBatchEdit();
+  CHECK(!m->isInBatchEdit());
+  MolOps::removeHs(*m, ps);
+  auto expected = "C/C=C/[C@H](N)[C@@H](O)C(=O)O"_smiles;
+  REQUIRE(expected);
+  CHECK(MolToSmiles(*m) == MolToSmiles(*expected));
+}

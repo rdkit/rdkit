@@ -306,6 +306,10 @@ RDKIT_GRAPHMOL_EXPORT void setTerminalAtomCoords(ROMol &mol, unsigned int idx,
        - Hs that are not connected to anything else will not be removed
        - Hs that have a query defined (i.e. hasQuery() returns true) will not
          be removed
+       - Hs can't be removed from an RWMol with a batch edit in progress (see
+         RWMol::beginBatchEdit()); a ValueErrorException is thrown if this is
+         attempted. This applies to all overloads of removeHs() and
+         removeAllHs().
 
        - the caller is responsible for <tt>delete</tt>ing the pointer this
    returns.
@@ -352,7 +356,8 @@ struct RDKIT_GRAPHMOL_EXPORT RemoveHsParameters {
 };
 
 //! \overload
-/// modifies the molecule in place
+/// modifies the molecule in place. Throws a ValueErrorException if a batch
+/// edit is in progress on \c mol.
 RDKIT_GRAPHMOL_EXPORT void removeHs(
     RWMol &mol, const RemoveHsParameters &ps = RemoveHsParameters(),
     bool sanitize = true);
@@ -363,6 +368,8 @@ RDKIT_GRAPHMOL_EXPORT ROMol *removeHs(
     bool sanitize = true);
 
 //! removes all Hs from a molecule
+/// Throws a ValueErrorException if \c mol is an RWMol with a batch edit in
+/// progress.
 RDKIT_GRAPHMOL_EXPORT void removeAllHs(RWMol &mol, bool sanitize = true);
 //! \overload
 /// The caller owns the pointer this returns

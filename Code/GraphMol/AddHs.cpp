@@ -8,6 +8,10 @@
 //  of the RDKit source tree.
 //
 #include "RDKitBase.h"
+#include <algorithm>
+#include <cstdint>
+#include <functional>
+#include <limits>
 #include <list>
 #include "QueryAtom.h"
 #include "QueryOps.h"
@@ -15,6 +19,7 @@
 #include "Chirality.h"
 #include <Geometry/Transform3D.h>
 #include <Geometry/point.h>
+#include <RDGeneral/Exceptions.h>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/dynamic_bitset.hpp>
 #include <boost/range/iterator_range.hpp>
@@ -138,10 +143,29 @@ std::map<unsigned int, std::vector<unsigned int>> getIsoMap(const ROMol &mol) {
   return isoMap;
 }
 
-bool may_need_extra_H(const ROMol &mol, const Atom *atom) {
+// Returns whether an atom has already been removed by removeHs(), which
+// removes atoms in a batch edit, so that they remain in the molecule until it
+// is committed. Code removing Hs must ignore them to get the same results as
+// if they had been removed immediately. Since the Hs are removed in order of
+// decreasing index, when removing the H with index currentIdx, the atoms
+// already removed are the Hs to be removed with a higher index.
+struct RemovedAtoms {
+  const boost::dynamic_bitset<> &atomsToRemove;
+  unsigned int currentIdx;
+
+  bool operator()(const Atom *atom) const {
+    return atom->getIdx() > currentIdx && atomsToRemove[atom->getIdx()];
+  }
+};
+
+bool may_need_extra_H(const ROMol &mol, const Atom *atom,
+                      const RemovedAtoms &isRemoved) {
   unsigned single_bonds = 0;
   unsigned aromatic_bonds = 0;
   for (auto bond : mol.atomBonds(atom)) {
+    if (isRemoved(bond->getOtherAtom(atom))) {
+      continue;
+    }
     if (bond->getBondType() == Bond::SINGLE) {
       ++single_bonds;
     } else if (bond->getBondType() == Bond::AROMATIC) {
@@ -641,14 +665,28 @@ void addHs(RWMol &mol, const AddHsParameters &params,
 }
 
 namespace {
+// the number of bonds of an atom to atoms that haven't been removed (see
+// RemovedAtoms)
+unsigned int getRemainingDegree(const ROMol &mol, const Atom *atom,
+                                const RemovedAtoms &isRemoved) {
+  unsigned int degree = 0;
+  for (const auto nbr : mol.atomNeighbors(atom)) {
+    if (!isRemoved(nbr)) {
+      ++degree;
+    }
+  }
+  return degree;
+}
+
 // returns whether or not an adjustment was made, in case we want that info
 bool adjustStereoAtomsIfRequired(RWMol &mol, const Atom *atom,
-                                 const Atom *heavyAtom) {
+                                 const Atom *heavyAtom,
+                                 const RemovedAtoms &isRemoved) {
   PRECONDITION(atom != nullptr, "bad atom");
   PRECONDITION(heavyAtom != nullptr, "bad heavy atom");
   // nothing we can do if the degree is only 2 (and we should have covered
   // that earlier anyway)
-  if (heavyAtom->getDegree() == 2) {
+  if (getRemainingDegree(mol, heavyAtom, isRemoved) == 2) {
     return false;
   }
   const auto &cbnd =
@@ -671,7 +709,8 @@ bool adjustStereoAtomsIfRequired(RWMol &mol, const Atom *atom,
         for (const auto &nbri :
              boost::make_iterator_range(mol.getAtomNeighbors(heavyAtom))) {
           const auto &nbr = mol[nbri];
-          if (nbr->getIdx() == dblNbrIdx || nbr->getIdx() == atom->getIdx()) {
+          if (nbr->getIdx() == dblNbrIdx || nbr->getIdx() == atom->getIdx() ||
+              isRemoved(nbr)) {
             continue;
           }
           *sAtomIt = nbr->getIdx();
@@ -696,11 +735,17 @@ bool adjustStereoAtomsIfRequired(RWMol &mol, const Atom *atom,
   return false;
 }
 
-void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
+void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount,
+                const RemovedAtoms &isRemoved) {
   auto atom = mol.getAtomWithIdx(idx);
   PRECONDITION(atom->getAtomicNum() == 1, "idx corresponds to a non-Hydrogen");
   for (const auto bond : mol.atomBonds(atom)) {
     Atom *heavyAtom = bond->getOtherAtom(atom);
+    // (the neighbor can be an H that has already been removed, such as the
+    // other atom in [H][H])
+    if (isRemoved(heavyAtom)) {
+      continue;
+    }
     int heavyAtomNum = heavyAtom->getAtomicNum();
 
     // we'll update the neighbor's explicit H count if we were told to
@@ -721,7 +766,7 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
       const INT_VECT &defaultVs =
           PeriodicTable::getTable()->getValenceList(heavyAtomNum);
       if (((heavyAtomNum == 7 || heavyAtomNum == 15 ||
-            may_need_extra_H(mol, heavyAtom)) &&
+            may_need_extra_H(mol, heavyAtom, isRemoved)) &&
            isAromaticAtom(*heavyAtom)) ||
           (std::find(defaultVs.begin() + 1, defaultVs.end(),
                      heavyAtom->getTotalValence()) != defaultVs.end())) {
@@ -735,14 +780,22 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
     // atom.  We deal with that by explicitly checking here:
     if (heavyAtom->getChiralTag() != Atom::CHI_UNSPECIFIED) {
       INT_LIST neighborIndices;
+      INT_LIST remainingBonds;
       for (const auto &nbnd : mol.atomBonds(heavyAtom)) {
+        if (isRemoved(nbnd->getOtherAtom(heavyAtom))) {
+          continue;
+        }
+        remainingBonds.push_back(nbnd->getIdx());
         if (nbnd->getIdx() != bond->getIdx()) {
           neighborIndices.push_back(nbnd->getIdx());
         }
       }
       neighborIndices.push_back(bond->getIdx());
 
-      int nSwaps = heavyAtom->getPerturbationOrder(neighborIndices);
+      // (like heavyAtom->getPerturbationOrder(), but ignoring the bonds to
+      // removed atoms)
+      int nSwaps = static_cast<int>(
+          countSwapsToInterconvert(neighborIndices, remainingBonds));
       // std::cerr << "H: "<<atom->getIdx()<<" hvy:
       // "<<heavyAtom->getIdx()<<" swaps: " << nSwaps<<std::endl;
       if (nSwaps % 2) {
@@ -752,9 +805,9 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
 
     // If we are removing a H atom that defines bond stereo (e.g. imines),
     // Then also remove the bond stereo information, as it is no longer valid.
-    if (heavyAtom->getDegree() == 2) {
+    if (getRemainingDegree(mol, heavyAtom, isRemoved) == 2) {
       for (auto &nbnd : mol.atomBonds(heavyAtom)) {
-        if (nbnd != bond) {
+        if (nbnd != bond && !isRemoved(nbnd->getOtherAtom(heavyAtom))) {
           if (nbnd->getStereo() > Bond::STEREOANY) {
             nbnd->setStereo(Bond::STEREONONE);
             nbnd->getStereoAtoms().clear();
@@ -783,6 +836,7 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
            boost::make_iterator_range(mol.getAtomBonds(heavyAtom))) {
         Bond *nbnd = mol[nbri];
         if (nbnd->getIdx() != bond->getIdx() &&
+            !isRemoved(nbnd->getOtherAtom(heavyAtom)) &&
             nbnd->getBondType() == Bond::SINGLE) {
           if (nbnd->getBondDir() == Bond::NONE) {
             oBond = nbnd;
@@ -805,40 +859,236 @@ void molRemoveH(RWMol &mol, unsigned int idx, bool updateExplicitCount) {
       // if this atom is one of the stereoatoms for a double bond we need
       // to switch the stereo atom on this end to be the other neighbor
       // This was part of github #1810
-      adjustStereoAtomsIfRequired(mol, atom, heavyAtom);
+      adjustStereoAtomsIfRequired(mol, atom, heavyAtom, isRemoved);
     } else {
       // if this atom is one of the stereoatoms for a double bond we need
       // to switch the stereo atom on this end to be the other neighbor
       // This was part of github #1810
-      adjustStereoAtomsIfRequired(mol, atom, heavyAtom);
-    }
-
-    // remove the bond from any SGroups that might include it.
-    for (auto &sg : getSubstanceGroups(mol)) {
-      sg.removeBondWithIdx(bond->getIdx());
+      adjustStereoAtomsIfRequired(mol, atom, heavyAtom, isRemoved);
     }
   }
 
-  // Finally, remove the atom from any SGroups that might include it, so that
-  // the SGroups don't get removed in removeAtom(). Since we allow removing
-  // SGroup SAP lvidx H atoms, we need to check for those and update them.
-  for (auto &sg : getSubstanceGroups(mol)) {
-    sg.removeAtomWithIdx(idx);
-    sg.removeParentAtomWithIdx(idx);
+  // (the H and its bonds are removed from any SGroups by
+  // removeHsFromSubstanceGroups())
 
-    for (auto &sap : sg.getAttachPoints()) {
-      if (sap.lvIdx == static_cast<int>(idx)) {
-        sap.lvIdx = -1;
-      }
-    }
-  }
   // computed properties will be cleared after all hydrogens are removed
   bool clearProps = false;
   mol.removeAtom(atom, clearProps);
 }
 
+// Removes the Hs to be removed, and their bonds, from any SGroups that include
+// them, so that the SGroups don't get removed when the atoms are removed. Since
+// we allow removing SGroup SAP lvidx H atoms, we need to check for those and
+// update them. This is done for all the Hs at once, since doing it for each H
+// would be quadratic.
+void removeHsFromSubstanceGroups(RWMol &mol,
+                                 const boost::dynamic_bitset<> &atomsToRemove) {
+  auto &sgs = getSubstanceGroups(mol);
+  if (sgs.empty()) {
+    return;
+  }
+  boost::dynamic_bitset<> bondsToRemove(mol.getNumBonds());
+  for (auto atom : mol.atoms()) {
+    if (atomsToRemove[atom->getIdx()]) {
+      for (auto bond : mol.atomBonds(atom)) {
+        bondsToRemove.set(bond->getIdx());
+      }
+    }
+  }
+  // Like SubstanceGroup::remove{Atom,ParentAtom,Bond}WithIdx() for each
+  // index, this only removes the first occurrence of each index. seen is
+  // scratch space for it, which is all false between calls; it's allocated
+  // once, since allocating it for each SGroup would be quadratic.
+  boost::dynamic_bitset<> seen(std::max(mol.getNumAtoms(), mol.getNumBonds()));
+  auto removeIndices = [&seen](const std::vector<unsigned int> &indices,
+                               const boost::dynamic_bitset<> &toRemove,
+                               std::vector<unsigned int> &remaining) {
+    bool changed = false;
+    for (auto idx : indices) {
+      if (idx < toRemove.size() && toRemove[idx] && !seen[idx]) {
+        seen.set(idx);
+        changed = true;
+      } else {
+        remaining.push_back(idx);
+      }
+    }
+    for (auto idx : indices) {
+      if (idx < seen.size()) {
+        seen.reset(idx);
+      }
+    }
+    return changed;
+  };
+  for (auto &sg : sgs) {
+    std::vector<unsigned int> remaining;
+    if (removeIndices(sg.getBonds(), bondsToRemove, remaining)) {
+      sg.setBonds(std::move(remaining));
+    }
+    remaining.clear();
+    if (removeIndices(sg.getAtoms(), atomsToRemove, remaining)) {
+      sg.setAtoms(std::move(remaining));
+    }
+    remaining.clear();
+    if (removeIndices(sg.getParentAtoms(), atomsToRemove, remaining)) {
+      sg.setParentAtoms(std::move(remaining));
+    }
+    for (auto &sap : sg.getAttachPoints()) {
+      if (sap.lvIdx >= 0 &&
+          static_cast<unsigned int>(sap.lvIdx) < atomsToRemove.size() &&
+          atomsToRemove[sap.lvIdx]) {
+        sap.lvIdx = -1;
+      }
+    }
+  }
+}
+
+// Determines which H atoms can't be removed because of SGroups. This is
+// computed once, when constructed, instead of looking at all the SGroups for
+// each H, which would be quadratic (or worse, since looking up a bond by index
+// is linear in the number of bonds).
+//
+// With removeInSGroups, H atoms with special roles in an SGroup can't be
+// removed; this checks the SGroups' bonds, attach points and CStates in the
+// same order as before, and a malformed SGroup (with a bond index out of
+// range, or a bond with neither atom in the SGroup) only causes an exception
+// when checking an H that isn't found to have a special role before reaching
+// it, as before. Otherwise, H atoms included in any SGroup can't be removed.
+class SGroupHChecker {
+ public:
+  SGroupHChecker(const ROMol &mol, const RemoveHsParameters &ps) : d_mol(mol) {
+    if (!getSubstanceGroups(mol).empty()) {
+      init(ps.removeInSGroups);
+    }
+  }
+
+  // returns whether the H atom can't be removed because of the SGroups
+  bool isProtected(const Atom *atom) const {
+    if (getSubstanceGroups(d_mol).empty()) {
+      return false;
+    }
+    if (d_firstRole[atom->getIdx()] < d_firstInvalid) {
+      return true;
+    }
+    if (d_throwInvalid) {
+      d_throwInvalid();
+    }
+    return false;
+  }
+
+ private:
+  static constexpr auto none = std::numeric_limits<std::uint64_t>::max();
+
+  void init(bool removeInSGroups) {
+    const auto numAtoms = d_mol.getNumAtoms();
+    d_firstRole.assign(numAtoms, none);
+    std::uint64_t position = 0;
+    auto setRole = [this, &position, numAtoms](unsigned int idx) {
+      if (idx < numAtoms && d_firstRole[idx] == none) {
+        d_firstRole[idx] = position;
+      }
+    };
+    if (!removeInSGroups) {
+      for (const auto &sg : getSubstanceGroups(d_mol)) {
+        // like SubstanceGroup::includesAtom()
+        for (auto idx : sg.getAtoms()) {
+          setRole(idx);
+        }
+        for (auto idx : sg.getParentAtoms()) {
+          setRole(idx);
+        }
+        for (const auto &sap : sg.getAttachPoints()) {
+          setRole(sap.aIdx);
+          if (sap.lvIdx >= 0) {
+            setRole(sap.lvIdx);
+          }
+        }
+      }
+      return;
+    }
+
+    std::vector<const Bond *> bonds(d_mol.getNumBonds());
+    for (const auto bond : d_mol.bonds()) {
+      bonds[bond->getIdx()] = bond;
+    }
+    boost::dynamic_bitset<> inSGroup(numAtoms);
+    for (const auto &sg : getSubstanceGroups(d_mol)) {
+      for (auto idx : sg.getAtoms()) {
+        if (idx < numAtoms) {
+          inSGroup.set(idx);
+        }
+      }
+      // The H atom is one of the "caps" of the SGroup. Technically,
+      // it's not part of the group, but it defines its boundaries.
+      for (auto bondIdx : sg.getBonds()) {
+        if (bondIdx >= bonds.size()) {
+          // getBondType() throws
+          setInvalid(position, [&sg, bondIdx] { sg.getBondType(bondIdx); });
+          break;
+        }
+        const auto bond = bonds[bondIdx];
+        const bool beginIn = inSGroup[bond->getBeginAtomIdx()];
+        const bool endIn = inSGroup[bond->getEndAtomIdx()];
+        if (!beginIn && !endIn) {
+          // getBondType() throws
+          setInvalid(position, [&sg, bondIdx] { sg.getBondType(bondIdx); });
+          break;
+        }
+        if (beginIn != endIn) {  // an XBOND
+          setRole(bond->getBeginAtomIdx());
+          setRole(bond->getEndAtomIdx());
+        }
+        ++position;
+      }
+      for (auto idx : sg.getAtoms()) {
+        if (idx < numAtoms) {
+          inSGroup.reset(idx);
+        }
+      }
+      if (d_throwInvalid) {
+        return;
+      }
+
+      // The H atoms is an attach point. This would be weird, but is possible.
+      // (if it is a 'leaving atom' we don't care, though)
+      for (const auto &sap : sg.getAttachPoints()) {
+        setRole(sap.aIdx);
+        ++position;
+      }
+
+      // The bond to the H atom defines a CState
+      for (const auto &cs : sg.getCStates()) {
+        if (cs.bondIdx >= bonds.size()) {
+          // getBondWithIdx() throws
+          const auto bondIdx = cs.bondIdx;
+          setInvalid(position,
+                     [this, bondIdx] { d_mol.getBondWithIdx(bondIdx); });
+          return;
+        }
+        setRole(bonds[cs.bondIdx]->getBeginAtomIdx());
+        setRole(bonds[cs.bondIdx]->getEndAtomIdx());
+        ++position;
+      }
+    }
+  }
+
+  void setInvalid(std::uint64_t position, std::function<void()> throwIt) {
+    d_firstInvalid = position;
+    d_throwInvalid = std::move(throwIt);
+  }
+
+  const ROMol &d_mol;
+  // for each atom, the position, in the order in which the SGroups are
+  // checked, at which it's first found to have a special role
+  std::vector<std::uint64_t> d_firstRole;
+  // the position of the first malformed SGroup bond, and a function throwing
+  // the exception it caused before
+  std::uint64_t d_firstInvalid = none;
+  std::function<void()> d_throwInvalid;
+};
+
 bool shouldRemoveH(const RWMol &mol, const Atom *atom,
-                   const RemoveHsParameters &ps) {
+                   const RemoveHsParameters &ps,
+                   const SGroupHChecker &sgroupChecker) {
   if (atom->getAtomicNum() != 1) {
     return false;
   }
@@ -866,43 +1116,10 @@ bool shouldRemoveH(const RWMol &mol, const Atom *atom,
     return false;
   }
 
-  if (ps.removeInSGroups) {
-    // If removing H in SGroups, do not remove H atoms in special
-    // roles in the SGroup
-    for (const auto &sg : getSubstanceGroups(mol)) {
-      // The H atom is one of the "caps" of the SGroup. Technically,
-      // it's not part of the group, but it defines its boundaries.
-      for (const auto &bond_idx : sg.getBonds()) {
-        if (sg.getBondType(bond_idx) == SubstanceGroup::BondType::XBOND) {
-          auto bond = mol.getBondWithIdx(bond_idx);
-          if (bond->getBeginAtom() == atom || bond->getEndAtom() == atom) {
-            return false;
-          }
-        }
-      }
-
-      for (const auto &sap : sg.getAttachPoints()) {
-        // The H atoms is an attach point. This would be weird, but is possible.
-        // (if it is a 'leaving atom' we don't care, though)
-        if (sap.aIdx == atom->getIdx()) {
-          return false;
-        }
-      }
-
-      for (const auto &cs : sg.getCStates()) {
-        // The bond to the H atom defines a CState
-        auto bond = mol.getBondWithIdx(cs.bondIdx);
-        if (bond->getBeginAtom() == atom || bond->getEndAtom() == atom) {
-          return false;
-        }
-      }
-    }
-  } else {
-    for (const auto &sg : getSubstanceGroups(mol)) {
-      if (sg.includesAtom(atom->getIdx())) {
-        return false;
-      }
-    }
+  // If removing H in SGroups, do not remove H atoms in special roles in the
+  // SGroup; otherwise, do not remove H atoms in SGroups
+  if (sgroupChecker.isProtected(atom)) {
+    return false;
   }
   if (!ps.removeHydrides && atom->getFormalCharge() == -1) {
     return false;
@@ -1003,9 +1220,22 @@ void filter_sgroup_emptying_hydrogens(const ROMol &mol,
   }
 }
 
+// Removing Hs while a batch edit is in progress isn't supported: the Hs
+// wouldn't be removed until the batch edit is committed, but the heavy atoms
+// they are bound to would be modified immediately (and a copy of the molecule
+// wouldn't include the pending deletions).
+void checkNotInBatchEdit(const ROMol &mol) {
+  const auto rwmol = dynamic_cast<const RWMol *>(&mol);
+  if (rwmol && rwmol->isInBatchEdit()) {
+    throw ValueErrorException(
+        "Hs can't be removed from a molecule with a batch edit in progress");
+  }
+}
+
 }  // end of anonymous namespace
 
 void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
+  checkNotInBatchEdit(mol);
   if (ps.removeAndTrackIsotopes) {
     // if there are any non-isotopic Hs remove them first
     // to make sure chirality is preserved
@@ -1034,8 +1264,9 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
   }
   boost::dynamic_bitset<> atomsToRemove{mol.getNumAtoms(), 0};
 
+  const SGroupHChecker sgroupChecker(mol, ps);
   for (auto atom : mol.atoms()) {
-    if (shouldRemoveH(mol, atom, ps)) {
+    if (shouldRemoveH(mol, atom, ps, sgroupChecker)) {
       atomsToRemove.set(atom->getIdx());
     }
   }  // end of the loop over atoms
@@ -1046,14 +1277,29 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
     filter_sgroup_emptying_hydrogens(mol, atomsToRemove);
   }
 
-  // now that we know which atoms need to be removed, go ahead and remove them
-  // NOTE: there's too much complexity around stereochemistry here
-  // to be able to safely use batch editing.
-  for (int idx = mol.getNumAtoms() - 1; idx >= 0; --idx) {
-    if (atomsToRemove[idx]) {
-      molRemoveH(mol, idx, ps.updateExplicitCount);
+  // now that we know which atoms need to be removed, go ahead and remove them.
+  // Removing them one at a time would be quadratic in the number of atoms, so
+  // they are removed in a batch edit. Since they are removed in order of
+  // decreasing index, the atoms already removed when removing an H are those to
+  // be removed with a higher index; molRemoveH() ignores them, which gives the
+  // same results as if they had been removed immediately.
+  mol.beginBatchEdit();
+  try {
+    removeHsFromSubstanceGroups(mol, atomsToRemove);
+    for (int idx = mol.getNumAtoms() - 1; idx >= 0; --idx) {
+      if (atomsToRemove[idx]) {
+        const RemovedAtoms isRemoved{atomsToRemove,
+                                     static_cast<unsigned int>(idx)};
+        molRemoveH(mol, idx, ps.updateExplicitCount, isRemoved);
+      }
     }
+  } catch (...) {
+    // don't leave the molecule in a batch edit, where any atoms removed
+    // later would only be marked for removal
+    mol.rollbackBatchEdit();
+    throw;
   }
+  mol.commitBatchEdit();
   mol.clearComputedProps(true);
   //
   //  If we didn't only remove implicit Hs, which are guaranteed to
@@ -1061,12 +1307,18 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
   //  This can screw up derived properties (such as ring members), so
   //  do some checks:
   //
+  //  NOTE: atomsToRemove.empty() is only true for a molecule without atoms;
+  //  it doesn't check whether any Hs were removed. Don't change it to
+  //  atomsToRemove.any(): callers rely on removeHs() sanitizing the molecule
+  //  even when there are no Hs to remove (for example, SmilesToMol() calls
+  //  removeHs() instead of sanitizeMol()).
+  //
   if (!atomsToRemove.empty() && ps.removeNonimplicit && sanitize) {
     sanitizeMol(mol);
   }
 
   // if we removed Hs and any chiral atoms now have more than 1 explict H,
-  // remove those
+  // remove those (this is done for any non-empty molecule; see above)
   if (!atomsToRemove.empty()) {
     for (auto atom : mol.atoms()) {
       if (!atom->getNoImplicit() &&
@@ -1081,6 +1333,7 @@ void removeHs(RWMol &mol, const RemoveHsParameters &ps, bool sanitize) {
   }
 }
 ROMol *removeHs(const ROMol &mol, const RemoveHsParameters &ps, bool sanitize) {
+  checkNotInBatchEdit(mol);
   auto *res = new RWMol(mol);
   try {
     removeHs(*res, ps, sanitize);
@@ -1099,6 +1352,7 @@ void removeHs(RWMol &mol, bool implicitOnly, bool updateExplicitCount,
 };
 ROMol *removeHs(const ROMol &mol, bool implicitOnly, bool updateExplicitCount,
                 bool sanitize) {
+  checkNotInBatchEdit(mol);
   auto *res = new RWMol(mol);
   RemoveHsParameters ps;
   ps.removeNonimplicit = !implicitOnly;
@@ -1130,6 +1384,7 @@ void removeAllHs(RWMol &mol, bool sanitize) {
   removeHs(mol, ps, sanitize);
 };
 ROMol *removeAllHs(const ROMol &mol, bool sanitize) {
+  checkNotInBatchEdit(mol);
   auto *res = new RWMol(mol);
   try {
     removeAllHs(*res, sanitize);

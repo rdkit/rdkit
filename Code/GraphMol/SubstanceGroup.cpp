@@ -12,6 +12,7 @@
 #include "ROMol.h"
 #include "RWMol.h"
 #include <boost/dynamic_bitset.hpp>
+#include <algorithm>
 
 namespace RDKit {
 
@@ -317,6 +318,126 @@ bool SubstanceGroup::includesBond(unsigned int bondIdx) const {
   return false;
 }
 
+namespace {
+bool containsIdx(const std::vector<unsigned int> &sortedIndices,
+                 unsigned int idx) {
+  return std::binary_search(sortedIndices.begin(), sortedIndices.end(), idx);
+}
+// the index that idx becomes after removing the (sorted) indices
+unsigned int adjustedIdx(const std::vector<unsigned int> &sortedIndices,
+                         unsigned int idx) {
+  const auto numBefore =
+      std::lower_bound(sortedIndices.begin(), sortedIndices.end(), idx) -
+      sortedIndices.begin();
+  return idx - static_cast<unsigned int>(numBefore);
+}
+}  // namespace
+
+bool SubstanceGroup::adjustToRemovedAtoms(
+    const std::vector<unsigned int> &atomIndices) {
+  if (atomIndices.empty()) {
+    return false;
+  }
+  bool res = false;
+  auto adjust = [&atomIndices, &res](unsigned int &aid) {
+    if (containsIdx(atomIndices, aid)) {
+      throw SubstanceGroupException(
+          "adjustToRemovedAtoms() called on SubstanceGroup which contains "
+          "one of the atoms");
+    }
+    const auto newIdx = adjustedIdx(atomIndices, aid);
+    if (newIdx != aid) {
+      res = true;
+      aid = newIdx;
+    }
+  };
+  for (auto &aid : d_atoms) {
+    adjust(aid);
+  }
+  for (auto &aid : d_patoms) {
+    adjust(aid);
+  }
+  for (auto &ap : d_saps) {
+    adjust(ap.aIdx);
+    if (ap.lvIdx >= 0) {
+      auto lvIdx = rdcast<unsigned int>(ap.lvIdx);
+      adjust(lvIdx);
+      ap.lvIdx = rdcast<int>(lvIdx);
+    }
+  }
+  return res;
+}
+
+bool SubstanceGroup::includesAnyAtom(
+    const std::vector<unsigned int> &atomIndices) const {
+  if (atomIndices.empty()) {
+    return false;
+  }
+  for (auto aid : d_atoms) {
+    if (containsIdx(atomIndices, aid)) {
+      return true;
+    }
+  }
+  for (auto aid : d_patoms) {
+    if (containsIdx(atomIndices, aid)) {
+      return true;
+    }
+  }
+  for (const auto &ap : d_saps) {
+    if (containsIdx(atomIndices, ap.aIdx) ||
+        (ap.lvIdx >= 0 &&
+         containsIdx(atomIndices, rdcast<unsigned int>(ap.lvIdx)))) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool SubstanceGroup::adjustToRemovedBonds(
+    const std::vector<unsigned int> &bondIndices) {
+  if (bondIndices.empty()) {
+    return false;
+  }
+  bool res = false;
+  auto adjust = [&bondIndices, &res](unsigned int &bid) {
+    if (containsIdx(bondIndices, bid)) {
+      throw SubstanceGroupException(
+          "adjustToRemovedBonds() called on SubstanceGroup which contains "
+          "one of the bonds");
+    }
+    const auto newIdx = adjustedIdx(bondIndices, bid);
+    if (newIdx != bid) {
+      res = true;
+      bid = newIdx;
+    }
+  };
+  for (auto &bid : d_bonds) {
+    adjust(bid);
+  }
+  for (auto &cs : d_cstates) {
+    adjust(cs.bondIdx);
+  }
+  return res;
+}
+
+bool SubstanceGroup::includesAnyBond(
+    const std::vector<unsigned int> &bondIndices) const {
+  if (bondIndices.empty()) {
+    return false;
+  }
+  for (auto bid : d_bonds) {
+    if (containsIdx(bondIndices, bid)) {
+      return true;
+    }
+  }
+  for (const auto &cs : d_cstates) {
+    if (containsIdx(bondIndices, cs.bondIdx)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool SubstanceGroupChecks::isValidType(const std::string &type) {
   return std::find(SubstanceGroupChecks::sGroupTypes.begin(),
                    SubstanceGroupChecks::sGroupTypes.end(),
@@ -372,19 +493,6 @@ unsigned int addSubstanceGroup(ROMol &mol, SubstanceGroup sgroup) {
 }
 
 namespace {
-bool includesBond(SubstanceGroup &sg, unsigned int idx) {
-  return sg.includesBond(idx);
-}
-bool includesAtom(SubstanceGroup &sg, unsigned int idx) {
-  return sg.includesAtom(idx);
-}
-void removedBond(SubstanceGroup &sg, unsigned int idx) {
-  sg.adjustToRemovedBond(idx);
-}
-void removedAtom(SubstanceGroup &sg, unsigned int idx) {
-  sg.adjustToRemovedAtom(idx);
-}
-
 bool removedParentInHierarchy(
     unsigned int idx, const std::vector<SubstanceGroup> &sgs,
     const boost::dynamic_bitset<> &toRemove,
@@ -405,9 +513,11 @@ bool removedParentInHierarchy(
   return false;
 }
 
-template <bool INCLUDES_METHOD(SubstanceGroup &, unsigned int),
-          void ADJUST_METHOD(SubstanceGroup &, unsigned int)>
-void removeSubstanceGroupsReferencing(RWMol &mol, unsigned int idx) {
+// Removes the SubstanceGroups for which includes(sg) is true, along with their
+// descendants, and calls adjust(sg) on the others.
+template <typename IncludesFunc, typename AdjustFunc>
+void removeSubstanceGroupsReferencing(RWMol &mol, IncludesFunc includes,
+                                      AdjustFunc adjust) {
   auto &sgs = getSubstanceGroups(mol);
   if (!sgs.empty()) {
     // first collect the ones that should be removed
@@ -418,7 +528,7 @@ void removeSubstanceGroupsReferencing(RWMol &mol, unsigned int idx) {
       if (!parentsPresent && sgs[i].hasProp("PARENT")) {
         parentsPresent = true;
       }
-      if (INCLUDES_METHOD(sgs[i], idx)) {
+      if (includes(sgs[i])) {
         toRemove.set(i);
         ++nRemoved;
       }
@@ -444,7 +554,7 @@ void removeSubstanceGroupsReferencing(RWMol &mol, unsigned int idx) {
       if (!toRemove[i]) {
         // we might be keeping it. Check the parent
         if (!parentsPresent || !sg.hasProp("PARENT")) {
-          ADJUST_METHOD(sg, idx);
+          adjust(sg);
           newsgs.push_back(std::move(sg));
         } else if (parentsPresent) {
           unsigned int parent;
@@ -466,7 +576,7 @@ void removeSubstanceGroupsReferencing(RWMol &mol, unsigned int idx) {
               }
             }
             if (keepIt) {
-              ADJUST_METHOD(sg, idx);
+              adjust(sg);
               newsgs.push_back(std::move(sg));
             }
           }
@@ -481,13 +591,51 @@ void removeSubstanceGroupsReferencing(RWMol &mol, unsigned int idx) {
 void removeSubstanceGroupsReferencingAtom(RWMol &mol, unsigned int idx) {
   // Delete substance groups containing this atom. It could be that it's ok to
   // keep it, but we just don't know
-  removeSubstanceGroupsReferencing<includesAtom, removedAtom>(mol, idx);
+  removeSubstanceGroupsReferencing(
+      mol, [idx](const SubstanceGroup &sg) { return sg.includesAtom(idx); },
+      [idx](SubstanceGroup &sg) { sg.adjustToRemovedAtom(idx); });
 }
 
 void removeSubstanceGroupsReferencingBond(RWMol &mol, unsigned int idx) {
   // Delete substance groups containing this bond. It could be that it's ok to
   // keep it, but we just don't know
-  removeSubstanceGroupsReferencing<includesBond, removedBond>(mol, idx);
+  removeSubstanceGroupsReferencing(
+      mol, [idx](const SubstanceGroup &sg) { return sg.includesBond(idx); },
+      [idx](SubstanceGroup &sg) { sg.adjustToRemovedBond(idx); });
+}
+
+void removeSubstanceGroupsReferencingAtoms(
+    RWMol &mol, const std::vector<unsigned int> &atomIndices) {
+  PRECONDITION(std::is_sorted(atomIndices.begin(), atomIndices.end()),
+               "atom indices must be sorted");
+  if (atomIndices.empty()) {
+    return;
+  }
+  removeSubstanceGroupsReferencing(
+      mol,
+      [&atomIndices](const SubstanceGroup &sg) {
+        return sg.includesAnyAtom(atomIndices);
+      },
+      [&atomIndices](SubstanceGroup &sg) {
+        sg.adjustToRemovedAtoms(atomIndices);
+      });
+}
+
+void removeSubstanceGroupsReferencingBonds(
+    RWMol &mol, const std::vector<unsigned int> &bondIndices) {
+  PRECONDITION(std::is_sorted(bondIndices.begin(), bondIndices.end()),
+               "bond indices must be sorted");
+  if (bondIndices.empty()) {
+    return;
+  }
+  removeSubstanceGroupsReferencing(
+      mol,
+      [&bondIndices](const SubstanceGroup &sg) {
+        return sg.includesAnyBond(bondIndices);
+      },
+      [&bondIndices](SubstanceGroup &sg) {
+        sg.adjustToRemovedBonds(bondIndices);
+      });
 }
 
 }  // namespace RDKit
