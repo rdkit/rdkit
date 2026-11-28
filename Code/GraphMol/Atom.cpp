@@ -23,6 +23,12 @@
 
 namespace RDKit {
 
+MolSanitizeException::~MolSanitizeException() noexcept = default;
+AtomSanitizeException::~AtomSanitizeException() noexcept = default;
+AtomValenceException::~AtomValenceException() noexcept = default;
+AtomKekulizeException::~AtomKekulizeException() noexcept = default;
+KekulizeException::~KekulizeException() noexcept = default;
+
 bool isAromaticAtom(const Atom &atom) {
   if (atom.getIsAromatic()) {
     return true;
