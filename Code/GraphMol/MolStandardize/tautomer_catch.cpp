@@ -18,6 +18,42 @@
 
 using namespace RDKit;
 
+TEST_CASE("tautomer scoring prefilter is independent of aromaticity",
+          "[tautomers]") {
+  namespace TS = MolStandardize::TautomerScoringFunctions;
+  MolStandardize::TautomerEnumerator te;
+  // Tautomerization can change whether an atom is aromatic. The prefilter
+  // must retain any term that can match a generated tautomer.
+  const std::vector<std::string> inputs = {
+      "N=C1NC(=O)CS1",
+      "N=C1NC(=O)[CH](S1)C2=CC=CC=C2",
+      "N=C1C=CC(C(=O)O)C=N1",
+      "Nc1nc(O)cs1",
+      "N=c1[nH]c(O)cs1",
+      "OC1=NC2=C(C=C(C=C2C(=N1)O)[N+]([O-])=O)[N+]([O-])=O"};
+  for (const auto &smi : inputs) {
+    CAPTURE(smi);
+    std::unique_ptr<RWMol> mol{SmilesToMol(smi)};
+    REQUIRE(mol);
+    const auto tautomers = te.enumerate(*mol);
+    REQUIRE(tautomers.status() ==
+            MolStandardize::TautomerEnumeratorStatus::Completed);
+    REQUIRE(tautomers.size() > 1);
+    const auto scorer = TS::makeOptimizedScorer(*mol);
+    for (const auto &taut : tautomers) {
+      CAPTURE(MolToSmiles(*taut));
+      CHECK(scorer(*taut) == TS::scoreTautomer(*taut));
+    }
+    std::unique_ptr<ROMol> full{te.canonicalize(*mol, TS::scoreTautomer)};
+    std::unique_ptr<ROMol> optimized{te.canonicalize(*mol)};
+    REQUIRE(full);
+    REQUIRE(optimized);
+    CHECK(MolToSmiles(*optimized) == MolToSmiles(*full));
+    te.canonicalizeInPlace(*mol);
+    CHECK(MolToSmiles(*mol) == MolToSmiles(*full));
+  }
+}
+
 TEST_CASE("exclude tautomer regions") {
   SECTION("basics") {
     MolStandardize::CleanupParameters params;
