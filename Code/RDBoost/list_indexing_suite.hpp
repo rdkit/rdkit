@@ -116,8 +116,7 @@ class list_indexing_suite
            container.end();
   }
 
-  static index_type get_min_index(Container& container) {
-    (void)container;
+  static index_type get_min_index([[maybe_unused]] Container &container) {
     return 0;
   }
 
@@ -125,8 +124,8 @@ class list_indexing_suite
     return container.size();
   }
 
-  static bool compare_index(Container& container, index_type a, index_type b) {
-    (void)container;
+  static bool compare_index([[maybe_unused]] Container &container, index_type a,
+                            index_type b) {
     return a < b;
   }
 
