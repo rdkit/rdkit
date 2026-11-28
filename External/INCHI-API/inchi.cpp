@@ -1767,6 +1767,11 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
   std::unique_ptr<inchi_Atom[]> inchiAtoms(new inchi_Atom[nAtoms]);
   // and a vector for stereo0D
   std::vector<inchi_Stereo0D> stereo0DEntries;
+  std::vector<unsigned int> symmetricDoubleBonds;
+  if (m->getNumConformers()) {
+    symmetricDoubleBonds =
+        Chirality::detail::getSymmetricUnspecifiedDoubleBondIndices(*m);
+  }
 
   PeriodicTable *periodicTable = PeriodicTable::getTable();
   // Fill inchi_Atom's by atoms in RWMol
@@ -2011,6 +2016,12 @@ std::string MolToInchi(const ROMol &mol, ExtraInchiReturnValues &rv,
       case Bond::NONE:
       default:
         inchiAtoms[atomIndex1].bond_stereo[idx] = INCHI_BOND_STEREO_NONE;
+    }
+    // Do not let retained coordinates invent stereo for graph-symmetric bonds.
+    if (std::binary_search(symmetricDoubleBonds.begin(),
+                           symmetricDoubleBonds.end(), bond->getIdx())) {
+      inchiAtoms[atomIndex1].bond_stereo[idx] =
+          INCHI_BOND_STEREO_DOUBLE_EITHER;
     }
 
     // double bond stereochemistry
