@@ -32,9 +32,8 @@ const std::vector<RDLogger *> allLogs = {&rdAppLog,     &rdDebugLog,
 
 LogStateSetter::LogStateSetter() {
   for (auto i = 0u; i < allLogs.size(); ++i) {
-    if (*allLogs[i] && (*allLogs[i])->df_enabled) {
+    if (*allLogs[i] && (*allLogs[i])->df_enabled.exchange(false)) {
       d_origState |= 1 << i;
-      (*allLogs[i])->df_enabled = false;
     }
   }
 }
@@ -51,8 +50,11 @@ LogStateSetter::LogStateSetter(RDLoggerList toEnable) : LogStateSetter() {
 
 LogStateSetter::~LogStateSetter() {
   for (auto i = 0u; i < allLogs.size(); ++i) {
-    if (*allLogs[i]) {
-      (*allLogs[i])->df_enabled ^= d_origState >> i & 1;
+    if (*allLogs[i] && (d_origState >> i & 1)) {
+      auto &enabled = (*allLogs[i])->df_enabled;
+      bool expected = enabled;
+      while (!enabled.compare_exchange_weak(expected, !expected)) {
+      }
     }
   }
 }

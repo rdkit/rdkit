@@ -19,6 +19,7 @@
 #include <fstream>
 #include <sstream>
 #include <ostream>
+#include <atomic>
 #include <vector>
 #include <cstdint>
 
@@ -32,7 +33,7 @@ class RDKIT_RDGENERAL_EXPORT rdLogger {
  public:
   std::ostream *dp_dest;
   bool df_owner;
-  bool df_enabled;
+  std::atomic<bool> df_enabled;
 
   std::ofstream *dp_teeHelperStream;
   RDTee *tee;
