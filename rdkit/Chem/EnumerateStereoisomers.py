@@ -178,6 +178,9 @@ def EnumerateStereoisomers(m, options=StereoEnumerationOptions(), verbose=False)
   for bond in tm.GetBonds():
     if bond.GetBondDir() == Chem.BondDir.EITHERDOUBLE or bond.GetBondDir() == Chem.BondDir.UNKNOWN:
       bond.SetBondDir(Chem.BondDir.NONE)
+    # wiggly bonds read from a mol file are recorded in this property, which
+    # the writers would otherwise restore them from
+    bond.ClearProp('_UnknownStereo')
   flippers = _getFlippers(tm, options)
   nCenters = len(flippers)
   if not nCenters:

@@ -164,6 +164,111 @@ TEST_CASE("StereoisomerEnumerator is an input range") {
   CHECK(got == expected);
 }
 
+TEST_CASE("Enumerated stereo survives mol block round trips of wiggly input") {
+  // Each isomer resolves the stereo the wiggly bond marked as unknown, so the
+  // wiggly bond has to go, or writing the isomer would mark it unknown again.
+  // The input itself must be left alone.
+  auto check = [](const ROMol &mol,
+                  const std::unordered_set<std::string> &expected) {
+    const auto before = MolToMolBlock(mol);
+    StereoisomerEnumerator enumerator(mol);
+    std::unordered_set<std::string> smiles;
+    unsigned int count = 0;
+    while (auto isomer = enumerator.next()) {
+      ++count;
+      const auto smi = MolToSmiles(*isomer);
+      smiles.insert(smi);
+      // Let the writers generate coordinates for each enumerated E/Z state.
+      isomer->clearConformers();
+      for (const auto &block :
+           {MolToMolBlock(*isomer), MolToV3KMolBlock(*isomer)}) {
+        std::unique_ptr<RWMol> reread{MolBlockToMol(block)};
+        REQUIRE(reread);
+        CHECK(MolToSmiles(*reread) == smi);
+      }
+    }
+    CHECK(smiles == expected);
+    CHECK(count == 2);
+    CHECK(MolToMolBlock(mol) == before);
+  };
+  auto parse = [](const ROMol &mol) {
+    std::unique_ptr<RWMol> parsed{MolBlockToMol(MolToMolBlock(mol))};
+    REQUIRE(parsed);
+    REQUIRE(parsed->getBondWithIdx(0)->getProp<int>(
+                common_properties::_UnknownStereo) == 1);
+    return parsed;
+  };
+  const std::unordered_set<std::string> alkeneIsomers{"C/C=C/C", R"(C/C=C\C)"};
+  const std::unordered_set<std::string> centerIsomers{"C[C@](F)(Cl)Br",
+                                                      "C[C@@](F)(Cl)Br"};
+  auto alkene = "CC=CC |w:1.0|"_smiles;
+  REQUIRE(alkene);
+  auto center = "CC(F)(Cl)Br |w:1.0|"_smiles;
+  REQUIRE(center);
+
+  SECTION("double bond, from SMILES") { check(*alkene, alkeneIsomers); }
+  SECTION("double bond, from a mol block") {
+    check(*parse(*alkene), alkeneIsomers);
+  }
+  SECTION("stereocenter, from SMILES") { check(*center, centerIsomers); }
+  SECTION("stereocenter, from a mol block") {
+    check(*parse(*center), centerIsomers);
+  }
+}
+
+TEST_CASE("Enumeration removes wiggly bonds without an enumerable center") {
+  // A wiggly bond at an atom which cannot be a stereocenter marks nothing, so
+  // it is not carried over to the isomers.
+  auto check = [](const ROMol &mol) {
+    StereoisomerEnumerator enumerator(mol);
+    auto isomer = enumerator.next();
+    REQUIRE(isomer);
+    CHECK(!enumerator.next());
+    std::unique_ptr<RWMol> reread{MolBlockToMol(MolToMolBlock(*isomer))};
+    REQUIRE(reread);
+    CHECK(
+        !reread->getBondWithIdx(1)->hasProp(common_properties::_UnknownStereo));
+  };
+  auto mol = "CCO |w:1.1|"_smiles;
+  REQUIRE(mol);
+  SECTION("from SMILES") { check(*mol); }
+  SECTION("from a mol block") {
+    std::unique_ptr<RWMol> parsed{MolBlockToMol(MolToMolBlock(*mol))};
+    REQUIRE(parsed);
+    REQUIRE(parsed->getBondWithIdx(1)->getProp<int>(
+                common_properties::_UnknownStereo) == 1);
+    check(*parsed);
+  }
+}
+
+TEST_CASE("Enumeration preserves the defined neighbor of a wiggly bond") {
+  // The wiggly bond marks atom 1 as unknown and says nothing about the defined
+  // center at its other end, atom 3. With onlyUnassigned, atom 3 must keep its
+  // configuration.
+  auto check = [](const ROMol &mol) {
+    const auto tag = mol.getAtomWithIdx(3)->getChiralTag();
+    REQUIRE(tag != Atom::CHI_UNSPECIFIED);
+    StereoisomerEnumerator enumerator(mol);
+    unsigned int count = 0;
+    while (auto isomer = enumerator.next()) {
+      ++count;
+      CHECK(isomer->getAtomWithIdx(3)->getChiralTag() == tag);
+    }
+    CHECK(count == 2);
+  };
+  auto mol = "CC(F)[C@H](Cl)Br"_smiles;
+  REQUIRE(mol);
+  mol->getBondBetweenAtoms(1, 3)->setBondDir(Bond::UNKNOWN);
+  SECTION("from SMILES") { check(*mol); }
+  SECTION("from a mol block") {
+    std::unique_ptr<RWMol> parsed{MolBlockToMol(MolToMolBlock(*mol))};
+    REQUIRE(parsed);
+    REQUIRE(parsed->getBondBetweenAtoms(1, 3)->getProp<int>(
+                common_properties::_UnknownStereo) == 1);
+    check(*parsed);
+  }
+}
+
 TEST_CASE("Unique") {
   auto m1 = "FC(Cl)C=CC=CC(F)Cl"_smiles;
   REQUIRE(m1);

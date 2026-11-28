@@ -40,6 +40,9 @@ StereoisomerEnumerator::StereoisomerEnumerator(
         bond->getBondDir() == Bond::BondDir::UNKNOWN) {
       bond->setBondDir(Bond::BondDir::NONE);
     }
+    // wiggly bonds read from a mol file are recorded in this property, which
+    // the writers would otherwise restore them from
+    bond->clearProp(common_properties::_UnknownStereo);
   }
   if (d_flippers.empty()) {
     d_totalPoss = 1;
